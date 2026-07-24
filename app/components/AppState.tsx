@@ -1,0 +1,91 @@
+"use client";
+
+import {createContext, ReactNode, useContext, useEffect, useState} from "react";
+import {showUnavailable} from "./ServiceNotice";
+
+export type Task = {id:string; title:string; project:string; due:string; priority:"High"|"Medium"|"Low"; completed:boolean; recurrence?:string; subtasks?:string[]; archived?:boolean};
+export type Event = {id:string; title:string; day:number; time:string; top:number; height:number; location?:string; active?:boolean};
+export type Note = {id:string; title:string; excerpt:string; content:string; tags:string[]; time:string; ai:boolean; source?:string; favorite?:boolean; trashed?:boolean};
+export type CaptureSource = "typed"|"voice"|"file"|"link";
+export type CaptureObject = {type:"task"|"event"|"note"; title:string; detail:string};
+export type Capture = {
+  id:string; text:string; createdAt:string; status:"processing"|"review"|"confirmed"|"failed"|"dismissed";
+  source:CaptureSource; sourceLabel:string; progress?:number; error?:string; objects:CaptureObject[];
+};
+
+type AppData = {tasks:Task[]; events:Event[]; notes:Note[]; captures:Capture[]};
+type AppState = AppData & {
+  addCapture:(text:string)=>string;
+  updateCapture:(id:string,status:Capture["status"])=>void;
+  toggleTask:(id:string)=>void;
+  saveTask:(task:Task)=>void;
+  saveEvent:(event:Event)=>void;
+  saveNote:(note:Note)=>void;
+  trashNote:(id:string)=>void;
+  archiveTask:(id:string)=>void;
+};
+
+const seed: AppData = {
+  tasks:[
+    {id:"proposal",title:"Review partnership proposal",project:"RevoU Partnership",due:"Today",priority:"High",completed:false},
+    {id:"normalization",title:"Finish database normalization exercises",project:"Computer Science",due:"Today",priority:"Medium",completed:false},
+    {id:"dian-questions",title:"Prepare questions for Dian",project:"RevoU Partnership",due:"Tomorrow",priority:"Medium",completed:false},
+    {id:"tcp-cards",title:"Review TCP congestion control flashcards",project:"Computer Networks",due:"Friday",priority:"Low",completed:false},
+  ],
+  events:[
+    {id:"study-block",day:0,top:76,height:58,title:"Study block",time:"09:00"},
+    {id:"project-review",day:2,top:170,height:76,title:"Project review",time:"11:00"},
+    {id:"networks",day:4,top:122,height:58,title:"Computer Networks lecture",time:"10:00",location:"Engineering Hall"},
+    {id:"dian",day:4,top:264,height:76,title:"Meeting with Dian",time:"13:00",location:"Google Meet · Prep ready",active:true},
+  ],
+  notes:[
+    {id:"tcp",title:"TCP Congestion Control",excerpt:"How TCP adapts its sending rate using slow start, congestion avoidance, and fast recovery.",content:"# TCP Congestion Control\n\nTCP adapts its sending rate using **slow start**, congestion avoidance, and fast recovery.\n\n## Source notes\n\n- Congestion window controls in-flight data\n- Packet loss signals congestion\n- AIMD stabilizes shared links",tags:["networking","tcp"],time:"12 min ago",ai:true,source:"Computer Networks lecture · July 24"},
+    {id:"revou",title:"RevoU Partnership Notes",excerpt:"Meeting context, partnership scope, open questions, and proposal review notes.",content:"# RevoU Partnership Notes\n\n## Open questions\n\n- Confirm review timeline\n- Define success measures\n- Prepare stakeholder proposal",tags:["revou","partnership"],time:"Yesterday",ai:false,source:"Meeting capture · July 23"},
+    {id:"database",title:"Database Normalization",excerpt:"Functional dependencies, normal forms, lossless decomposition, and worked examples.",content:"# Database Normalization\n\nNormalization reduces redundancy while preserving dependencies and lossless joins.",tags:["database","course"],time:"Yesterday",ai:false,source:"Imported PDF · database-week-4.pdf"},
+    {id:"os-plan",title:"OS Exam Study Plan",excerpt:"Four-week review sequence covering processes, memory, file systems, and concurrency.",content:"# OS Exam Study Plan\n\n1. Processes and scheduling\n2. Memory management\n3. File systems\n4. Concurrency",tags:["operating-systems","study"],time:"Jul 22",ai:true,source:"Generated from course syllabus"},
+  ],
+  captures:[
+    {id:"dentist",text:"Book dentist appointment next Tuesday morning",createdAt:"2026-07-24T09:41:00+07:00",status:"review",source:"voice",sourceLabel:"Voice · 18 sec",objects:[{type:"task",title:"Book dentist appointment",detail:"Due Tuesday · Personal"},{type:"event",title:"Dentist appointment",detail:"Tuesday · 9:00–9:30 AM"}]},
+    {id:"aurora",text:"Project Aurora PRD v1.2.docx",createdAt:"2026-07-24T09:32:00+07:00",status:"confirmed",source:"file",sourceLabel:"Document · 2.4 MB",objects:[{type:"note",title:"Project Aurora requirements",detail:"12 sections · Source preserved"}]},
+    {id:"linear-link",text:"https://linear.app/team/aurora/issue/1234",createdAt:"2026-07-24T09:21:00+07:00",status:"confirmed",source:"link",sourceLabel:"Web link · linear.app",objects:[{type:"task",title:"Review Aurora issue 1234",detail:"Project Aurora · No due date"}]},
+    {id:"roadmap",text:"@Alex can you review the Q2 roadmap?",createdAt:"2026-07-24T08:58:00+07:00",status:"processing",source:"typed",sourceLabel:"Typed capture",progress:62,objects:[]},
+    {id:"invoice",text:"Fwd: Invoice INV-001873",createdAt:"2026-07-24T08:15:00+07:00",status:"failed",source:"file",sourceLabel:"Email attachment · PDF",error:"The attachment could not be read. Try processing it again.",objects:[]},
+    {id:"newsletter",text:"Ideas for the next newsletter",createdAt:"2026-07-23T19:16:00+07:00",status:"confirmed",source:"voice",sourceLabel:"Voice · 42 sec",objects:[{type:"note",title:"Newsletter ideas",detail:"6 ideas · Source preserved"}]},
+  ],
+};
+
+const storageKey="lifeos-state-v2";
+const Context=createContext<AppState|null>(null);
+
+async function api(path:string,method="GET",value?:unknown){
+  const response=await fetch(`/api/v1${path}`,{method,headers:value?{"Content-Type":"application/json"}:undefined,body:value?JSON.stringify(value):undefined});
+  if(!response.ok)throw new Error((await response.json()).error?.message||"Backend request failed");
+  return response.json();
+}
+
+export function AppStateProvider({children}:{children:ReactNode}) {
+  const [data,setData]=useState(seed);
+  const [loaded,setLoaded]=useState(false);
+
+  useEffect(()=>{
+    try {const saved=localStorage.getItem(storageKey);if(saved)setData({...seed,...JSON.parse(saved)})} catch {}
+    api("/state").then(remote=>setData(remote)).catch(()=>{});
+    setLoaded(true);
+  },[]);
+  useEffect(()=>{if(loaded)localStorage.setItem(storageKey,JSON.stringify(data))},[data,loaded]);
+
+  const persist=(path:string,method:string,value:unknown)=>void api(path,method,value).catch(error=>showUnavailable(`${error.message} Your change remains saved in this browser.`));
+  const value:AppState={...data,
+    addCapture:text=>{const capture={id:crypto.randomUUID(),text,createdAt:new Date().toISOString(),status:"review" as const,source:"typed" as const,sourceLabel:"Typed capture",objects:[]};setData(current=>({...current,captures:[capture,...current.captures]}));persist("/captures","POST",capture);return capture.id},
+    updateCapture:(id,status)=>{setData(current=>({...current,captures:current.captures.map(item=>item.id===id?{...item,status}:item)}));persist(`/captures/${id}`,"PATCH",{status})},
+    toggleTask:id=>{const task=data.tasks.find(item=>item.id===id);if(!task)return;const changed={...task,completed:!task.completed};setData(current=>({...current,tasks:current.tasks.map(item=>item.id===id?changed:item)}));persist("/tasks","POST",changed)},
+    saveTask:task=>{setData(current=>({...current,tasks:current.tasks.some(item=>item.id===task.id)?current.tasks.map(item=>item.id===task.id?task:item):[task,...current.tasks]}));persist("/tasks","POST",task)},
+    saveEvent:event=>{setData(current=>({...current,events:current.events.some(item=>item.id===event.id)?current.events.map(item=>item.id===event.id?event:item):[...current.events,event]}));persist("/events","POST",event)},
+    saveNote:note=>{setData(current=>({...current,notes:current.notes.some(item=>item.id===note.id)?current.notes.map(item=>item.id===note.id?note:item):[note,...current.notes]}));persist("/notes","POST",note)},
+    trashNote:id=>{const note=data.notes.find(item=>item.id===id);if(!note)return;const changed={...note,trashed:true};setData(current=>({...current,notes:current.notes.map(item=>item.id===id?changed:item)}));persist("/notes","POST",changed)},
+    archiveTask:id=>{const task=data.tasks.find(item=>item.id===id);if(!task)return;const changed={...task,archived:true};setData(current=>({...current,tasks:current.tasks.map(item=>item.id===id?changed:item)}));persist("/tasks","POST",changed)},
+  };
+  return <Context.Provider value={value}>{children}</Context.Provider>;
+}
+
+export function useAppState(){const value=useContext(Context);if(!value)throw new Error("useAppState must be used inside AppStateProvider");return value}

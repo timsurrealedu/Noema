@@ -1,0 +1,89 @@
+"use client";
+
+import {useEffect, useMemo, useState} from "react";
+import {
+  ArrowClockwise, ArrowLeft, CalendarBlank, Check, CheckCircle, CheckSquare,
+  CircleNotch, File, Globe, Keyboard, Microphone, Note, Plus, Sparkle, WarningCircle, X
+} from "@phosphor-icons/react";
+import {Capture, CaptureSource, useAppState} from "../components/AppState";
+import {ModuleShell} from "../components/ModuleShell";
+
+const filters=["All","Needs review","Processing","Failed"] as const;
+type Filter=(typeof filters)[number];
+
+const statusMeta={
+  processing:{label:"Processing",Icon:CircleNotch}, review:{label:"Needs review",Icon:Sparkle},
+  confirmed:{label:"Confirmed",Icon:CheckCircle}, failed:{label:"Failed",Icon:WarningCircle},
+  dismissed:{label:"Dismissed",Icon:X},
+} as const;
+const sourceMeta:Record<CaptureSource,{label:string;Icon:typeof Keyboard}>={
+  typed:{label:"Typed",Icon:Keyboard}, voice:{label:"Voice",Icon:Microphone},
+  file:{label:"File",Icon:File}, link:{label:"Web link",Icon:Globe},
+};
+
+function timeFor(value:string){return new Intl.DateTimeFormat("en-US",{hour:"numeric",minute:"2-digit",timeZone:"Asia/Jakarta"}).format(new Date(value))}
+function matches(capture:Capture,filter:Filter){return filter==="All"||capture.status===({"Needs review":"review","Processing":"processing","Failed":"failed"} as const)[filter as Exclude<Filter,"All">]}
+
+export default function CaptureInbox(){
+  const {addCapture,captures,updateCapture}=useAppState();
+  const [filter,setFilter]=useState<Filter>("All");
+  const visible=useMemo(()=>captures.filter(item=>item.status!=="dismissed"&&matches(item,filter)),[captures,filter]);
+  const [selectedId,setSelectedId]=useState<string|null>(null);
+  const [detailOpen,setDetailOpen]=useState(false);
+  const [toast,setToast]=useState<{id:string;message:string;previous:Capture["status"]}|null>(null);
+  const selected=visible.find(item=>item.id===selectedId)??visible[0];
+
+  useEffect(()=>{const params=new URLSearchParams(location.search);const shared=[params.get("title"),params.get("text"),params.get("url")].filter(Boolean).join("\n");if(shared){setSelectedId(addCapture(shared));history.replaceState(null,"","/capture")}},[]);
+  useEffect(()=>{if(toast){const timer=setTimeout(()=>setToast(null),6000);return()=>clearTimeout(timer)}},[toast]);
+
+  function choose(id:string){setSelectedId(id);setDetailOpen(true)}
+  function changeStatus(capture:Capture,status:Capture["status"],message:string){
+    updateCapture(capture.id,status);setToast({id:capture.id,message,previous:capture.status});
+    if(status==="dismissed"){setSelectedId(null);setDetailOpen(false)}
+  }
+  function retry(capture:Capture){
+    setFilter("All");setSelectedId(capture.id);updateCapture(capture.id,"processing");setToast({id:capture.id,message:"Processing started again",previous:"failed"});
+    setTimeout(()=>updateCapture(capture.id,"review"),1400);
+  }
+  function undo(){if(!toast)return;updateCapture(toast.id,toast.previous);setSelectedId(toast.id);setToast(null)}
+
+  return <ModuleShell active="Capture" title="Capture inbox" action={<a className="primary top-primary" href="/#capture"><Plus/>Quick capture</a>}>
+    <div className={`capture-inbox ${detailOpen?"detail-open":""}`}>
+      <section className="capture-list-pane" aria-label="Capture inbox">
+        <div className="capture-intro"><div><h2>Review what LifeOS understood</h2><p>Every interpretation stays visible and reversible.</p></div></div>
+        <div className="capture-filters" role="tablist" aria-label="Capture status">
+          {filters.map(item=>{const count=item==="All"?captures.filter(c=>c.status!=="dismissed").length:captures.filter(c=>matches(c,item)).length;return <button key={item} role="tab" aria-selected={filter===item} className={filter===item?"active":""} onClick={()=>{setFilter(item);setSelectedId(null)}}>{item}<span>{count}</span></button>})}
+        </div>
+        {visible.length?<div className="capture-groups">
+          <h3>Recent captures</h3>
+          <div className="capture-rows">{visible.map(capture=><CaptureRow capture={capture} selected={selected?.id===capture.id} onSelect={()=>choose(capture.id)} onRetry={()=>retry(capture)} key={capture.id}/>)}</div>
+        </div>:<div className="capture-empty"><CheckCircle/><h3>{filter==="All"?"Inbox clear":`No ${filter.toLowerCase()} captures`}</h3><p>{filter==="All"?"New captures will appear here with their source and interpretation.":"Choose another status to keep reviewing your inbox."}</p>{filter!=="All"&&<button className="secondary" onClick={()=>setFilter("All")}>Show all captures</button>}</div>}
+      </section>
+
+      <aside className="capture-inspector" aria-label="Capture details">
+        {selected?<>
+          <header className="inspector-head"><button className="icon-button mobile-detail-back" aria-label="Back to capture list" onClick={()=>setDetailOpen(false)}><ArrowLeft/></button><div><span>Original capture</span><time>{timeFor(selected.createdAt)}</time></div><span className={`capture-source ${selected.source}`}><SourceIcon source={selected.source}/>{sourceMeta[selected.source].label}</span></header>
+          <div className="original-capture"><p>{selected.text}</p><span>{selected.sourceLabel}</span></div>
+          {selected.status==="processing"&&<section className="processing-panel" aria-live="polite"><CircleNotch className="spin"/><div><strong>Interpreting this capture</strong><span>Reading the source and identifying useful objects.</span><i><b style={{width:`${selected.progress??28}%`}}/></i></div><em>{selected.progress??28}%</em></section>}
+          {selected.status==="failed"&&<section className="failure-panel" role="alert"><WarningCircle/><div><strong>Processing failed</strong><p>{selected.error}</p></div><button className="secondary" onClick={()=>retry(selected)}><ArrowClockwise/>Try again</button></section>}
+          {(selected.status==="review"||selected.status==="confirmed")&&<>
+            <section className="interpretation-head"><div><Sparkle/><span><strong>Interpretation</strong><small>{selected.status==="review"?"Check the detected objects before confirming.":"This interpretation has been confirmed."}</small></span></div><span className={`capture-status status-${selected.status}`}><StatusIcon capture={selected}/>{statusMeta[selected.status].label}</span></section>
+            <section className="detected-objects" aria-labelledby="detected-title"><h3 id="detected-title">Detected objects <span>{selected.objects.length}</span></h3>{selected.objects.map((object,index)=><article key={`${object.type}-${index}`}><span className={`object-icon ${object.type}`}>{object.type==="task"?<CheckSquare/>:object.type==="event"?<CalendarBlank/>:<Note/>}</span><div><small>{object.type}</small><strong>{object.title}</strong><p>{object.detail}</p></div><CheckCircle aria-label="Ready to confirm"/></article>)}</section>
+            <section className="source-relationship"><h3>Source relationship</h3><div><SourceIcon source={selected.source}/><span><strong>Original source preserved</strong><small>{selected.sourceLabel}</small></span><Check/></div></section>
+          </>}
+          <footer className="inspector-actions">
+            {selected.status==="review"&&<><button className="secondary" onClick={()=>changeStatus(selected,"dismissed","Capture dismissed")}>Dismiss</button><button className="primary" onClick={()=>changeStatus(selected,"confirmed","Capture confirmed")}><Check/>Confirm all</button></>}
+            {selected.status==="confirmed"&&<button className="secondary" onClick={()=>changeStatus(selected,"review","Capture reopened for review")}>Reopen review</button>}
+          </footer>
+        </>:<div className="inspector-empty"><Sparkle/><h3>Select a capture</h3><p>Its source, interpretation, and actions will appear here.</p></div>}
+      </aside>
+    </div>
+    {toast&&<div className="undo-toast" role="status"><CheckCircle/><span>{toast.message}</span><button onClick={undo}>Undo</button><button aria-label="Dismiss notification" onClick={()=>setToast(null)}><X/></button></div>}
+  </ModuleShell>
+}
+
+function SourceIcon({source}:{source:CaptureSource}){const Icon=sourceMeta[source].Icon;return <Icon/>}
+function StatusIcon({capture}:{capture:Capture}){const Icon=statusMeta[capture.status].Icon;return <Icon className={capture.status==="processing"?"spin":""}/>}
+function CaptureRow({capture,selected,onSelect,onRetry}:{capture:Capture;selected:boolean;onSelect:()=>void;onRetry:()=>void}){
+  return <article className={`capture-row ${selected?"selected":""}`}><button className="capture-row-main" onClick={onSelect} aria-current={selected?"true":undefined}><span className={`source-icon ${capture.source}`}><SourceIcon source={capture.source}/></span><span className="capture-copy"><strong>{capture.text}</strong><small>{timeFor(capture.createdAt)} · {sourceMeta[capture.source].label}</small></span><span className={`capture-status status-${capture.status}`}><StatusIcon capture={capture}/>{statusMeta[capture.status].label}</span></button>{capture.status==="processing"&&<i aria-label={`${capture.progress}% processed`}><b style={{width:`${capture.progress}%`}}/></i>}{capture.status==="failed"&&<button className="row-retry" onClick={onRetry}><ArrowClockwise/>Retry</button>}</article>
+}

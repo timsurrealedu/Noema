@@ -1,0 +1,429 @@
+{
+  "communities": {
+    "0": [
+      "app_calendar_page",
+      "app_calendar_page_blankevent",
+      "app_calendar_page_calendarpage",
+      "app_calendar_page_days",
+      "app_calendar_page_positionfor",
+      "app_capture_page",
+      "app_capture_page_captureinbox",
+      "app_capture_page_capturerow",
+      "app_capture_page_filter",
+      "app_capture_page_filters",
+      "app_capture_page_matches",
+      "app_capture_page_sourceicon",
+      "app_capture_page_sourcemeta",
+      "app_capture_page_statusicon",
+      "app_capture_page_statusmeta",
+      "app_capture_page_timefor",
+      "app_components_appstate",
+      "app_components_appstate_api",
+      "app_components_appstate_appdata",
+      "app_components_appstate_appstate",
+      "app_components_appstate_appstateprovider",
+      "app_components_appstate_capture",
+      "app_components_appstate_captureobject",
+      "app_components_appstate_capturesource",
+      "app_components_appstate_context",
+      "app_components_appstate_event",
+      "app_components_appstate_note",
+      "app_components_appstate_seed",
+      "app_components_appstate_task",
+      "app_components_appstate_useappstate",
+      "app_components_pwaregister",
+      "app_components_pwaregister_pwaregister",
+      "app_components_servicenotice",
+      "app_components_servicenotice_servicenotice",
+      "app_components_servicenotice_showunavailable",
+      "app_layout",
+      "app_layout_metadata",
+      "app_layout_rootlayout",
+      "app_layout_viewport",
+      "app_page",
+      "app_page_activity",
+      "app_page_nav",
+      "app_page_today",
+      "app_tasks_page",
+      "app_tasks_page_blanktask",
+      "app_tasks_page_taskspage",
+      "app_vault_page",
+      "app_vault_page_blanknote",
+      "app_vault_page_rendermarkdown",
+      "app_vault_page_vaultpage"
+    ],
+    "1": [
+      "app_activity_page",
+      "app_activity_page_activitypage",
+      "app_activity_page_entries",
+      "app_automations_page",
+      "app_automations_page_automations",
+      "app_automations_page_automationspage",
+      "app_canvas_page",
+      "app_canvas_page_canvaspage",
+      "app_coding_compiler_page",
+      "app_coding_compiler_page_compilerpage",
+      "app_coding_compiler_page_language",
+      "app_coding_compiler_page_result",
+      "app_coding_compiler_page_starters",
+      "app_coding_page",
+      "app_coding_page_codingpage",
+      "app_coding_page_sessions",
+      "app_components_moduleshell",
+      "app_components_moduleshell_moduleshell",
+      "app_components_moduleshell_nav",
+      "app_help_page",
+      "app_help_page_helppage",
+      "app_help_page_shortcuts",
+      "app_projects_page",
+      "app_projects_page_projects",
+      "app_projects_page_projectspage",
+      "app_settings_page",
+      "app_settings_page_sections",
+      "app_settings_page_settingspage",
+      "app_study_page",
+      "app_study_page_courses",
+      "app_study_page_studypage",
+      "app_study_page_workspace"
+    ],
+    "2": [
+      "next",
+      "package",
+      "package_dependencies",
+      "package_dependencies_next",
+      "package_dependencies_phosphor_icons_react",
+      "package_dependencies_react",
+      "package_dependencies_react_dom",
+      "package_devdependencies",
+      "package_devdependencies_types_node",
+      "package_devdependencies_types_react",
+      "package_devdependencies_types_react_dom",
+      "package_devdependencies_typescript",
+      "package_name",
+      "package_private",
+      "package_scripts",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_lint",
+      "package_scripts_start",
+      "package_scripts_test",
+      "package_scripts_test_backend",
+      "package_scripts_worker",
+      "package_version",
+      "phosphor_icons_react",
+      "react",
+      "react_dom",
+      "types_node",
+      "types_react",
+      "types_react_dom",
+      "typescript"
+    ],
+    "3": [
+      "app_api_v1_captures_id_interpret_route",
+      "app_api_v1_captures_id_interpret_route_post",
+      "app_api_v1_captures_id_route",
+      "app_api_v1_captures_id_route_patch",
+      "app_api_v1_captures_route",
+      "app_api_v1_captures_route_post",
+      "app_api_v1_compiler_run_route",
+      "app_api_v1_compiler_run_route_post",
+      "app_api_v1_events_route",
+      "app_api_v1_events_route_post",
+      "app_api_v1_jobs_id_route",
+      "app_api_v1_jobs_id_route_get",
+      "app_api_v1_notes_route",
+      "app_api_v1_notes_route_get",
+      "app_api_v1_notes_route_post",
+      "app_api_v1_state_route",
+      "app_api_v1_state_route_get",
+      "app_api_v1_tasks_route",
+      "app_api_v1_tasks_route_post",
+      "server_http",
+      "server_http_body",
+      "server_http_errorresponse",
+      "server_http_handle",
+      "server_http_json",
+      "server_http_requireuser",
+      "server_jobs_getjob"
+    ],
+    "4": [
+      "app_api_v1_health_route",
+      "app_api_v1_health_route_get",
+      "server_codex",
+      "server_codex_codexargs",
+      "server_codex_runcodex",
+      "server_config",
+      "server_config_absolute",
+      "server_config_ensuredatadirs",
+      "server_config_loadconfig",
+      "server_config_root",
+      "server_db",
+      "server_db_closedatabase",
+      "server_db_getdatabase",
+      "server_db_opendatabase",
+      "server_jobs",
+      "server_jobs_addjobevent",
+      "server_jobs_canceljob",
+      "server_jobs_claimjob",
+      "server_jobs_enqueuejob",
+      "server_jobs_failjob",
+      "server_jobs_finishjob",
+      "server_jobs_now",
+      "server_worker",
+      "server_worker_runone",
+      "server_worker_schema",
+      "server_worker_startworker"
+    ],
+    "5": [
+      "ref_dom",
+      "ref_dom_iterable",
+      "ref_esnext",
+      "ref_next_env_d_ts",
+      "ref_next_types_ts",
+      "ref_node_modules",
+      "ref_ts",
+      "ref_tsx",
+      "tsconfig",
+      "tsconfig_compileroptions",
+      "tsconfig_compileroptions_allowjs",
+      "tsconfig_compileroptions_esmoduleinterop",
+      "tsconfig_compileroptions_incremental",
+      "tsconfig_compileroptions_isolatedmodules",
+      "tsconfig_compileroptions_jsx",
+      "tsconfig_compileroptions_lib",
+      "tsconfig_compileroptions_module",
+      "tsconfig_compileroptions_moduleresolution",
+      "tsconfig_compileroptions_noemit",
+      "tsconfig_compileroptions_plugins",
+      "tsconfig_compileroptions_resolvejsonmodule",
+      "tsconfig_compileroptions_skiplibcheck",
+      "tsconfig_compileroptions_strict",
+      "tsconfig_compileroptions_target",
+      "tsconfig_exclude",
+      "tsconfig_include"
+    ],
+    "6": [
+      "app_api_v1_auth_login_route",
+      "app_api_v1_auth_login_route_post",
+      "app_api_v1_auth_logout_route",
+      "app_api_v1_auth_logout_route_post",
+      "server_auth",
+      "server_auth_authenticate",
+      "server_auth_ensureowner",
+      "server_auth_hashpassword",
+      "server_auth_hashtoken",
+      "server_auth_login",
+      "server_auth_now",
+      "server_auth_revokesession",
+      "server_auth_scrypt",
+      "server_auth_verifypassword",
+      "server_http_cookie"
+    ],
+    "7": [
+      "server_core",
+      "server_core_audit",
+      "server_core_createcapture",
+      "server_core_liststate",
+      "server_core_parse",
+      "server_core_required",
+      "server_core_saveevent",
+      "server_core_saveinterpretation",
+      "server_core_savenote",
+      "server_core_savetask",
+      "server_core_searchnotes",
+      "server_core_stamp",
+      "server_core_updatecapture"
+    ],
+    "8": [
+      "test_backend_test",
+      "test_backend_test_assert",
+      "test_backend_test_join",
+      "test_backend_test_mkdtempsync_rmsync",
+      "test_backend_test_temp",
+      "test_backend_test_test",
+      "test_backend_test_tmpdir"
+    ],
+    "9": [
+      "test_frontend_test",
+      "test_frontend_test_assert",
+      "test_frontend_test_fs",
+      "test_frontend_test_path",
+      "test_frontend_test_read",
+      "test_frontend_test_root",
+      "test_frontend_test_test"
+    ],
+    "10": [
+      "server_compiler",
+      "server_compiler_availablelanguages",
+      "server_compiler_execute",
+      "server_compiler_languages",
+      "server_compiler_runcode"
+    ],
+    "11": [
+      "app_error",
+      "app_error_errorpage"
+    ],
+    "12": [
+      "app_loading",
+      "app_loading_loading"
+    ],
+    "13": [
+      "app_login_page",
+      "app_login_page_loginpage"
+    ],
+    "14": [
+      "app_not_found",
+      "app_not_found_notfound"
+    ],
+    "15": [
+      "next_config",
+      "next_config_config"
+    ],
+    "16": [
+      "next_env_d",
+      "next_env_d_rationale_5"
+    ],
+    "17": [
+      "public_sw",
+      "public_sw_shell"
+    ],
+    "18": [
+      "server_mjs_d",
+      "server_mjs_d_mjs"
+    ]
+  },
+  "cohesion": {
+    "0": 0.0636734693877551,
+    "1": 0.08064516129032258,
+    "2": 0.06666666666666667,
+    "3": 0.30153846153846153,
+    "4": 0.19384615384615383,
+    "5": 0.07692307692307693,
+    "6": 0.3047619047619048,
+    "7": 0.3974358974358974,
+    "8": 0.2857142857142857,
+    "9": 0.2857142857142857,
+    "10": 0.5,
+    "11": 1.0,
+    "12": 1.0,
+    "13": 1.0,
+    "14": 1.0,
+    "15": 1.0,
+    "16": 1.0,
+    "17": 1.0,
+    "18": 1.0
+  },
+  "gods": [
+    {
+      "id": "server_http_json",
+      "label": "json()",
+      "degree": 28
+    },
+    {
+      "id": "server_http_handle",
+      "label": "handle()",
+      "degree": 23
+    },
+    {
+      "id": "server_http_requireuser",
+      "label": "requireUser()",
+      "degree": 22
+    },
+    {
+      "id": "server_http_body",
+      "label": "body()",
+      "degree": 16
+    },
+    {
+      "id": "tsconfig_compileroptions",
+      "label": "compilerOptions",
+      "degree": 15
+    },
+    {
+      "id": "app_components_moduleshell_moduleshell",
+      "label": "ModuleShell()",
+      "degree": 14
+    },
+    {
+      "id": "app_components_appstate_useappstate",
+      "label": "useAppState()",
+      "degree": 11
+    },
+    {
+      "id": "server_config_loadconfig",
+      "label": "loadConfig()",
+      "degree": 9
+    },
+    {
+      "id": "server_db_getdatabase",
+      "label": "getDatabase()",
+      "degree": 9
+    },
+    {
+      "id": "server_jobs_addjobevent",
+      "label": "addJobEvent()",
+      "degree": 9
+    }
+  ],
+  "surprises": [
+    {
+      "source": "POST()",
+      "target": "loadConfig()",
+      "source_files": [
+        "app/api/v1/auth/login/route.ts",
+        "server/config.mjs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "POST()",
+      "target": "body()",
+      "source_files": [
+        "app/api/v1/auth/login/route.ts",
+        "server/http.mjs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "POST()",
+      "target": "handle()",
+      "source_files": [
+        "app/api/v1/auth/login/route.ts",
+        "server/http.mjs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "POST()",
+      "target": "json()",
+      "source_files": [
+        "app/api/v1/auth/login/route.ts",
+        "server/http.mjs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "POST()",
+      "target": "json()",
+      "source_files": [
+        "app/api/v1/auth/logout/route.ts",
+        "server/http.mjs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    }
+  ],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}

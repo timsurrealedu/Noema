@@ -1,0 +1,6 @@
+import {ensureOwner,login} from "../../../../../server/auth.mjs";
+import {loadConfig} from "../../../../../server/config.mjs";
+import {body,handle,json,sessionCookie} from "../../../../../server/http.mjs";
+
+export const runtime="nodejs";
+export async function POST(request:Request){try{const config=loadConfig();await ensureOwner({email:config.ownerEmail,password:config.ownerPassword});const input=await body(request);const result=await login({email:input.email||"",password:input.password||"",device:request.headers.get("user-agent")||""},undefined,config.sessionHours);if(!result)return json({error:{code:"INVALID_CREDENTIALS",message:"Email or password is incorrect.",retryable:false}},401);const secure=process.env.NODE_ENV==="production"?"; Secure":"";return json({user:result.user,expiresAt:result.expiresAt},200,{"Set-Cookie":`${sessionCookie}=${result.token}; Path=/; HttpOnly; SameSite=Lax${secure}; Max-Age=${config.sessionHours*3600}`})}catch(error){return handle(error)}}

@@ -1,0 +1,8 @@
+"use client";
+
+import {useState} from "react";
+import {ArrowCounterClockwise, CalendarBlank, Check, FileText, Funnel, Lightning, Sparkle} from "@phosphor-icons/react";
+import {ModuleShell} from "../components/ModuleShell";
+
+const entries=[["Task completed","Database normalization notes","Today · 09:18",Check,"Undo"],["AI interpretation confirmed","Dentist appointment and task","Today · 09:06",Sparkle,"View"],["Calendar event updated","Meeting with Dian moved to 13:00","Yesterday · 17:42",CalendarBlank,"Undo"],["Automation failed","Google Drive authentication expired","Yesterday · 16:10",Lightning,"Open"],["Note imported","OS Exam Study Plan.pdf","Jul 22 · 11:34",FileText,"View"]] as const;
+export default function ActivityPage(){const [undone,setUndone]=useState<string[]>([]);return <ModuleShell active="Activity" title="Activity"><div className="module-header"><div><h2>Changes you can trace</h2><p>Review AI, system, and manual actions. Reversible changes remain available here.</p></div><button className="filter-button"><Funnel/>All activity</button></div><section className="audit-list"><div className="list-title"><h3>Recent activity</h3><span>Last 30 days</span></div>{entries.map(([type,detail,time,Icon,action])=><article key={detail}><span className="audit-icon"><Icon/></span><div><strong>{type}</strong><span>{detail}</span><time>{time}</time></div>{action==="Undo"?<button className="secondary" disabled={undone.includes(detail)} onClick={()=>setUndone([...undone,detail])}><ArrowCounterClockwise/>{undone.includes(detail)?"Undone":"Undo"}</button>:<button className="secondary">{action}</button>}</article>)}</section></ModuleShell>}
