@@ -5,6 +5,15 @@ import {getDatabase} from "./db.mjs";
 const scrypt=promisify(scryptCallback);
 const now=()=>new Date().toISOString();
 const hashToken=token=>createHash("sha256").update(token).digest("hex");
+const attempts=new Map();
+
+export function enforceLoginRateLimit(key,limit=5,windowMs=15*60_000){
+  const id=String(key).trim().toLowerCase(),time=Date.now(),recent=(attempts.get(id)||[]).filter(stamp=>time-stamp<windowMs);
+  if(recent.length>=limit)throw Object.assign(new Error("Too many login attempts. Try again later."),{status:429});
+  recent.push(time);attempts.set(id,recent);
+}
+
+export function clearLoginRateLimit(key){attempts.delete(String(key).trim().toLowerCase())}
 
 export async function hashPassword(password){
   if(typeof password!=="string"||password.length<12)throw new Error("Password must contain at least 12 characters");
@@ -25,9 +34,11 @@ export async function ensureOwner({email,password},db=getDatabase()){
 }
 
 export async function login({email,password,device=""},db=getDatabase(),hours=720){
-  const user=db.prepare("SELECT * FROM users WHERE email=?").get(email.trim().toLowerCase());if(!user||!await verifyPassword(password,user.password_hash))return null;
+  const normalized=email.trim().toLowerCase();enforceLoginRateLimit(normalized||"(empty)");
+  const user=db.prepare("SELECT * FROM users WHERE email=?").get(normalized);if(!user||!await verifyPassword(password,user.password_hash))return null;
   const token=randomBytes(32).toString("base64url"),stamp=now(),expires=new Date(Date.now()+hours*3600000).toISOString();
   db.prepare("INSERT INTO sessions(id,user_id,token_hash,expires_at,device,created_at) VALUES(?,?,?,?,?,?)").run(randomUUID(),user.id,hashToken(token),expires,String(device).slice(0,200),stamp);
+  clearLoginRateLimit(normalized);
   return {token,expiresAt:expires,user:{id:user.id,email:user.email}};
 }
 

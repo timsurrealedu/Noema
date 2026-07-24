@@ -25,6 +25,13 @@ test("password login stores only hashes and sessions revoke",async()=>{
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
+test("unsafe cross-origin requests and repeated login attempts are rejected",async()=>{
+  const {requireSameOrigin}=await import("../server/http.mjs");const {enforceLoginRateLimit,clearLoginRateLimit}=await import("../server/auth.mjs");
+  assert.throws(()=>requireSameOrigin(new Request("https://lifeos.test/api/v1/tasks",{method:"POST",headers:{origin:"https://evil.test"}})),error=>error.status===403);
+  requireSameOrigin(new Request("https://lifeos.test/api/v1/tasks",{method:"POST",headers:{origin:"https://lifeos.test"}}));
+  const key=`rate-${Date.now()}`;for(let i=0;i<5;i++)enforceLoginRateLimit(key);assert.throws(()=>enforceLoginRateLimit(key),error=>error.status===429);clearLoginRateLimit(key);
+});
+
 test("durable jobs claim once and record events",async()=>{
   const dir=temp();const {openDatabase}=await import("../server/db.mjs");const jobs=await import("../server/jobs.mjs");const db=openDatabase(join(dir,"test.sqlite"));
   try{const id=jobs.enqueueJob("interpret",{captureId:"c1"},db);assert.equal(jobs.claimJob(["interpret"],60,db).id,id);assert.equal(jobs.claimJob(["interpret"],60,db),null);jobs.finishJob(id,{ok:true},db);const job=jobs.getJob(id,db);assert.equal(job.state,"completed");assert.deepEqual(job.result,{ok:true});assert.deepEqual(job.events.map(e=>e.type),["queued","claimed","completed"])}finally{db.close();rmSync(dir,{recursive:true,force:true})}

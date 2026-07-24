@@ -27,3 +27,4 @@
 - Graph refresh: `graphify . --update --code-only --no-viz`
 - Do not run `npm run build` while `npm run dev` is active: both write `.next` and can corrupt the dev server manifest. Stop dev, build, then restart.
 - `npm audit` reports transitive Next.js `postcss`/`sharp` advisories. Its suggested `--force` repair downgrades Next.js to 9.3.3; do not apply blindly.
+- Unsafe authenticated requests enforce same-origin checks; login attempts use an in-process per-identity limiter pending production-grade persistent throttling.

@@ -4,7 +4,7 @@
 
 - [x] Runtime configuration and local environment template
 - [x] SQLite connection, WAL settings, initial migration, FTS5, and test database
-- [~] Single-owner authentication and session revocation; CSRF/origin and rate limits remain
+- [~] Single-owner authentication, session revocation, same-origin enforcement, and login rate limits; persistent/distributed throttling remains
 - [~] Stable API error envelope and input validation; idempotency/version-conflict enforcement remains
 - [~] Audit-event persistence exists; inverse application and undo endpoint remain
 
