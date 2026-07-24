@@ -29,4 +29,4 @@
 - `npm audit` reports transitive Next.js `postcss`/`sharp` advisories. Its suggested `--force` repair downgrades Next.js to 9.3.3; do not apply blindly.
 - Unsafe authenticated requests enforce same-origin checks; login attempts use an in-process per-identity limiter pending production-grade persistent throttling.
 - Ten v1 AI workflows are managed in `skills/` and passed explicitly to isolated Codex runs; global user skills remain ignored. Vault and compiler tutors are read-only until the user applies their output.
-- `GEMINI_API_KEY`/`GOOGLE_API_KEY` enables a server-only Gemini structured-output fallback. Codex remains primary; failover is limited to disabled Codex or explicit capacity/quota errors.
+- AI provider order is Codex → Gemini → OpenAI. `GEMINI_API_KEY`/`GOOGLE_API_KEY` and `OPENAI_API_KEY` stay server-only; failover is limited to disabled Codex or explicit capacity/quota errors. OpenAI uses the documented Instant alias `chat-latest` for simple tasks/schedules, `gpt-5.6` low for notes/code, and `gpt-5.6` medium for math/research. Actual handwritten-image ingestion still requires the planned upload/OCR pipeline.

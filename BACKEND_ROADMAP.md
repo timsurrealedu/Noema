@@ -30,6 +30,8 @@
 - [ ] SSE job events and frontend status integration
 - [~] Interpretation proposal storage; transactional apply, approval, and undo remain
 - [x] Managed Codex ports for all v1 AI workflows, plus contextual Vault and Coding tutors
+- [x] Capacity-aware Codex → Gemini → OpenAI fallback and workload-based OpenAI model/reasoning routing
+- [ ] Evaluate routing against representative schedule, note, code, research, and math fixtures
 
 ## Phase 5 — Extended modules
 

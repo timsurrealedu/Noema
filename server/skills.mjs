@@ -20,6 +20,7 @@ const definitions={
 
 export const listSkills=()=>Object.entries(definitions).map(([id,value])=>({id,...value}));
 export function getSkill(id){const skill=definitions[id];if(!skill)throw Object.assign(new Error("Unknown skill"),{status:404});return {id,...skill}}
+export const workloadForSkill=id=>({assistant:"simple","weekly-review":"schedule","refresh-home":"simple",autosort:"simple",research:"research","code-tutor":"code"}[id]||"note");
 export function buildSkillPrompt(id,input,context=""){const skill=getSkill(id);return `You are running the managed LifeOS skill \"${id}\".\n${skill.instructions}\n${common}\n\nLifeOS context:\n${context||"No additional context."}\n\nUser input:\n${JSON.stringify(input)}`}
 
 const tutorSchema={type:"object",additionalProperties:false,required:["answer","citations","replacement"],properties:{answer:{type:"string",minLength:1,maxLength:12000},citations:{type:"array",maxItems:8,items:{type:"string",maxLength:500}},replacement:{type:"string",maxLength:50000}}};
@@ -27,7 +28,8 @@ export async function runTutor(input,config=ensureDataDirs(loadConfig()),db=getD
   const kind=input.kind==="code"?"code-tutor":"note-tutor",messages=Array.isArray(input.messages)?input.messages.slice(-8):[];
   const subject=kind==="code-tutor"?`File: ${String(input.name||"Untitled").slice(0,300)}\nLanguage: ${String(input.language||"unknown").slice(0,50)}\nCode:\n${String(input.code||"").slice(0,50000)}`:`Note: ${String(input.title||"Untitled").slice(0,300)}\nContent:\n${String(input.content||"").slice(0,50000)}`;
   const related=kind==="note-tutor"?db.prepare("SELECT title,excerpt FROM notes WHERE trashed=0 AND id<>? ORDER BY updated_at DESC LIMIT 8").all(String(input.id||"")).map(note=>`- [[${note.title}]]: ${note.excerpt}`).join("\n"):"";
-  const prompt=buildSkillPrompt(kind,{subject,messages,question:String(input.question||"").slice(0,4000)},related),output=await runAI({prompt,cwd:resolve(config.jobsDir,`tutor-${randomUUID()}`),schema:tutorSchema,config});return {...output.result,provider:output.provider};
+  const question=String(input.question||"").slice(0,4000),math=/\b(math|algebra|calculus|equation|proof|derivative|integral|matrix|handwritten)\b|[∫∑√]/i.test(`${subject}\n${question}`);
+  const prompt=buildSkillPrompt(kind,{subject,messages,question},related),output=await runAI({prompt,cwd:resolve(config.jobsDir,`tutor-${randomUUID()}`),schema:tutorSchema,config,workload:math?"math":workloadForSkill(kind)});return {...output.result,provider:output.provider};
 }
 
 export const skillSchema={type:"object",additionalProperties:false,required:["summary","proposals","citations"],properties:{summary:{type:"string",maxLength:4000},proposals:{type:"array",maxItems:30,items:{type:"object",additionalProperties:false,required:["type","title","content"],properties:{type:{enum:["note","task","event","move","answer"]},title:{type:"string",maxLength:500},content:{type:"string",maxLength:20000}}}},citations:{type:"array",maxItems:20,items:{type:"string",maxLength:500}}}};
