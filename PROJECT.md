@@ -29,3 +29,4 @@
 - `npm audit` reports transitive Next.js `postcss`/`sharp` advisories. Its suggested `--force` repair downgrades Next.js to 9.3.3; do not apply blindly.
 - Unsafe authenticated requests enforce same-origin checks; login attempts use an in-process per-identity limiter pending production-grade persistent throttling.
 - Ten v1 AI workflows are managed in `skills/` and passed explicitly to isolated Codex runs; global user skills remain ignored. Vault and compiler tutors are read-only until the user applies their output.
+- `GEMINI_API_KEY`/`GOOGLE_API_KEY` enables a server-only Gemini structured-output fallback. Codex remains primary; failover is limited to disabled Codex or explicit capacity/quota errors.

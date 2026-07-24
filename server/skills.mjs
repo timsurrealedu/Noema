@@ -2,7 +2,7 @@ import {randomUUID} from "node:crypto";
 import {resolve} from "node:path";
 import {getDatabase} from "./db.mjs";
 import {ensureDataDirs,loadConfig} from "./config.mjs";
-import {runCodex} from "./codex.mjs";
+import {runAI} from "./ai.mjs";
 
 const common="Preserve the user's language. Be concise, concrete, and source-grounded. Never claim an action was performed when it was only proposed.";
 const definitions={
@@ -27,7 +27,7 @@ export async function runTutor(input,config=ensureDataDirs(loadConfig()),db=getD
   const kind=input.kind==="code"?"code-tutor":"note-tutor",messages=Array.isArray(input.messages)?input.messages.slice(-8):[];
   const subject=kind==="code-tutor"?`File: ${String(input.name||"Untitled").slice(0,300)}\nLanguage: ${String(input.language||"unknown").slice(0,50)}\nCode:\n${String(input.code||"").slice(0,50000)}`:`Note: ${String(input.title||"Untitled").slice(0,300)}\nContent:\n${String(input.content||"").slice(0,50000)}`;
   const related=kind==="note-tutor"?db.prepare("SELECT title,excerpt FROM notes WHERE trashed=0 AND id<>? ORDER BY updated_at DESC LIMIT 8").all(String(input.id||"")).map(note=>`- [[${note.title}]]: ${note.excerpt}`).join("\n"):"";
-  const prompt=buildSkillPrompt(kind,{subject,messages,question:String(input.question||"").slice(0,4000)},related);return (await runCodex({prompt,cwd:resolve(config.jobsDir,`tutor-${randomUUID()}`),schema:tutorSchema,config})).result;
+  const prompt=buildSkillPrompt(kind,{subject,messages,question:String(input.question||"").slice(0,4000)},related),output=await runAI({prompt,cwd:resolve(config.jobsDir,`tutor-${randomUUID()}`),schema:tutorSchema,config});return {...output.result,provider:output.provider};
 }
 
 export const skillSchema={type:"object",additionalProperties:false,required:["summary","proposals","citations"],properties:{summary:{type:"string",maxLength:4000},proposals:{type:"array",maxItems:30,items:{type:"object",additionalProperties:false,required:["type","title","content"],properties:{type:{enum:["note","task","event","move","answer"]},title:{type:"string",maxLength:500},content:{type:"string",maxLength:20000}}}},citations:{type:"array",maxItems:20,items:{type:"string",maxLength:500}}}};

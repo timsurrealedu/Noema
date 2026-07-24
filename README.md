@@ -12,6 +12,8 @@ npm run dev
 
 Set a strong `LIFEOS_OWNER_PASSWORD` in `.env.local`. Backend features are disabled unless their environment flags are enabled.
 
+Optional: set `GEMINI_API_KEY` from Google AI Studio. Codex stays primary; Gemini handles structured AI requests only when Codex is disabled or reports exhausted usage/quota. Override the default with `LIFEOS_GEMINI_MODEL`.
+
 ## Verification
 
 ```bash
