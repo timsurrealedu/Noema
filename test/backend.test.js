@@ -43,4 +43,12 @@ test("compiler runs supported code with limits and rejects unsafe languages",asy
 
 test("Codex runner uses JSON, ephemeral mode, schema, and an explicit sandbox",async()=>{
   const {codexArgs}=await import("../server/codex.mjs");const args=codexArgs({cwd:"/tmp/job",schemaPath:"/tmp/job/schema.json"});assert.deepEqual(args,["exec","--json","--ephemeral","--ignore-user-config","--skip-git-repo-check","--output-schema","/tmp/job/schema.json","--sandbox","read-only","--cd","/tmp/job","-"]);assert.equal(args.includes("--dangerously-bypass-approvals-and-sandbox"),false);
+  assert.equal(codexArgs({cwd:"/tmp/job",schemaPath:"/tmp/job/schema.json",search:true})[0],"--search");
+});
+
+test("all v1 AI workflows are registered as managed Codex skills",async()=>{
+  const {listSkills,buildSkillPrompt}=await import("../server/skills.mjs");const ids=listSkills().map(skill=>skill.id);
+  assert.deepEqual(ids,["process-inbox","research","weekly-review","refresh-home","assistant","note-tutor","code-tutor","note-augment","semantic-search","autosort"]);
+  assert.match(buildSkillPrompt("code-tutor",{question:"why?"},"main.js"),/managed LifeOS skill/);
+  assert.throws(()=>buildSkillPrompt("unknown",{}),error=>error.status===404);
 });

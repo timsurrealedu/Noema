@@ -16,6 +16,11 @@ test("coding compiler workspace exists",()=>{
   assert.match(read("app/coding/compiler/page.tsx"),/\/api\/v1\/compiler\/run/);
 });
 
+test("Vault and compiler expose the contextual tutor",()=>{
+  for(const file of ["app/vault/page.tsx","app/coding/compiler/page.tsx"])assert.match(read(file),/TutorPanel/);
+  const panel=read("app/components/TutorPanel.tsx");assert.match(panel,/lifeos-tutor-mobile-mode/);assert.match(panel,/Apply to editor/);assert.match(panel,/Add to note/);
+});
+
 test("shared shell exposes keyboard search and accessible navigation",()=>{
   const shell=read("app/components/ModuleShell.tsx");
   assert.match(shell,/metaKey\|\|event\.ctrlKey/);

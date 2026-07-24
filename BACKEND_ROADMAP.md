@@ -29,6 +29,7 @@
 - [x] Capture interpretation schema and structured-result validation
 - [ ] SSE job events and frontend status integration
 - [~] Interpretation proposal storage; transactional apply, approval, and undo remain
+- [x] Managed Codex ports for all v1 AI workflows, plus contextual Vault and Coding tutors
 
 ## Phase 5 — Extended modules
 
