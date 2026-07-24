@@ -27,8 +27,8 @@ test("password login stores only hashes and sessions revoke",async()=>{
 
 test("unsafe cross-origin requests and repeated login attempts are rejected",async()=>{
   const {requireSameOrigin}=await import("../server/http.mjs");const {enforceLoginRateLimit,clearLoginRateLimit}=await import("../server/auth.mjs");
-  assert.throws(()=>requireSameOrigin(new Request("https://lifeos.test/api/v1/tasks",{method:"POST",headers:{origin:"https://evil.test"}})),error=>error.status===403);
-  requireSameOrigin(new Request("https://lifeos.test/api/v1/tasks",{method:"POST",headers:{origin:"https://lifeos.test"}}));
+  assert.throws(()=>requireSameOrigin(new Request("https://internal.test/api/v1/tasks",{method:"POST",headers:{host:"lifeos.test",origin:"https://evil.test"}})),error=>error.status===403);
+  requireSameOrigin(new Request("https://internal.test/api/v1/tasks",{method:"POST",headers:{host:"lifeos.test",origin:"https://lifeos.test"}}));
   const key=`rate-${Date.now()}`;for(let i=0;i<5;i++)enforceLoginRateLimit(key);assert.throws(()=>enforceLoginRateLimit(key),error=>error.status===429);clearLoginRateLimit(key);
 });
 

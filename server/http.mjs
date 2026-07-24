@@ -8,7 +8,7 @@ export function cookie(request,name){return request.headers.get("cookie")?.split
 export function requireSameOrigin(request){
   if(["GET","HEAD","OPTIONS"].includes(request.method))return;
   const origin=request.headers.get("origin");
-  if(origin&&origin!==new URL(request.url).origin)throw Object.assign(new Error("Cross-origin request rejected"),{status:403});
+  if(origin&&new URL(origin).host!==request.headers.get("host"))throw Object.assign(new Error("Cross-origin request rejected"),{status:403});
   if(!origin&&request.headers.get("sec-fetch-site")==="cross-site")throw Object.assign(new Error("Cross-site request rejected"),{status:403});
 }
 export function requireUser(request){requireSameOrigin(request);const user=authenticate(cookie(request,sessionCookie));if(!user)throw Object.assign(new Error("Authentication required"),{status:401});return user}
