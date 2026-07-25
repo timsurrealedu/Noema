@@ -7,10 +7,12 @@ import {saveInterpretation} from "./core.mjs";
 import {extractText} from "./extract.mjs";
 import {assetsForCapture} from "./objects.mjs";
 import {buildSkillPrompt,getSkill,skillSchema,workloadForSkill} from "./skills.mjs";
+import {runScheduledAutomations} from "./modules.mjs";
 
 const schema={type:"object",additionalProperties:false,required:["objects"],properties:{objects:{type:"array",maxItems:20,items:{type:"object",additionalProperties:false,required:["type","title","detail"],properties:{type:{enum:["task","event","note"]},title:{type:"string",minLength:1,maxLength:500},detail:{type:"string",maxLength:1000}}}}}};
 
 export async function runOne(config=ensureDataDirs(loadConfig()),db=getDatabase(config)){
+  runScheduledAutomations(new Date(),db);
   const job=claimJob(["interpret-capture","skill-run"],120,db);if(!job)return false;
   if(job.kind==="skill-run")try{getSkill(job.input.skill);const state={tasks:db.prepare("SELECT title,project,due,completed FROM tasks WHERE archived=0 LIMIT 100").all(),notes:db.prepare("SELECT title,excerpt,tags_json FROM notes WHERE trashed=0 LIMIT 100").all(),captures:db.prepare("SELECT text,source,status FROM captures LIMIT 100").all()};const output=await runAI({prompt:buildSkillPrompt(job.input.skill,job.input.input,JSON.stringify(state)),cwd:resolve(config.jobsDir,job.id),schema:skillSchema,config,workload:workloadForSkill(job.input.skill),search:job.input.skill==="research",onEvent:event=>addJobEvent(job.id,"ai",{type:event.type,provider:event.provider},db)});finishJob(job.id,{skill:job.input.skill,provider:output.provider,...output.result},db);return true}catch(error){failJob(job.id,error,db);return true}
   try{const capture=db.prepare("SELECT text,source FROM captures WHERE id=?").get(job.input.captureId);if(!capture)throw new Error("Capture not found");db.prepare("UPDATE jobs SET state='running',updated_at=? WHERE id=?").run(new Date().toISOString(),job.id);db.prepare("UPDATE captures SET status='processing',updated_at=? WHERE id=?").run(new Date().toISOString(),job.input.captureId);addJobEvent(job.id,"running",{},db);

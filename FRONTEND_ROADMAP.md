@@ -31,12 +31,12 @@ Frontend status is separate from backend integration. `Done` means the interacti
 ## Backend integration backlog
 
 - [~] Authentication, sessions, two-factor authentication, and revocation (sessions done; 2FA pending)
-- [ ] Durable database persistence, synchronization, backup, and workspace export
+- [~] Durable database persistence, synchronization, and encrypted backup; full workspace export remains
 - [~] Codex interpretation service with review, approval, cancellation, and audit records; execution approval and streaming agent sessions remain
-- [~] File/object storage, OCR, transcription, source preservation, and attachment retrieval (storage and retrieval done; OCR/transcription pending)
+- [x] File/object storage, OCR, transcription, source preservation, and attachment retrieval
 - [ ] Calendar and external-service synchronization
-- [ ] Notifications, automation execution, job logs, metrics, schedules, and streaming agent sessions
-- [ ] Semantic/global search, backlink indexing, and relationship persistence
+- [~] Notifications, automation execution, job logs, metrics, and schedules; streaming agent sessions remain
+- [~] Global search, backlink indexing, and relationship persistence; semantic ranking remains
 - [ ] Analytics implementation that excludes private note content
 
 ## MVP acceptance matrix

@@ -10,17 +10,17 @@
 
 ## Phase 2 — Core objects
 
-- [~] Tasks, events, notes, captures, and Today state API; projects and relationships remain
-- [ ] Markdown import/export and note version history
-- [~] FTS5 note search; backlink index remains
+- [x] Tasks, events, notes, captures, projects, task dependencies, and Today state API
+- [x] Markdown import/export and note version history
+- [x] FTS5 note search and backlink index
 - [x] Browser state hydrates and mirrors mutations through the API with a durable offline queue
 
 ## Phase 3 — Capture and assets
 
-- [~] Text capture and status lifecycle API with transactional confirmation apply; file capture remains
+- [x] Text/file capture and status lifecycle API with transactional confirmation apply
 - [x] Streaming upload, validation, SHA-256 object storage, and source retrieval
-- [~] Deterministic document extraction adapters (text and pdftotext); DOCX and other formats remain
-- [ ] OCR and transcription adapters
+- [x] Deterministic text, PDF, and DOCX extraction adapters
+- [x] OCR and transcription adapters via Gemini multimodal
 
 ## Phase 4 — Codex jobs
 
@@ -31,19 +31,19 @@
 - [x] Interpretation proposal storage, transactional apply, job approval, and audit undo
 - [x] Managed Codex ports for all v1 AI workflows, plus contextual Vault and Coding tutors
 - [x] Capacity-aware Codex → Gemini → OpenAI fallback and workload-based OpenAI model/reasoning routing
-- [ ] Evaluate routing against representative schedule, note, code, research, and math fixtures
+- [x] Evaluate routing against representative schedule, note, code, research, and math fixtures
 
 ## Phase 5 — Extended modules
 
-- [ ] Study courses, assignments, cards, quizzes, and review scheduling
-- [ ] Notifications and push subscriptions
-- [ ] Automation definitions, schedules, run history, logs, and metrics
+- [x] Study courses, assignments, cards, quizzes, and review scheduling
+- [x] Notifications and push subscriptions
+- [x] Automation definitions, schedules, run history, logs, and metrics
 - [~] Bubblewrap-isolated compiler workspace for JavaScript, Python, C, C++, Go, Rust, and Java; Git worktree sessions and resource cgroups remain
 
 ## Phase 6 — Operations and migration
 
-- [ ] systemd/Caddy-or-Tailscale deployment
-- [ ] Encrypted backups, retention, integrity checks, and restore drill
-- [ ] Health checks, structured redacted logs, and disk alerts
-- [ ] v1 Markdown, attachment, task, and event importer
-- [ ] Security and recovery acceptance test
+- [x] systemd/Caddy-or-Tailscale deployment configuration
+- [x] Encrypted backups, retention, integrity checks, and restore drill
+- [x] Health checks, structured redacted logs, and disk alerts
+- [x] v1 Markdown, attachment, task, and event importer
+- [x] Security and recovery acceptance test

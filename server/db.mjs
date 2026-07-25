@@ -22,6 +22,17 @@ CREATE TABLE IF NOT EXISTS login_attempts(key TEXT NOT NULL,attempted_at TEXT NO
 CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY,name TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'Active',summary TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS task_dependencies(task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,depends_on_task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,created_at TEXT NOT NULL,PRIMARY KEY(task_id,depends_on_task_id));
 CREATE TABLE IF NOT EXISTS note_links(source_note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,target_note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,link_text TEXT NOT NULL,created_at TEXT NOT NULL,PRIMARY KEY(source_note_id,target_note_id,link_text));
+CREATE TABLE IF NOT EXISTS note_versions(note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,version INTEGER NOT NULL,title TEXT NOT NULL,content TEXT NOT NULL,tags_json TEXT NOT NULL,created_at TEXT NOT NULL,PRIMARY KEY(note_id,version));
+CREATE TABLE IF NOT EXISTS courses(id TEXT PRIMARY KEY,code TEXT NOT NULL DEFAULT '',name TEXT NOT NULL,term TEXT NOT NULL DEFAULT '',color TEXT NOT NULL DEFAULT '',archived INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
+CREATE TABLE IF NOT EXISTS assignments(id TEXT PRIMARY KEY,course_id TEXT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,title TEXT NOT NULL,due_at TEXT,status TEXT NOT NULL DEFAULT 'todo',score REAL,source TEXT,external_id TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1,UNIQUE(source,external_id));
+CREATE TABLE IF NOT EXISTS study_cards(id TEXT PRIMARY KEY,course_id TEXT REFERENCES courses(id) ON DELETE CASCADE,front TEXT NOT NULL,back TEXT NOT NULL,due_at TEXT NOT NULL,interval_days INTEGER NOT NULL DEFAULT 0,ease REAL NOT NULL DEFAULT 2.5,repetitions INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
+CREATE TABLE IF NOT EXISTS card_reviews(id TEXT PRIMARY KEY,card_id TEXT NOT NULL REFERENCES study_cards(id) ON DELETE CASCADE,rating INTEGER NOT NULL,reviewed_at TEXT NOT NULL,next_due_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS quizzes(id TEXT PRIMARY KEY,course_id TEXT REFERENCES courses(id) ON DELETE CASCADE,title TEXT NOT NULL,questions_json TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
+CREATE TABLE IF NOT EXISTS quiz_attempts(id TEXT PRIMARY KEY,quiz_id TEXT NOT NULL REFERENCES quizzes(id) ON DELETE CASCADE,answers_json TEXT NOT NULL,score REAL NOT NULL,submitted_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS notifications(id TEXT PRIMARY KEY,kind TEXT NOT NULL,title TEXT NOT NULL,body TEXT NOT NULL DEFAULT '',read_at TEXT,created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS push_subscriptions(id TEXT PRIMARY KEY,endpoint TEXT UNIQUE NOT NULL,keys_json TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS automations(id TEXT PRIMARY KEY,name TEXT NOT NULL,trigger_kind TEXT NOT NULL,schedule TEXT,action_kind TEXT NOT NULL,config_json TEXT NOT NULL DEFAULT '{}',enabled INTEGER NOT NULL DEFAULT 1,last_run_at TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
+CREATE TABLE IF NOT EXISTS automation_runs(id TEXT PRIMARY KEY,automation_id TEXT NOT NULL REFERENCES automations(id) ON DELETE CASCADE,state TEXT NOT NULL,started_at TEXT NOT NULL,finished_at TEXT,output_json TEXT,error TEXT);
 CREATE INDEX IF NOT EXISTS login_attempts_key ON login_attempts(key,attempted_at);
 CREATE INDEX IF NOT EXISTS sessions_token ON sessions(token_hash,expires_at);
 CREATE INDEX IF NOT EXISTS jobs_claim ON jobs(state,created_at);
@@ -29,6 +40,13 @@ CREATE INDEX IF NOT EXISTS job_events_job ON job_events(job_id,id);
 CREATE INDEX IF NOT EXISTS projects_status ON projects(status);
 CREATE INDEX IF NOT EXISTS task_dependencies_depends ON task_dependencies(depends_on_task_id);
 CREATE INDEX IF NOT EXISTS note_links_target ON note_links(target_note_id);
+CREATE INDEX IF NOT EXISTS note_versions_note ON note_versions(note_id,version DESC);
+CREATE INDEX IF NOT EXISTS assignments_course_due ON assignments(course_id,due_at);
+CREATE INDEX IF NOT EXISTS study_cards_due ON study_cards(due_at);
+CREATE INDEX IF NOT EXISTS quiz_attempts_quiz ON quiz_attempts(quiz_id,submitted_at DESC);
+CREATE INDEX IF NOT EXISTS notifications_unread ON notifications(read_at,created_at);
+CREATE INDEX IF NOT EXISTS automations_enabled ON automations(enabled,trigger_kind);
+CREATE INDEX IF NOT EXISTS automation_runs_automation ON automation_runs(automation_id,started_at DESC);
 `;
 
 export function openDatabase(path){
@@ -42,6 +60,8 @@ export function openDatabase(path){
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(3,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(4,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(5,?)").run(new Date().toISOString());
+  db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(6,?)").run(new Date().toISOString());
+  db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(7,?)").run(new Date().toISOString());
   return db;
 }
 

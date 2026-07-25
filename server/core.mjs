@@ -47,7 +47,8 @@ export function saveNote(input,db=getDatabase(),actor=null){
   db.prepare(`INSERT INTO notes(id,title,excerpt,content,tags_json,ai,source,favorite,trashed,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,excerpt=excluded.excerpt,content=excluded.content,tags_json=excluded.tags_json,ai=excluded.ai,source=excluded.source,favorite=excluded.favorite,trashed=excluded.trashed,updated_at=excluded.updated_at,version=notes.version+1`).run(id,title,excerpt,content,JSON.stringify(input.tags||[]),input.ai?1:0,input.source||null,input.favorite?1:0,input.trashed?1:0,before?.created_at||time,time);
   db.prepare("DELETE FROM notes_fts WHERE id=?").run(id);db.prepare("INSERT INTO notes_fts(id,title,content,tags) VALUES(?,?,?,?)").run(id,title,content,(input.tags||[]).join(" "));
   reindexNoteLinks(id,content,db);
-  audit(db,before?"update":"create","note",id,title,before?{op:"restore",row:before}:{op:"delete"},actor);return db.prepare("SELECT * FROM notes WHERE id=?").get(id);
+  const saved=db.prepare("SELECT * FROM notes WHERE id=?").get(id);db.prepare("INSERT INTO note_versions(note_id,version,title,content,tags_json,created_at) VALUES(?,?,?,?,?,?)").run(id,saved.version,title,content,saved.tags_json,time);
+  audit(db,before?"update":"create","note",id,title,before?{op:"restore",row:before}:{op:"delete"},actor);return saved;
 }
 
 export function createCapture(input,db=getDatabase(),actor=null){
@@ -115,6 +116,16 @@ export function undoAuditEvent(auditId,db=getDatabase(),actor=null){
 export function searchNotes(query,db=getDatabase()){
   const q=required(query,"query",500).replace(/["']/g," ");return db.prepare("SELECT n.* FROM notes_fts f JOIN notes n ON n.id=f.id WHERE notes_fts MATCH ? AND n.trashed=0 ORDER BY rank LIMIT 50").all(q);
 }
+
+export function noteVersions(noteId,db=getDatabase()){return db.prepare("SELECT version,title,content,tags_json,created_at AS createdAt FROM note_versions WHERE note_id=? ORDER BY version DESC").all(noteId).map(row=>({...row,tags:parse(row.tags_json)}))}
+
+export function restoreNoteVersion(noteId,version,db=getDatabase(),actor=null){const snapshot=db.prepare("SELECT * FROM note_versions WHERE note_id=? AND version=?").get(noteId,Number(version));if(!snapshot)throw Object.assign(new Error("Note version not found"),{status:404});const current=db.prepare("SELECT * FROM notes WHERE id=?").get(noteId);if(!current)throw Object.assign(new Error("Note not found"),{status:404});return saveNote({id:noteId,title:snapshot.title,content:snapshot.content,tags:parse(snapshot.tags_json),ai:!!current.ai,source:current.source,favorite:!!current.favorite,trashed:!!current.trashed,version:current.version},db,actor)}
+
+export function importMarkdown(markdown,db=getDatabase(),actor=null){const content=required(markdown,"markdown",2_000_000),match=content.match(/^#\s+(.+)$/m),title=match?.[1].trim()||"Imported note";return saveNote({title,content,tags:[],source:"Markdown import"},db,actor)}
+
+export function exportMarkdown(noteId,db=getDatabase()){const note=db.prepare("SELECT title,content FROM notes WHERE id=?").get(noteId);if(!note)throw Object.assign(new Error("Note not found"),{status:404});return note.content.startsWith("# ")?note.content:`# ${note.title}\n\n${note.content}`}
+
+export function searchAll(query,db=getDatabase()){const q=required(query,"query",500),like=`%${q.replace(/[\\%_]/g,"\\$&")}%`,limit=20;return {notes:searchNotes(q,db),tasks:db.prepare("SELECT id,title,project,due,updated_at AS updatedAt FROM tasks WHERE archived=0 AND (title LIKE ? ESCAPE '\\' OR project LIKE ? ESCAPE '\\') ORDER BY updated_at DESC LIMIT ?").all(like,like,limit),projects:db.prepare("SELECT id,name,status,summary,updated_at AS updatedAt FROM projects WHERE name LIKE ? ESCAPE '\\' OR summary LIKE ? ESCAPE '\\' ORDER BY updated_at DESC LIMIT ?").all(like,like,limit),captures:db.prepare("SELECT id,text,source,status,updated_at AS updatedAt FROM captures WHERE text LIKE ? ESCAPE '\\' ORDER BY updated_at DESC LIMIT ?").all(like,limit)}}
 
 export function saveProject(input,db=getDatabase(),actor=null){
   const id=input.id||randomUUID(),name=required(input.name,"name",200),time=stamp(),before=db.prepare("SELECT * FROM projects WHERE id=?").get(id);

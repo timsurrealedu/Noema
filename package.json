@@ -8,8 +8,11 @@
     "start": "next start",
     "worker": "node server/worker.mjs",
     "lint": "next lint",
-    "test": "node --test test/*.test.js",
-    "test:backend": "node --test test/backend.test.js"
+    "test": "node --test test/backend.test.js && node --test test/frontend.test.js",
+    "test:backend": "node --test test/backend.test.js",
+    "backup": "node scripts/backup.mjs",
+    "verify:backup": "node scripts/verify-backup.mjs",
+    "import:v1": "node scripts/import-v1.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

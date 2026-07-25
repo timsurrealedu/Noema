@@ -86,6 +86,12 @@ test("OpenAI fallback routes simple and complex work to appropriate models",asyn
   assert.equal(result.provider,"openai");assert.equal(result.model,"gpt-5.6");assert.equal(result.reasoningEffort,"medium");assert.equal(request.url,"https://api.openai.com/v1/responses");assert.equal(request.options.headers.Authorization,"Bearer test-secret");assert.equal(request.url.includes("test-secret"),false);assert.deepEqual(body.reasoning,{effort:"medium"});assert.equal(body.text.format.type,"json_schema");assert.equal(body.store,false);
 });
 
+test("representative AI workloads use the intended routing tier",async()=>{
+  const {selectOpenAIModel}=await import("../server/ai.mjs"),config={openaiFastModel:"chat-latest",openaiReasoningModel:"gpt-5.6"};
+  const fixtures={schedule:["chat-latest",null],note:["gpt-5.6","low"],code:["gpt-5.6","low"],research:["gpt-5.6","medium"],math:["gpt-5.6","medium"]};
+  for(const [workload,expected] of Object.entries(fixtures)){const route=selectOpenAIModel(workload,config);assert.deepEqual([route.model,route.reasoningEffort],expected,workload)}
+});
+
 test("interpretation apply creates objects transactionally and its undo reverses them",async()=>{
   const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
   try{
@@ -280,4 +286,38 @@ test("note links are extracted from [[Title]] and support backlinks",async()=>{
     const backlinks=core.backlinksForNote("n1",db);assert.equal(backlinks.length,1);assert.equal(backlinks[0].sourceNoteId,"n2");
     const state=core.listState(db);assert.equal(state.noteLinks.length,1);
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("notes retain versions, restore snapshots, and round-trip Markdown",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const note=core.importMarkdown("# Imported\n\nFirst body",db,"owner");
+    core.saveNote({id:note.id,title:"Imported",content:"Second body",tags:["study"],version:1},db,"owner");
+    assert.deepEqual(core.noteVersions(note.id,db).map(item=>item.version),[2,1]);
+    const restored=core.restoreNoteVersion(note.id,1,db,"owner");assert.equal(restored.version,3);assert.match(restored.content,/First body/);
+    assert.match(core.exportMarkdown(note.id,db),/^# Imported/);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("unified search finds notes, tasks, projects, and captures",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    core.saveNote({title:"Quantum notes",content:"wave function"},db);core.saveTask({title:"Review quantum",project:"Physics",due:"Today"},db);core.saveProject({name:"Quantum lab",summary:"Physics"},db);core.createCapture({text:"quantum question"},db);
+    const found=core.searchAll("quantum",db);assert.equal(found.notes.length,1);assert.equal(found.tasks.length,1);assert.equal(found.projects.length,1);assert.equal(found.captures.length,1);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("study courses, assignments, quizzes, and spaced reviews persist",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const study=await import("../server/modules.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  try{const course=study.saveCourse({name:"Algorithms",code:"COMP6047",term:"2026"},db);const assignment=study.saveAssignment({courseId:course.id,title:"Dynamic programming",dueAt:"2026-08-01T00:00:00.000Z"},db);assert.equal(study.listAssignments(course.id,db)[0].id,assignment.id);const card=study.saveCard({courseId:course.id,front:"Complexity?",back:"O(n)"},db);const reviewed=study.reviewCard(card.id,5,db);assert.equal(reviewed.repetitions,1);assert.equal(reviewed.interval_days,1);const quiz=study.saveQuiz({courseId:course.id,title:"Complexity",questions:[{prompt:"Linear?",choices:["O(1)","O(n)"],answer:1}]},db);assert.equal(study.submitQuiz(quiz.id,[1],db).score,100);assert.equal(db.prepare("SELECT COUNT(*) count FROM card_reviews").get().count,1)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("notifications, push subscriptions, and automation runs persist",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const modules=await import("../server/modules.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  try{const notice=modules.createNotification({kind:"assignment",title:"Due soon"},db);modules.readNotification(notice.id,db);assert.ok(modules.listNotifications(db)[0].read_at);modules.savePushSubscription({endpoint:"https://push.example/sub",keys:{p256dh:"x",auth:"y"}},db);assert.equal(db.prepare("SELECT COUNT(*) count FROM push_subscriptions").get().count,1);const tick=new Date(),automation=modules.saveAutomation({name:"Daily review",triggerKind:"schedule",schedule:`${tick.getMinutes()} ${tick.getHours()} * * *`,actionKind:"notification",config:{title:"Review now"}},db);const runs=modules.runScheduledAutomations(tick,db);assert.equal(runs.length,1);assert.equal(modules.automationRuns(automation.id,db).length,1);assert.deepEqual(modules.automationMetrics(automation.id,db).states,{completed:1});assert.equal(modules.runScheduledAutomations(new Date(tick.getTime()+1000),db).length,0)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("operations redact logs, import v1 data, and verify encrypted backups",async()=>{
+  const dir=temp(),fs=require("node:fs");const {openDatabase}=await import("../server/db.mjs"),ops=await import("../server/ops.mjs");const db=openDatabase(join(dir,"lifeos.sqlite")),config={dataDir:dir,dbPath:join(dir,"lifeos.sqlite"),objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs"),backupsDir:join(dir,"backups"),backupKey:"correct horse battery staple backup key",backupRetention:2,minFreeBytes:0};
+  try{fs.mkdirSync(config.objectsDir);fs.mkdirSync(config.jobsDir);fs.mkdirSync(config.backupsDir);const imported=join(dir,"v1");fs.mkdirSync(imported);fs.mkdirSync(join(imported,"attachments"));fs.writeFileSync(join(imported,"note.md"),"# Legacy note\n\nPortable");fs.writeFileSync(join(imported,"tasks.json"),JSON.stringify([{title:"Legacy task",project:"Inbox",due:"Today"}]));fs.writeFileSync(join(imported,"attachments","source.txt"),"original");assert.deepEqual(await ops.importV1(imported,db,config),{notes:1,tasks:1,events:0,attachments:1});let line;ops.log("info","auth",{password:"secret",nested:{apiKey:"key"}},value=>line=value);assert.doesNotMatch(line,/secret|\"key\"/);const backup=ops.createBackup(config,db);assert.equal(ops.verifyBackup(backup.path,config).ok,true);assert.equal(ops.healthReport(db,config).database,"ok")}finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });

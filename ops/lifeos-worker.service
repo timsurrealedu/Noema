@@ -1,0 +1,21 @@
+[Unit]
+Description=LifeOS worker
+After=lifeos.service
+
+[Service]
+Type=simple
+User=lifeos
+Group=lifeos
+WorkingDirectory=/opt/lifeos
+EnvironmentFile=/etc/lifeos.env
+ExecStart=/usr/bin/npm run worker
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/lifeos
+
+[Install]
+WantedBy=multi-user.target
