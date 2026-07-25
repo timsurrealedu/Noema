@@ -149,6 +149,18 @@ test("deterministic extraction reads text assets and skips unsupported types",as
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
+test("deterministic extraction reads DOCX word/document.xml",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const {storeAsset}=await import("../server/objects.mjs");const {extractText}=await import("../server/extract.mjs");const {execFileSync}=require("node:child_process");const db=openDatabase(join(dir,"test.sqlite"));
+  const config={dataDir:dir,objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs")};require("node:fs").mkdirSync(config.objectsDir,{recursive:true});require("node:fs").mkdirSync(config.jobsDir,{recursive:true});
+  try{
+    const docxDir=join(dir,"docx");require("node:fs").mkdirSync(join(docxDir,"word"),{recursive:true});
+    require("node:fs").writeFileSync(join(docxDir,"word","document.xml"),"<w:document><w:body><w:p><w:t>Hello from DOCX</w:t></w:p></w:body></w:document>");
+    const docxPath=join(dir,"sample.docx");execFileSync("zip",["-r",docxPath,"word"],{cwd:docxDir});
+    const asset=await storeAsset({stream:require("node:stream").Readable.from([require("node:fs").readFileSync(docxPath)]),name:"sample.docx",mime:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"},config,db);
+    const extracted=await extractText(asset,config);assert.equal(extracted.tool,"docx");assert.equal(extracted.text,"Hello from DOCX");
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
 test("captures link uploaded assets and expose them in state",async()=>{
   const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const {storeAsset}=await import("../server/objects.mjs");const db=openDatabase(join(dir,"test.sqlite"));
   const config={dataDir:dir,objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs")};require("node:fs").mkdirSync(config.objectsDir,{recursive:true});require("node:fs").mkdirSync(config.jobsDir,{recursive:true});

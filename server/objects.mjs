@@ -8,7 +8,7 @@ import {loadConfig} from "./config.mjs";
 
 const now=()=>new Date().toISOString();
 const allowedMimes=new Map([
-  ["application/pdf","Document"],["text/plain","Text"],["text/markdown","Text"],["text/csv","Text"],
+  ["application/pdf","Document"],["application/vnd.openxmlformats-officedocument.wordprocessingml.document","Document"],["text/plain","Text"],["text/markdown","Text"],["text/csv","Text"],
   ["image/png","Image"],["image/jpeg","Image"],["image/webp","Image"],["image/gif","Image"],
   ["audio/mpeg","Audio"],["audio/wav","Audio"],["audio/ogg","Audio"],["audio/webm","Audio"],["audio/mp4","Audio"],
 ]);
