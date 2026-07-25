@@ -1,5 +1,5 @@
-import {listState,saveProject} from "../../../../../server/core.mjs";
-import {body,handle,idempotent,json,requireUser} from "../../../../../server/http.mjs";
+import {listState,saveProject} from "../../../../server/core.mjs";
+import {body,handle,idempotent,json,requireUser} from "../../../../server/http.mjs";
 
 export const runtime="nodejs";
 export function GET(request:Request){try{requireUser(request);return json({projects:listState().projects})}catch(error){return handle(error)}}

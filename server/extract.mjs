@@ -41,3 +41,18 @@ export async function extractText(asset,config=loadConfig(),fetcher=fetch){
   }
   return null;
 }
+
+/**
+ * Extract handwritten text and math from an image, returning plain text and
+ * LaTeX equations. Requires a Gemini API key.
+ */
+export async function extractHandwriting(asset,config=loadConfig(),fetcher=fetch){
+  if(!asset.mime.startsWith("image/"))throw Object.assign(new Error("Handwriting extraction requires an image"),{status:400});
+  if(!config.geminiApiKey)throw new Error("Handwriting extraction requires GEMINI_API_KEY");
+  const base64=await readFile(assetPath(asset.sha256,config),"base64");
+  const schema={type:"object",properties:{text:{type:"string"},equations:{type:"array",items:{type:"object",properties:{latex:{type:"string"},confidence:{type:"string",enum:["high","medium","low"]}},required:["latex","confidence"]}}},required:["text","equations"]};
+  const {result}=await runGeminiMultimodal({prompt:"Extract all handwritten text and mathematical notation from this image. Return the plain text and each equation as LaTeX.",base64,mimeType:asset.mime,schema,config,fetcher});
+  const text=String(result.text||"").trim();
+  const equations=(result.equations||[]).map(e=>({latex:String(e.latex||""),confidence:["high","medium","low"].includes(e.confidence)?e.confidence:"low"}));
+  return {text,equations};
+}
