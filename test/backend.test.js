@@ -54,6 +54,19 @@ test("compiler runs supported code with limits and rejects unsafe languages",asy
   const dir=temp();const {runCode}=await import("../server/compiler.mjs");try{const result=await runCode({language:"javascript",code:"console.log(6 * 7)"},{enabled:true,isolate:false,jobsDir:dir,timeoutMs:3000,maxOutputBytes:1024});assert.equal(result.code,0);assert.equal(result.output.trim(),"42");await assert.rejects(()=>runCode({language:"shell",code:"id"},{enabled:true,isolate:false,jobsDir:dir}),/Unsupported language/)}finally{rmSync(dir,{recursive:true,force:true})}
 });
 
+test("compiler uses a git worktree when repoDir is a repository",async()=>{
+  const repo=temp();const {runCode,prepareWorktree,cleanupWorktree,compilerCapabilities}=await import("../server/compiler.mjs");const {spawnSync}=await import("node:child_process");
+  try{
+    spawnSync("git",["init","-q",repo],{shell:false});
+    spawnSync("git",["-C",repo,"config","user.email","test@example.com"],{shell:false});
+    spawnSync("git",["-C",repo,"config","user.name","Test"],{shell:false});
+    spawnSync("git",["-C",repo,"commit","--allow-empty","-m","init"],{shell:false});
+    const session=prepareWorktree(repo);assert.equal(session.isWorktree,true);cleanupWorktree(session);
+    const result=await runCode({language:"javascript",code:"console.log('wt')"},{enabled:true,isolate:false,repoDir:repo,timeoutMs:3000,maxOutputBytes:1024});
+    assert.equal(result.code,0);assert.equal(result.output.trim(),"wt");
+  }finally{rmSync(repo,{recursive:true,force:true})}
+});
+
 test("Codex runner uses JSON, ephemeral mode, schema, and an explicit sandbox",async()=>{
   const {codexArgs}=await import("../server/codex.mjs");const args=codexArgs({cwd:"/tmp/job",schemaPath:"/tmp/job/schema.json"});assert.deepEqual(args,["exec","--json","--ephemeral","--ignore-user-config","--skip-git-repo-check","--output-schema","/tmp/job/schema.json","--sandbox","read-only","--cd","/tmp/job","-"]);assert.equal(args.includes("--dangerously-bypass-approvals-and-sandbox"),false);
   assert.equal(codexArgs({cwd:"/tmp/job",schemaPath:"/tmp/job/schema.json",search:true})[0],"--search");

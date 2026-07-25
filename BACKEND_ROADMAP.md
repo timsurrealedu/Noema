@@ -38,7 +38,7 @@
 - [x] Study courses, assignments, cards, quizzes, and review scheduling
 - [x] Notifications and push subscriptions
 - [x] Automation definitions, schedules, run history, logs, and metrics
-- [~] Bubblewrap-isolated compiler workspace for JavaScript, Python, C, C++, Go, Rust, and Java; Git worktree sessions and resource cgroups remain
+- [x] Bubblewrap-isolated compiler workspace for JavaScript, Python, C, C++, Go, Rust, and Java; Git worktree sessions and host-enforced cgroups
 
 ## Phase 6 — Operations and migration
 
