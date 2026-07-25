@@ -172,6 +172,16 @@ test("captures link uploaded assets and expose them in state",async()=>{
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
+test("file capture creates a capture with a stored asset",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  const config={dataDir:dir,objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs")};require("node:fs").mkdirSync(config.objectsDir,{recursive:true});require("node:fs").mkdirSync(config.jobsDir,{recursive:true});
+  try{
+    const capture=await core.createFileCapture({stream:require("node:stream").Readable.from(["# Report"]),name:"report.md",type:"text/markdown",size:8},db);
+    assert.equal(capture.source,"file");assert.equal(capture.sourceLabel,"Text · 1 KB");assert.equal(capture.assets.length,1);assert.equal(capture.assets[0].name,"report.md");
+    const state=core.listState(db);assert.equal(state.captures.length,1);assert.equal(state.captures[0].assets.length,1);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
 test("failed jobs retry up to max attempts and expired leases are reclaimed",async()=>{
   const dir=temp();const {openDatabase}=await import("../server/db.mjs");const jobs=await import("../server/jobs.mjs");const db=openDatabase(join(dir,"test.sqlite"));
   try{

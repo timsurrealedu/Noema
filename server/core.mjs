@@ -1,8 +1,11 @@
 import {randomUUID} from "node:crypto";
 import {getDatabase} from "./db.mjs";
-import {assetsForCapture,attachAssets} from "./objects.mjs";
+import {assetsForCapture,attachAssets,storeAsset} from "./objects.mjs";
+import {loadConfig} from "./config.mjs";
 
 const stamp=()=>new Date().toISOString();
+const formatSize=bytes=>bytes>1024*1024?`${(bytes/1048576).toFixed(1)} MB`:`${Math.max(1,Math.round(bytes/1024))} KB`;
+const fileKind=type=>type?.startsWith("image/")?"Image":type?.startsWith("audio/")?"Audio":type?.startsWith("text/")?"Text":type==="application/pdf"?"Document":type==="application/vnd.openxmlformats-officedocument.wordprocessingml.document"?"Document":"File";
 const parse=value=>{try{return JSON.parse(value)}catch{return []}};
 const required=(value,name,max=10000)=>{if(typeof value!=="string"||!value.trim())throw new Error(`${name} is required`);if(value.length>max)throw new Error(`${name} is too long`);return value.trim()};
 const requireVersion=(input,before)=>{if(before&&input.version!==before.version)throw Object.assign(new Error(`Expected version ${before.version}`),{status:409,code:"VERSION_CONFLICT"})};
@@ -50,6 +53,11 @@ export function saveNote(input,db=getDatabase(),actor=null){
 export function createCapture(input,db=getDatabase(),actor=null){
   const id=input.id||randomUUID(),text=required(input.text,"text",50000),source=["typed","voice","file","link"].includes(input.source)?input.source:"typed",time=stamp();
   db.prepare("INSERT INTO captures(id,text,source,status,source_label,objects_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)").run(id,text,source,"review",input.sourceLabel||"Typed capture","[]",time,time);attachAssets(id,input.assetIds,db);audit(db,"create","capture",id,text.slice(0,120),{op:"delete"},actor);return {id,text,source,status:"review",sourceLabel:input.sourceLabel||"Typed capture",objects:[],assets:assetsForCapture(id,db).map(asset=>({id:asset.id,name:asset.name,mime:asset.mime,size:asset.size})),createdAt:time,version:1};
+}
+
+export async function createFileCapture(file,db=getDatabase(),actor=null){
+  const asset=await storeAsset({stream:file.stream,name:file.name,mime:file.type||"application/octet-stream"},loadConfig(),db);
+  return createCapture({text:file.name,source:"file",assetIds:[asset.id],sourceLabel:`${fileKind(file.type)} · ${formatSize(file.size)}`},db,actor);
 }
 
 export function updateCapture(id,status,version,db=getDatabase(),actor=null){
