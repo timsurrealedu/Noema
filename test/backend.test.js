@@ -73,3 +73,84 @@ test("OpenAI fallback routes simple and complex work to appropriate models",asyn
   const result=await runOpenAI({prompt:"Explain",schema:{type:"object",required:["answer"],properties:{answer:{type:"string"}}},workload:"math",config,fetcher:async(url,options)=>{request={url,options};return Response.json({output_text:'{"answer":"shown"}'})}}),body=JSON.parse(request.options.body);
   assert.equal(result.provider,"openai");assert.equal(result.model,"gpt-5.6");assert.equal(result.reasoningEffort,"medium");assert.equal(request.url,"https://api.openai.com/v1/responses");assert.equal(request.options.headers.Authorization,"Bearer test-secret");assert.equal(request.url.includes("test-secret"),false);assert.deepEqual(body.reasoning,{effort:"medium"});assert.equal(body.text.format.type,"json_schema");assert.equal(body.store,false);
 });
+
+test("interpretation apply creates objects transactionally and its undo reverses them",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    core.createCapture({id:"c1",text:"Meet Dian tomorrow 1pm",source:"typed"},db);
+    assert.throws(()=>core.applyCaptureInterpretation("c1",db),error=>error.status===409&&error.code==="NOTHING_TO_APPLY");
+    core.saveInterpretation("c1",[{type:"task",title:"Review proposal",detail:"Due tomorrow"},{type:"event",title:"Meeting with Dian",detail:"1pm"},{type:"note",title:"Meeting notes",detail:"Context"}],db);
+    const applied=core.applyCaptureInterpretation("c1",db,"owner");
+    assert.equal(applied.status,"confirmed");assert.equal(applied.created.length,3);
+    const state=core.listState(db);assert.equal(state.tasks.length,1);assert.equal(state.events.length,1);assert.equal(state.notes.length,1);assert.equal(state.captures[0].status,"confirmed");
+    assert.equal(core.applyCaptureInterpretation("c1",db).created.length,0);
+    const applyAudit=core.listAuditEvents(10,db).find(event=>event.action==="apply"&&event.reversible);
+    core.undoAuditEvent(applyAudit.id,db,"owner");
+    const after=core.listState(db);assert.equal(after.tasks.length,0);assert.equal(after.events.length,0);assert.equal(after.notes.length,0);assert.equal(after.captures[0].status,"review");
+    assert.equal(core.applyCaptureInterpretation("c1",db).created.length,3);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("undo restores prior object versions and rejects irreversible events",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    core.saveTask({id:"t1",title:"First",project:"Inbox",due:"Today"},db);
+    core.saveTask({id:"t1",title:"Second",project:"Inbox",due:"Today",version:1},db);
+    const updateAudit=core.listAuditEvents(10,db).find(event=>event.action==="update"&&event.objectType==="task");
+    core.undoAuditEvent(updateAudit.id,db);assert.equal(core.listState(db).tasks[0].title,"First");
+    const createAudit=core.listAuditEvents(10,db).find(event=>event.action==="create"&&event.objectType==="task");
+    core.undoAuditEvent(createAudit.id,db);assert.equal(core.listState(db).tasks.length,0);
+    const undoEvent=core.listAuditEvents(10,db).find(event=>event.action==="undo");
+    assert.throws(()=>core.undoAuditEvent(undoEvent.id,db),error=>error.status===409&&error.code==="NOT_REVERSIBLE");
+    assert.throws(()=>core.undoAuditEvent("missing",db),error=>error.status===404);
+    core.saveNote({id:"n1",title:"Versioned",content:"one",tags:["a"]},db);core.saveNote({id:"n1",title:"Versioned",content:"two",version:1},db);
+    const noteUpdate=core.listAuditEvents(10,db).find(event=>event.action==="update"&&event.objectType==="note");
+    core.undoAuditEvent(noteUpdate.id,db);assert.equal(core.searchNotes("one",db).length,1);assert.equal(core.searchNotes("two",db).length,0);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("queued jobs accept a cancellation flag exactly once per state",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const jobs=await import("../server/jobs.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const id=jobs.enqueueJob("interpret-capture",{captureId:"c1"},db);
+    assert.equal(jobs.cancelJob(id,db),true);assert.equal(jobs.getJob(id,db).cancel_requested,1);
+    jobs.finishJob(id,{ok:true},db);assert.equal(jobs.cancelJob(id,db),false);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("object store hashes uploads, deduplicates, and enforces limits",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const {storeAsset,assetPath,getAsset}=await import("../server/objects.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  const config={dataDir:dir,objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs")};require("node:fs").mkdirSync(config.objectsDir,{recursive:true});require("node:fs").mkdirSync(config.jobsDir,{recursive:true});
+  try{
+    const stream=()=>require("node:stream").Readable.from(["# Lecture notes\n\nTCP slow start"]);
+    const first=await storeAsset({stream:stream(),name:"lecture.md",mime:"text/markdown"},config,db);
+    assert.match(first.sha256,/^[0-9a-f]{64}$/);assert.equal(first.deduplicated,false);assert.equal(first.size,31);
+    const second=await storeAsset({stream:stream(),name:"copy.md",mime:"text/markdown"},config,db);
+    assert.equal(second.sha256,first.sha256);assert.equal(second.deduplicated,true);assert.equal(db.prepare("SELECT COUNT(*) count FROM assets").get().count,1);
+    assert.ok(require("node:fs").existsSync(assetPath(first.sha256,config)));assert.equal(getAsset(first.id,db).name,"lecture.md");assert.equal(getAsset(first.sha256,db).id,first.id);
+    await assert.rejects(()=>storeAsset({stream:stream(),name:"evil.sh",mime:"application/x-sh"},config,db),error=>error.status===415);
+    await assert.rejects(()=>storeAsset({stream:require("node:stream").Readable.from([Buffer.alloc(51*1024*1024,1)]),name:"big.pdf",mime:"application/pdf"},config,db),error=>error.status===413);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("deterministic extraction reads text assets and skips unsupported types",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const {storeAsset}=await import("../server/objects.mjs");const {extractText}=await import("../server/extract.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  const config={dataDir:dir,objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs")};require("node:fs").mkdirSync(config.objectsDir,{recursive:true});require("node:fs").mkdirSync(config.jobsDir,{recursive:true});
+  try{
+    const asset=await storeAsset({stream:require("node:stream").Readable.from(["plain text body"]),name:"note.txt",mime:"text/plain"},config,db);
+    const extracted=await extractText(asset,config);assert.equal(extracted.tool,"read");assert.equal(extracted.text,"plain text body");
+    const image=await storeAsset({stream:require("node:stream").Readable.from([Buffer.from([137,80,78,71])]),name:"scan.png",mime:"image/png"},config,db);
+    assert.equal(await extractText(image,config),null);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("captures link uploaded assets and expose them in state",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const {storeAsset}=await import("../server/objects.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  const config={dataDir:dir,objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs")};require("node:fs").mkdirSync(config.objectsDir,{recursive:true});require("node:fs").mkdirSync(config.jobsDir,{recursive:true});
+  try{
+    const asset=await storeAsset({stream:require("node:stream").Readable.from(["slides"]),name:"slides.pdf",mime:"application/pdf"},config,db);
+    core.createCapture({id:"c1",text:"slides.pdf",source:"file",assetIds:[asset.id]},db);
+    const state=core.listState(db);assert.equal(state.captures[0].assets.length,1);assert.equal(state.captures[0].assets[0].name,"slides.pdf");
+    assert.throws(()=>core.createCapture({text:"x",assetIds:["missing"]},db),error=>error.status===404);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});

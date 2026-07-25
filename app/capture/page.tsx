@@ -2,7 +2,7 @@
 
 import {useEffect, useMemo, useState} from "react";
 import {
-  ArrowClockwise, ArrowLeft, CalendarBlank, Check, CheckCircle, CheckSquare,
+  ArrowClockwise, ArrowLeft, ArrowSquareOut, CalendarBlank, Check, CheckCircle, CheckSquare,
   CircleNotch, File, Globe, Keyboard, Microphone, Note, Plus, Sparkle, WarningCircle, X
 } from "@phosphor-icons/react";
 import {Capture, CaptureSource, useAppState} from "../components/AppState";
@@ -25,7 +25,7 @@ function timeFor(value:string){return new Intl.DateTimeFormat("en-US",{hour:"num
 function matches(capture:Capture,filter:Filter){return filter==="All"||capture.status===({"Needs review":"review","Processing":"processing","Failed":"failed"} as const)[filter as Exclude<Filter,"All">]}
 
 export default function CaptureInbox(){
-  const {addCapture,captures,updateCapture}=useAppState();
+  const {addCapture,captures,confirmCapture,requestInterpretation,updateCapture}=useAppState();
   const [filter,setFilter]=useState<Filter>("All");
   const visible=useMemo(()=>captures.filter(item=>item.status!=="dismissed"&&matches(item,filter)),[captures,filter]);
   const [selectedId,setSelectedId]=useState<string|null>(null);
@@ -42,9 +42,9 @@ export default function CaptureInbox(){
     if(status==="dismissed"){setSelectedId(null);setDetailOpen(false)}
   }
   function retry(capture:Capture){
-    setFilter("All");setSelectedId(capture.id);updateCapture(capture.id,"processing");setToast({id:capture.id,message:"Processing started again",previous:"failed"});
-    setTimeout(()=>updateCapture(capture.id,"review"),1400);
+    setFilter("All");setSelectedId(capture.id);requestInterpretation(capture.id);setToast({id:capture.id,message:"Processing started again",previous:"failed"});
   }
+  function confirm(capture:Capture){if(!capture.objects.length){changeStatus(capture,"confirmed","Capture confirmed");return}confirmCapture(capture.id);setToast({id:capture.id,message:"Capture confirmed and objects created",previous:capture.status})}
   function undo(){if(!toast)return;updateCapture(toast.id,toast.previous);setSelectedId(toast.id);setToast(null)}
 
   return <ModuleShell active="Capture" title="Capture inbox" action={<a className="primary top-primary" href="/#capture"><Plus/>Quick capture</a>}>
@@ -69,10 +69,10 @@ export default function CaptureInbox(){
           {(selected.status==="review"||selected.status==="confirmed")&&<>
             <section className="interpretation-head"><div><Sparkle/><span><strong>Interpretation</strong><small>{selected.status==="review"?"Check the detected objects before confirming.":"This interpretation has been confirmed."}</small></span></div><span className={`capture-status status-${selected.status}`}><StatusIcon capture={selected}/>{statusMeta[selected.status].label}</span></section>
             <section className="detected-objects" aria-labelledby="detected-title"><h3 id="detected-title">Detected objects <span>{selected.objects.length}</span></h3>{selected.objects.map((object,index)=><article key={`${object.type}-${index}`}><span className={`object-icon ${object.type}`}>{object.type==="task"?<CheckSquare/>:object.type==="event"?<CalendarBlank/>:<Note/>}</span><div><small>{object.type}</small><strong>{object.title}</strong><p>{object.detail}</p></div><CheckCircle aria-label="Ready to confirm"/></article>)}</section>
-            <section className="source-relationship"><h3>Source relationship</h3><div><SourceIcon source={selected.source}/><span><strong>Original source preserved</strong><small>{selected.sourceLabel}</small></span><Check/></div></section>
+            <section className="source-relationship"><h3>Source relationship</h3><div><SourceIcon source={selected.source}/><span><strong>Original source preserved</strong><small>{selected.sourceLabel}</small></span><Check/></div>{selected.assets?.map(asset=><div key={asset.id}><File/><span><strong>{asset.name}</strong><small>{asset.mime} · {asset.size>1048576?`${(asset.size/1048576).toFixed(1)} MB`:`${Math.max(1,Math.round(asset.size/1024))} KB`}</small></span><a className="row-action" href={`/api/v1/assets/${asset.id}`} target="_blank" rel="noreferrer" aria-label={`Open original ${asset.name}`}><ArrowSquareOut/></a></div>)}</section>
           </>}
           <footer className="inspector-actions">
-            {selected.status==="review"&&<><button className="secondary" onClick={()=>changeStatus(selected,"dismissed","Capture dismissed")}>Dismiss</button><button className="primary" onClick={()=>changeStatus(selected,"confirmed","Capture confirmed")}><Check/>Confirm all</button></>}
+            {selected.status==="review"&&<><button className="secondary" onClick={()=>changeStatus(selected,"dismissed","Capture dismissed")}>Dismiss</button>{selected.objects.length===0&&<button className="secondary" onClick={()=>requestInterpretation(selected.id)}><Sparkle/>Interpret</button>}<button className="primary" onClick={()=>confirm(selected)}><Check/>Confirm all</button></>}
             {selected.status==="confirmed"&&<button className="secondary" onClick={()=>changeStatus(selected,"review","Capture reopened for review")}>Reopen review</button>}
           </footer>
         </>:<div className="inspector-empty"><Sparkle/><h3>Select a capture</h3><p>Its source, interpretation, and actions will appear here.</p></div>}

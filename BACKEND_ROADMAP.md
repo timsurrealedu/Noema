@@ -6,7 +6,7 @@
 - [x] SQLite connection, WAL settings, initial migration, FTS5, and test database
 - [~] Single-owner authentication, session revocation, same-origin enforcement, and login rate limits; persistent/distributed throttling remains
 - [x] Stable API error envelope, input validation, idempotent core mutations, and version-conflict enforcement
-- [~] Audit-event persistence exists; inverse application and undo endpoint remain
+- [x] Audit-event persistence, inverse application, and undo endpoint
 
 ## Phase 2 — Core objects
 
@@ -17,9 +17,9 @@
 
 ## Phase 3 — Capture and assets
 
-- [~] Text capture and status lifecycle API; confirmation apply flow remains
-- [ ] Streaming upload, validation, SHA-256 object storage, and source retrieval
-- [ ] Deterministic document extraction adapters
+- [~] Text capture and status lifecycle API with transactional confirmation apply; file capture remains
+- [x] Streaming upload, validation, SHA-256 object storage, and source retrieval
+- [~] Deterministic document extraction adapters (text and pdftotext); DOCX and other formats remain
 - [ ] OCR and transcription adapters
 
 ## Phase 4 — Codex jobs
@@ -27,8 +27,8 @@
 - [~] Durable database queue, leases, events, completion, failure, and cancellation flag; retries/reaping remain
 - [x] Isolated read-only `codex exec --json` runner boundary
 - [x] Capture interpretation schema and structured-result validation
-- [ ] SSE job events and frontend status integration
-- [~] Interpretation proposal storage; transactional apply, approval, and undo remain
+- [x] SSE job events and frontend status integration
+- [x] Interpretation proposal storage, transactional apply, job approval, and audit undo
 - [x] Managed Codex ports for all v1 AI workflows, plus contextual Vault and Coding tutors
 - [x] Capacity-aware Codex → Gemini → OpenAI fallback and workload-based OpenAI model/reasoning routing
 - [ ] Evaluate routing against representative schedule, note, code, research, and math fixtures

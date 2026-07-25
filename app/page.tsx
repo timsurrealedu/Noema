@@ -3,7 +3,7 @@
 import {
   Bell, BookOpen, CalendarBlank, CaretRight, Check, CheckSquare, Clock,
   Code, Command, FileText, Folder, Gear, House, Lightning, ListChecks,
-  MagnifyingGlass, Microphone, Moon, PaperPlaneTilt, Plus, Sparkle,
+  MagnifyingGlass, Microphone, Moon, Paperclip, PaperPlaneTilt, Plus, Sparkle,
   Sun, Tray, UploadSimple, Warning, X
 } from "@phosphor-icons/react";
 import Link from "next/link";
@@ -24,12 +24,13 @@ const activity = [
 ] as const;
 
 export default function Today() {
-  const {addCapture,captures,events,tasks,toggleTask,updateCapture}=useAppState();
+  const {addCapture,addFileCapture,captures,events,tasks,toggleTask,updateCapture}=useAppState();
   const [theme,setTheme] = useState<"dark"|"light">("dark");
   const [capture,setCapture] = useState("");
   const [reviewId,setReviewId] = useState<string|null>(null);
   const [palette,setPalette] = useState(false);
   const input = useRef<HTMLInputElement>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const saved=localStorage.getItem("lifeos-theme") as "dark"|"light"|null;
@@ -80,6 +81,8 @@ export default function Today() {
         <label htmlFor="capture">Quick capture</label>
         <Plus aria-hidden="true"/>
         <input ref={input} id="capture" value={capture} onChange={e=>setCapture(e.target.value)} placeholder="Capture a thought, task, event, file, or command…"/>
+        <button type="button" className="capture-tool" aria-label="Attach a file" onClick={()=>fileInput.current?.click()}><Paperclip/></button>
+        <input ref={fileInput} type="file" hidden aria-hidden="true" tabIndex={-1} onChange={e=>{const file=e.target.files?.[0];if(file){addFileCapture(file);showUnavailable("File captured. Server interpretation runs once an AI provider is configured; the original is preserved when signed in.")}e.target.value=""}}/>
         <button type="button" className="capture-tool" aria-label="Record voice" data-unavailable="Voice transcription requires the AI backend. Use text capture for this browser-only prototype."><Microphone/></button>
         <button className="send" disabled={!capture.trim()} aria-label="Process capture"><PaperPlaneTilt/></button>
         <kbd>⌘ ⇧ C</kbd>

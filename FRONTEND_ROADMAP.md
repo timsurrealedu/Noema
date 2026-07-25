@@ -32,8 +32,8 @@ Frontend status is separate from backend integration. `Done` means the interacti
 
 - [ ] Authentication, sessions, two-factor authentication, and revocation
 - [ ] Durable database persistence, synchronization, backup, and workspace export
-- [ ] Codex interpretation/execution service with review, approval, cancellation, and audit records
-- [ ] File/object storage, OCR, transcription, source preservation, and attachment retrieval
+- [~] Codex interpretation service with review, approval, cancellation, and audit records; execution approval and streaming agent sessions remain
+- [~] File/object storage, OCR, transcription, source preservation, and attachment retrieval (storage and retrieval done; OCR/transcription pending)
 - [ ] Calendar and external-service synchronization
 - [ ] Notifications, automation execution, job logs, metrics, schedules, and streaming agent sessions
 - [ ] Semantic/global search, backlink indexing, and relationship persistence
@@ -44,19 +44,19 @@ Frontend status is separate from backend integration. `Done` means the interacti
 | # | Requirement | Frontend | Integration |
 |---|---|---|---|
 | 1 | Natural-language capture on desktop/mobile | Done | Pending AI/server |
-| 2 | Structured interpretation review | Done | Pending AI |
+| 2 | Structured interpretation review | Done | Server apply done; AI provider pending |
 | 3 | Create/edit tasks | Done | Browser-local |
 | 4 | Create/edit events | Done | Browser-local |
 | 5 | Tasks/events appear on Today | Done | Browser-local |
 | 6 | Create/edit/search notes | Done | Browser-local |
 | 7 | Markdown portability | Done | Local import/export |
-| 8 | Original images remain linked | Done UI | Pending object storage |
+| 8 | Original images remain linked | Done UI | Object storage + retrieval done |
 | 9 | AI information identified | Done | Pending AI |
-| 10 | AI actions can be undone | Done UI | Pending durable audit |
+| 10 | AI actions can be undone | Done UI | Durable audit + undo done |
 | 11 | Phone-sized usability | Done | Verification pending |
 | 12 | Installable PWA | Done UI | Device verification pending |
 | 13 | Loading/error states | Done | Remote errors pending |
-| 14 | AI/system activity visible | Done UI | Pending audit service |
+| 14 | AI/system activity visible | Done UI | Audit API done; Activity wiring pending |
 | 15 | Automation status separated from Today | Done | Pending executor |
 | 16 | Keyboard primary flows | Done | Formal audit pending |
 | 17 | Light/dark modes | Done | Browser-local |
