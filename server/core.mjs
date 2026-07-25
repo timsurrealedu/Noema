@@ -7,7 +7,7 @@ const parse=value=>{try{return JSON.parse(value)}catch{return []}};
 const required=(value,name,max=10000)=>{if(typeof value!=="string"||!value.trim())throw new Error(`${name} is required`);if(value.length>max)throw new Error(`${name} is too long`);return value.trim()};
 const requireVersion=(input,before)=>{if(before&&input.version!==before.version)throw Object.assign(new Error(`Expected version ${before.version}`),{status:409,code:"VERSION_CONFLICT"})};
 const audit=(db,action,type,id,summary,inverse=null,actor=null)=>db.prepare("INSERT INTO audit_events(id,actor_id,action,object_type,object_id,summary,inverse_json,created_at) VALUES(?,?,?,?,?,?,?,?)").run(randomUUID(),actor,action,type,id,summary,inverse?JSON.stringify(inverse):null,stamp());
-const objectTables={task:"tasks",event:"events",note:"notes",capture:"captures"};
+const objectTables={task:"tasks",event:"events",note:"notes",capture:"captures",project:"projects"};
 const insertRow=(db,table,row)=>{const columns=Object.keys(row);db.prepare(`INSERT INTO ${table}(${columns.join(",")}) VALUES(${columns.map(()=>"?").join(",")})`).run(...columns.map(column=>row[column]))};
 const deleteObject=(db,type,id)=>{db.prepare(`DELETE FROM ${objectTables[type]} WHERE id=?`).run(id);if(type==="note")db.prepare("DELETE FROM notes_fts WHERE id=?").run(id)};
 const reindexNote=(db,row)=>{db.prepare("DELETE FROM notes_fts WHERE id=?").run(row.id);db.prepare("INSERT INTO notes_fts(id,title,content,tags) VALUES(?,?,?,?)").run(row.id,row.title,row.content,parse(row.tags_json).join(" "))};
@@ -18,6 +18,9 @@ export function listState(db=getDatabase()){
     events:db.prepare("SELECT * FROM events ORDER BY day,time").all().map(row=>({...row,active:!!row.active})),
     notes:db.prepare("SELECT * FROM notes ORDER BY updated_at DESC").all().map(row=>({...row,ai:!!row.ai,favorite:!!row.favorite,trashed:!!row.trashed,tags:parse(row.tags_json),time:row.updated_at})),
     captures:db.prepare("SELECT * FROM captures ORDER BY created_at DESC").all().map(row=>({id:row.id,text:row.text,source:row.source,status:row.status,sourceLabel:row.source_label,objects:parse(row.objects_json),error:row.error,assets:assetsForCapture(row.id,db).map(asset=>({id:asset.id,name:asset.name,mime:asset.mime,size:asset.size})),createdAt:row.created_at,version:row.version})),
+    projects:db.prepare("SELECT * FROM projects ORDER BY name").all(),
+    taskDependencies:db.prepare("SELECT task_id AS taskId,depends_on_task_id AS dependsOnTaskId,created_at AS createdAt FROM task_dependencies").all(),
+    noteLinks:db.prepare("SELECT source_note_id AS sourceNoteId,target_note_id AS targetNoteId,link_text AS linkText,created_at AS createdAt FROM note_links").all(),
   };
 }
 
@@ -40,6 +43,7 @@ export function saveNote(input,db=getDatabase(),actor=null){
   requireVersion(input,before);
   db.prepare(`INSERT INTO notes(id,title,excerpt,content,tags_json,ai,source,favorite,trashed,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,excerpt=excluded.excerpt,content=excluded.content,tags_json=excluded.tags_json,ai=excluded.ai,source=excluded.source,favorite=excluded.favorite,trashed=excluded.trashed,updated_at=excluded.updated_at,version=notes.version+1`).run(id,title,excerpt,content,JSON.stringify(input.tags||[]),input.ai?1:0,input.source||null,input.favorite?1:0,input.trashed?1:0,before?.created_at||time,time);
   db.prepare("DELETE FROM notes_fts WHERE id=?").run(id);db.prepare("INSERT INTO notes_fts(id,title,content,tags) VALUES(?,?,?,?)").run(id,title,content,(input.tags||[]).join(" "));
+  reindexNoteLinks(id,content,db);
   audit(db,before?"update":"create","note",id,title,before?{op:"restore",row:before}:{op:"delete"},actor);return db.prepare("SELECT * FROM notes WHERE id=?").get(id);
 }
 
@@ -84,9 +88,11 @@ export function listAuditEvents(limit=100,db=getDatabase()){
 function applyInverse(db,event,inverse){
   const table=objectTables[event.object_type];
   if(inverse.op==="delete"){if(!table)throw new Error("Unsupported object type");deleteObject(db,event.object_type,event.object_id);return}
-  if(inverse.op==="restore"){const row=inverse.row;if(!table||!row)throw new Error("Unsupported restore inverse");db.prepare(`DELETE FROM ${table} WHERE id=?`).run(row.id);insertRow(db,table,row);if(event.object_type==="note")reindexNote(db,row);return}
+  if(inverse.op==="restore"){const row=inverse.row;if(!table||!row)throw new Error("Unsupported restore inverse");db.prepare(`DELETE FROM ${table} WHERE id=?`).run(row.id);insertRow(db,table,row);if(event.object_type==="note"){reindexNote(db,row);reindexNoteLinks(row.id,row.content,db)}return}
   if(inverse.op==="capture-status"){db.prepare("UPDATE captures SET status=?,updated_at=?,version=version+1 WHERE id=?").run(inverse.status,stamp(),event.object_id);return}
   if(inverse.op==="delete-many"){for(const object of inverse.objects||[])if(objectTables[object.type]&&object.type!=="capture")deleteObject(db,object.type,object.id);if(inverse.captureStatus)db.prepare("UPDATE captures SET status=?,updated_at=?,version=version+1 WHERE id=?").run(inverse.captureStatus,stamp(),event.object_id);return}
+  if(inverse.op==="delete-dependency"){db.prepare("DELETE FROM task_dependencies WHERE task_id=? AND depends_on_task_id=?").run(inverse.taskId,inverse.dependsOnTaskId);return}
+  if(inverse.op==="create-dependency"){db.prepare("INSERT OR IGNORE INTO task_dependencies(task_id,depends_on_task_id,created_at) VALUES(?,?,?)").run(inverse.taskId,inverse.dependsOnTaskId,inverse.createdAt||stamp());return}
   throw new Error("Unsupported inverse operation");
 }
 
@@ -101,3 +107,59 @@ export function undoAuditEvent(auditId,db=getDatabase(),actor=null){
 export function searchNotes(query,db=getDatabase()){
   const q=required(query,"query",500).replace(/["']/g," ");return db.prepare("SELECT n.* FROM notes_fts f JOIN notes n ON n.id=f.id WHERE notes_fts MATCH ? AND n.trashed=0 ORDER BY rank LIMIT 50").all(q);
 }
+
+export function saveProject(input,db=getDatabase(),actor=null){
+  const id=input.id||randomUUID(),name=required(input.name,"name",200),time=stamp(),before=db.prepare("SELECT * FROM projects WHERE id=?").get(id);
+  requireVersion(input,before);
+  const status=["Active","Planned","Archived"].includes(input.status)?input.status:"Active";
+  const summary=String(input.summary||"").slice(0,1000);
+  db.prepare(`INSERT INTO projects(id,name,status,summary,created_at,updated_at) VALUES(?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET name=excluded.name,status=excluded.status,summary=excluded.summary,updated_at=excluded.updated_at,version=projects.version+1`).run(id,name,status,summary,before?.created_at||time,time);
+  audit(db,before?"update":"create","project",id,name,before?{op:"restore",row:before}:{op:"delete"},actor);
+  return db.prepare("SELECT * FROM projects WHERE id=?").get(id);
+}
+
+export function deleteProject(id,db=getDatabase(),actor=null){
+  const before=db.prepare("SELECT * FROM projects WHERE id=?").get(id);if(!before)throw Object.assign(new Error("Project not found"),{status:404});
+  db.prepare("DELETE FROM projects WHERE id=?").run(id);
+  audit(db,"delete","project",id,before.name,{op:"restore",row:before},actor);return {ok:true};
+}
+
+export function saveTaskDependency(taskId,dependsOnTaskId,db=getDatabase(),actor=null){
+  if(taskId===dependsOnTaskId)throw Object.assign(new Error("A task cannot depend on itself"),{status:409});
+  const task=db.prepare("SELECT id FROM tasks WHERE id=?").get(taskId);if(!task)throw Object.assign(new Error("Task not found"),{status:404});
+  const dep=db.prepare("SELECT id FROM tasks WHERE id=?").get(dependsOnTaskId);if(!dep)throw Object.assign(new Error("Dependency task not found"),{status:404});
+  const existing=db.prepare("SELECT 1 FROM task_dependencies WHERE task_id=? AND depends_on_task_id=?").get(taskId,dependsOnTaskId);
+  if(existing)return {taskId,dependsOnTaskId,createdAt:null};
+  const reciprocal=db.prepare("SELECT 1 FROM task_dependencies WHERE task_id=? AND depends_on_task_id=?").get(dependsOnTaskId,taskId);
+  if(reciprocal)throw Object.assign(new Error("Circular dependency detected"),{status:409});
+  const time=stamp();
+  db.prepare("INSERT OR IGNORE INTO task_dependencies(task_id,depends_on_task_id,created_at) VALUES(?,?,?)").run(taskId,dependsOnTaskId,time);
+  audit(db,"create","task_dependency",`${taskId}->${dependsOnTaskId}`,"",{op:"delete-dependency",taskId,dependsOnTaskId},actor);
+  return {taskId,dependsOnTaskId,createdAt:time};
+}
+
+export function removeTaskDependency(taskId,dependsOnTaskId,db=getDatabase(),actor=null){
+  const before=db.prepare("SELECT * FROM task_dependencies WHERE task_id=? AND depends_on_task_id=?").get(taskId,dependsOnTaskId);
+  if(!before)throw Object.assign(new Error("Dependency not found"),{status:404});
+  db.prepare("DELETE FROM task_dependencies WHERE task_id=? AND depends_on_task_id=?").run(taskId,dependsOnTaskId);
+  audit(db,"delete","task_dependency",`${taskId}->${dependsOnTaskId}`,"",{op:"create-dependency",taskId,dependsOnTaskId,createdAt:before.created_at},actor);
+  return {ok:true};
+}
+
+export function dependenciesForTask(taskId,db=getDatabase()){return db.prepare("SELECT depends_on_task_id AS dependsOnTaskId,created_at AS createdAt FROM task_dependencies WHERE task_id=?").all(taskId)}
+export function dependentsForTask(taskId,db=getDatabase()){return db.prepare("SELECT task_id AS taskId,created_at AS createdAt FROM task_dependencies WHERE depends_on_task_id=?").all(taskId)}
+
+const linkPattern=/\[\[([^|\]]+)(?:\|[^\]]+)?\]\]/g;
+export function noteLinks(content){const links=new Map();for(const match of String(content).matchAll(linkPattern)){const text=match[1].trim();if(text)links.set(text.toLowerCase(),text)}return [...links.values()]}
+
+export function reindexNoteLinks(noteId,content,db=getDatabase()){
+  db.prepare("DELETE FROM note_links WHERE source_note_id=?").run(noteId);
+  const links=noteLinks(content),time=stamp();
+  for(const text of links){
+    const target=db.prepare("SELECT id FROM notes WHERE LOWER(title)=LOWER(?) AND trashed=0").get(text);
+    if(target)db.prepare("INSERT OR IGNORE INTO note_links(source_note_id,target_note_id,link_text,created_at) VALUES(?,?,?,?)").run(noteId,target.id,text,time);
+  }
+}
+
+export function linksForNote(noteId,db=getDatabase()){return db.prepare("SELECT target_note_id AS targetNoteId,link_text AS linkText,created_at AS createdAt FROM note_links WHERE source_note_id=?").all(noteId)}
+export function backlinksForNote(noteId,db=getDatabase()){return db.prepare("SELECT source_note_id AS sourceNoteId,link_text AS linkText,created_at AS createdAt FROM note_links WHERE target_note_id=?").all(noteId)}

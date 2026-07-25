@@ -190,3 +190,45 @@ test("sessions list per device and revoke individually",async()=>{
     assert.equal(auth.revokeSessionById(target.id,first.user.id,db),false);
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
+
+test("projects persist, version-conflict, and undo restores deletions",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const created=core.saveProject({id:"p1",name:"LifeOS",status:"Active",summary:"Build backend"},db);
+    assert.equal(created.name,"LifeOS");assert.equal(created.version,1);
+    const updated=core.saveProject({id:"p1",name:"LifeOS v2",status:"Active",summary:"Build backend",version:1},db);
+    assert.equal(updated.version,2);
+    assert.throws(()=>core.saveProject({id:"p1",name:"Stale",version:1},db),error=>error.status===409&&error.code==="VERSION_CONFLICT");
+    const state=core.listState(db);assert.equal(state.projects.length,1);
+    core.deleteProject("p1",db,"owner");assert.equal(core.listState(db).projects.length,0);
+    const delAudit=core.listAuditEvents(10,db).find(event=>event.action==="delete"&&event.objectType==="project");
+    core.undoAuditEvent(delAudit.id,db,"owner");assert.equal(core.listState(db).projects[0].name,"LifeOS v2");
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("task dependencies block self- and circular references and undo",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    core.saveTask({id:"t1",title:"First",project:"Inbox",due:"Today"},db);
+    core.saveTask({id:"t2",title:"Second",project:"Inbox",due:"Today"},db);
+    core.saveTaskDependency("t1","t2",db,"owner");
+    assert.throws(()=>core.saveTaskDependency("t1","t1",db),error=>error.status===409);
+    assert.throws(()=>core.saveTaskDependency("t2","t1",db),error=>error.status===409);
+    assert.deepEqual(core.dependenciesForTask("t1",db).map(d=>d.dependsOnTaskId),["t2"]);
+    assert.deepEqual(core.dependentsForTask("t2",db).map(d=>d.taskId),["t1"]);
+    const depAudit=core.listAuditEvents(10,db).find(event=>event.action==="create"&&event.objectType==="task_dependency");
+    core.undoAuditEvent(depAudit.id,db,"owner");assert.equal(core.dependenciesForTask("t1",db).length,0);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("note links are extracted from [[Title]] and support backlinks",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    core.saveNote({id:"n1",title:"Target note",content:"Body",tags:[]},db);
+    core.saveNote({id:"n2",title:"Source note",content:"See [[Target note]] and [[Target note|alias]]",tags:[]},db);
+    assert.deepEqual(core.noteLinks("See [[Target note]] and [[Target note|alias]]"),["Target note"]);
+    const links=core.linksForNote("n2",db);assert.equal(links.length,1);assert.equal(links[0].targetNoteId,"n1");
+    const backlinks=core.backlinksForNote("n1",db);assert.equal(backlinks.length,1);assert.equal(backlinks[0].sourceNoteId,"n2");
+    const state=core.listState(db);assert.equal(state.noteLinks.length,1);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});

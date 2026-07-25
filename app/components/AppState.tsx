@@ -12,8 +12,11 @@ export type Capture = {
   id:string; text:string; createdAt:string; status:"processing"|"review"|"confirmed"|"failed"|"dismissed";
   source:CaptureSource; sourceLabel:string; progress?:number; error?:string; objects:CaptureObject[]; assets?:{id:string;name:string;mime:string;size:number}[]; version?:number;
 };
+export type Project = {id:string; name:string; status:"Active"|"Planned"|"Archived"; summary:string; version?:number};
+export type TaskDependency = {taskId:string; dependsOnTaskId:string; createdAt:string};
+export type NoteLink = {sourceNoteId:string; targetNoteId:string; linkText:string; createdAt:string};
 
-type AppData = {tasks:Task[]; events:Event[]; notes:Note[]; captures:Capture[]};
+type AppData = {tasks:Task[]; events:Event[]; notes:Note[]; captures:Capture[]; projects:Project[]; taskDependencies:TaskDependency[]; noteLinks:NoteLink[]};
 type AppState = AppData & {
   addCapture:(text:string)=>string;
   addFileCapture:(file:File)=>string;
@@ -55,6 +58,9 @@ const seed: AppData = {
     {id:"invoice",text:"Fwd: Invoice INV-001873",createdAt:"2026-07-24T08:15:00+07:00",status:"failed",source:"file",sourceLabel:"Email attachment · PDF",error:"The attachment could not be read. Try processing it again.",objects:[]},
     {id:"newsletter",text:"Ideas for the next newsletter",createdAt:"2026-07-23T19:16:00+07:00",status:"confirmed",source:"voice",sourceLabel:"Voice · 42 sec",objects:[{type:"note",title:"Newsletter ideas",detail:"6 ideas · Source preserved"}]},
   ],
+  projects:[],
+  taskDependencies:[],
+  noteLinks:[],
 };
 
 const storageKey="lifeos-state-v2";
@@ -84,7 +90,7 @@ export function AppStateProvider({children}:{children:ReactNode}) {
 
   useEffect(()=>{
     try {const saved=localStorage.getItem(storageKey);if(saved)setData({...seed,...JSON.parse(saved)})} catch {}
-    api("/state").then(remote=>setData(remote)).catch(()=>{});
+    api("/state").then(remote=>setData(current=>({...current,...remote,projects:remote.projects||[],taskDependencies:remote.taskDependencies||[],noteLinks:remote.noteLinks||[]}))).catch(()=>{});
     setLoaded(true);
   },[]);
   useEffect(()=>{if(loaded)localStorage.setItem(storageKey,JSON.stringify(data))},[data,loaded]);
