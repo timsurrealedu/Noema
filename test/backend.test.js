@@ -17,6 +17,14 @@ test("SQLite core objects persist and remain searchable",async()=>{
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
+test("mutations reject stale versions and replay idempotency keys",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const {idempotent}=await import("../server/http.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    core.saveTask({id:"t1",title:"First",project:"Inbox",due:"Today"},db);const updated=core.saveTask({id:"t1",title:"Second",project:"Inbox",due:"Today",version:1},db);assert.equal(updated.version,2);assert.throws(()=>core.saveTask({id:"t1",title:"Stale",project:"Inbox",due:"Today",version:1},db),error=>error.status===409&&error.code==="VERSION_CONFLICT");
+    const request=new Request("https://lifeos.test/api/v1/tasks",{method:"POST",headers:{"Idempotency-Key":"same-request"}}),input={title:"Once"};let calls=0,work=()=>({calls:++calls});assert.deepEqual(idempotent(request,"owner",input,work,db).value,{calls:1});assert.deepEqual(idempotent(request,"owner",input,work,db).value,{calls:1});assert.equal(calls,1);assert.throws(()=>idempotent(request,"owner",{title:"Different"},work,db),error=>error.status===409&&error.code==="IDEMPOTENCY_CONFLICT");
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
 test("password login stores only hashes and sessions revoke",async()=>{
   const dir=temp();const {openDatabase}=await import("../server/db.mjs");const auth=await import("../server/auth.mjs");const db=openDatabase(join(dir,"test.sqlite"));
   try{

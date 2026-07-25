@@ -5,7 +5,7 @@
 - [x] Runtime configuration and local environment template
 - [x] SQLite connection, WAL settings, initial migration, FTS5, and test database
 - [~] Single-owner authentication, session revocation, same-origin enforcement, and login rate limits; persistent/distributed throttling remains
-- [~] Stable API error envelope and input validation; idempotency/version-conflict enforcement remains
+- [x] Stable API error envelope, input validation, idempotent core mutations, and version-conflict enforcement
 - [~] Audit-event persistence exists; inverse application and undo endpoint remain
 
 ## Phase 2 — Core objects

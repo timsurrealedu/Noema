@@ -3,14 +3,14 @@
 import {createContext, ReactNode, useContext, useEffect, useState} from "react";
 import {showUnavailable} from "./ServiceNotice";
 
-export type Task = {id:string; title:string; project:string; due:string; priority:"High"|"Medium"|"Low"; completed:boolean; recurrence?:string; subtasks?:string[]; archived?:boolean};
-export type Event = {id:string; title:string; day:number; time:string; top:number; height:number; location?:string; active?:boolean};
-export type Note = {id:string; title:string; excerpt:string; content:string; tags:string[]; time:string; ai:boolean; source?:string; favorite?:boolean; trashed?:boolean};
+export type Task = {id:string; title:string; project:string; due:string; priority:"High"|"Medium"|"Low"; completed:boolean; recurrence?:string; subtasks?:string[]; archived?:boolean; version?:number};
+export type Event = {id:string; title:string; day:number; time:string; top:number; height:number; location?:string; active?:boolean; version?:number};
+export type Note = {id:string; title:string; excerpt:string; content:string; tags:string[]; time:string; ai:boolean; source?:string; favorite?:boolean; trashed?:boolean; version?:number};
 export type CaptureSource = "typed"|"voice"|"file"|"link";
 export type CaptureObject = {type:"task"|"event"|"note"; title:string; detail:string};
 export type Capture = {
   id:string; text:string; createdAt:string; status:"processing"|"review"|"confirmed"|"failed"|"dismissed";
-  source:CaptureSource; sourceLabel:string; progress?:number; error?:string; objects:CaptureObject[];
+  source:CaptureSource; sourceLabel:string; progress?:number; error?:string; objects:CaptureObject[]; version?:number;
 };
 
 type AppData = {tasks:Task[]; events:Event[]; notes:Note[]; captures:Capture[]};
@@ -58,7 +58,7 @@ const storageKey="lifeos-state-v2";
 const Context=createContext<AppState|null>(null);
 
 async function api(path:string,method="GET",value?:unknown){
-  const response=await fetch(`/api/v1${path}`,{method,headers:value?{"Content-Type":"application/json"}:undefined,body:value?JSON.stringify(value):undefined});
+  const response=await fetch(`/api/v1${path}`,{method,headers:value?{"Content-Type":"application/json","Idempotency-Key":crypto.randomUUID()}:undefined,body:value?JSON.stringify(value):undefined});
   if(!response.ok)throw new Error((await response.json()).error?.message||"Backend request failed");
   return response.json();
 }
@@ -76,14 +76,14 @@ export function AppStateProvider({children}:{children:ReactNode}) {
 
   const persist=(path:string,method:string,value:unknown)=>void api(path,method,value).catch(error=>showUnavailable(`${error.message} Your change remains saved in this browser.`));
   const value:AppState={...data,
-    addCapture:text=>{const capture={id:crypto.randomUUID(),text,createdAt:new Date().toISOString(),status:"review" as const,source:"typed" as const,sourceLabel:"Typed capture",objects:[]};setData(current=>({...current,captures:[capture,...current.captures]}));persist("/captures","POST",capture);return capture.id},
-    updateCapture:(id,status)=>{setData(current=>({...current,captures:current.captures.map(item=>item.id===id?{...item,status}:item)}));persist(`/captures/${id}`,"PATCH",{status})},
-    toggleTask:id=>{const task=data.tasks.find(item=>item.id===id);if(!task)return;const changed={...task,completed:!task.completed};setData(current=>({...current,tasks:current.tasks.map(item=>item.id===id?changed:item)}));persist("/tasks","POST",changed)},
-    saveTask:task=>{setData(current=>({...current,tasks:current.tasks.some(item=>item.id===task.id)?current.tasks.map(item=>item.id===task.id?task:item):[task,...current.tasks]}));persist("/tasks","POST",task)},
-    saveEvent:event=>{setData(current=>({...current,events:current.events.some(item=>item.id===event.id)?current.events.map(item=>item.id===event.id?event:item):[...current.events,event]}));persist("/events","POST",event)},
-    saveNote:note=>{setData(current=>({...current,notes:current.notes.some(item=>item.id===note.id)?current.notes.map(item=>item.id===note.id?note:item):[note,...current.notes]}));persist("/notes","POST",note)},
-    trashNote:id=>{const note=data.notes.find(item=>item.id===id);if(!note)return;const changed={...note,trashed:true};setData(current=>({...current,notes:current.notes.map(item=>item.id===id?changed:item)}));persist("/notes","POST",changed)},
-    archiveTask:id=>{const task=data.tasks.find(item=>item.id===id);if(!task)return;const changed={...task,archived:true};setData(current=>({...current,tasks:current.tasks.map(item=>item.id===id?changed:item)}));persist("/tasks","POST",changed)},
+    addCapture:text=>{const capture={id:crypto.randomUUID(),text,createdAt:new Date().toISOString(),status:"review" as const,source:"typed" as const,sourceLabel:"Typed capture",objects:[],version:1};setData(current=>({...current,captures:[capture,...current.captures]}));persist("/captures","POST",capture);return capture.id},
+    updateCapture:(id,status)=>{const capture=data.captures.find(item=>item.id===id);if(!capture)return;setData(current=>({...current,captures:current.captures.map(item=>item.id===id?{...item,status,version:(item.version||0)+1}:item)}));persist(`/captures/${id}`,"PATCH",{status,version:capture.version})},
+    toggleTask:id=>{const task=data.tasks.find(item=>item.id===id);if(!task)return;const changed={...task,completed:!task.completed};setData(current=>({...current,tasks:current.tasks.map(item=>item.id===id?{...changed,version:(task.version||0)+1}:item)}));persist("/tasks","POST",changed)},
+    saveTask:task=>{const stored={...task,version:task.version?task.version+1:1};setData(current=>({...current,tasks:current.tasks.some(item=>item.id===task.id)?current.tasks.map(item=>item.id===task.id?stored:item):[stored,...current.tasks]}));persist("/tasks","POST",task)},
+    saveEvent:event=>{const stored={...event,version:event.version?event.version+1:1};setData(current=>({...current,events:current.events.some(item=>item.id===event.id)?current.events.map(item=>item.id===event.id?stored:item):[...current.events,stored]}));persist("/events","POST",event)},
+    saveNote:note=>{const stored={...note,version:note.version?note.version+1:1};setData(current=>({...current,notes:current.notes.some(item=>item.id===note.id)?current.notes.map(item=>item.id===note.id?stored:item):[stored,...current.notes]}));persist("/notes","POST",note)},
+    trashNote:id=>{const note=data.notes.find(item=>item.id===id);if(!note)return;const changed={...note,trashed:true};setData(current=>({...current,notes:current.notes.map(item=>item.id===id?{...changed,version:(note.version||0)+1}:item)}));persist("/notes","POST",changed)},
+    archiveTask:id=>{const task=data.tasks.find(item=>item.id===id);if(!task)return;const changed={...task,archived:true};setData(current=>({...current,tasks:current.tasks.map(item=>item.id===id?{...changed,version:(task.version||0)+1}:item)}));persist("/tasks","POST",changed)},
   };
   return <Context.Provider value={value}>{children}</Context.Provider>;
 }
