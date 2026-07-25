@@ -72,6 +72,13 @@ test("Gemini fallback keeps keys in headers and returns structured output",async
   assert.equal(result.provider,"gemini");assert.equal(result.result.answer,"grounded");assert.equal(request.options.headers["x-goog-api-key"],"test-secret");assert.equal(request.url.includes("test-secret"),false);assert.equal("maxLength" in geminiSchema({maxLength:2,type:"string"}),false);assert.equal(isCapacityError(new Error("429 RESOURCE_EXHAUSTED")),true);assert.equal(isCapacityError(new Error("invalid schema")),false);
 });
 
+test("Gemini multimodal sends base64 inline data and returns extracted text",async()=>{
+  const {runGeminiMultimodal}=await import("../server/ai.mjs");let request;
+  const result=await runGeminiMultimodal({prompt:"OCR this",base64:"abc",mimeType:"image/png",schema:{type:"object",required:["text"],properties:{text:{type:"string"}}},config:{geminiApiKey:"test-secret",geminiModel:"gemini-2.5-flash"},fetcher:async(url,options)=>{request={url,options};return Response.json({candidates:[{content:{parts:[{text:'{"text":"hello"}'}]}}]})}});
+  assert.equal(result.provider,"gemini");assert.equal(result.result.text,"hello");
+  const body=JSON.parse(request.options.body);assert.ok(body.contents[0].parts.some(part=>part.inlineData&&part.inlineData.data==="abc"&&part.inlineData.mimeType==="image/png"));
+});
+
 test("OpenAI fallback routes simple and complex work to appropriate models",async()=>{
   const {runOpenAI,selectOpenAIModel}=await import("../server/ai.mjs");const config={openaiApiKey:"test-secret",openaiFastModel:"chat-latest",openaiReasoningModel:"gpt-5.6"};let request;
   assert.deepEqual(selectOpenAIModel("schedule",config),{model:"chat-latest",reasoningEffort:null});assert.deepEqual(selectOpenAIModel("note",config),{model:"gpt-5.6",reasoningEffort:"low"});assert.deepEqual(selectOpenAIModel("math",config),{model:"gpt-5.6",reasoningEffort:"medium"});
@@ -158,6 +165,26 @@ test("deterministic extraction reads DOCX word/document.xml",async()=>{
     const docxPath=join(dir,"sample.docx");execFileSync("zip",["-r",docxPath,"word"],{cwd:docxDir});
     const asset=await storeAsset({stream:require("node:stream").Readable.from([require("node:fs").readFileSync(docxPath)]),name:"sample.docx",mime:"application/vnd.openxmlformats-officedocument.wordprocessingml.document"},config,db);
     const extracted=await extractText(asset,config);assert.equal(extracted.tool,"docx");assert.equal(extracted.text,"Hello from DOCX");
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("OCR extracts text from images via Gemini multimodal",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const {storeAsset}=await import("../server/objects.mjs");const {extractText}=await import("../server/extract.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  const config={dataDir:dir,objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs"),geminiApiKey:"test-secret",geminiModel:"gemini-2.5-flash"};require("node:fs").mkdirSync(config.objectsDir,{recursive:true});require("node:fs").mkdirSync(config.jobsDir,{recursive:true});
+  try{
+    const asset=await storeAsset({stream:require("node:stream").Readable.from([Buffer.from([137,80,78,71])]),name:"scan.png",mime:"image/png"},config,db);
+    const extracted=await extractText(asset,config,async()=>Response.json({candidates:[{content:{parts:[{text:'{"text":"scanned text"}'}]}}]}));
+    assert.equal(extracted.tool,"gemini");assert.equal(extracted.text,"scanned text");
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("transcription extracts text from audio via Gemini multimodal",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const {storeAsset}=await import("../server/objects.mjs");const {extractText}=await import("../server/extract.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  const config={dataDir:dir,objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs"),geminiApiKey:"test-secret",geminiModel:"gemini-2.5-flash"};require("node:fs").mkdirSync(config.objectsDir,{recursive:true});require("node:fs").mkdirSync(config.jobsDir,{recursive:true});
+  try{
+    const asset=await storeAsset({stream:require("node:stream").Readable.from([Buffer.from([255,251,144,100])]),name:"note.mp3",mime:"audio/mpeg"},config,db);
+    const extracted=await extractText(asset,config,async()=>Response.json({candidates:[{content:{parts:[{text:'{"text":"spoken words"}'}]}}]}));
+    assert.equal(extracted.tool,"gemini");assert.equal(extracted.text,"spoken words");
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 

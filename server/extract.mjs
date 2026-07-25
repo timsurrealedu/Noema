@@ -3,6 +3,7 @@ import {readFile} from "node:fs/promises";
 import {promisify} from "node:util";
 import {assetPath} from "./objects.mjs";
 import {loadConfig} from "./config.mjs";
+import {runGeminiMultimodal} from "./ai.mjs";
 
 const execFileAsync=promisify(execFile);
 const maxExtractedChars=20000;
@@ -12,7 +13,7 @@ function stripXml(xml){return xml.replace(/<[^>]+>/g,"").replace(/&lt;/g,"<").re
  * Deterministic text extraction. Returns {text,tool} or null when the asset
  * type has no deterministic adapter (images and audio need OCR/transcription).
  */
-export async function extractText(asset,config=loadConfig()){
+export async function extractText(asset,config=loadConfig(),fetcher=fetch){
   const path=assetPath(asset.sha256,config);
   if(asset.mime.startsWith("text/")){
     const content=await readFile(path,"utf8");
@@ -28,6 +29,14 @@ export async function extractText(asset,config=loadConfig()){
     try{
       const {stdout}=await execFileAsync("unzip",["-p",path,"word/document.xml"],{timeout:30000,maxBuffer:4*1024*1024});
       const text=stripXml(String(stdout));return text?{text:text.slice(0,maxExtractedChars),tool:"docx"}:null;
+    }catch{return null}
+  }
+  if((asset.mime.startsWith("image/")||asset.mime.startsWith("audio/"))&&config.geminiApiKey){
+    try{
+      const base64=await readFile(path,"base64");
+      const prompt=asset.mime.startsWith("image/")?"Extract all visible text from this image.":"Transcribe the spoken content from this audio file.";
+      const {result}=await runGeminiMultimodal({prompt,base64,mimeType:asset.mime,schema:{type:"object",properties:{text:{type:"string"}},required:["text"]},config,fetcher});
+      const text=String(result.text||"").trim();return text?{text:text.slice(0,maxExtractedChars),tool:"gemini"}:null;
     }catch{return null}
   }
   return null;

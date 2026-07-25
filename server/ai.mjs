@@ -17,6 +17,14 @@ export async function runGemini({prompt,schema,config,fetcher=fetch}){
   try{return {code:0,result:JSON.parse(text.replace(/^```json\s*|\s*```$/g,"")),provider:"gemini"}}catch{throw new Error("Gemini returned invalid structured output")}
 }
 
+export async function runGeminiMultimodal({prompt,base64,mimeType,schema,config,fetcher=fetch}){
+  if(!config.geminiApiKey)throw new Error("Gemini fallback is not configured");
+  const url=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.geminiModel)}:generateContent`,response=await fetcher(url,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":config.geminiApiKey},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt},{inlineData:{mimeType,data:base64}}]}],generationConfig:{responseMimeType:"application/json",responseSchema:geminiSchema(schema)}})});
+  if(!response.ok){const detail=(await response.text()).slice(0,300);throw new Error(`Gemini failed (HTTP ${response.status})${detail?`: ${detail}`:""}`)}
+  const body=await response.json(),text=body.candidates?.[0]?.content?.parts?.map(part=>part.text||"").join("").trim();if(!text)throw new Error("Gemini returned no structured result");
+  try{return {code:0,result:JSON.parse(text.replace(/^```json\s*|\s*```$/g,"")),provider:"gemini"}}catch{throw new Error("Gemini returned invalid structured output")}
+}
+
 export function selectOpenAIModel(workload,config){
   if(["simple","task","schedule"].includes(workload))return {model:config.openaiFastModel,reasoningEffort:null};
   return {model:config.openaiReasoningModel,reasoningEffort:["math","handwritten-math","research"].includes(workload)?"medium":"low"};
