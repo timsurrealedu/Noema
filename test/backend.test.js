@@ -37,7 +37,12 @@ test("unsafe cross-origin requests and repeated login attempts are rejected",asy
   const {requireSameOrigin}=await import("../server/http.mjs");const {enforceLoginRateLimit,clearLoginRateLimit}=await import("../server/auth.mjs");
   assert.throws(()=>requireSameOrigin(new Request("https://internal.test/api/v1/tasks",{method:"POST",headers:{host:"lifeos.test",origin:"https://evil.test"}})),error=>error.status===403);
   requireSameOrigin(new Request("https://internal.test/api/v1/tasks",{method:"POST",headers:{host:"lifeos.test",origin:"https://lifeos.test"}}));
-  const key=`rate-${Date.now()}`;for(let i=0;i<5;i++)enforceLoginRateLimit(key);assert.throws(()=>enforceLoginRateLimit(key),error=>error.status===429);clearLoginRateLimit(key);
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const key=`rate-${Date.now()}`;for(let i=0;i<5;i++)enforceLoginRateLimit(key,5,15*60_000,db);assert.throws(()=>enforceLoginRateLimit(key,5,15*60_000,db),error=>error.status===429);
+    db.close();const db2=openDatabase(join(dir,"test.sqlite"));assert.throws(()=>enforceLoginRateLimit(key,5,15*60_000,db2),error=>error.status===429);db2.close();
+    const db3=openDatabase(join(dir,"test.sqlite"));clearLoginRateLimit(key,db3);enforceLoginRateLimit(key,5,15*60_000,db3);db3.close();
+  }finally{rmSync(dir,{recursive:true,force:true})}
 });
 
 test("durable jobs claim once and record events",async()=>{
@@ -152,5 +157,36 @@ test("captures link uploaded assets and expose them in state",async()=>{
     core.createCapture({id:"c1",text:"slides.pdf",source:"file",assetIds:[asset.id]},db);
     const state=core.listState(db);assert.equal(state.captures[0].assets.length,1);assert.equal(state.captures[0].assets[0].name,"slides.pdf");
     assert.throws(()=>core.createCapture({text:"x",assetIds:["missing"]},db),error=>error.status===404);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("failed jobs retry up to max attempts and expired leases are reclaimed",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const jobs=await import("../server/jobs.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const id=jobs.enqueueJob("interpret-capture",{captureId:"c1"},db);
+    jobs.claimJob(["interpret-capture"],60,db);jobs.failJob(id,new Error("boom"),db);
+    let job=jobs.getJob(id,db);assert.equal(job.state,"queued");assert.equal(job.attempts,1);assert.equal(job.events.at(-1).type,"retry-scheduled");
+    jobs.claimJob(["interpret-capture"],60,db);jobs.failJob(id,"boom",db);
+    jobs.claimJob(["interpret-capture"],60,db);jobs.failJob(id,"boom",db);
+    job=jobs.getJob(id,db);assert.equal(job.state,"failed");assert.equal(job.attempts,3);assert.equal(job.events.at(-1).type,"failed");
+    const stuck=jobs.enqueueJob("skill-run",{skill:"assistant"},db);
+    jobs.claimJob(["skill-run"],60,db);
+    db.prepare("UPDATE jobs SET lease_until=? WHERE id=?").run(new Date(Date.now()-1000).toISOString(),stuck);
+    const reclaimed=jobs.claimJob(["skill-run"],60,db);assert.equal(reclaimed.id,stuck);assert.equal(jobs.getJob(stuck,db).events.at(-1).type,"reclaimed");
+    const doomed=jobs.enqueueJob("skill-run",{skill:"assistant"},db);
+    jobs.cancelJob(doomed,db);assert.equal(jobs.claimJob(["skill-run"],60,db),null);assert.equal(jobs.getJob(doomed,db).state,"cancelled");
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("sessions list per device and revoke individually",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const auth=await import("../server/auth.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db);
+    const first=await auth.login({email:"owner@example.com",password:"correct horse battery staple",device:"Pixel 8"},db,1);
+    const second=await auth.login({email:"owner@example.com",password:"correct horse battery staple",device:"ThinkPad"},db,1);
+    const sessions=auth.listSessions(first.user.id,db);assert.equal(sessions.length,2);assert.equal(sessions[0].device,"ThinkPad");
+    const target=sessions.find(session=>session.device==="Pixel 8");
+    assert.equal(auth.revokeSessionById(target.id,second.user.id,db),true);assert.equal(auth.authenticate(first.token,db),null);assert.ok(auth.authenticate(second.token,db));
+    assert.equal(auth.revokeSessionById(target.id,first.user.id,db),false);
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });

@@ -56,3 +56,10 @@ test("frontend roadmap separates UI completion from integrations",()=>{
   assert.match(roadmap,/## Backend integration backlog/);
   assert.match(roadmap,/Remote actions must show the shared/);
 });
+
+test("offline mutations queue durably and replay idempotently",()=>{
+  const state=read("app/components/AppState.tsx");
+  assert.match(state,/lifeos-offline-queue-v1/);
+  assert.match(state,/addEventListener\("online"/);
+  assert.match(state,/Idempotency-Key/);
+});

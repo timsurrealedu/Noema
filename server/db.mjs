@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS audit_events(id TEXT PRIMARY KEY,actor_id TEXT,action
 CREATE TABLE IF NOT EXISTS idempotency_keys(actor_id TEXT NOT NULL,key TEXT NOT NULL,request_hash TEXT NOT NULL,response_json TEXT NOT NULL,created_at TEXT NOT NULL,PRIMARY KEY(actor_id,key));
 CREATE TABLE IF NOT EXISTS assets(id TEXT PRIMARY KEY,sha256 TEXT UNIQUE NOT NULL,name TEXT NOT NULL,mime TEXT NOT NULL,size INTEGER NOT NULL,created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS capture_assets(capture_id TEXT NOT NULL REFERENCES captures(id) ON DELETE CASCADE,asset_id TEXT NOT NULL REFERENCES assets(id) ON DELETE CASCADE,PRIMARY KEY(capture_id,asset_id));
+CREATE TABLE IF NOT EXISTS login_attempts(key TEXT NOT NULL,attempted_at TEXT NOT NULL);
+CREATE INDEX IF NOT EXISTS login_attempts_key ON login_attempts(key,attempted_at);
 CREATE INDEX IF NOT EXISTS sessions_token ON sessions(token_hash,expires_at);
 CREATE INDEX IF NOT EXISTS jobs_claim ON jobs(state,created_at);
 CREATE INDEX IF NOT EXISTS job_events_job ON job_events(job_id,id);
@@ -27,11 +29,16 @@ export function openDatabase(path){
   const db=new DatabaseSync(path);
   db.exec("PRAGMA foreign_keys=ON; PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA busy_timeout=5000;");
   db.exec(schema);
+  ensureColumn(db,"jobs","attempts","INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(db,"jobs","max_attempts","INTEGER NOT NULL DEFAULT 3");
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(1,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(2,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(3,?)").run(new Date().toISOString());
+  db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(4,?)").run(new Date().toISOString());
   return db;
 }
+
+function ensureColumn(db,table,column,definition){if(!db.prepare(`PRAGMA table_info(${table})`).all().some(info=>info.name===column))db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)}
 
 export function getDatabase(config=loadConfig()){
   if(!singleton){ensureDataDirs(config);singleton=openDatabase(config.dbPath)}

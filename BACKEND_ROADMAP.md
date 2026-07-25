@@ -4,7 +4,7 @@
 
 - [x] Runtime configuration and local environment template
 - [x] SQLite connection, WAL settings, initial migration, FTS5, and test database
-- [~] Single-owner authentication, session revocation, same-origin enforcement, and login rate limits; persistent/distributed throttling remains
+- [x] Single-owner authentication, session revocation, same-origin enforcement, and persistent login rate limits
 - [x] Stable API error envelope, input validation, idempotent core mutations, and version-conflict enforcement
 - [x] Audit-event persistence, inverse application, and undo endpoint
 
@@ -13,7 +13,7 @@
 - [~] Tasks, events, notes, captures, and Today state API; projects and relationships remain
 - [ ] Markdown import/export and note version history
 - [~] FTS5 note search; backlink index remains
-- [~] Browser state hydrates and mirrors mutations through the API; durable offline queue remains
+- [x] Browser state hydrates and mirrors mutations through the API with a durable offline queue
 
 ## Phase 3 — Capture and assets
 
@@ -24,7 +24,7 @@
 
 ## Phase 4 — Codex jobs
 
-- [~] Durable database queue, leases, events, completion, failure, and cancellation flag; retries/reaping remain
+- [x] Durable database queue, leases, events, completion, failure, retries, lease reclaim, and cancellation
 - [x] Isolated read-only `codex exec --json` runner boundary
 - [x] Capture interpretation schema and structured-result validation
 - [x] SSE job events and frontend status integration

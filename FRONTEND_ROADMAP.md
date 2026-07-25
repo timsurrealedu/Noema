@@ -30,7 +30,7 @@ Frontend status is separate from backend integration. `Done` means the interacti
 
 ## Backend integration backlog
 
-- [ ] Authentication, sessions, two-factor authentication, and revocation
+- [~] Authentication, sessions, two-factor authentication, and revocation (sessions done; 2FA pending)
 - [ ] Durable database persistence, synchronization, backup, and workspace export
 - [~] Codex interpretation service with review, approval, cancellation, and audit records; execution approval and streaming agent sessions remain
 - [~] File/object storage, OCR, transcription, source preservation, and attachment retrieval (storage and retrieval done; OCR/transcription pending)
@@ -45,10 +45,10 @@ Frontend status is separate from backend integration. `Done` means the interacti
 |---|---|---|---|
 | 1 | Natural-language capture on desktop/mobile | Done | Pending AI/server |
 | 2 | Structured interpretation review | Done | Server apply done; AI provider pending |
-| 3 | Create/edit tasks | Done | Browser-local |
-| 4 | Create/edit events | Done | Browser-local |
-| 5 | Tasks/events appear on Today | Done | Browser-local |
-| 6 | Create/edit/search notes | Done | Browser-local |
+| 3 | Create/edit tasks | Done | Synced + offline queue |
+| 4 | Create/edit events | Done | Synced + offline queue |
+| 5 | Tasks/events appear on Today | Done | Synced + offline queue |
+| 6 | Create/edit/search notes | Done | Synced + offline queue |
 | 7 | Markdown portability | Done | Local import/export |
 | 8 | Original images remain linked | Done UI | Object storage + retrieval done |
 | 9 | AI information identified | Done | Pending AI |
