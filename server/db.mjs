@@ -81,6 +81,8 @@ export function openDatabase(path){
   ensureColumn(db,"events","reminder_at","TEXT");
   ensureColumn(db,"events","reminder_sent_at","TEXT");
   ensureColumn(db,"notes","draft","INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(db,"notifications","related_type","TEXT");
+  ensureColumn(db,"notifications","related_id","TEXT");
   db.exec("CREATE INDEX IF NOT EXISTS tasks_reminders ON tasks(reminder_at,reminder_sent_at); CREATE INDEX IF NOT EXISTS events_reminders ON events(reminder_at,reminder_sent_at);");
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(1,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(2,?)").run(new Date().toISOString());
@@ -101,6 +103,7 @@ export function openDatabase(path){
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(17,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(18,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(19,?)").run(new Date().toISOString());
+  db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(20,?)").run(new Date().toISOString());
   return db;
 }
 
