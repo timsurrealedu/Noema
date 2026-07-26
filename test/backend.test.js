@@ -33,6 +33,11 @@ test("password login stores only hashes and sessions revoke",async()=>{
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
+test("TOTP login follows RFC 6238 and rejects replay",async()=>{
+  const dir=temp(),secret="GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db);assert.equal(auth.totp(secret,1),"287082");assert.equal(auth.verifyTotp(secret,"287082",user.id,db,1),true);assert.equal(auth.verifyTotp(secret,"287082",user.id,db,1),false);const code=auth.totp(secret),challenge=await auth.login({email:user.email,password:"correct horse battery staple",totpSecret:secret},db,1);assert.equal(challenge.mfaRequired,true);const session=await auth.login({email:user.email,password:"correct horse battery staple",totpSecret:secret,totpCode:code},db,1);assert.ok(session.token);assert.ok(auth.authenticate(session.token,db).mfa_verified_at)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
 test("unsafe cross-origin requests and repeated login attempts are rejected",async()=>{
   const {requireSameOrigin}=await import("../server/http.mjs");const {enforceLoginRateLimit,clearLoginRateLimit}=await import("../server/auth.mjs");
   assert.throws(()=>requireSameOrigin(new Request("https://internal.test/api/v1/tasks",{method:"POST",headers:{host:"lifeos.test",origin:"https://evil.test"}})),error=>error.status===403);

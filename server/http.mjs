@@ -1,6 +1,7 @@
 import {authenticate} from "./auth.mjs";
 import {createHash} from "node:crypto";
 import {getDatabase} from "./db.mjs";
+import {loadConfig} from "./config.mjs";
 
 export const sessionCookie="lifeos_session";
 export function json(data,status=200,headers={}){return Response.json(data,{status,headers:{"Cache-Control":"no-store",...headers}})}
@@ -14,6 +15,7 @@ export function requireSameOrigin(request){
   if(!origin&&request.headers.get("sec-fetch-site")==="cross-site")throw Object.assign(new Error("Cross-site request rejected"),{status:403});
 }
 export function requireUser(request){requireSameOrigin(request);const user=authenticate(cookie(request,sessionCookie));if(!user)throw Object.assign(new Error("Authentication required"),{status:401});return user}
+export function requireMfa(request){const user=requireUser(request);if(loadConfig().totpSecret&&!user.mfa_verified_at)throw Object.assign(new Error("Sign in again with your authenticator code to continue"),{status:403,code:"MFA_REQUIRED"});return user}
 export function idempotent(request,actor,input,work,db=getDatabase()){
   const key=request.headers.get("idempotency-key");if(!key)return {value:work(),replayed:false};if(key.length>200)throw new Error("Idempotency-Key is too long");
   const hash=createHash("sha256").update(JSON.stringify(input)).digest("hex"),prior=db.prepare("SELECT request_hash,response_json FROM idempotency_keys WHERE actor_id=? AND key=?").get(actor,key);

@@ -75,3 +75,10 @@ test("Activity reads durable audit events and executes undo",()=>{
   assert.match(activity,/\/api\/v1\/audit\/\$\{event\.id\}\/undo/);
   assert.match(activity,/Idempotency-Key/);
 });
+
+test("login supports an optional authenticator challenge",()=>{
+  const login=read("app/login/page.tsx");
+  assert.match(login,/mfaRequired/);
+  assert.match(login,/autoComplete="one-time-code"/);
+  assert.match(login,/pattern="\[0-9\]\{6\}"/);
+});

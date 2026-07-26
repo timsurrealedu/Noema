@@ -12,6 +12,8 @@ npm run dev
 
 Set a strong `LIFEOS_OWNER_PASSWORD` in `.env.local`. Backend features are disabled unless their environment flags are enabled.
 
+Optional two-factor login: set `LIFEOS_TOTP_SECRET` to the same 160-bit-or-longer base32 secret configured in your authenticator app. Enabling it also requires MFA-authenticated sessions for compiler runs, AI approvals, and session revocation.
+
 Optional fallbacks: set `GEMINI_API_KEY` from Google AI Studio and/or `OPENAI_API_KEY`. The order is Codex → Gemini → OpenAI on explicit capacity/quota exhaustion. OpenAI routes simple tasks and schedules to `chat-latest`, notes and code to `gpt-5.6` with low reasoning, and math/research to `gpt-5.6` with medium reasoning. Override these with `LIFEOS_GEMINI_MODEL`, `LIFEOS_OPENAI_FAST_MODEL`, and `LIFEOS_OPENAI_REASONING_MODEL`.
 
 ## Verification
