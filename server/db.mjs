@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS assets(id TEXT PRIMARY KEY,sha256 TEXT UNIQUE NOT NUL
 CREATE TABLE IF NOT EXISTS capture_assets(capture_id TEXT NOT NULL REFERENCES captures(id) ON DELETE CASCADE,asset_id TEXT NOT NULL REFERENCES assets(id) ON DELETE CASCADE,PRIMARY KEY(capture_id,asset_id));
 CREATE TABLE IF NOT EXISTS login_attempts(key TEXT NOT NULL,attempted_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS totp_uses(user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,counter INTEGER NOT NULL,used_at TEXT NOT NULL,PRIMARY KEY(user_id,counter));
+CREATE TABLE IF NOT EXISTS recovery_codes(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,code_hash TEXT NOT NULL,created_at TEXT NOT NULL,used_at TEXT);
 CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY,name TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'Active',summary TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS task_dependencies(task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,depends_on_task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,created_at TEXT NOT NULL,PRIMARY KEY(task_id,depends_on_task_id));
 CREATE TABLE IF NOT EXISTS note_links(source_note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,target_note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,link_text TEXT NOT NULL,created_at TEXT NOT NULL,PRIMARY KEY(source_note_id,target_note_id,link_text));
@@ -63,6 +64,10 @@ export function openDatabase(path){
   ensureColumn(db,"jobs","attempts","INTEGER NOT NULL DEFAULT 0");
   ensureColumn(db,"jobs","max_attempts","INTEGER NOT NULL DEFAULT 3");
   ensureColumn(db,"sessions","mfa_verified_at","TEXT");
+  ensureColumn(db,"users","totp_secret_enc","TEXT");
+  ensureColumn(db,"users","totp_pending_enc","TEXT");
+  ensureColumn(db,"users","totp_pending_at","TEXT");
+  ensureColumn(db,"users","totp_env_disabled","INTEGER NOT NULL DEFAULT 0");
   ensureColumn(db,"tasks","reminder_at","TEXT");
   ensureColumn(db,"tasks","reminder_sent_at","TEXT");
   ensureColumn(db,"events","reminder_at","TEXT");
@@ -81,6 +86,7 @@ export function openDatabase(path){
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(10,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(11,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(12,?)").run(new Date().toISOString());
+  db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(13,?)").run(new Date().toISOString());
   return db;
 }
 
