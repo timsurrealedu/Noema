@@ -82,3 +82,8 @@ test("login supports an optional authenticator challenge",()=>{
   assert.match(login,/autoComplete="one-time-code"/);
   assert.match(login,/pattern="\[0-9\]\{6\}"/);
 });
+
+test("Settings workspace export downloads a streamed archive",()=>{
+  assert.match(read("app/components/ServiceNotice.tsx"),/location\.assign\("\/api\/v1\/export"\)/);
+  const route=read("app/api/v1/export/route.ts");assert.match(route,/requireMfa/);assert.match(route,/application\/x-tar/);assert.match(route,/workspace\.json/);assert.match(route,/assets\//);
+});

@@ -4,28 +4,29 @@
 - cluster-only mode — file stats not available
 
 ## Summary
-- 469 nodes · 1008 edges · 29 communities (23 shown, 6 thin omitted)
+- 478 nodes · 1005 edges · 30 communities (24 shown, 6 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 1 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `5b7ca7e7`
+- Built from commit: `4b3c3b33`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- json
 - core.mjs
 - AppState.tsx
+- json
 - modules.mjs
 - scripts
-- ops.mjs
+- skills.mjs
 - ModuleShell.tsx
 - compilerOptions
 - auth.mjs
-- skills.mjs
+- ops.mjs
 - compiler.mjs
 - objects.mjs
+- ai.mjs
 - jobs.mjs
 - backend.test.js
 - frontend.test.js
@@ -43,12 +44,12 @@
 2. `handle()` - 43 edges
 3. `requireUser()` - 38 edges
 4. `body()` - 20 edges
-5. `loadConfig()` - 18 edges
+5. `loadConfig()` - 17 edges
 6. `idempotent()` - 17 edges
 7. `compilerOptions` - 15 edges
 8. `now()` - 14 edges
-9. `getDatabase()` - 14 edges
-10. `stamp()` - 13 edges
+9. `stamp()` - 13 edges
+10. `audit()` - 13 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `POST()` --calls--> `enqueueJob()`  [EXTRACTED]
@@ -65,31 +66,31 @@
 ## Import Cycles
 - None detected.
 
-## Communities (29 total, 6 thin omitted)
+## Communities (30 total, 6 thin omitted)
 
-### Community 0 - "json"
-Cohesion: 0.12
-Nodes (41): POST(), GET(), POST(), POST(), DELETE(), POST(), POST(), PATCH() (+33 more)
-
-### Community 1 - "core.mjs"
+### Community 0 - "core.mjs"
 Cohesion: 0.08
-Nodes (50): POST(), GET(), GET(), GET(), GET(), POST(), POST(), GET() (+42 more)
+Nodes (49): POST(), GET(), GET(), GET(), GET(), POST(), POST(), GET() (+41 more)
 
-### Community 2 - "AppState.tsx"
+### Community 1 - "AppState.tsx"
 Cohesion: 0.06
 Nodes (43): blankEvent(), CalendarPage(), days, CaptureInbox(), CaptureRow(), Filter, filters, matches() (+35 more)
+
+### Community 2 - "json"
+Cohesion: 0.15
+Nodes (33): POST(), GET(), POST(), POST(), DELETE(), POST(), POST(), PATCH() (+25 more)
 
 ### Community 3 - "modules.mjs"
 Cohesion: 0.09
 Nodes (40): GET(), POST(), GET(), POST(), POST(), GET(), POST(), POST() (+32 more)
 
 ### Community 4 - "scripts"
-Cohesion: 0.06
-Nodes (32): next, dependencies, next, @phosphor-icons/react, react, react-dom, devDependencies, @types/node (+24 more)
+Cohesion: 0.05
+Nodes (36): next, dependencies, next, @phosphor-icons/react, react, react-dom, tar-stream, devDependencies (+28 more)
 
-### Community 5 - "ops.mjs"
-Cohesion: 0.13
-Nodes (18): GET(), terminal, backup, ensureDataDirs(), ensureColumn(), getDatabase(), openDatabase(), cronDue() (+10 more)
+### Community 5 - "skills.mjs"
+Cohesion: 0.12
+Nodes (26): POST(), GET(), terminal, absolute(), ensureDataDirs(), loadConfig(), root, ensureColumn() (+18 more)
 
 ### Community 6 - "ModuleShell.tsx"
 Cohesion: 0.10
@@ -103,9 +104,9 @@ Nodes (25): dom, dom.iterable, esnext, next-env.d.ts, .next/types/**/*.ts, node_
 Cohesion: 0.23
 Nodes (17): GET(), authenticate(), base32(), clearLoginRateLimit(), enforceLoginRateLimit(), ensureOwner(), hashPassword(), hashToken() (+9 more)
 
-### Community 9 - "skills.mjs"
-Cohesion: 0.20
-Nodes (16): geminiSchema(), isCapacityError(), runAI(), runFallback(), runGemini(), runGeminiMultimodal(), runOpenAI(), schemaKeys (+8 more)
+### Community 9 - "ops.mjs"
+Cohesion: 0.18
+Nodes (12): GET(), safe(), backup, createBackup(), exportTables, exportWorkspace(), importV1(), keyFor() (+4 more)
 
 ### Community 10 - "compiler.mjs"
 Cohesion: 0.28
@@ -115,45 +116,49 @@ Nodes (10): GET(), buildCommand(), cleanupWorktree(), compilerCapabilities(), ex
 Cohesion: 0.30
 Nodes (8): GET(), POST(), allowedMimes, assetPath(), attachAssets(), getAsset(), now(), storeAsset()
 
-### Community 12 - "jobs.mjs"
+### Community 12 - "ai.mjs"
+Cohesion: 0.38
+Nodes (9): geminiSchema(), isCapacityError(), runAI(), runFallback(), runGemini(), runGeminiMultimodal(), runOpenAI(), schemaKeys (+1 more)
+
+### Community 13 - "jobs.mjs"
 Cohesion: 0.64
 Nodes (7): addJobEvent(), cancelJob(), claimJob(), enqueueJob(), failJob(), finishJob(), now()
 
-### Community 13 - "backend.test.js"
+### Community 14 - "backend.test.js"
 Cohesion: 0.29
 Nodes (5): assert, {join}, {mkdtempSync,rmSync}, test, {tmpdir}
 
-### Community 14 - "frontend.test.js"
+### Community 15 - "frontend.test.js"
 Cohesion: 0.29
 Nodes (5): assert, fs, path, root, test
 
-### Community 15 - "page.tsx"
+### Community 16 - "page.tsx"
 Cohesion: 0.40
 Nodes (3): AuditEvent, icons, time
 
-### Community 16 - "page.tsx"
+### Community 17 - "page.tsx"
 Cohesion: 0.40
 Nodes (3): Language, Result, starters
 
 ## Knowledge Gaps
-- **100 isolated node(s):** `config`, `target`, `dom`, `dom.iterable`, `esnext` (+95 more)
+- **103 isolated node(s):** `config`, `target`, `dom`, `dom.iterable`, `esnext` (+98 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDatabase()` connect `ops.mjs` to `json`, `core.mjs`, `modules.mjs`, `auth.mjs`, `skills.mjs`, `objects.mjs`, `jobs.mjs`?**
-  _High betweenness centrality (0.067) - this node is a cross-community bridge._
-- **Why does `loadConfig()` connect `json` to `core.mjs`, `ops.mjs`, `skills.mjs`?**
-  _High betweenness centrality (0.023) - this node is a cross-community bridge._
+- **Why does `getDatabase()` connect `skills.mjs` to `core.mjs`, `json`, `modules.mjs`, `auth.mjs`, `objects.mjs`, `jobs.mjs`?**
+  _High betweenness centrality (0.058) - this node is a cross-community bridge._
+- **Why does `loadConfig()` connect `skills.mjs` to `core.mjs`, `json`?**
+  _High betweenness centrality (0.019) - this node is a cross-community bridge._
 - **What connects `config`, `target`, `dom` to the rest of the system?**
-  _100 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `json` be split into smaller, more focused modules?**
-  _Cohesion score 0.11971153846153847 - nodes in this community are weakly interconnected._
+  _103 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `core.mjs` be split into smaller, more focused modules?**
-  _Cohesion score 0.08022598870056497 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08065458796025717 - nodes in this community are weakly interconnected._
 - **Should `AppState.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.05513784461152882 - nodes in this community are weakly interconnected._
 - **Should `modules.mjs` be split into smaller, more focused modules?**
   _Cohesion score 0.08748114630467571 - nodes in this community are weakly interconnected._
+- **Should `scripts` be split into smaller, more focused modules?**
+  _Cohesion score 0.05405405405405406 - nodes in this community are weakly interconnected._

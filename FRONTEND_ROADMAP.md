@@ -32,7 +32,7 @@ Frontend status is separate from backend integration. `Done` means the interacti
 ## Backend integration backlog
 
 - [~] Authentication, sessions, optional TOTP login, and revocation; in-app TOTP setup and recovery remain
-- [~] Durable database persistence, synchronization, and encrypted backup; full workspace export remains
+- [x] Durable database persistence, synchronization, encrypted backup, and full workspace export
 - [~] Codex interpretation service with review, approval, cancellation, and audit records; execution approval and streaming agent sessions remain
 - [x] File/object storage, OCR, transcription, source preservation, and attachment retrieval
 - [ ] Calendar and external-service synchronization

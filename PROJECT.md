@@ -25,6 +25,7 @@
 - Layout scan: `node /home/timsurreal/.agents/skills/impeccable/scripts/detect.mjs --json --scope layout app app/globals.css`
 - Graph refresh: `graphify . --update --code-only --no-viz`
 - Backup: `npm run backup`; verify independently with `npm run verify:backup -- <file>`.
+- Portable export: Settings → Data → Export workspace downloads a `.tar` containing `workspace.json` and original assets; credentials, sessions, provider secrets, push endpoints, rate limits, TOTP replay state, and idempotency records are excluded.
 - v1 import: `npm run import:v1 -- <export-directory>`.
 - Do not run `npm run build` while `npm run dev` is active: both write `.next` and can corrupt the dev server manifest. Stop dev, build, then restart.
 - `npm audit` reports transitive Next.js `postcss`/`sharp` advisories. Its suggested `--force` repair downgrades Next.js to 9.3.3; do not apply blindly.

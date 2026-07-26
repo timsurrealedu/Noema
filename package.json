@@ -18,12 +18,14 @@
     "@phosphor-icons/react": "^2.1.10",
     "next": "^15.4.4",
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "tar-stream": "^3.2.0"
   },
   "devDependencies": {
     "@types/node": "^24.1.0",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",
+    "@types/tar-stream": "^3.1.4",
     "typescript": "^5.8.3"
   }
 }
