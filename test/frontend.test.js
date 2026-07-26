@@ -139,6 +139,8 @@ test("Settings loads and saves persisted account controls",()=>{
   const page=read("app/settings/page.tsx");assert.match(page,/\/api\/v1\/settings/);assert.match(page,/\/api\/v1\/settings\/password/);assert.match(page,/\/api\/v1\/auth\/sessions/);assert.match(page,/\/api\/v1\/auth\/totp/);assert.match(page,/Idempotency-Key/);
 });
 
+test("Settings connects Google and selects discovered calendars",()=>{const page=read("app/settings/page.tsx"),callback=read("app/api/v1/integrations/google/callback/route.ts");assert.match(page,/\/api\/v1\/integrations\/google\/connect/);assert.match(page,/Refresh calendars/);assert.match(page,/calendarIds/);assert.match(page,/Disconnect/);assert.match(callback,/completeGoogleOAuth/) });
+
 test("Automations use durable API state and runs",()=>{
   const page=read("app/automations/page.tsx");
   assert.match(page,/\/api\/v1\/automations/);

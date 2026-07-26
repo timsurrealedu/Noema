@@ -125,9 +125,9 @@
     "semantic_hash": "c6551491a1707311a7537381e92f546b"
   },
   "app/settings/page.tsx": {
-    "mtime": 1785086381.8816032,
-    "ast_hash": "d6b0cdc35536e29964133c6792134b36",
-    "semantic_hash": "d6b0cdc35536e29964133c6792134b36"
+    "mtime": 1785088387.885377,
+    "ast_hash": "8d9a7e9a483b5664312357e44798da3a",
+    "semantic_hash": "8d9a7e9a483b5664312357e44798da3a"
   },
   "public/sw.js": {
     "mtime": 1785085431.7957878,
@@ -135,9 +135,9 @@
     "semantic_hash": "94a3e68c25c7819d85cdab31fa26af47"
   },
   "test/frontend.test.js": {
-    "mtime": 1785088183.106641,
-    "ast_hash": "24c8135835ae6d4287e681d340fe0d81",
-    "semantic_hash": "24c8135835ae6d4287e681d340fe0d81"
+    "mtime": 1785088414.3280442,
+    "ast_hash": "8ee8f0699e3ddd26154fa191623ec579",
+    "semantic_hash": "8ee8f0699e3ddd26154fa191623ec579"
   },
   "app/api/v1/auth/login/route.ts": {
     "mtime": 1785085599.0668235,
@@ -220,9 +220,9 @@
     "semantic_hash": "9c3088b535727787af5e9cb764211c58"
   },
   "server/config.mjs": {
-    "mtime": 1785087624.4528797,
-    "ast_hash": "8d5b169554c445c41a1ab8c1d6015f15",
-    "semantic_hash": "8d5b169554c445c41a1ab8c1d6015f15"
+    "mtime": 1785088336.317002,
+    "ast_hash": "1c29517b2bd6118b2010807dff46be6e",
+    "semantic_hash": "1c29517b2bd6118b2010807dff46be6e"
   },
   "server/core.mjs": {
     "mtime": 1785088210.3513763,
@@ -230,9 +230,9 @@
     "semantic_hash": "facc9ec676f460bf8ddcbb5c87c16322"
   },
   "server/db.mjs": {
-    "mtime": 1785088082.337502,
-    "ast_hash": "57b01cf5ddbb72abb730fcd86d74b553",
-    "semantic_hash": "57b01cf5ddbb72abb730fcd86d74b553"
+    "mtime": 1785088336.1850035,
+    "ast_hash": "60e4f9cb56372cd521a9139a7e50919d",
+    "semantic_hash": "60e4f9cb56372cd521a9139a7e50919d"
   },
   "server/http.mjs": {
     "mtime": 1785085628.5097716,
@@ -255,9 +255,9 @@
     "semantic_hash": "c2abed0fa746b30405a48ed07b8c3850"
   },
   "test/backend.test.js": {
-    "mtime": 1785088210.4483752,
-    "ast_hash": "de33c9a4649baf6e8e86c82044c2fa25",
-    "semantic_hash": "de33c9a4649baf6e8e86c82044c2fa25"
+    "mtime": 1785088414.2050457,
+    "ast_hash": "c01463d03a655668ac6c1bd7929b0be3",
+    "semantic_hash": "c01463d03a655668ac6c1bd7929b0be3"
   },
   "app/api/v1/audit/[id]/undo/route.ts": {
     "mtime": 1784954491.5351684,
@@ -663,5 +663,30 @@
     "mtime": 1785088140.723027,
     "ast_hash": "605abb841e203a25567107b226b090b8",
     "semantic_hash": "605abb841e203a25567107b226b090b8"
+  },
+  "app/api/v1/integrations/google/calendars/route.ts": {
+    "mtime": 1785088351.3838227,
+    "ast_hash": "1c6ada03084c8549f7a5b887b54b16a6",
+    "semantic_hash": "1c6ada03084c8549f7a5b887b54b16a6"
+  },
+  "app/api/v1/integrations/google/callback/route.ts": {
+    "mtime": 1785088351.1588254,
+    "ast_hash": "c1ba5cae0142600ac893124d9079cae5",
+    "semantic_hash": "c1ba5cae0142600ac893124d9079cae5"
+  },
+  "app/api/v1/integrations/google/connect/route.ts": {
+    "mtime": 1785088350.951828,
+    "ast_hash": "25a1be7561d035dfc293b9f095f5e5d2",
+    "semantic_hash": "25a1be7561d035dfc293b9f095f5e5d2"
+  },
+  "app/api/v1/integrations/google/route.ts": {
+    "mtime": 1785088387.7673783,
+    "ast_hash": "b1054040d8bb1abe84dcc01304163306",
+    "semantic_hash": "b1054040d8bb1abe84dcc01304163306"
+  },
+  "server/google-calendar.mjs": {
+    "mtime": 1785088336.5829988,
+    "ast_hash": "af843bdb681e2d209efc03c67571ef3c",
+    "semantic_hash": "af843bdb681e2d209efc03c67571ef3c"
   }
 }

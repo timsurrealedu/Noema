@@ -29,6 +29,9 @@ CREATE TABLE IF NOT EXISTS project_blockers(id TEXT PRIMARY KEY,project_id TEXT 
 CREATE TABLE IF NOT EXISTS recommendations(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,context_type TEXT NOT NULL,context_id TEXT NOT NULL,proposal_json TEXT NOT NULL,sources_json TEXT NOT NULL,provider TEXT NOT NULL,provenance_json TEXT NOT NULL,feedback TEXT,disposition TEXT NOT NULL DEFAULT 'pending',created_at TEXT NOT NULL,updated_at TEXT NOT NULL,applied_at TEXT);
 CREATE TABLE IF NOT EXISTS pdf_annotations(id TEXT PRIMARY KEY,asset_id TEXT NOT NULL REFERENCES assets(id) ON DELETE CASCADE,page INTEGER NOT NULL,kind TEXT NOT NULL,geometry_json TEXT NOT NULL,content TEXT NOT NULL DEFAULT '',color TEXT NOT NULL DEFAULT '#f5d90a',comment TEXT NOT NULL DEFAULT '',link_type TEXT,link_id TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS notification_deliveries(id TEXT PRIMARY KEY,notification_id TEXT NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,subscription_id TEXT NOT NULL REFERENCES push_subscriptions(id) ON DELETE CASCADE,state TEXT NOT NULL DEFAULT 'pending',attempts INTEGER NOT NULL DEFAULT 0,next_attempt_at TEXT NOT NULL,lease_until TEXT,provider_status INTEGER,provider_response TEXT,error TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(notification_id,subscription_id));
+CREATE TABLE IF NOT EXISTS google_accounts(id TEXT PRIMARY KEY,user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,email TEXT NOT NULL,token_enc TEXT NOT NULL,scopes_json TEXT NOT NULL,expires_at TEXT NOT NULL,health TEXT NOT NULL DEFAULT 'connected',last_error TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS google_oauth_states(state TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,expires_at TEXT NOT NULL,created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS google_calendars(account_id TEXT NOT NULL REFERENCES google_accounts(id) ON DELETE CASCADE,calendar_id TEXT NOT NULL,name TEXT NOT NULL,timezone TEXT,access_role TEXT NOT NULL,selected INTEGER NOT NULL DEFAULT 0,updated_at TEXT NOT NULL,PRIMARY KEY(account_id,calendar_id));
 CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY,name TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'Active',summary TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS task_dependencies(task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,depends_on_task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,created_at TEXT NOT NULL,PRIMARY KEY(task_id,depends_on_task_id));
 CREATE TABLE IF NOT EXISTS note_links(source_note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,target_note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,link_text TEXT NOT NULL,created_at TEXT NOT NULL,PRIMARY KEY(source_note_id,target_note_id,link_text));
@@ -63,6 +66,7 @@ CREATE INDEX IF NOT EXISTS automation_runs_automation ON automation_runs(automat
 CREATE INDEX IF NOT EXISTS note_optimizations_note ON note_optimizations(note_id,created_at DESC);
 CREATE INDEX IF NOT EXISTS tutor_sessions_subject ON tutor_sessions(kind,subject_id,updated_at DESC);
 CREATE INDEX IF NOT EXISTS tutor_messages_session ON tutor_messages(session_id,created_at);
+CREATE INDEX IF NOT EXISTS google_oauth_states_expiry ON google_oauth_states(expires_at);
 `;
 
 export function openDatabase(path){
@@ -112,6 +116,7 @@ export function openDatabase(path){
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(20,?)").run(new Date().toISOString());
   migrateLegacyEvents(db);
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(21,?)").run(new Date().toISOString());
+  db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(22,?)").run(new Date().toISOString());
   return db;
 }
 

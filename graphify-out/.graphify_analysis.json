@@ -75,10 +75,8 @@
       "server_core_savetask",
       "server_core_savetaskdependency",
       "server_core_searchall",
-      "server_core_searchnotes",
       "server_core_stamp",
       "server_core_timestamp",
-      "server_core_undoauditevent",
       "server_core_updatecapture"
     ],
     "1": [
@@ -196,6 +194,8 @@
       "server_config_loadconfig",
       "server_config_root",
       "server_core_listauditevents",
+      "server_core_searchnotes",
+      "server_core_undoauditevent",
       "server_http",
       "server_http_body",
       "server_http_cookie",
@@ -209,6 +209,51 @@
       "server_skills_listskills"
     ],
     "3": [
+      "app_api_v1_export_route",
+      "app_api_v1_export_route_get",
+      "app_api_v1_export_route_safe",
+      "app_api_v1_extract_handwriting_route",
+      "app_api_v1_extract_handwriting_route_post",
+      "app_api_v1_settings_route",
+      "app_api_v1_settings_route_get",
+      "app_api_v1_settings_route_patch",
+      "scripts_backup",
+      "scripts_backup_backup",
+      "scripts_import_v1",
+      "scripts_verify_backup",
+      "server_config_ensuredatadirs",
+      "server_db",
+      "server_db_closedatabase",
+      "server_db_ensurecolumn",
+      "server_db_getdatabase",
+      "server_db_migratelegacyevents",
+      "server_db_opendatabase",
+      "server_extract",
+      "server_extract_execfileasync",
+      "server_extract_extracthandwriting",
+      "server_extract_extracttext",
+      "server_extract_stripxml",
+      "server_ops",
+      "server_ops_createbackup",
+      "server_ops_exporttables",
+      "server_ops_exportworkspace",
+      "server_ops_healthreport",
+      "server_ops_importv1",
+      "server_ops_keyfor",
+      "server_ops_log",
+      "server_ops_mimes",
+      "server_ops_redact",
+      "server_ops_verifybackup",
+      "server_settings",
+      "server_settings_clean",
+      "server_settings_defaults",
+      "server_settings_fields",
+      "server_settings_getsettings",
+      "server_settings_parse",
+      "server_settings_savesettings",
+      "server_settings_stamp"
+    ],
+    "4": [
       "next",
       "package",
       "package_dependencies",
@@ -249,82 +294,7 @@
       "typescript",
       "web_push"
     ],
-    "4": [
-      "app_calendar_page",
-      "app_calendar_page_blankevent",
-      "app_calendar_page_calendarpage",
-      "app_calendar_page_days",
-      "app_calendar_page_monday",
-      "app_calendar_page_positionfor",
-      "app_calendar_page_remindervalue",
-      "app_calendar_page_weekdays",
-      "app_components_appstate",
-      "app_components_appstate_api",
-      "app_components_appstate_appdata",
-      "app_components_appstate_appstate",
-      "app_components_appstate_appstateprovider",
-      "app_components_appstate_capture",
-      "app_components_appstate_captureobject",
-      "app_components_appstate_capturesource",
-      "app_components_appstate_context",
-      "app_components_appstate_event",
-      "app_components_appstate_note",
-      "app_components_appstate_notelink",
-      "app_components_appstate_project",
-      "app_components_appstate_seed",
-      "app_components_appstate_task",
-      "app_components_appstate_taskdependency",
-      "app_components_appstate_useappstate",
-      "app_components_servicenotice",
-      "app_components_servicenotice_servicenotice",
-      "app_components_servicenotice_showunavailable",
-      "app_layout",
-      "app_layout_metadata",
-      "app_layout_rootlayout",
-      "app_layout_viewport",
-      "app_tasks_page",
-      "app_tasks_page_blanktask",
-      "app_tasks_page_remindervalue",
-      "app_tasks_page_taskspage"
-    ],
     "5": [
-      "app_api_v1_export_route",
-      "app_api_v1_export_route_get",
-      "app_api_v1_export_route_safe",
-      "app_api_v1_settings_route",
-      "app_api_v1_settings_route_get",
-      "app_api_v1_settings_route_patch",
-      "scripts_backup",
-      "scripts_backup_backup",
-      "scripts_import_v1",
-      "scripts_verify_backup",
-      "server_db",
-      "server_db_closedatabase",
-      "server_db_ensurecolumn",
-      "server_db_getdatabase",
-      "server_db_migratelegacyevents",
-      "server_db_opendatabase",
-      "server_ops",
-      "server_ops_createbackup",
-      "server_ops_exporttables",
-      "server_ops_exportworkspace",
-      "server_ops_healthreport",
-      "server_ops_importv1",
-      "server_ops_keyfor",
-      "server_ops_log",
-      "server_ops_mimes",
-      "server_ops_redact",
-      "server_ops_verifybackup",
-      "server_settings",
-      "server_settings_clean",
-      "server_settings_defaults",
-      "server_settings_fields",
-      "server_settings_getsettings",
-      "server_settings_parse",
-      "server_settings_savesettings",
-      "server_settings_stamp"
-    ],
-    "6": [
       "app_api_v1_auth_recovery_route",
       "app_api_v1_auth_recovery_route_post",
       "app_api_v1_auth_sessions_route",
@@ -360,7 +330,7 @@
       "server_auth_verifypassword",
       "server_auth_verifytotp"
     ],
-    "7": [
+    "6": [
       "app_automations_page",
       "app_automations_page_automation",
       "app_automations_page_automationspage",
@@ -395,7 +365,69 @@
       "app_help_page_helppage",
       "app_help_page_shortcuts"
     ],
+    "7": [
+      "app_calendar_page",
+      "app_calendar_page_blankevent",
+      "app_calendar_page_calendarpage",
+      "app_calendar_page_days",
+      "app_calendar_page_monday",
+      "app_calendar_page_positionfor",
+      "app_calendar_page_remindervalue",
+      "app_calendar_page_weekdays",
+      "app_components_appstate",
+      "app_components_appstate_api",
+      "app_components_appstate_appdata",
+      "app_components_appstate_appstate",
+      "app_components_appstate_appstateprovider",
+      "app_components_appstate_capture",
+      "app_components_appstate_captureobject",
+      "app_components_appstate_capturesource",
+      "app_components_appstate_context",
+      "app_components_appstate_event",
+      "app_components_appstate_note",
+      "app_components_appstate_notelink",
+      "app_components_appstate_project",
+      "app_components_appstate_seed",
+      "app_components_appstate_task",
+      "app_components_appstate_taskdependency",
+      "app_components_appstate_useappstate",
+      "app_tasks_page",
+      "app_tasks_page_blanktask",
+      "app_tasks_page_remindervalue",
+      "app_tasks_page_taskspage"
+    ],
     "8": [
+      "app_components_pwaregister",
+      "app_components_pwaregister_pwaregister",
+      "app_components_servicenotice",
+      "app_components_servicenotice_servicenotice",
+      "app_components_servicenotice_showunavailable",
+      "app_layout",
+      "app_layout_metadata",
+      "app_layout_rootlayout",
+      "app_layout_viewport",
+      "app_lib_offlinequeue",
+      "app_lib_offlinequeue_announce",
+      "app_lib_offlinequeue_database",
+      "app_lib_offlinequeue_flushqueue",
+      "app_lib_offlinequeue_listofflinecaptures",
+      "app_lib_offlinequeue_listpending",
+      "app_lib_offlinequeue_listqueued",
+      "app_lib_offlinequeue_observequeue",
+      "app_lib_offlinequeue_offlinecapture",
+      "app_lib_offlinequeue_pendingitem",
+      "app_lib_offlinequeue_queuedrequest",
+      "app_lib_offlinequeue_queueofflinecapture",
+      "app_lib_offlinequeue_queuerequest",
+      "app_lib_offlinequeue_queuestatus",
+      "app_lib_offlinequeue_registersync",
+      "app_lib_offlinequeue_replay",
+      "app_lib_offlinequeue_replaycaptures",
+      "app_lib_offlinequeue_requestresult",
+      "app_lib_offlinequeue_retryqueued",
+      "app_lib_offlinequeue_store"
+    ],
+    "9": [
       "app_api_v1_projects_id_blockers_route",
       "app_api_v1_projects_id_blockers_route_post",
       "app_api_v1_projects_id_milestones_route",
@@ -423,7 +455,7 @@
       "server_projects_types",
       "server_projects_unlinkproject"
     ],
-    "9": [
+    "10": [
       "ref_dom",
       "ref_dom_iterable",
       "ref_esnext",
@@ -451,31 +483,34 @@
       "tsconfig_exclude",
       "tsconfig_include"
     ],
-    "10": [
-      "app_components_pwaregister",
-      "app_components_pwaregister_pwaregister",
-      "app_lib_offlinequeue",
-      "app_lib_offlinequeue_announce",
-      "app_lib_offlinequeue_database",
-      "app_lib_offlinequeue_flushqueue",
-      "app_lib_offlinequeue_listofflinecaptures",
-      "app_lib_offlinequeue_listpending",
-      "app_lib_offlinequeue_listqueued",
-      "app_lib_offlinequeue_observequeue",
-      "app_lib_offlinequeue_offlinecapture",
-      "app_lib_offlinequeue_pendingitem",
-      "app_lib_offlinequeue_queuedrequest",
-      "app_lib_offlinequeue_queueofflinecapture",
-      "app_lib_offlinequeue_queuerequest",
-      "app_lib_offlinequeue_queuestatus",
-      "app_lib_offlinequeue_registersync",
-      "app_lib_offlinequeue_replay",
-      "app_lib_offlinequeue_replaycaptures",
-      "app_lib_offlinequeue_requestresult",
-      "app_lib_offlinequeue_retryqueued",
-      "app_lib_offlinequeue_store"
-    ],
     "11": [
+      "app_api_v1_integrations_google_calendars_route",
+      "app_api_v1_integrations_google_calendars_route_get",
+      "app_api_v1_integrations_google_calendars_route_put",
+      "app_api_v1_integrations_google_callback_route",
+      "app_api_v1_integrations_google_callback_route_get",
+      "app_api_v1_integrations_google_connect_route",
+      "app_api_v1_integrations_google_connect_route_post",
+      "app_api_v1_integrations_google_route",
+      "app_api_v1_integrations_google_route_delete",
+      "app_api_v1_integrations_google_route_get",
+      "server_google_calendar",
+      "server_google_calendar_begingoogleoauth",
+      "server_google_calendar_completegoogleoauth",
+      "server_google_calendar_configured",
+      "server_google_calendar_discovergooglecalendars",
+      "server_google_calendar_googlestatus",
+      "server_google_calendar_key",
+      "server_google_calendar_listgooglecalendars",
+      "server_google_calendar_now",
+      "server_google_calendar_open",
+      "server_google_calendar_response",
+      "server_google_calendar_revokegoogle",
+      "server_google_calendar_seal",
+      "server_google_calendar_selectgooglecalendars",
+      "server_google_calendar_tokenfor"
+    ],
+    "12": [
       "app_api_v1_approvals_id_approve_route",
       "app_api_v1_approvals_id_approve_route_post",
       "app_api_v1_approvals_route",
@@ -494,7 +529,7 @@
       "server_approvals_now",
       "server_approvals_view"
     ],
-    "12": [
+    "13": [
       "app_api_v1_assets_id_annotations_annotationid_route",
       "app_api_v1_assets_id_annotations_annotationid_route_delete",
       "app_api_v1_assets_id_annotations_annotationid_route_patch",
@@ -513,7 +548,7 @@
       "server_annotations_saveannotation",
       "server_annotations_target"
     ],
-    "13": [
+    "14": [
       "app_api_v1_jobs_id_events_route",
       "app_api_v1_jobs_id_events_route_get",
       "app_api_v1_jobs_id_events_route_terminal",
@@ -531,7 +566,7 @@
       "server_jobs_now",
       "server_jobs_retryjob"
     ],
-    "14": [
+    "15": [
       "app_api_v1_tutor_messages_id_insert_route",
       "app_api_v1_tutor_messages_id_insert_route_post",
       "app_api_v1_tutor_route",
@@ -549,7 +584,7 @@
       "server_skills_tutorschema",
       "server_skills_workloadforskill"
     ],
-    "15": [
+    "16": [
       "app_api_v1_health_route",
       "app_api_v1_health_route_get",
       "server_compiler",
@@ -564,7 +599,7 @@
       "server_compiler_prepareworktree",
       "server_compiler_runcode"
     ],
-    "16": [
+    "17": [
       "app_api_v1_assets_id_route",
       "app_api_v1_assets_id_route_get",
       "app_api_v1_assets_route",
@@ -578,7 +613,7 @@
       "server_objects_now",
       "server_objects_storeasset"
     ],
-    "17": [
+    "18": [
       "app_api_v1_notification_deliveries_id_route",
       "app_api_v1_notification_deliveries_id_route_patch",
       "app_api_v1_notification_deliveries_route",
@@ -591,7 +626,20 @@
       "server_push_resolvedelivery",
       "server_push_retrydelivery"
     ],
-    "18": [
+    "19": [
+      "app_settings_page",
+      "app_settings_page_googlecalendar",
+      "app_settings_page_googleconnection",
+      "app_settings_page_icons",
+      "app_settings_page_mfa",
+      "app_settings_page_request",
+      "app_settings_page_sections",
+      "app_settings_page_session",
+      "app_settings_page_settings",
+      "app_settings_page_settingspage",
+      "app_settings_page_toggle"
+    ],
+    "20": [
       "app_api_v1_recommendations_id_route",
       "app_api_v1_recommendations_id_route_patch",
       "app_api_v1_recommendations_route",
@@ -603,7 +651,7 @@
       "server_recommendations_recommendations",
       "server_recommendations_view"
     ],
-    "19": [
+    "21": [
       "app_components_markdowncontent",
       "app_components_markdowncontent_basic",
       "app_components_markdowncontent_chart",
@@ -615,7 +663,7 @@
       "app_vault_page_rendermarkdown",
       "app_vault_page_vaultpage"
     ],
-    "20": [
+    "22": [
       "app_study_page",
       "app_study_page_assignment",
       "app_study_page_card",
@@ -627,7 +675,7 @@
       "app_study_page_studypage",
       "app_study_page_workspace"
     ],
-    "21": [
+    "23": [
       "server_ai",
       "server_ai_geminischema",
       "server_ai_iscapacityerror",
@@ -638,27 +686,6 @@
       "server_ai_runopenai",
       "server_ai_schemakeys",
       "server_ai_selectopenaimodel"
-    ],
-    "22": [
-      "app_settings_page",
-      "app_settings_page_icons",
-      "app_settings_page_mfa",
-      "app_settings_page_request",
-      "app_settings_page_sections",
-      "app_settings_page_session",
-      "app_settings_page_settings",
-      "app_settings_page_settingspage",
-      "app_settings_page_toggle"
-    ],
-    "23": [
-      "app_api_v1_extract_handwriting_route",
-      "app_api_v1_extract_handwriting_route_post",
-      "server_config_ensuredatadirs",
-      "server_extract",
-      "server_extract_execfileasync",
-      "server_extract_extracthandwriting",
-      "server_extract_extracttext",
-      "server_extract_stripxml"
     ],
     "24": [
       "test_backend_test",
@@ -765,30 +792,30 @@
     ]
   },
   "cohesion": {
-    "0": 0.06004543979227524,
+    "0": 0.061175666438824335,
     "1": 0.06826923076923076,
-    "2": 0.14216575922565033,
-    "3": 0.05128205128205128,
-    "4": 0.07936507936507936,
-    "5": 0.10252100840336134,
-    "6": 0.1532976827094474,
-    "7": 0.08143939393939394,
-    "8": 0.1476923076923077,
-    "9": 0.07692307692307693,
-    "10": 0.2510822510822511,
-    "11": 0.25,
-    "12": 0.2426470588235294,
-    "13": 0.275,
-    "14": 0.21666666666666667,
-    "15": 0.28205128205128205,
-    "16": 0.30303030303030304,
-    "17": 0.38181818181818183,
-    "18": 0.4444444444444444,
-    "19": 0.28888888888888886,
-    "20": 0.24444444444444444,
-    "21": 0.37777777777777777,
-    "22": 0.25,
-    "23": 0.42857142857142855,
+    "2": 0.13502824858757062,
+    "3": 0.08305647840531562,
+    "4": 0.05128205128205128,
+    "5": 0.1532976827094474,
+    "6": 0.08143939393939394,
+    "7": 0.10098522167487685,
+    "8": 0.16502463054187191,
+    "9": 0.1476923076923077,
+    "10": 0.07692307692307693,
+    "11": 0.19333333333333333,
+    "12": 0.25,
+    "13": 0.2426470588235294,
+    "14": 0.275,
+    "15": 0.21666666666666667,
+    "16": 0.28205128205128205,
+    "17": 0.30303030303030304,
+    "18": 0.38181818181818183,
+    "19": 0.2,
+    "20": 0.4444444444444444,
+    "21": 0.28888888888888886,
+    "22": 0.24444444444444444,
+    "23": 0.37777777777777777,
     "24": 0.2857142857142857,
     "25": 0.2857142857142857,
     "26": 0.3333333333333333,
@@ -836,6 +863,11 @@
       "degree": 19
     },
     {
+      "id": "server_db_getdatabase",
+      "label": "getDatabase()",
+      "degree": 18
+    },
+    {
       "id": "server_http_idempotent",
       "label": "idempotent()",
       "degree": 17
@@ -846,18 +878,13 @@
       "degree": 16
     },
     {
-      "id": "server_db_getdatabase",
-      "label": "getDatabase()",
+      "id": "server_config_loadconfig",
+      "label": "loadConfig()",
       "degree": 16
     },
     {
       "id": "tsconfig_compileroptions",
       "label": "compilerOptions",
-      "degree": 15
-    },
-    {
-      "id": "server_modules_now",
-      "label": "now()",
       "degree": 15
     }
   ],
@@ -897,10 +924,10 @@
     },
     {
       "source": "POST()",
-      "target": "undoAuditEvent()",
+      "target": "revokeSession()",
       "source_files": [
-        "app/api/v1/audit/[id]/undo/route.ts",
-        "server/core.mjs"
+        "app/api/v1/auth/logout/route.ts",
+        "server/auth.mjs"
       ],
       "confidence": "EXTRACTED",
       "relation": "calls",
@@ -908,10 +935,10 @@
     },
     {
       "source": "POST()",
-      "target": "revokeSession()",
+      "target": "applyCaptureInterpretation()",
       "source_files": [
-        "app/api/v1/auth/logout/route.ts",
-        "server/auth.mjs"
+        "app/api/v1/captures/[id]/apply/route.ts",
+        "server/core.mjs"
       ],
       "confidence": "EXTRACTED",
       "relation": "calls",
