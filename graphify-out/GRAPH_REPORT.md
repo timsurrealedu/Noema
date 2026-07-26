@@ -4,12 +4,12 @@
 - cluster-only mode — file stats not available
 
 ## Summary
-- 504 nodes · 1041 edges · 31 communities (23 shown, 8 thin omitted)
+- 510 nodes · 1029 edges · 32 communities (24 shown, 8 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `dc91e5f0`
+- Built from commit: `4ddb4063`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -26,6 +26,7 @@
 - skills.mjs
 - compiler.mjs
 - objects.mjs
+- ai.mjs
 - backend.test.js
 - frontend.test.js
 - page.tsx
@@ -40,10 +41,10 @@
 - mjs.d.ts
 
 ## God Nodes (most connected - your core abstractions)
-1. `json()` - 44 edges
-2. `handle()` - 43 edges
-3. `requireUser()` - 38 edges
-4. `body()` - 20 edges
+1. `json()` - 42 edges
+2. `handle()` - 41 edges
+3. `requireUser()` - 36 edges
+4. `body()` - 18 edges
 5. `stamp()` - 18 edges
 6. `idempotent()` - 17 edges
 7. `compilerOptions` - 15 edges
@@ -66,15 +67,15 @@
 ## Import Cycles
 - None detected.
 
-## Communities (31 total, 8 thin omitted)
+## Communities (32 total, 8 thin omitted)
 
 ### Community 0 - "core.mjs"
 Cohesion: 0.06
-Nodes (65): POST(), GET(), GET(), GET(), GET(), POST(), GET(), POST() (+57 more)
+Nodes (64): POST(), GET(), GET(), GET(), GET(), POST(), GET(), POST() (+56 more)
 
 ### Community 1 - "json"
 Cohesion: 0.12
-Nodes (42): POST(), GET(), POST(), POST(), DELETE(), POST(), POST(), PATCH() (+34 more)
+Nodes (40): POST(), GET(), POST(), POST(), DELETE(), POST(), POST(), PATCH() (+32 more)
 
 ### Community 2 - "modules.mjs"
 Cohesion: 0.08
@@ -93,8 +94,8 @@ Cohesion: 0.05
 Nodes (36): next, dependencies, next, @phosphor-icons/react, react, react-dom, tar-stream, devDependencies (+28 more)
 
 ### Community 6 - "ops.mjs"
-Cohesion: 0.12
-Nodes (23): GET(), safe(), GET(), terminal, backup, ensureColumn(), getDatabase(), openDatabase() (+15 more)
+Cohesion: 0.11
+Nodes (24): GET(), safe(), GET(), terminal, backup, ensureColumn(), getDatabase(), openDatabase() (+16 more)
 
 ### Community 7 - "compilerOptions"
 Cohesion: 0.08
@@ -105,8 +106,8 @@ Cohesion: 0.23
 Nodes (17): GET(), authenticate(), base32(), clearLoginRateLimit(), enforceLoginRateLimit(), ensureOwner(), hashPassword(), hashToken() (+9 more)
 
 ### Community 9 - "skills.mjs"
-Cohesion: 0.20
-Nodes (16): geminiSchema(), isCapacityError(), runAI(), runFallback(), runGemini(), runGeminiMultimodal(), runOpenAI(), schemaKeys (+8 more)
+Cohesion: 0.19
+Nodes (14): GET(), POST(), GET(), POST(), buildSkillPrompt(), definitions, insertTutorMessage(), listSkills() (+6 more)
 
 ### Community 10 - "compiler.mjs"
 Cohesion: 0.28
@@ -116,19 +117,23 @@ Nodes (10): GET(), buildCommand(), cleanupWorktree(), compilerCapabilities(), ex
 Cohesion: 0.30
 Nodes (8): GET(), POST(), allowedMimes, assetPath(), attachAssets(), getAsset(), now(), storeAsset()
 
-### Community 12 - "backend.test.js"
+### Community 12 - "ai.mjs"
+Cohesion: 0.38
+Nodes (9): geminiSchema(), isCapacityError(), runAI(), runFallback(), runGemini(), runGeminiMultimodal(), runOpenAI(), schemaKeys (+1 more)
+
+### Community 13 - "backend.test.js"
 Cohesion: 0.29
 Nodes (5): assert, {join}, {mkdtempSync,rmSync}, test, {tmpdir}
 
-### Community 13 - "frontend.test.js"
+### Community 14 - "frontend.test.js"
 Cohesion: 0.29
 Nodes (5): assert, fs, path, root, test
 
-### Community 14 - "page.tsx"
+### Community 15 - "page.tsx"
 Cohesion: 0.40
 Nodes (3): AuditEvent, icons, time
 
-### Community 15 - "page.tsx"
+### Community 16 - "page.tsx"
 Cohesion: 0.40
 Nodes (3): Language, Result, starters
 
@@ -141,16 +146,16 @@ Nodes (3): Language, Result, starters
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `getDatabase()` connect `ops.mjs` to `core.mjs`, `json`, `modules.mjs`, `auth.mjs`, `skills.mjs`, `objects.mjs`?**
-  _High betweenness centrality (0.087) - this node is a cross-community bridge._
+  _High betweenness centrality (0.090) - this node is a cross-community bridge._
+- **Why does `json()` connect `json` to `skills.mjs`?**
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+- **Why does `handle()` connect `json` to `skills.mjs`?**
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
 - **What connects `config`, `target`, `dom` to the rest of the system?**
   _112 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `core.mjs` be split into smaller, more focused modules?**
-  _Cohesion score 0.05886075949367089 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06027306027306027 - nodes in this community are weakly interconnected._
 - **Should `json` be split into smaller, more focused modules?**
-  _Cohesion score 0.11841491841491841 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.12480169222633528 - nodes in this community are weakly interconnected._
 - **Should `modules.mjs` be split into smaller, more focused modules?**
   _Cohesion score 0.08215488215488216 - nodes in this community are weakly interconnected._
-- **Should `AppState.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.0696969696969697 - nodes in this community are weakly interconnected._
-- **Should `page.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.07112375533428165 - nodes in this community are weakly interconnected._

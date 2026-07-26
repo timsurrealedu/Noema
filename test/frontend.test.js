@@ -115,3 +115,7 @@ test("tasks and events expose durable reminder controls",()=>{
 test("Vault exposes reviewable Draft optimization",()=>{
   const vault=read("app/vault/page.tsx");assert.match(vault,/Optimize draft/);assert.match(vault,/Optimization review/);assert.match(vault,/Apply proposal/);assert.match(vault,/\/optimizations/);assert.match(read("server/worker.mjs"),/note-optimize/);
 });
+
+test("Tutor resumes sessions and inserts messages through the API",()=>{
+  const panel=read("app/components/TutorPanel.tsx");assert.match(panel,/subjectId=/);assert.match(panel,/sessionId/);assert.match(panel,/\/tutor\/messages\/\$\{message\.id\}\/insert/);assert.match(panel,/insertedNoteId/);
+});

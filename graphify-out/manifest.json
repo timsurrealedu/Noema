@@ -135,9 +135,9 @@
     "semantic_hash": "4e3272880f48d01e749047ec3696c83d"
   },
   "test/frontend.test.js": {
-    "mtime": 1785084064.3200433,
-    "ast_hash": "838e1c68e61b48d69e994f7bd8143f30",
-    "semantic_hash": "838e1c68e61b48d69e994f7bd8143f30"
+    "mtime": 1785084488.3074312,
+    "ast_hash": "f7711ed6ab2bc5c8aed810b714bf6852",
+    "semantic_hash": "f7711ed6ab2bc5c8aed810b714bf6852"
   },
   "app/api/v1/auth/login/route.ts": {
     "mtime": 1785052510.358101,
@@ -230,9 +230,9 @@
     "semantic_hash": "43214d9be9af45e36d50823672078d2e"
   },
   "server/db.mjs": {
-    "mtime": 1785083937.457628,
-    "ast_hash": "96d24324da7ff8666f66e83b4b83360e",
-    "semantic_hash": "96d24324da7ff8666f66e83b4b83360e"
+    "mtime": 1785084282.7417583,
+    "ast_hash": "a3fc46f6094e1edd2f07ea8007dbedad",
+    "semantic_hash": "a3fc46f6094e1edd2f07ea8007dbedad"
   },
   "server/http.mjs": {
     "mtime": 1785052700.6060371,
@@ -255,9 +255,9 @@
     "semantic_hash": "a2c81a01294d41f2e3abfc43cd413370"
   },
   "test/backend.test.js": {
-    "mtime": 1785084064.221043,
-    "ast_hash": "b98daf22859a3836b146ffde94dbd310",
-    "semantic_hash": "b98daf22859a3836b146ffde94dbd310"
+    "mtime": 1785084488.1944308,
+    "ast_hash": "1a097f275f8abb6613a0efc63ac278d5",
+    "semantic_hash": "1a097f275f8abb6613a0efc63ac278d5"
   },
   "app/api/v1/audit/[id]/undo/route.ts": {
     "mtime": 1784954491.5351684,
@@ -300,14 +300,14 @@
     "semantic_hash": "0ce5ddc96cd5c5ee458e218a6878b2a8"
   },
   "app/api/v1/tutor/route.ts": {
-    "mtime": 1784915936.233352,
-    "ast_hash": "4832b3354a4e21c9228d6db3351f2fa8",
-    "semantic_hash": "4832b3354a4e21c9228d6db3351f2fa8"
+    "mtime": 1785084329.5309114,
+    "ast_hash": "08a9579783604be418e53364dd14cf58",
+    "semantic_hash": "08a9579783604be418e53364dd14cf58"
   },
   "app/components/TutorPanel.tsx": {
-    "mtime": 1784916660.4626036,
-    "ast_hash": "597ec8f74833a215bdcdff4e7ab24b1e",
-    "semantic_hash": "597ec8f74833a215bdcdff4e7ab24b1e"
+    "mtime": 1785084470.0273714,
+    "ast_hash": "ab4a18e26ec2396e7265b864ebc63764",
+    "semantic_hash": "ab4a18e26ec2396e7265b864ebc63764"
   },
   "server/ai.mjs": {
     "mtime": 1784959563.3581069,
@@ -315,9 +315,9 @@
     "semantic_hash": "504eaa2b549abe3a79a674505f92bb28"
   },
   "server/skills.mjs": {
-    "mtime": 1784917844.094657,
-    "ast_hash": "124072140bb6f9ae2dd8b604c1468cdb",
-    "semantic_hash": "124072140bb6f9ae2dd8b604c1468cdb"
+    "mtime": 1785084317.2978714,
+    "ast_hash": "f9ec0864104712839aff9416805935b4",
+    "semantic_hash": "f9ec0864104712839aff9416805935b4"
   },
   "app/api/v1/assets/[id]/route.ts": {
     "mtime": 1784955352.0264864,
@@ -480,9 +480,9 @@
     "semantic_hash": "28ffa80e56d7fe3c97c0c392024dab05"
   },
   "server/ops.mjs": {
-    "mtime": 1785084064.1210427,
-    "ast_hash": "ddc34b5507a013a75845630d2a4eece8",
-    "semantic_hash": "ddc34b5507a013a75845630d2a4eece8"
+    "mtime": 1785084282.8647587,
+    "ast_hash": "7fe867334b5b96405b3d1762bdbe1aa6",
+    "semantic_hash": "7fe867334b5b96405b3d1762bdbe1aa6"
   },
   "app/api/v1/extract/handwriting/route.ts": {
     "mtime": 1784984447.8180716,
@@ -513,5 +513,10 @@
     "mtime": 1785083968.309729,
     "ast_hash": "a28691b2d525c852d178e54e04e63cd5",
     "semantic_hash": "a28691b2d525c852d178e54e04e63cd5"
+  },
+  "app/api/v1/tutor/messages/[id]/insert/route.ts": {
+    "mtime": 1785084329.723912,
+    "ast_hash": "340ab888eab139a0998522e54fb00ae9",
+    "semantic_hash": "340ab888eab139a0998522e54fb00ae9"
   }
 }
