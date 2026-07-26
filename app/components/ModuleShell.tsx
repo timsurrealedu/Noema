@@ -11,6 +11,7 @@ import {ModalDialog} from "./ModalDialog";
 
 type SearchHit={id:string;label:string;detail:string;href:string;Icon:typeof FileText};
 type Notification={id:string;title:string;body:string;kind:string;read_at:string|null;created_at:string};
+type Recommendation={id:string;proposal:{title:string;priority:string};sources:{title:string}[];provider:string};
 
 const nav = [
   ["Today","/",House],["Capture","/capture",Plus],["Calendar","/calendar",CalendarBlank],
@@ -18,7 +19,7 @@ const nav = [
   ["Study","/study",BookOpen],["Coding","/coding",Code],["Automations","/automations",Lightning]
 ] as const;
 
-export function ModuleShell({active,title,action,children}:{active:string;title:string;action?:ReactNode;children:ReactNode}) {
+export function ModuleShell({active,title,action,assistantContext,children}:{active:string;title:string;action?:ReactNode;assistantContext?:{type:string;id:string};children:ReactNode}) {
   const router=useRouter();
   const [theme,setTheme]=useState<"dark"|"light">("dark");
   const [palette,setPalette]=useState(false);
@@ -26,6 +27,8 @@ export function ModuleShell({active,title,action,children}:{active:string;title:
   const [notificationItems,setNotificationItems]=useState<Notification[]>([]);
   const [notificationError,setNotificationError]=useState("");
   const [assistant,setAssistant]=useState(false);
+  const [recommendations,setRecommendations]=useState<Recommendation[]>([]),[assistantError,setAssistantError]=useState("");
+  const [resolvedAssistantContext,setResolvedAssistantContext]=useState<{type:string;id:string}|undefined>();assistantContext=assistantContext||resolvedAssistantContext;
   const [query,setQuery]=useState("");
   const [searchResults,setSearchResults]=useState<SearchHit[]>([]);
   const [searching,setSearching]=useState(false);
@@ -34,6 +37,7 @@ export function ModuleShell({active,title,action,children}:{active:string;title:
   useEffect(()=>{document.documentElement.dataset.theme=theme;localStorage.setItem("lifeos-theme",theme)},[theme]);
   useEffect(()=>{const key=(event:KeyboardEvent)=>{if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==="k"){event.preventDefault();setPalette(true)}if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==="j"){event.preventDefault();setAssistant(true)}if(event.key==="Escape"){setPalette(false);setNotifications(false);setAssistant(false)}};addEventListener("keydown",key);return()=>removeEventListener("keydown",key)},[]);
   useEffect(()=>{if(!notifications)return;setNotificationError("");fetch("/api/v1/notifications").then(async response=>{if(!response.ok)throw new Error(response.status===401?"Sign in to view notifications.":"Notifications are unavailable.");return response.json()}).then(data=>setNotificationItems(data.notifications)).catch(error=>setNotificationError(error.message))},[notifications]);
+  useEffect(()=>{if(!assistant)return;void (async()=>{try{let context=assistantContext;if(!context&&active==="Projects"){const data=await (await fetch("/api/v1/projects")).json(),project=data.projects?.find((item:{id:string;name:string})=>item.name===title);if(project){context={type:"project",id:project.id};setResolvedAssistantContext(context)}}if(!context)return;const response=await fetch(`/api/v1/recommendations?contextType=${context.type}&contextId=${context.id}&generate=true`),data=await response.json();if(!response.ok)throw new Error(data.error?.message);setRecommendations(data.recommendations)}catch(error){setAssistantError((error as Error).message)}})()},[assistant,assistantContext?.type,assistantContext?.id,active,title]);
   useEffect(()=>{
     const term=query.trim();
     if(term.length<2){setSearchResults([]);setSearching(false);setSearchError("");return}
@@ -50,6 +54,7 @@ export function ModuleShell({active,title,action,children}:{active:string;title:
   const results=query.trim().length<2?navigationResults:searchResults;
   function go(href:string){setPalette(false);setQuery("");if(href.includes("?open="))location.assign(href);else router.push(href)}
   async function markRead(item:Notification){if(item.read_at)return;const response=await fetch(`/api/v1/notifications/${item.id}/read`,{method:"POST"});if(response.ok)setNotificationItems(current=>current.map(value=>value.id===item.id?{...value,read_at:new Date().toISOString()}:value))}
+  async function decide(item:Recommendation,disposition:"accepted"|"rejected"){const response=await fetch(`/api/v1/recommendations/${item.id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({disposition})});if(response.ok)setRecommendations(current=>current.filter(value=>value.id!==item.id));else setAssistantError((await response.json()).error?.message||"Recommendation failed")}
   return <div className="module-shell">
     <a className="skip" href="#module-main">Skip to main content</a>
     <aside className="sidebar" aria-label="Primary navigation">
@@ -61,6 +66,6 @@ export function ModuleShell({active,title,action,children}:{active:string;title:
     <main id="module-main" className="module-main">{children}</main>
     <nav className="mobile-nav" aria-label="Mobile navigation">{([["Today","/",House],["Capture","/capture",Plus],["Tasks","/tasks",ListChecks],["Vault","/vault",Folder],["More","/settings",Command]] as const).map(([label,href,Icon],i)=><Link className={`${label===active?"active":""} ${i===1?"capture-nav":""}`} href={href} key={label}><Icon/><span>{label}</span></Link>)}</nav>
     {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus value={query} onChange={event=>setQuery(event.target.value)} aria-label="Search workspace" placeholder="Search notes, tasks, events, captures…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><p aria-live="polite">{searching?"Searching…":searchError||`${results.length} results`}</p>{results.map(({id,label,detail,href,Icon})=><button key={id} onClick={()=>go(href)}><Icon/><span><strong>{label}</strong><small>{detail}</small></span><kbd>↵</kbd></button>)}{!searching&&!searchError&&!results.length&&<div className="palette-empty">No workspace results match “{query}”.</div>}</ModalDialog>}
-    {assistant&&<aside className="ai-panel" aria-label="Contextual assistant"><header><span><Sparkle/><strong>Plan with LifeOS</strong></span><button className="icon-button" aria-label="Close assistant" onClick={()=>setAssistant(false)}><X/></button></header><p>Based on your {title.toLowerCase()} context, the proposal review is the best next action before your 1 PM meeting.</p><ol><li><CheckSquare/><span><strong>Review the proposal</strong><small>25 minutes · Due today</small></span></li><li><FileText/><span><strong>Open meeting notes</strong><small>Source context from Vault</small></span></li><li><CalendarBlank/><span><strong>Join meeting with Dian</strong><small>Today at 13:00</small></span></li></ol><footer><button className="secondary">Edit plan</button><button className="primary">Start first step</button></footer><small>AI suggestions are drafts. Nothing changes without confirmation.</small></aside>}
+    {assistant&&<aside className="ai-panel" aria-label="Contextual assistant"><header><span><Sparkle/><strong>Plan with LifeOS</strong></span><button className="icon-button" aria-label="Close assistant" onClick={()=>setAssistant(false)}><X/></button></header>{assistantError&&<p role="alert">{assistantError}</p>}{!assistantContext?<p>Open a project to receive grounded recommendations.</p>:recommendations.length?<ol>{recommendations.map(item=><li key={item.id}><CheckSquare/><span><strong>{item.proposal.title}</strong><small>{item.proposal.priority} · {item.sources.map(source=>source.title).join(", ")} · {item.provider}</small><button className="secondary" onClick={()=>void decide(item,"rejected")}>Reject</button><button className="primary" onClick={()=>void decide(item,"accepted")}>Create task</button></span></li>)}</ol>:<p>No pending recommendations.</p>}<small>Suggestions are persisted drafts. Nothing changes without confirmation.</small></aside>}
   </div>;
 }
