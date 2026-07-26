@@ -89,6 +89,10 @@ test("contextual assistant renders persisted reviewable recommendations",()=>{
   const shell=read("app/components/ModuleShell.tsx");assert.doesNotMatch(shell,/proposal review is the best next action/);assert.match(shell,/\/api\/v1\/recommendations/);assert.match(shell,/Create task/);assert.match(shell,/persisted drafts/);
 });
 
+test("Vault renders accessible charts and Mermaid with source fallback",()=>{
+  const content=read("app/components/MarkdownContent.tsx"),vault=read("app/vault/page.tsx");assert.match(content,/```\(mermaid\|chart\)/);assert.match(content,/role="img"/);assert.match(content,/<table>/);assert.match(content,/scope="row"/);assert.match(content,/Diagram could not be rendered/);assert.match(content,/View Mermaid source/);assert.match(vault,/MarkdownContent/);
+});
+
 test("offline mutations queue durably and replay idempotently",()=>{
   const queue=read("app/lib/offlineQueue.ts"),pwa=read("app/components/PWARegister.tsx"),worker=read("public/sw.js");
   assert.match(queue,/databaseName="lifeos-offline-v1"/);

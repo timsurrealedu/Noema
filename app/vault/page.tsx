@@ -5,10 +5,11 @@ import {ArrowLeft, BookOpen, Clock, DownloadSimple, FileText, Folder, Magnifying
 import {ModuleShell} from "../components/ModuleShell";
 import {Note, useAppState} from "../components/AppState";
 import {TutorPanel} from "../components/TutorPanel";
+import {MarkdownContent} from "../components/MarkdownContent";
 
 const blankNote=():Note=>({id:crypto.randomUUID(),title:"Untitled note",excerpt:"",content:"# Untitled note\n\n",tags:[],time:"Now",ai:false,source:"Created in LifeOS"});
 type Optimization={id:string;mode:string;state:string;before_content:string;after_content:string|null;summary:string|null;provider:string|null;error:string|null};
-const renderMarkdown=(text:string)=>text.split("\n").map((line,index)=>line.startsWith("# ")?<h1 key={index}>{line.slice(2)}</h1>:line.startsWith("## ")?<h2 key={index}>{line.slice(3)}</h2>:line.startsWith("- ")?<li key={index}>{line.slice(2)}</li>:line?<p key={index}>{line.replaceAll("**","")}</p>:<br key={index}/>);
+const renderMarkdown=(text:string)=><MarkdownContent text={text}/>;
 
 export default function VaultPage(){
   const {notes,saveNote,trashNote}=useAppState();
