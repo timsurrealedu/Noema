@@ -10,11 +10,16 @@ test("SQLite core objects persist and remain searchable",async()=>{
   const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
   try{
     core.saveTask({id:"t1",title:"Ship backend",project:"LifeOS",due:"Today",priority:"High"},db);
-    core.saveEvent({id:"e1",title:"Backend review",day:5,time:"10:00",top:100,height:58},db);
+    core.saveEvent({id:"e1",title:"Backend review",startAt:"2026-07-25T03:00:00.000Z",endAt:"2026-07-25T04:30:00.000Z",timezone:"Asia/Jakarta",allDay:false,recurrence:{frequency:"weekly"}},db);
     core.saveNote({id:"n1",title:"Backend plan",content:"# Backend plan\n\nSQLite and Codex",tags:["lifeos"]},db);
     core.createCapture({id:"c1",text:"Plan tomorrow",source:"typed"},db);
-    const state=core.listState(db);assert.equal(state.tasks[0].title,"Ship backend");assert.equal(state.events[0].title,"Backend review");assert.equal(state.notes[0].tags[0],"lifeos");assert.equal(state.captures[0].status,"review");assert.equal(core.searchNotes("SQLite",db)[0].id,"n1");
+    const state=core.listState(db);assert.equal(state.tasks[0].title,"Ship backend");assert.equal(state.events[0].title,"Backend review");assert.equal(state.events[0].startAt,"2026-07-25T03:00:00.000Z");assert.equal(state.events[0].timezone,"Asia/Jakarta");assert.equal(state.events[0].day,5);assert.equal(state.events[0].time,"10:00");assert.deepEqual(state.events[0].recurrence,{frequency:"weekly"});assert.equal(state.notes[0].tags[0],"lifeos");assert.equal(state.captures[0].status,"review");assert.equal(core.searchNotes("SQLite",db)[0].id,"n1");
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("legacy events migrate to absolute time and deletion is soft",async()=>{
+  const dir=temp(),path=join(dir,"test.sqlite");const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");let db=openDatabase(path);
+  try{db.prepare("INSERT INTO events(id,title,day,time,top,height,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)").run("legacy","Legacy",2,"09:30",0,51,"2026-07-20T12:00:00.000Z","2026-07-20T12:00:00.000Z");db.close();db=openDatabase(path);const migrated=core.listState(db).events[0];assert.equal(migrated.startAt,"2026-07-22T09:30:00.000Z");assert.equal(migrated.endAt,"2026-07-22T10:30:00.000Z");assert.equal(migrated.timezone,"UTC");assert.equal(core.deleteEvent("legacy",migrated.version,db).ok,true);assert.equal(core.listState(db).events.length,0);assert.equal(db.prepare("SELECT deleted_at FROM events WHERE id='legacy'").get().deleted_at!==null,true)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
 test("mutations reject stale versions and replay idempotency keys",async()=>{

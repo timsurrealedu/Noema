@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS users(id TEXT PRIMARY KEY,email TEXT UNIQUE NOT NULL,
 CREATE TABLE IF NOT EXISTS sessions(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,token_hash TEXT UNIQUE NOT NULL,expires_at TEXT NOT NULL,revoked_at TEXT,device TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS captures(id TEXT PRIMARY KEY,text TEXT NOT NULL,source TEXT NOT NULL,status TEXT NOT NULL,source_label TEXT NOT NULL,objects_json TEXT NOT NULL DEFAULT '[]',error TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS tasks(id TEXT PRIMARY KEY,title TEXT NOT NULL,project TEXT NOT NULL,due TEXT NOT NULL,priority TEXT NOT NULL,completed INTEGER NOT NULL DEFAULT 0,recurrence TEXT,subtasks_json TEXT NOT NULL DEFAULT '[]',archived INTEGER NOT NULL DEFAULT 0,reminder_at TEXT,reminder_sent_at TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
-CREATE TABLE IF NOT EXISTS events(id TEXT PRIMARY KEY,title TEXT NOT NULL,day INTEGER NOT NULL,time TEXT NOT NULL,top REAL NOT NULL,height REAL NOT NULL,location TEXT,active INTEGER NOT NULL DEFAULT 0,reminder_at TEXT,reminder_sent_at TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
+CREATE TABLE IF NOT EXISTS events(id TEXT PRIMARY KEY,title TEXT NOT NULL,day INTEGER NOT NULL,time TEXT NOT NULL,top REAL NOT NULL,height REAL NOT NULL,location TEXT,active INTEGER NOT NULL DEFAULT 0,reminder_at TEXT,reminder_sent_at TEXT,start_at TEXT,end_at TEXT,timezone TEXT,all_day INTEGER NOT NULL DEFAULT 0,recurrence_json TEXT,deleted_at TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS notes(id TEXT PRIMARY KEY,title TEXT NOT NULL,excerpt TEXT NOT NULL,content TEXT NOT NULL,tags_json TEXT NOT NULL DEFAULT '[]',ai INTEGER NOT NULL DEFAULT 0,draft INTEGER NOT NULL DEFAULT 0,source TEXT,favorite INTEGER NOT NULL DEFAULT 0,trashed INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
 CREATE VIRTUAL TABLE IF NOT EXISTS notes_fts USING fts5(id UNINDEXED,title,content,tags);
 CREATE TABLE IF NOT EXISTS jobs(id TEXT PRIMARY KEY,kind TEXT NOT NULL,state TEXT NOT NULL,input_json TEXT NOT NULL,result_json TEXT,error TEXT,lease_until TEXT,cancel_requested INTEGER NOT NULL DEFAULT 0,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
@@ -80,6 +80,12 @@ export function openDatabase(path){
   ensureColumn(db,"tasks","reminder_sent_at","TEXT");
   ensureColumn(db,"events","reminder_at","TEXT");
   ensureColumn(db,"events","reminder_sent_at","TEXT");
+  ensureColumn(db,"events","start_at","TEXT");
+  ensureColumn(db,"events","end_at","TEXT");
+  ensureColumn(db,"events","timezone","TEXT");
+  ensureColumn(db,"events","all_day","INTEGER NOT NULL DEFAULT 0");
+  ensureColumn(db,"events","recurrence_json","TEXT");
+  ensureColumn(db,"events","deleted_at","TEXT");
   ensureColumn(db,"notes","draft","INTEGER NOT NULL DEFAULT 0");
   ensureColumn(db,"notifications","related_type","TEXT");
   ensureColumn(db,"notifications","related_id","TEXT");
@@ -104,10 +110,13 @@ export function openDatabase(path){
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(18,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(19,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(20,?)").run(new Date().toISOString());
+  migrateLegacyEvents(db);
+  db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(21,?)").run(new Date().toISOString());
   return db;
 }
 
 function ensureColumn(db,table,column,definition){if(!db.prepare(`PRAGMA table_info(${table})`).all().some(info=>info.name===column))db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`)}
+function migrateLegacyEvents(db){const update=db.prepare("UPDATE events SET start_at=?,end_at=?,timezone='UTC' WHERE id=?");for(const row of db.prepare("SELECT id,day,time,height,created_at FROM events WHERE start_at IS NULL").all()){const base=new Date(row.created_at),monday=new Date(Date.UTC(base.getUTCFullYear(),base.getUTCMonth(),base.getUTCDate()-((base.getUTCDay()+6)%7))),[hour,minute]=row.time.split(":").map(Number),start=new Date(monday);start.setUTCDate(start.getUTCDate()+row.day);start.setUTCHours(hour||0,minute||0,0,0);const end=new Date(start.getTime()+Math.max(15,Math.round(row.height/0.85))*60000);update.run(start.toISOString(),end.toISOString(),row.id)}}
 
 export function getDatabase(config=loadConfig()){
   if(!singleton){ensureDataDirs(config);singleton=openDatabase(config.dbPath)}
