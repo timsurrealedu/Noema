@@ -111,3 +111,7 @@ test("tasks and events expose durable reminder controls",()=>{
   for(const file of ["app/tasks/page.tsx","app/calendar/page.tsx"])assert.match(read(file),/type="datetime-local"/);
   assert.match(read("server/worker.mjs"),/deliverDueReminders/);
 });
+
+test("Vault exposes reviewable Draft optimization",()=>{
+  const vault=read("app/vault/page.tsx");assert.match(vault,/Optimize draft/);assert.match(vault,/Optimization review/);assert.match(vault,/Apply proposal/);assert.match(vault,/\/optimizations/);assert.match(read("server/worker.mjs"),/note-optimize/);
+});

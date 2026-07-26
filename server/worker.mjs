@@ -3,18 +3,20 @@ import {getDatabase} from "./db.mjs";
 import {ensureDataDirs,loadConfig} from "./config.mjs";
 import {runAI} from "./ai.mjs";
 import {addJobEvent,claimJob,failJob,finishJob} from "./jobs.mjs";
-import {saveInterpretation} from "./core.mjs";
+import {failNoteOptimization,finishNoteOptimization,saveInterpretation} from "./core.mjs";
 import {extractText} from "./extract.mjs";
 import {assetsForCapture} from "./objects.mjs";
 import {buildSkillPrompt,getSkill,skillSchema,workloadForSkill} from "./skills.mjs";
 import {deliverDueReminders,runScheduledAutomations} from "./modules.mjs";
 
 const schema={type:"object",additionalProperties:false,required:["objects"],properties:{objects:{type:"array",maxItems:20,items:{type:"object",additionalProperties:false,required:["type","title","detail"],properties:{type:{enum:["task","event","note"]},title:{type:"string",minLength:1,maxLength:500},detail:{type:"string",maxLength:1000}}}}}};
+const optimizationSchema={type:"object",additionalProperties:false,required:["content","summary"],properties:{content:{type:"string",minLength:1,maxLength:100000},summary:{type:"string",minLength:1,maxLength:2000}}};
 
 export async function runOne(config=ensureDataDirs(loadConfig()),db=getDatabase(config)){
   deliverDueReminders(new Date(),db);
   runScheduledAutomations(new Date(),db);
-  const job=claimJob(["interpret-capture","skill-run"],120,db);if(!job)return false;
+  const job=claimJob(["interpret-capture","skill-run","note-optimize"],120,db);if(!job)return false;
+  if(job.kind==="note-optimize")try{const note=db.prepare("SELECT title,content FROM notes WHERE id=? AND draft=1 AND trashed=0").get(job.input.noteId);if(!note)throw new Error("Draft note not found");const instructions={light:"Fix grammar and formatting only.",organize:"Improve headings, order, and readability.",study:"Turn this into clear study notes with summaries and examples.",technical:"Improve technical structure and precision.",voice:"Preserve the author's voice while improving clarity."}[job.input.mode];const output=await runAI({prompt:`Optimize this Draft note. ${instructions} Preserve facts and meaning. Return the complete replacement Markdown and a concise change summary.\n\nTitle: ${note.title}\n\n${note.content}`,cwd:resolve(config.jobsDir,job.id),schema:optimizationSchema,config,workload:"note",onEvent:event=>addJobEvent(job.id,"ai",{type:event.type,provider:event.provider},db)});finishNoteOptimization(job.input.optimizationId,output.result,output.provider,db);finishJob(job.id,{optimizationId:job.input.optimizationId,provider:output.provider},db);return true}catch(error){failNoteOptimization(job.input.optimizationId,error,db);failJob(job.id,error,db);return true}
   if(job.kind==="skill-run")try{getSkill(job.input.skill);const state={tasks:db.prepare("SELECT title,project,due,completed FROM tasks WHERE archived=0 LIMIT 100").all(),notes:db.prepare("SELECT title,excerpt,tags_json FROM notes WHERE trashed=0 LIMIT 100").all(),captures:db.prepare("SELECT text,source,status FROM captures LIMIT 100").all()};const output=await runAI({prompt:buildSkillPrompt(job.input.skill,job.input.input,JSON.stringify(state)),cwd:resolve(config.jobsDir,job.id),schema:skillSchema,config,workload:workloadForSkill(job.input.skill),search:job.input.skill==="research",onEvent:event=>addJobEvent(job.id,"ai",{type:event.type,provider:event.provider},db)});finishJob(job.id,{skill:job.input.skill,provider:output.provider,...output.result},db);return true}catch(error){failJob(job.id,error,db);return true}
   try{const capture=db.prepare("SELECT text,source FROM captures WHERE id=?").get(job.input.captureId);if(!capture)throw new Error("Capture not found");db.prepare("UPDATE jobs SET state='running',updated_at=? WHERE id=?").run(new Date().toISOString(),job.id);db.prepare("UPDATE captures SET status='processing',updated_at=? WHERE id=?").run(new Date().toISOString(),job.input.captureId);addJobEvent(job.id,"running",{},db);
     const assets=assetsForCapture(job.input.captureId,db),attachments=[];

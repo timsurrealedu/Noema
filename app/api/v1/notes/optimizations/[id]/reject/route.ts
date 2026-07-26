@@ -1,0 +1,4 @@
+import {rejectNoteOptimization} from "../../../../../../../server/core.mjs";
+import {handle,json,requireUser} from "../../../../../../../server/http.mjs";
+export const runtime="nodejs";
+export async function POST(request:Request,{params}:{params:Promise<{id:string}>}){try{requireUser(request);return json(rejectNoteOptimization((await params).id))}catch(error){return handle(error)}}
