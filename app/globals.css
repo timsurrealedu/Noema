@@ -85,3 +85,4 @@ main{grid-column:2;padding:44px clamp(24px,4vw,64px) 72px;min-width:0}.hero h1{m
 }
 
 .palette-dialog{margin:12vh auto auto}.palette-dialog::backdrop{background:oklch(0.05 0 0/.72)}
+.notification-popover>button{display:flex;align-items:flex-start;flex-direction:column;gap:4px;width:100%;min-height:58px;padding:10px;border:0;border-radius:var(--r-sm);background:transparent;color:var(--ink);font-size:.82rem;text-align:left}.notification-popover>button:hover{background:var(--surface)}.notification-popover>button.unread-item{box-shadow:inset 2px 0 var(--primary)}.notification-popover>p{padding:12px;color:var(--muted)}

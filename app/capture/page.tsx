@@ -33,7 +33,7 @@ export default function CaptureInbox(){
   const [toast,setToast]=useState<{id:string;message:string;previous:Capture["status"]}|null>(null);
   const selected=visible.find(item=>item.id===selectedId)??visible[0];
 
-  useEffect(()=>{const params=new URLSearchParams(location.search);const shared=[params.get("title"),params.get("text"),params.get("url")].filter(Boolean).join("\n");if(shared){setSelectedId(addCapture(shared));history.replaceState(null,"","/capture")}},[]);
+  useEffect(()=>{const params=new URLSearchParams(location.search),open=params.get("open"),shared=[params.get("title"),params.get("text"),params.get("url")].filter(Boolean).join("\n");if(open&&captures.some(item=>item.id===open)){setFilter("All");setSelectedId(open);setDetailOpen(true)}else if(shared){setSelectedId(addCapture(shared));history.replaceState(null,"","/capture")}},[captures]);
   useEffect(()=>{if(toast){const timer=setTimeout(()=>setToast(null),6000);return()=>clearTimeout(timer)}},[toast]);
 
   function choose(id:string){setSelectedId(id);setDetailOpen(true)}

@@ -1,6 +1,6 @@
 "use client";
 
-import {ChangeEvent, useState} from "react";
+import {ChangeEvent, useEffect, useState} from "react";
 import {ArrowLeft, BookOpen, Clock, DownloadSimple, FileText, Folder, MagnifyingGlass, Plus, Sparkle, Star, Tag, Trash, UploadSimple, X} from "@phosphor-icons/react";
 import {ModuleShell} from "../components/ModuleShell";
 import {Note, useAppState} from "../components/AppState";
@@ -16,6 +16,7 @@ export default function VaultPage(){
   const [draft,setDraft]=useState<Note|null>(null);
   const [mode,setMode]=useState<"write"|"split"|"read">("write");
   const [tutorOpen,setTutorOpen]=useState(false);
+  useEffect(()=>{const id=new URLSearchParams(location.search).get("open"),note=notes.find(item=>item.id===id);if(note)setDraft({...note,content:note.content||`# ${note.title}\n\n${note.excerpt}`})},[notes]);
   const filtered=notes.filter(note=>view==="Trash"?note.trashed:!note.trashed).filter(note=>view==="Favorites"?note.favorite:view==="Courses"?note.tags.some(tag=>["course","networking","database","study","operating-systems"].includes(tag)):view==="Projects"?note.tags.some(tag=>["revou","partnership","project"].includes(tag)):true).filter(note=>`${note.title} ${note.excerpt} ${note.tags}`.toLowerCase().includes(query.toLowerCase()));
   function update(content:string){if(!draft)return;const title=content.match(/^# (.+)$/m)?.[1]||draft.title;setDraft({...draft,title,content,excerpt:content.replace(/[#*_>-]/g,"").trim().slice(0,140)})}
   function save(){if(draft){saveNote({...draft,time:"Now"});setDraft(null)}}

@@ -317,11 +317,11 @@ test("notes retain versions, restore snapshots, and round-trip Markdown",async()
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
-test("unified search finds notes, tasks, projects, and captures",async()=>{
+test("unified search finds notes, tasks, events, projects, and captures",async()=>{
   const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
   try{
-    core.saveNote({title:"Quantum notes",content:"wave function"},db);core.saveTask({title:"Review quantum",project:"Physics",due:"Today"},db);core.saveProject({name:"Quantum lab",summary:"Physics"},db);core.createCapture({text:"quantum question"},db);
-    const found=core.searchAll("quantum",db);assert.equal(found.notes.length,1);assert.equal(found.tasks.length,1);assert.equal(found.projects.length,1);assert.equal(found.captures.length,1);
+    core.saveNote({title:"Quantum notes",content:"wave function"},db);core.saveTask({title:"Review quantum",project:"Physics",due:"Today"},db);core.saveEvent({title:"Quantum seminar",day:2,time:"10:00",location:"Lab"},db);core.saveProject({name:"Quantum lab",summary:"Physics"},db);core.createCapture({text:"quantum question"},db);
+    const found=core.searchAll("quantum",db);assert.equal(found.notes.length,1);assert.equal(found.tasks.length,1);assert.equal(found.events.length,1);assert.equal(found.projects.length,1);assert.equal(found.captures.length,1);
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 

@@ -24,6 +24,11 @@ test("Vault and compiler expose the contextual tutor",()=>{
 test("shared shell exposes keyboard search and accessible navigation",()=>{
   const shell=read("app/components/ModuleShell.tsx");
   assert.match(shell,/metaKey\|\|event\.ctrlKey/);
+  assert.match(shell,/\/api\/v1\/search\?q=/);
+  assert.match(shell,/data\.events\.map/);
+  assert.match(shell,/\?open=\$\{item\.id\}/);
+  assert.match(shell,/\/api\/v1\/notifications/);
+  assert.match(shell,/\/read`,\{method:"POST"/);
   assert.match(read("app/components/ModalDialog.tsx"),/aria-label="Search LifeOS"/);
   assert.match(shell,/Skip to main content/);
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import {FormEvent, useState} from "react";
+import {FormEvent, useEffect, useState} from "react";
 import {Archive, CalendarBlank, CaretDown, Check, Circle, Flag, Plus, X} from "@phosphor-icons/react";
 import {ModuleShell} from "../components/ModuleShell";
 import {Task, useAppState} from "../components/AppState";
@@ -11,6 +11,7 @@ export default function TasksPage(){
   const {tasks,toggleTask,saveTask,archiveTask}=useAppState();
   const [filter,setFilter]=useState("Today");
   const [draft,setDraft]=useState<Task|null>(null);
+  useEffect(()=>{const id=new URLSearchParams(location.search).get("open"),task=tasks.find(item=>item.id===id);if(task){setFilter("Inbox");setDraft({...task})}},[tasks]);
   function submit(event:FormEvent){event.preventDefault();if(!draft?.title.trim())return;saveTask({...draft,title:draft.title.trim(),project:draft.project.trim()||"Inbox"});setDraft(null)}
   const visible=tasks.filter(task=>filter==="Completed"?task.completed&&!task.archived:filter==="Someday"?task.due==="No date"&&!task.archived:filter==="Upcoming"?!["Today","No date"].includes(task.due)&&!task.completed&&!task.archived:filter==="Today"?task.due==="Today"&&!task.completed&&!task.archived:!task.archived);
   return <ModuleShell active="Tasks" title="Tasks" action={<button className="primary top-primary" onClick={()=>setDraft(blankTask())}><Plus/>New task</button>}>
