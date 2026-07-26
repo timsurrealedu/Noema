@@ -22,6 +22,7 @@ CREATE TABLE IF NOT EXISTS login_attempts(key TEXT NOT NULL,attempted_at TEXT NO
 CREATE TABLE IF NOT EXISTS totp_uses(user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,counter INTEGER NOT NULL,used_at TEXT NOT NULL,PRIMARY KEY(user_id,counter));
 CREATE TABLE IF NOT EXISTS recovery_codes(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,code_hash TEXT NOT NULL,created_at TEXT NOT NULL,used_at TEXT);
 CREATE TABLE IF NOT EXISTS user_settings(user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,profile_json TEXT NOT NULL DEFAULT '{}',preferences_json TEXT NOT NULL DEFAULT '{}',notifications_json TEXT NOT NULL DEFAULT '{}',agent_permissions_json TEXT NOT NULL DEFAULT '{}',calendar_json TEXT NOT NULL DEFAULT '{}',backup_json TEXT NOT NULL DEFAULT '{}',updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
+CREATE TABLE IF NOT EXISTS approvals(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,session_id TEXT NOT NULL REFERENCES sessions(id) ON DELETE CASCADE,mfa_verified_at TEXT NOT NULL,action_type TEXT NOT NULL,action_hash TEXT NOT NULL,risk TEXT NOT NULL,details_json TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'pending',expires_at TEXT NOT NULL,approved_at TEXT,consumed_at TEXT,created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY,name TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'Active',summary TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS task_dependencies(task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,depends_on_task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,created_at TEXT NOT NULL,PRIMARY KEY(task_id,depends_on_task_id));
 CREATE TABLE IF NOT EXISTS note_links(source_note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,target_note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,link_text TEXT NOT NULL,created_at TEXT NOT NULL,PRIMARY KEY(source_note_id,target_note_id,link_text));
@@ -89,6 +90,7 @@ export function openDatabase(path){
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(12,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(13,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(14,?)").run(new Date().toISOString());
+  db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(15,?)").run(new Date().toISOString());
   return db;
 }
 
