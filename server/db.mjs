@@ -32,6 +32,9 @@ CREATE TABLE IF NOT EXISTS notification_deliveries(id TEXT PRIMARY KEY,notificat
 CREATE TABLE IF NOT EXISTS google_accounts(id TEXT PRIMARY KEY,user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,email TEXT NOT NULL,token_enc TEXT NOT NULL,scopes_json TEXT NOT NULL,expires_at TEXT NOT NULL,health TEXT NOT NULL DEFAULT 'connected',last_error TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS google_oauth_states(state TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,expires_at TEXT NOT NULL,created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS google_calendars(account_id TEXT NOT NULL REFERENCES google_accounts(id) ON DELETE CASCADE,calendar_id TEXT NOT NULL,name TEXT NOT NULL,timezone TEXT,access_role TEXT NOT NULL,selected INTEGER NOT NULL DEFAULT 0,updated_at TEXT NOT NULL,PRIMARY KEY(account_id,calendar_id));
+CREATE TABLE IF NOT EXISTS google_calendar_sync(account_id TEXT NOT NULL,calendar_id TEXT NOT NULL,sync_token TEXT,last_synced_at TEXT,last_error TEXT,PRIMARY KEY(account_id,calendar_id),FOREIGN KEY(account_id,calendar_id) REFERENCES google_calendars(account_id,calendar_id) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS calendar_event_mappings(id TEXT PRIMARY KEY,account_id TEXT NOT NULL,calendar_id TEXT NOT NULL,local_event_id TEXT NOT NULL UNIQUE REFERENCES events(id) ON DELETE CASCADE,google_event_id TEXT NOT NULL,google_etag TEXT,last_local_version INTEGER NOT NULL,google_snapshot_json TEXT NOT NULL,tombstone INTEGER NOT NULL DEFAULT 0,last_synced_at TEXT NOT NULL,UNIQUE(account_id,calendar_id,google_event_id),FOREIGN KEY(account_id,calendar_id) REFERENCES google_calendars(account_id,calendar_id) ON DELETE CASCADE);
+CREATE TABLE IF NOT EXISTS calendar_conflicts(id TEXT PRIMARY KEY,mapping_id TEXT NOT NULL REFERENCES calendar_event_mappings(id) ON DELETE CASCADE,local_snapshot_json TEXT NOT NULL,google_snapshot_json TEXT NOT NULL,google_etag TEXT NOT NULL,state TEXT NOT NULL DEFAULT 'pending',created_at TEXT NOT NULL,resolved_at TEXT,UNIQUE(mapping_id,google_etag));
 CREATE TABLE IF NOT EXISTS projects(id TEXT PRIMARY KEY,name TEXT NOT NULL,status TEXT NOT NULL DEFAULT 'Active',summary TEXT NOT NULL DEFAULT '',created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS task_dependencies(task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,depends_on_task_id TEXT NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,created_at TEXT NOT NULL,PRIMARY KEY(task_id,depends_on_task_id));
 CREATE TABLE IF NOT EXISTS note_links(source_note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,target_note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,link_text TEXT NOT NULL,created_at TEXT NOT NULL,PRIMARY KEY(source_note_id,target_note_id,link_text));
@@ -67,6 +70,7 @@ CREATE INDEX IF NOT EXISTS note_optimizations_note ON note_optimizations(note_id
 CREATE INDEX IF NOT EXISTS tutor_sessions_subject ON tutor_sessions(kind,subject_id,updated_at DESC);
 CREATE INDEX IF NOT EXISTS tutor_messages_session ON tutor_messages(session_id,created_at);
 CREATE INDEX IF NOT EXISTS google_oauth_states_expiry ON google_oauth_states(expires_at);
+CREATE INDEX IF NOT EXISTS calendar_conflicts_state ON calendar_conflicts(state,created_at);
 `;
 
 export function openDatabase(path){
@@ -117,6 +121,7 @@ export function openDatabase(path){
   migrateLegacyEvents(db);
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(21,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(22,?)").run(new Date().toISOString());
+  db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(23,?)").run(new Date().toISOString());
   return db;
 }
 

@@ -141,6 +141,8 @@ test("Settings loads and saves persisted account controls",()=>{
 
 test("Settings connects Google and selects discovered calendars",()=>{const page=read("app/settings/page.tsx"),callback=read("app/api/v1/integrations/google/callback/route.ts");assert.match(page,/\/api\/v1\/integrations\/google\/connect/);assert.match(page,/Refresh calendars/);assert.match(page,/calendarIds/);assert.match(page,/Disconnect/);assert.match(callback,/completeGoogleOAuth/) });
 
+test("Calendar sync exposes diagnostics and conflict counts",()=>{const page=read("app/settings/page.tsx"),route=read("app/api/v1/calendar-sync/route.ts");assert.match(page,/Sync now/);assert.match(page,/conflicts\.length/);assert.match(page,/lastSyncedAt/);assert.match(route,/pullGoogleCalendar/);assert.match(route,/calendarSyncStatus/) });
+
 test("Automations use durable API state and runs",()=>{
   const page=read("app/automations/page.tsx");
   assert.match(page,/\/api\/v1\/automations/);

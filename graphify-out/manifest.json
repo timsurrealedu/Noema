@@ -125,9 +125,9 @@
     "semantic_hash": "c6551491a1707311a7537381e92f546b"
   },
   "app/settings/page.tsx": {
-    "mtime": 1785088387.885377,
-    "ast_hash": "8d9a7e9a483b5664312357e44798da3a",
-    "semantic_hash": "8d9a7e9a483b5664312357e44798da3a"
+    "mtime": 1785088734.9384933,
+    "ast_hash": "2e87b15448174d7de45598e6fabfd472",
+    "semantic_hash": "2e87b15448174d7de45598e6fabfd472"
   },
   "public/sw.js": {
     "mtime": 1785085431.7957878,
@@ -135,9 +135,9 @@
     "semantic_hash": "94a3e68c25c7819d85cdab31fa26af47"
   },
   "test/frontend.test.js": {
-    "mtime": 1785088414.3280442,
-    "ast_hash": "8ee8f0699e3ddd26154fa191623ec579",
-    "semantic_hash": "8ee8f0699e3ddd26154fa191623ec579"
+    "mtime": 1785088779.9967945,
+    "ast_hash": "d1f984b83c3cf68d6d3eea51b7cae935",
+    "semantic_hash": "d1f984b83c3cf68d6d3eea51b7cae935"
   },
   "app/api/v1/auth/login/route.ts": {
     "mtime": 1785085599.0668235,
@@ -230,9 +230,9 @@
     "semantic_hash": "facc9ec676f460bf8ddcbb5c87c16322"
   },
   "server/db.mjs": {
-    "mtime": 1785088336.1850035,
-    "ast_hash": "60e4f9cb56372cd521a9139a7e50919d",
-    "semantic_hash": "60e4f9cb56372cd521a9139a7e50919d"
+    "mtime": 1785088695.0851014,
+    "ast_hash": "4715a5faa4ea3787b51175987d9cba6f",
+    "semantic_hash": "4715a5faa4ea3787b51175987d9cba6f"
   },
   "server/http.mjs": {
     "mtime": 1785085628.5097716,
@@ -255,9 +255,9 @@
     "semantic_hash": "c2abed0fa746b30405a48ed07b8c3850"
   },
   "test/backend.test.js": {
-    "mtime": 1785088414.2050457,
-    "ast_hash": "c01463d03a655668ac6c1bd7929b0be3",
-    "semantic_hash": "c01463d03a655668ac6c1bd7929b0be3"
+    "mtime": 1785088863.53147,
+    "ast_hash": "2047066947b2cadf627851b26841bfc1",
+    "semantic_hash": "2047066947b2cadf627851b26841bfc1"
   },
   "app/api/v1/audit/[id]/undo/route.ts": {
     "mtime": 1784954491.5351684,
@@ -685,8 +685,18 @@
     "semantic_hash": "b1054040d8bb1abe84dcc01304163306"
   },
   "server/google-calendar.mjs": {
-    "mtime": 1785088336.5829988,
-    "ast_hash": "af843bdb681e2d209efc03c67571ef3c",
-    "semantic_hash": "af843bdb681e2d209efc03c67571ef3c"
+    "mtime": 1785088695.2040997,
+    "ast_hash": "210e70ba3cac4551c72272548792f18f",
+    "semantic_hash": "210e70ba3cac4551c72272548792f18f"
+  },
+  "app/api/v1/calendar-sync/route.ts": {
+    "mtime": 1785088734.8204951,
+    "ast_hash": "bcc4f9a0702ad5cbe4966d91519d793a",
+    "semantic_hash": "bcc4f9a0702ad5cbe4966d91519d793a"
+  },
+  "server/calendar-sync.mjs": {
+    "mtime": 1785088695.3300977,
+    "ast_hash": "655e806b2b2fb4b5ec7cce6fb6e613ac",
+    "semantic_hash": "655e806b2b2fb4b5ec7cce6fb6e613ac"
   }
 }
