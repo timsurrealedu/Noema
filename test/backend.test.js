@@ -298,6 +298,10 @@ test("projects persist, version-conflict, and undo restores deletions",async()=>
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
+test("project workspaces derive linked objects, milestones, blockers, and activity",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),projects=await import("../server/projects.mjs"),db=openDatabase(join(dir,"test.sqlite"));try{const project=core.saveProject({name:"Launch",summary:"Ship"},db,"owner"),task=core.saveTask({title:"Review",project:"Launch",due:"Today"},db,"owner");projects.linkProject({projectId:project.id,objectType:"task",objectId:task.id},db,"owner");projects.saveMilestone(project.id,{title:"Beta",status:"active"},db,"owner");projects.saveBlocker(project.id,{title:"Missing approval"},db,"owner");const workspace=projects.projectWorkspace(project.id,db);assert.equal(workspace.links[0].object.display,"Review");assert.equal(workspace.milestones[0].title,"Beta");assert.equal(workspace.blockers[0].title,"Missing approval");assert.ok(workspace.activity.some(item=>item.action==="link"));projects.unlinkProject(project.id,"task",task.id,db,"owner");assert.equal(projects.projectWorkspace(project.id,db).links.length,0)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
 test("task dependencies block self- and circular references and undo",async()=>{
   const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
   try{
