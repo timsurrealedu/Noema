@@ -2,6 +2,7 @@
 
 import {createContext, ReactNode, useContext, useEffect, useState} from "react";
 import {showUnavailable} from "./ServiceNotice";
+import {flushQueue, queueRequest} from "../lib/offlineQueue";
 
 export type Task = {id:string; title:string; project:string; due:string; priority:"High"|"Medium"|"Low"; completed:boolean; recurrence?:string; reminderAt?:string|null; subtasks?:string[]; archived?:boolean; version?:number};
 export type Event = {id:string; title:string; day:number; time:string; top:number; height:number; location?:string; reminderAt?:string|null; active?:boolean; version?:number};
@@ -64,24 +65,12 @@ const seed: AppData = {
 };
 
 const storageKey="lifeos-state-v2";
-const queueKey="lifeos-offline-queue-v1";
 const Context=createContext<AppState|null>(null);
-
-type QueuedRequest={path:string;method:string;value:unknown;key:string};
-const readQueue=():QueuedRequest[]=>{try{return JSON.parse(localStorage.getItem(queueKey)||"[]")}catch{return []}};
-const writeQueue=(items:QueuedRequest[])=>localStorage.setItem(queueKey,JSON.stringify(items.slice(-100)));
 
 async function api(path:string,method="GET",value?:unknown,key?:string){
   const response=await fetch(`/api/v1${path}`,{method,headers:value?{"Content-Type":"application/json","Idempotency-Key":key||crypto.randomUUID()}:undefined,body:value?JSON.stringify(value):undefined});
   if(!response.ok){const error=new Error((await response.json()).error?.message||"Backend request failed") as Error&{status?:number};error.status=response.status;throw error}
   return response.json();
-}
-
-async function flushQueue(){
-  const items=readQueue();if(!items.length)return;
-  const remaining:QueuedRequest[]=[];
-  for(const item of items){try{await api(item.path,item.method,item.value,item.key)}catch(error){const status=(error as {status?:number}).status;if(!status||status>=500)remaining.push(item)}}
-  writeQueue(remaining);
 }
 
 export function AppStateProvider({children}:{children:ReactNode}) {
@@ -102,7 +91,7 @@ export function AppStateProvider({children}:{children:ReactNode}) {
     return()=>{window.removeEventListener("online",online);clearInterval(timer)};
   },[]);
 
-  const persist=(path:string,method:string,value:unknown)=>{const key=crypto.randomUUID();void api(path,method,value,key).catch(error=>{if(!error.status||error.status>=500)writeQueue([...readQueue(),{path,method,value,key}]);showUnavailable(`${error.message} Your change remains saved in this browser and will retry when the server is reachable.`)});};
+  const persist=(path:string,method:string,value:unknown)=>{const idempotencyKey=crypto.randomUUID();void api(path,method,value,idempotencyKey).catch(error=>{if(!error.status||error.status>=500)void queueRequest({path,method,body:value,idempotencyKey,dependencies:[]});showUnavailable(`${error.message} Your change remains saved in this browser and will retry when the server is reachable.`)});};
   const patchCapture=(id:string,patch:Partial<Capture>)=>setData(current=>({...current,captures:current.captures.map(item=>item.id===id?{...item,...patch}:item)}));
   const applyObjects=(created:{type:string;object:any}[])=>setData(current=>{
     const tasks=[...current.tasks],events=[...current.events],notes=[...current.notes];

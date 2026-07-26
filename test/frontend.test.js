@@ -74,10 +74,14 @@ test("frontend roadmap separates UI completion from integrations",()=>{
 });
 
 test("offline mutations queue durably and replay idempotently",()=>{
-  const state=read("app/components/AppState.tsx");
-  assert.match(state,/lifeos-offline-queue-v1/);
-  assert.match(state,/addEventListener\("online"/);
-  assert.match(state,/Idempotency-Key/);
+  const queue=read("app/lib/offlineQueue.ts"),pwa=read("app/components/PWARegister.tsx"),worker=read("public/sw.js");
+  assert.match(queue,/databaseName="lifeos-offline-v1"/);
+  assert.match(queue,/idempotencyKey/);
+  assert.match(queue,/dependencies\.some/);
+  assert.match(queue,/locks\.request\("lifeos-offline-replay"/);
+  assert.match(queue,/status:response\.status===409\?"conflict"/);
+  assert.match(pwa,/addEventListener\("online"/);
+  assert.match(worker,/lifeos-mutations/);
 });
 
 test("Activity reads durable audit events and executes undo",()=>{
