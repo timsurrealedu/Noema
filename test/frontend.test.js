@@ -53,13 +53,19 @@ test("remote actions disclose missing AI and persistence",()=>{
   assert.match(notice,/role="alert"/);
   assert.match(notice,/AI and server persistence aren’t connected yet/);
   assert.doesNotMatch(read("app/login/page.tsx"),/secure sign-in link was sent/i);
-  assert.match(read("app/page.tsx"),/Sample interpretation/);
+  const today=read("app/page.tsx");
+  assert.match(today,/Sample interpretation/);
+  assert.doesNotMatch(today,/AI interpretation is not connected/);
+  assert.doesNotMatch(today,/File captured\. Server interpretation/);
 });
 
 test("frontend roadmap separates UI completion from integrations",()=>{
   const roadmap=read("FRONTEND_ROADMAP.md");
   assert.match(roadmap,/## Backend integration backlog/);
-  assert.match(roadmap,/Remote actions must show the shared/);
+  assert.match(roadmap,/## Completion contract/);
+  assert.match(roadmap,/Sample-state controls are prototypes/);
+  assert.match(roadmap,/Google Calendar is the first supported external provider/);
+  assert.match(roadmap,/Full mobile repository IDE/);
 });
 
 test("offline mutations queue durably and replay idempotently",()=>{

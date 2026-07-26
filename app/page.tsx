@@ -9,7 +9,6 @@ import {
 import Link from "next/link";
 import {FormEvent, useEffect, useRef, useState} from "react";
 import {useAppState} from "./components/AppState";
-import {showUnavailable} from "./components/ServiceNotice";
 import {ModalDialog} from "./components/ModalDialog";
 
 const nav = [
@@ -51,7 +50,7 @@ export default function Today() {
   const todayEvents=events.filter(event=>event.day===4).toSorted((a,b)=>a.time.localeCompare(b.time));
   const todayTasks=tasks.filter(task=>task.due==="Today");
   const pendingCaptures=captures.filter(item=>item.status==="review").length;
-  function submit(e:FormEvent) {e.preventDefault();if(capture.trim()){setReviewId(addCapture(capture.trim()));showUnavailable("AI interpretation is not connected. The card below is a sample preview; your original capture is saved only in this browser.")}}
+  function submit(e:FormEvent) {e.preventDefault();if(capture.trim())setReviewId(addCapture(capture.trim()))}
   function closeReview(status:"confirmed"|"dismissed") {if(reviewId)updateCapture(reviewId,status);setReviewId(null);if(status==="confirmed")setCapture("")}
 
   return <div className="app-shell">
@@ -83,7 +82,7 @@ export default function Today() {
         <Plus aria-hidden="true"/>
         <input ref={input} id="capture" value={capture} onChange={e=>setCapture(e.target.value)} placeholder="Capture a thought, task, event, file, or command…"/>
         <button type="button" className="capture-tool" aria-label="Attach a file" onClick={()=>fileInput.current?.click()}><Paperclip/></button>
-        <input ref={fileInput} type="file" hidden aria-hidden="true" tabIndex={-1} onChange={e=>{const file=e.target.files?.[0];if(file){addFileCapture(file);showUnavailable("File captured. Server interpretation runs once an AI provider is configured; the original is preserved when signed in.")}e.target.value=""}}/>
+        <input ref={fileInput} type="file" hidden aria-hidden="true" tabIndex={-1} onChange={e=>{const file=e.target.files?.[0];if(file)addFileCapture(file);e.target.value=""}}/>
         <button type="button" className="capture-tool" aria-label="Record voice" data-unavailable="Voice transcription requires the AI backend. Use text capture for this browser-only prototype."><Microphone/></button>
         <button className="send" disabled={!capture.trim()} aria-label="Process capture"><PaperPlaneTilt/></button>
         <kbd>⌘ ⇧ C</kbd>

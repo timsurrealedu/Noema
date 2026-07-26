@@ -1,6 +1,21 @@
 # LifeOS Frontend Roadmap
 
-Frontend status is separate from backend integration. `Done` means the interaction is implemented in the browser. Remote actions must show the shared “Not connected yet” notice until their service exists.
+Frontend status is separate from backend integration. `Done` means the interaction is implemented in the browser. `Integrated` means it persists through the authenticated API and has failure handling. Sample-state controls are prototypes, not complete features. Runtime failures must show the shared connection notice; controls backed by an existing API must not show a blanket “Not connected yet” notice.
+
+## Completion contract
+
+- `Done`: browser interaction works at supported widths with keyboard access and real state transitions.
+- `Integrated`: authenticated API, persistence, validation, retry/error behavior, and at least one automated end-to-end check work.
+- `Verified`: supported browser/device matrix, WCAG 2.2 AA audit, and visual baselines pass.
+- `Deferred`: explicitly outside the MVP; it does not block `v1.0.0`.
+
+Supported MVP targets:
+
+- Runtime/deployment: Node.js 22 LTS on Linux x64, systemd, SQLite, and Caddy or Tailscale Serve.
+- Desktop browsers: current and previous major Chrome, Firefox, and Safari.
+- Mobile/PWA: current Android Chrome and iOS Safari; 375px minimum viewport.
+- AI providers: Codex primary, Gemini capacity fallback plus OCR/transcription, and OpenAI capacity fallback.
+- Calendar sync: Google Calendar is the first supported external provider; no other external provider is in MVP scope.
 
 ## Frontend milestone
 
@@ -31,14 +46,20 @@ Frontend status is separate from backend integration. `Done` means the interacti
 
 ## Backend integration backlog
 
-- [~] Authentication, sessions, optional TOTP login, and revocation; in-app TOTP setup and recovery remain
+- [~] Authentication, sessions, optional TOTP login, and revocation
+  - Complete when Settings enrolls/disables TOTP, recovery codes are generated once and stored hashed, recovery invalidates used codes, and browser tests cover enrollment, login, recovery, and revocation.
 - [x] Durable database persistence, synchronization, encrypted backup, and full workspace export
-- [~] Codex interpretation service with review, approval, cancellation, and audit records; execution approval and streaming agent sessions remain
+- [~] Codex interpretation service with review, approval, cancellation, and audit records
+  - Complete when quick capture uses real interpretation results, sensitive execution shows the actual command/diff, approval is MFA-bound and single-use, SSE reconnects without duplicate events, and cancel/retry paths have browser coverage.
 - [x] File/object storage, OCR, transcription, source preservation, and attachment retrieval
-- [ ] Calendar and external-service synchronization
-- [~] Notifications, automation execution, job logs, metrics, and schedules; streaming agent sessions remain
-- [~] Global search, backlink indexing, and relationship persistence; semantic ranking remains
-- [ ] Analytics implementation that excludes private note content
+- [ ] Google Calendar synchronization
+  - Complete when account connect/revoke, initial import, incremental two-way sync, token refresh, deduplication, conflict handling, deletion, retry, and last-sync/error UI pass integration tests.
+- [~] Notifications, automation execution, job logs, metrics, and schedules
+  - Complete when the Automations page reads API state instead of fixtures and create, pause/resume, cancel, retry, schedule, logs, metrics, and reconnecting live updates pass browser tests.
+- [~] Global search, backlink indexing, and relationship persistence
+  - Complete when the global palette queries `/api/v1/search`, exact/FTS results remain deterministic, semantic ranking is optional and source-attributed, and unavailable embeddings degrade to FTS without losing results.
+- [ ] Privacy-safe analytics
+  - Complete when an allowlisted schema excludes note/capture bodies, attachments, prompts, and extracted text; opt-out and deletion work; and tests reject private-content fields and values.
 
 ## MVP acceptance matrix
 
@@ -52,22 +73,22 @@ Frontend status is separate from backend integration. `Done` means the interacti
 | 6 | Create/edit/search notes | Done | Synced + offline queue |
 | 7 | Markdown portability | Done | Local import/export |
 | 8 | Original images remain linked | Done UI | Object storage + retrieval done |
-| 9 | AI information identified | Done | Pending AI |
+| 9 | AI information identified | Done | Provider configuration required |
 | 10 | AI actions can be undone | Done UI | Durable audit + undo done |
 | 11 | Phone-sized usability | Done | Verification pending |
 | 12 | Installable PWA | Done UI | Device verification pending |
-| 13 | Loading/error states | Done | Remote errors pending |
+| 13 | Loading/error states | Done | Core mutation errors wired; full browser verification pending |
 | 14 | AI/system activity visible | Done | Audit and undo API wired |
-| 15 | Automation status separated from Today | Done | Executor/API done; frontend wiring pending |
+| 15 | Automation status separated from Today | Done | Executor/API done; Automations page still uses sample state |
 | 16 | Keyboard primary flows | Done | Formal audit pending |
 | 17 | Light/dark modes | Done | Browser-local |
 | 18 | Private notes excluded from analytics | Done policy | Analytics not implemented |
 | 19 | Portable note export | Done | Local Markdown |
-| 20 | Sensitive actions require confirmation | Done UI | Pending authorization service |
+| 20 | Sensitive actions require confirmation | Prototype UI | Compiler and AI endpoints require MFA; real approval UI remains |
 
 ## Deferred beyond MVP
 
-- [ ] Full mobile IDE
+- [ ] Full mobile repository IDE (the responsive single-file compiler/editor is complete; repository browsing, multi-file editing, diffs, terminal sessions, and source-control workflows are deferred)
 - [ ] Advanced automation builder
 - [ ] Knowledge-graph visualization
 - [ ] Multiplayer collaboration

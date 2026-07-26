@@ -2,6 +2,15 @@
 
 Personal-first, self-hosted LifeOS for capture, tasks, scheduling, knowledge, study, coding, and automations. The frontend is a responsive Next.js PWA; the local backend uses SQLite, authenticated APIs, durable jobs, isolated Codex execution, and a Bubblewrap compiler.
 
+## Supported targets
+
+- Node.js 22 LTS on Linux x64 with systemd and SQLite
+- Current and previous major Chrome, Firefox, and Safari
+- Current Android Chrome and iOS Safari, down to a 375px viewport
+- Caddy or Tailscale Serve for deployment
+
+Codex is the primary AI provider. Gemini supplies capacity fallback and OCR/transcription; OpenAI is an additional capacity fallback. Google Calendar is the planned MVP calendar provider and is not implemented yet.
+
 ## Local development
 
 ```bash
