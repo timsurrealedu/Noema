@@ -27,6 +27,7 @@ Supported MVP targets:
 - [x] Capture inbox, source/status states, review, retry, dismiss, and undo
 - [x] Task creation, editing, recurrence fields, subtasks, completion, archive, and views
 - [x] Calendar day, week, month, agenda, creation, and editing interfaces
+- [x] Durable task/event reminders with restart-safe notification delivery
 - [x] Vault search, views, Markdown editor, split/read modes, import/export, properties, source, trash, and AI provenance
 - [x] Study upload/camera, processing-result, source comparison, flashcard, quiz, and assignment interfaces
 - [x] Handwriting and mathematical recognition through image upload

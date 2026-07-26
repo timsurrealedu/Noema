@@ -3,8 +3,8 @@
 import {createContext, ReactNode, useContext, useEffect, useState} from "react";
 import {showUnavailable} from "./ServiceNotice";
 
-export type Task = {id:string; title:string; project:string; due:string; priority:"High"|"Medium"|"Low"; completed:boolean; recurrence?:string; subtasks?:string[]; archived?:boolean; version?:number};
-export type Event = {id:string; title:string; day:number; time:string; top:number; height:number; location?:string; active?:boolean; version?:number};
+export type Task = {id:string; title:string; project:string; due:string; priority:"High"|"Medium"|"Low"; completed:boolean; recurrence?:string; reminderAt?:string|null; subtasks?:string[]; archived?:boolean; version?:number};
+export type Event = {id:string; title:string; day:number; time:string; top:number; height:number; location?:string; reminderAt?:string|null; active?:boolean; version?:number};
 export type Note = {id:string; title:string; excerpt:string; content:string; tags:string[]; time:string; ai:boolean; source?:string; favorite?:boolean; trashed?:boolean; version?:number};
 export type CaptureSource = "typed"|"voice"|"file"|"link";
 export type CaptureObject = {type:"task"|"event"|"note"; title:string; detail:string};

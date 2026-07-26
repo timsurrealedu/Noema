@@ -8,6 +8,7 @@ const formatSize=bytes=>bytes>1024*1024?`${(bytes/1048576).toFixed(1)} MB`:`${Ma
 const fileKind=type=>type?.startsWith("image/")?"Image":type?.startsWith("audio/")?"Audio":type?.startsWith("text/")?"Text":type==="application/pdf"?"Document":type==="application/vnd.openxmlformats-officedocument.wordprocessingml.document"?"Document":"File";
 const parse=value=>{try{return JSON.parse(value)}catch{return []}};
 const required=(value,name,max=10000)=>{if(typeof value!=="string"||!value.trim())throw new Error(`${name} is required`);if(value.length>max)throw new Error(`${name} is too long`);return value.trim()};
+const timestamp=value=>{if(!value)return null;const date=new Date(value);if(Number.isNaN(date.getTime()))throw new Error("reminderAt must be a valid date");return date.toISOString()};
 const requireVersion=(input,before)=>{if(before&&input.version!==before.version)throw Object.assign(new Error(`Expected version ${before.version}`),{status:409,code:"VERSION_CONFLICT"})};
 const audit=(db,action,type,id,summary,inverse=null,actor=null)=>db.prepare("INSERT INTO audit_events(id,actor_id,action,object_type,object_id,summary,inverse_json,created_at) VALUES(?,?,?,?,?,?,?,?)").run(randomUUID(),actor,action,type,id,summary,inverse?JSON.stringify(inverse):null,stamp());
 const objectTables={task:"tasks",event:"events",note:"notes",capture:"captures",project:"projects"};
@@ -17,8 +18,8 @@ const reindexNote=(db,row)=>{db.prepare("DELETE FROM notes_fts WHERE id=?").run(
 
 export function listState(db=getDatabase()){
   return {
-    tasks:db.prepare("SELECT * FROM tasks ORDER BY created_at DESC").all().map(row=>({...row,completed:!!row.completed,archived:!!row.archived,subtasks:parse(row.subtasks_json)})),
-    events:db.prepare("SELECT * FROM events ORDER BY day,time").all().map(row=>({...row,active:!!row.active})),
+    tasks:db.prepare("SELECT * FROM tasks ORDER BY created_at DESC").all().map(row=>({...row,completed:!!row.completed,archived:!!row.archived,reminderAt:row.reminder_at,subtasks:parse(row.subtasks_json)})),
+    events:db.prepare("SELECT * FROM events ORDER BY day,time").all().map(row=>({...row,active:!!row.active,reminderAt:row.reminder_at})),
     notes:db.prepare("SELECT * FROM notes ORDER BY updated_at DESC").all().map(row=>({...row,ai:!!row.ai,favorite:!!row.favorite,trashed:!!row.trashed,tags:parse(row.tags_json),time:row.updated_at})),
     captures:db.prepare("SELECT * FROM captures ORDER BY created_at DESC").all().map(row=>({id:row.id,text:row.text,source:row.source,status:row.status,sourceLabel:row.source_label,objects:parse(row.objects_json),error:row.error,assets:assetsForCapture(row.id,db).map(asset=>({id:asset.id,name:asset.name,mime:asset.mime,size:asset.size})),createdAt:row.created_at,version:row.version})),
     projects:db.prepare("SELECT * FROM projects ORDER BY name").all(),
@@ -30,14 +31,14 @@ export function listState(db=getDatabase()){
 export function saveTask(input,db=getDatabase(),actor=null){
   const id=input.id||randomUUID(),title=required(input.title,"title",500),project=required(input.project||"Inbox","project",200),due=required(input.due||"No date","due",100),priority=["High","Medium","Low"].includes(input.priority)?input.priority:"Medium",time=stamp(),before=db.prepare("SELECT * FROM tasks WHERE id=?").get(id);
   requireVersion(input,before);
-  db.prepare(`INSERT INTO tasks(id,title,project,due,priority,completed,recurrence,subtasks_json,archived,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,project=excluded.project,due=excluded.due,priority=excluded.priority,completed=excluded.completed,recurrence=excluded.recurrence,subtasks_json=excluded.subtasks_json,archived=excluded.archived,updated_at=excluded.updated_at,version=tasks.version+1`).run(id,title,project,due,priority,input.completed?1:0,input.recurrence||null,JSON.stringify(input.subtasks||[]),input.archived?1:0,before?.created_at||time,time);
+  const reminderAt=timestamp(input.reminderAt);db.prepare(`INSERT INTO tasks(id,title,project,due,priority,completed,recurrence,subtasks_json,archived,reminder_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,project=excluded.project,due=excluded.due,priority=excluded.priority,completed=excluded.completed,recurrence=excluded.recurrence,subtasks_json=excluded.subtasks_json,archived=excluded.archived,reminder_sent_at=CASE WHEN tasks.reminder_at IS excluded.reminder_at THEN tasks.reminder_sent_at ELSE NULL END,reminder_at=excluded.reminder_at,updated_at=excluded.updated_at,version=tasks.version+1`).run(id,title,project,due,priority,input.completed?1:0,input.recurrence||null,JSON.stringify(input.subtasks||[]),input.archived?1:0,reminderAt,before?.created_at||time,time);
   audit(db,before?"update":"create","task",id,title,before?{op:"restore",row:before}:{op:"delete"},actor);return db.prepare("SELECT * FROM tasks WHERE id=?").get(id);
 }
 
 export function saveEvent(input,db=getDatabase(),actor=null){
   const id=input.id||randomUUID(),title=required(input.title,"title",500),day=Number(input.day),timeValue=required(input.time,"time",20),time=stamp(),before=db.prepare("SELECT * FROM events WHERE id=?").get(id);if(!Number.isInteger(day)||day<0||day>6)throw new Error("day must be between 0 and 6");
   requireVersion(input,before);
-  db.prepare(`INSERT INTO events(id,title,day,time,top,height,location,active,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,day=excluded.day,time=excluded.time,top=excluded.top,height=excluded.height,location=excluded.location,active=excluded.active,updated_at=excluded.updated_at,version=events.version+1`).run(id,title,day,timeValue,Number(input.top)||0,Number(input.height)||58,input.location||null,input.active?1:0,before?.created_at||time,time);
+  const reminderAt=timestamp(input.reminderAt);db.prepare(`INSERT INTO events(id,title,day,time,top,height,location,active,reminder_at,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,day=excluded.day,time=excluded.time,top=excluded.top,height=excluded.height,location=excluded.location,active=excluded.active,reminder_sent_at=CASE WHEN events.reminder_at IS excluded.reminder_at THEN events.reminder_sent_at ELSE NULL END,reminder_at=excluded.reminder_at,updated_at=excluded.updated_at,version=events.version+1`).run(id,title,day,timeValue,Number(input.top)||0,Number(input.height)||58,input.location||null,input.active?1:0,reminderAt,before?.created_at||time,time);
   audit(db,before?"update":"create","event",id,title,before?{op:"restore",row:before}:{op:"delete"},actor);return db.prepare("SELECT * FROM events WHERE id=?").get(id);
 }
 
