@@ -85,14 +85,14 @@
     "semantic_hash": "49930ff4e4a77b09ef89f3e7a0bd128e"
   },
   "app/components/AppState.tsx": {
-    "mtime": 1785085431.5924966,
-    "ast_hash": "6cb437a522918b2089f258545f05064e",
-    "semantic_hash": "6cb437a522918b2089f258545f05064e"
+    "mtime": 1785086521.8932302,
+    "ast_hash": "f93a417b0493ccdfbde2e81d5a956cd5",
+    "semantic_hash": "f93a417b0493ccdfbde2e81d5a956cd5"
   },
   "app/components/PWARegister.tsx": {
-    "mtime": 1785085431.6966457,
-    "ast_hash": "fd3c0a764aacdf20c13b863ed05bdca2",
-    "semantic_hash": "fd3c0a764aacdf20c13b863ed05bdca2"
+    "mtime": 1785086521.7942295,
+    "ast_hash": "a72f5969ef979284f3cd0bdbeac1bd8a",
+    "semantic_hash": "a72f5969ef979284f3cd0bdbeac1bd8a"
   },
   "app/components/ServiceNotice.tsx": {
     "mtime": 1785053011.3215303,
@@ -135,9 +135,9 @@
     "semantic_hash": "94a3e68c25c7819d85cdab31fa26af47"
   },
   "test/frontend.test.js": {
-    "mtime": 1785086382.1026103,
-    "ast_hash": "a78592f3bc01887c6ff9ede527bdf498",
-    "semantic_hash": "a78592f3bc01887c6ff9ede527bdf498"
+    "mtime": 1785086533.6333165,
+    "ast_hash": "95f8d3670f1a5387d214a21968f1a366",
+    "semantic_hash": "95f8d3670f1a5387d214a21968f1a366"
   },
   "app/api/v1/auth/login/route.ts": {
     "mtime": 1785085599.0668235,
@@ -525,9 +525,9 @@
     "semantic_hash": "6293b21a51f0b1c4112dfda347652605"
   },
   "app/lib/offlineQueue.ts": {
-    "mtime": 1785085464.2825918,
-    "ast_hash": "918eba23b5283f548190376dd0184e3f",
-    "semantic_hash": "918eba23b5283f548190376dd0184e3f"
+    "mtime": 1785086521.6962287,
+    "ast_hash": "7fcc96782a4de78c35f376d00bc5c726",
+    "semantic_hash": "7fcc96782a4de78c35f376d00bc5c726"
   },
   "app/api/v1/settings/password/route.ts": {
     "mtime": 1785085949.3114738,

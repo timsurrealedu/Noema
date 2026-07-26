@@ -2,7 +2,7 @@
 
 import {createContext, ReactNode, useContext, useEffect, useState} from "react";
 import {showUnavailable} from "./ServiceNotice";
-import {flushQueue, queueRequest} from "../lib/offlineQueue";
+import {flushQueue, queueOfflineCapture, queueRequest} from "../lib/offlineQueue";
 
 export type Task = {id:string; title:string; project:string; due:string; priority:"High"|"Medium"|"Low"; completed:boolean; recurrence?:string; reminderAt?:string|null; subtasks?:string[]; archived?:boolean; version?:number};
 export type Event = {id:string; title:string; day:number; time:string; top:number; height:number; location?:string; reminderAt?:string|null; active?:boolean; version?:number};
@@ -110,7 +110,7 @@ export function AppStateProvider({children}:{children:ReactNode}) {
       const form=new FormData();form.append("file",file);
       fetch("/api/v1/assets",{method:"POST",body:form}).then(async response=>{if(!response.ok)throw new Error((await response.json()).error?.message||"Upload failed");return response.json()})
         .then(({assets})=>{patchCapture(capture.id,{assets:assets.map((asset:{id:string;name:string;mime:string;size:number})=>({id:asset.id,name:asset.name,mime:asset.mime,size:asset.size}))});persist("/captures","POST",{...capture,assetIds:assets.map((asset:{id:string})=>asset.id)})})
-        .catch(error=>showUnavailable(`${error.message} The original file is not preserved on the server yet.`));
+        .catch(error=>{void queueOfflineCapture(capture,file);showUnavailable(`${error.message} The original file is preserved on this device and will retry when the server is reachable.`)});
       return capture.id;
     },
     updateCapture:(id,status)=>{const capture=data.captures.find(item=>item.id===id);if(!capture)return;setData(current=>({...current,captures:current.captures.map(item=>item.id===id?{...item,status,version:(item.version||0)+1}:item)}));persist(`/captures/${id}`,"PATCH",{status,version:capture.version})},

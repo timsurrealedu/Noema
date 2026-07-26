@@ -88,6 +88,10 @@ test("offline mutations queue durably and replay idempotently",()=>{
   assert.match(worker,/lifeos-mutations/);
 });
 
+test("offline file captures preserve blobs until asset and capture persistence complete",()=>{
+  const queue=read("app/lib/offlineQueue.ts"),state=read("app/components/AppState.tsx");assert.match(queue,/captureStore="capture-blobs"/);assert.match(queue,/blob:Blob/);assert.match(queue,/new File\(\[item\.blob\]/);assert.match(queue,/assetIds:\[data\.assets\[0\]\.id\]/);assert.match(queue,/delete\(item\.id\)/);assert.match(state,/queueOfflineCapture\(capture,file\)/);
+});
+
 test("Activity reads durable audit events and executes undo",()=>{
   const activity=read("app/activity/page.tsx");
   assert.match(activity,/\/api\/v1\/audit\?limit=100/);
