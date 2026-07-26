@@ -103,6 +103,10 @@ test("Settings workspace export downloads a streamed archive",()=>{
   const route=read("app/api/v1/export/route.ts");assert.match(route,/requireMfa/);assert.match(route,/application\/x-tar/);assert.match(route,/workspace\.json/);assert.match(route,/assets\//);
 });
 
+test("Settings loads and saves persisted account controls",()=>{
+  const page=read("app/settings/page.tsx");assert.match(page,/\/api\/v1\/settings/);assert.match(page,/\/api\/v1\/settings\/password/);assert.match(page,/\/api\/v1\/auth\/sessions/);assert.match(page,/\/api\/v1\/auth\/totp/);assert.match(page,/Idempotency-Key/);
+});
+
 test("Automations use durable API state and runs",()=>{
   const page=read("app/automations/page.tsx");
   assert.match(page,/\/api\/v1\/automations/);
