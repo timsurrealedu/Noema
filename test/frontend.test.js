@@ -102,6 +102,10 @@ test("login supports an optional authenticator challenge",()=>{
   assert.match(login,/pattern="\[0-9\]\{6\}"/);
 });
 
+test("login and Settings expose recovery and MFA revocation controls",()=>{
+  const login=read("app/login/page.tsx"),settings=read("app/settings/page.tsx");assert.match(login,/recoveryCode/);assert.match(login,/Use a recovery code/);assert.match(settings,/\/api\/v1\/auth\/recovery/);assert.match(settings,/method:"DELETE"/);assert.match(settings,/invalidates every recovery code/);
+});
+
 test("Settings workspace export downloads a streamed archive",()=>{
   assert.match(read("app/components/ServiceNotice.tsx"),/location\.assign\("\/api\/v1\/export"\)/);
   const route=read("app/api/v1/export/route.ts");assert.match(route,/requireMfa/);assert.match(route,/application\/x-tar/);assert.match(route,/workspace\.json/);assert.match(route,/assets\//);
