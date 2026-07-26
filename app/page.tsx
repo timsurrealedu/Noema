@@ -10,6 +10,7 @@ import Link from "next/link";
 import {FormEvent, useEffect, useRef, useState} from "react";
 import {useAppState} from "./components/AppState";
 import {showUnavailable} from "./components/ServiceNotice";
+import {ModalDialog} from "./components/ModalDialog";
 
 const nav = [
   ["Today",House],["Capture",Plus],["Calendar",CalendarBlank],["Tasks",CheckSquare],
@@ -122,6 +123,6 @@ export default function Today() {
       {([["Today","/",House],["Capture","/capture",Plus],["Tasks","/tasks",ListChecks],["Vault","/vault",Folder],["More","/settings",Command]] as const).map(([label,href,Icon],i)=><Link className={`${i===0?"active":""} ${i===1?"capture-nav":""}`} href={href} key={label}><Icon/><span>{label}</span></Link>)}
     </nav>
 
-    {palette&&<div className="palette-backdrop" onMouseDown={e=>e.target===e.currentTarget&&setPalette(false)}><dialog open aria-label="Command palette"><div className="palette-search"><MagnifyingGlass/><input autoFocus aria-label="Search commands" placeholder="Search LifeOS or run a command…"/><kbd>Esc</kbd></div><p>Quick actions</p>{([["New capture","#capture",Plus,"⌘ ⇧ C"],["Add task","/tasks",CheckSquare,"⌘ ⇧ T"],["Open calendar","/calendar",CalendarBlank,"G C"],["Search vault","/vault",Folder,"G V"]] as const).map(([label,href,Icon,key])=><Link href={href} onClick={()=>setPalette(false)} key={label}><Icon/><span>{label}</span><kbd>{key}</kbd></Link>)}</dialog></div>}
+    {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus aria-label="Search commands" placeholder="Search LifeOS or run a command…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><p>Quick actions</p>{([["New capture","#capture",Plus,"⌘ ⇧ C"],["Add task","/tasks",CheckSquare,"⌘ ⇧ T"],["Open calendar","/calendar",CalendarBlank,"G C"],["Search vault","/vault",Folder,"G V"]] as const).map(([label,href,Icon,key])=><Link href={href} onClick={()=>setPalette(false)} key={label}><Icon/><span>{label}</span><kbd>{key}</kbd></Link>)}</ModalDialog>}
   </div>;
 }

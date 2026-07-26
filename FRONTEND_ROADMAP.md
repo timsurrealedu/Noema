@@ -14,6 +14,7 @@ Frontend status is separate from backend integration. `Done` means the interacti
 - [x] Calendar day, week, month, agenda, creation, and editing interfaces
 - [x] Vault search, views, Markdown editor, split/read modes, import/export, properties, source, trash, and AI provenance
 - [x] Study upload/camera, processing-result, source comparison, flashcard, quiz, and assignment interfaces
+- [x] Handwriting and mathematical recognition through image upload
 - [x] Project, repository, coding-agent, automation, and Canvas workspaces
 - [x] Global navigation search, notifications, contextual AI panel, Activity, Settings, Help, and authentication surfaces
 - [x] Shared accessible fallback for AI, authentication, server persistence, integrations, and remote execution
@@ -43,8 +44,8 @@ Frontend status is separate from backend integration. `Done` means the interacti
 
 | # | Requirement | Frontend | Integration |
 |---|---|---|---|
-| 1 | Natural-language capture on desktop/mobile | Done | Pending AI/server |
-| 2 | Structured interpretation review | Done | Server apply done; AI provider pending |
+| 1 | Natural-language capture on desktop/mobile | Done | Server-backed; AI provider configuration required |
+| 2 | Structured interpretation review | Done | Server apply done; AI provider configuration required |
 | 3 | Create/edit tasks | Done | Synced + offline queue |
 | 4 | Create/edit events | Done | Synced + offline queue |
 | 5 | Tasks/events appear on Today | Done | Synced + offline queue |
@@ -56,8 +57,8 @@ Frontend status is separate from backend integration. `Done` means the interacti
 | 11 | Phone-sized usability | Done | Verification pending |
 | 12 | Installable PWA | Done UI | Device verification pending |
 | 13 | Loading/error states | Done | Remote errors pending |
-| 14 | AI/system activity visible | Done UI | Audit API done; Activity wiring pending |
-| 15 | Automation status separated from Today | Done | Pending executor |
+| 14 | AI/system activity visible | Done | Audit and undo API wired |
+| 15 | Automation status separated from Today | Done | Executor/API done; frontend wiring pending |
 | 16 | Keyboard primary flows | Done | Formal audit pending |
 | 17 | Light/dark modes | Done | Browser-local |
 | 18 | Private notes excluded from analytics | Done policy | Analytics not implemented |
@@ -66,7 +67,6 @@ Frontend status is separate from backend integration. `Done` means the interacti
 
 ## Deferred beyond MVP
 
-- [ ] Full handwriting and mathematical recognition
 - [ ] Full mobile IDE
 - [ ] Advanced automation builder
 - [ ] Knowledge-graph visualization

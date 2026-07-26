@@ -1,8 +1,20 @@
 "use client";
 
-import {useState} from "react";
-import {ArrowCounterClockwise, CalendarBlank, Check, FileText, Funnel, Lightning, Sparkle} from "@phosphor-icons/react";
+import {useEffect,useState} from "react";
+import {ArrowCounterClockwise,CalendarBlank,Check,FileText,Lightning,Sparkle,Warning} from "@phosphor-icons/react";
 import {ModuleShell} from "../components/ModuleShell";
 
-const entries=[["Task completed","Database normalization notes","Today · 09:18",Check,"Undo"],["AI interpretation confirmed","Dentist appointment and task","Today · 09:06",Sparkle,"View"],["Calendar event updated","Meeting with Dian moved to 13:00","Yesterday · 17:42",CalendarBlank,"Undo"],["Automation failed","Google Drive authentication expired","Yesterday · 16:10",Lightning,"Open"],["Note imported","OS Exam Study Plan.pdf","Jul 22 · 11:34",FileText,"View"]] as const;
-export default function ActivityPage(){const [undone,setUndone]=useState<string[]>([]);return <ModuleShell active="Activity" title="Activity"><div className="module-header"><div><h2>Changes you can trace</h2><p>Review AI, system, and manual actions. Reversible changes remain available here.</p></div><button className="filter-button"><Funnel/>All activity</button></div><section className="audit-list"><div className="list-title"><h3>Recent activity</h3><span>Last 30 days</span></div>{entries.map(([type,detail,time,Icon,action])=><article key={detail}><span className="audit-icon"><Icon/></span><div><strong>{type}</strong><span>{detail}</span><time>{time}</time></div>{action==="Undo"?<button className="secondary" disabled={undone.includes(detail)} onClick={()=>setUndone([...undone,detail])}><ArrowCounterClockwise/>{undone.includes(detail)?"Undone":"Undo"}</button>:<button className="secondary">{action}</button>}</article>)}</section></ModuleShell>}
+type AuditEvent={id:string;action:string;objectType:string;summary:string;reversible:boolean;createdAt:string};
+
+const icons={event:CalendarBlank,note:FileText,automation:Lightning,capture:Sparkle,task:Check} as const;
+const time=new Intl.DateTimeFormat(undefined,{dateStyle:"medium",timeStyle:"short"});
+
+export default function ActivityPage(){
+  const [events,setEvents]=useState<AuditEvent[]>([]),[loading,setLoading]=useState(true),[error,setError]=useState("");
+  useEffect(()=>{fetch("/api/v1/audit?limit=100").then(async response=>{if(!response.ok)throw new Error((await response.json()).error?.message||"Activity could not load");return response.json()}).then(result=>setEvents(result.events||[])).catch(reason=>setError(reason instanceof Error?reason.message:"Activity could not load")).finally(()=>setLoading(false))},[]);
+  async function undo(event:AuditEvent){
+    setError("");
+    try{const response=await fetch(`/api/v1/audit/${event.id}/undo`,{method:"POST",headers:{"Idempotency-Key":crypto.randomUUID()}});if(!response.ok)throw new Error((await response.json()).error?.message||"Undo failed");setEvents(current=>current.map(item=>item.id===event.id?{...item,reversible:false}:item))}catch(reason){setError(reason instanceof Error?reason.message:"Undo failed")}
+  }
+  return <ModuleShell active="Activity" title="Activity"><div className="module-header"><div><h2>Changes you can trace</h2><p>Review AI, system, and manual actions. Reversible changes remain available here.</p></div></div><section className="audit-list" aria-live="polite"><div className="list-title"><h3>Recent activity</h3><span>Latest 100 changes</span></div>{loading?<p>Loading activity…</p>:error?<div className="warning-text" role="alert"><Warning/>{error}</div>:events.length?events.map(event=>{const Icon=icons[event.objectType as keyof typeof icons]||FileText;return <article key={event.id}><span className="audit-icon"><Icon/></span><div><strong>{event.action} {event.objectType.replaceAll("_"," ")}</strong><span>{event.summary}</span><time dateTime={event.createdAt}>{time.format(new Date(event.createdAt))}</time></div>{event.reversible&&<button className="secondary" onClick={()=>undo(event)}><ArrowCounterClockwise/>Undo</button>}</article>}):<p>No activity yet. Changes to tasks, events, notes, captures, and projects will appear here.</p>}</section></ModuleShell>;
+}

@@ -3,8 +3,6 @@
     "0": [
       "app_api_v1_captures_file_route",
       "app_api_v1_captures_file_route_post",
-      "app_api_v1_health_route",
-      "app_api_v1_health_route_get",
       "app_api_v1_notes_id_backlinks_route",
       "app_api_v1_notes_id_backlinks_route_get",
       "app_api_v1_notes_id_export_route",
@@ -23,10 +21,6 @@
       "app_api_v1_tasks_id_dependencies_route_post",
       "app_api_v1_tasks_id_dependents_route",
       "app_api_v1_tasks_id_dependents_route_get",
-      "scripts_backup",
-      "scripts_backup_backup",
-      "scripts_import_v1",
-      "scripts_verify_backup",
       "server_core",
       "server_core_applycaptureinterpretation",
       "server_core_applyinverse",
@@ -66,17 +60,68 @@
       "server_core_stamp",
       "server_core_undoauditevent",
       "server_core_updatecapture",
-      "server_ops",
-      "server_ops_createbackup",
-      "server_ops_healthreport",
-      "server_ops_importv1",
-      "server_ops_keyfor",
-      "server_ops_log",
-      "server_ops_mimes",
-      "server_ops_redact",
-      "server_ops_verifybackup"
+      "server_ops_importv1"
     ],
     "1": [
+      "app_api_v1_audit_id_undo_route",
+      "app_api_v1_audit_id_undo_route_post",
+      "app_api_v1_audit_route",
+      "app_api_v1_audit_route_get",
+      "app_api_v1_auth_login_route",
+      "app_api_v1_auth_login_route_post",
+      "app_api_v1_auth_logout_route",
+      "app_api_v1_auth_logout_route_post",
+      "app_api_v1_captures_id_apply_route",
+      "app_api_v1_captures_id_apply_route_post",
+      "app_api_v1_captures_id_interpret_route",
+      "app_api_v1_captures_id_interpret_route_post",
+      "app_api_v1_captures_id_route",
+      "app_api_v1_captures_id_route_patch",
+      "app_api_v1_captures_route",
+      "app_api_v1_captures_route_post",
+      "app_api_v1_events_route",
+      "app_api_v1_events_route_post",
+      "app_api_v1_jobs_id_approve_route",
+      "app_api_v1_jobs_id_approve_route_post",
+      "app_api_v1_jobs_id_cancel_route",
+      "app_api_v1_jobs_id_cancel_route_post",
+      "app_api_v1_jobs_id_route",
+      "app_api_v1_jobs_id_route_get",
+      "app_api_v1_notes_route",
+      "app_api_v1_notes_route_get",
+      "app_api_v1_notes_route_post",
+      "app_api_v1_skills_name_run_route",
+      "app_api_v1_skills_name_run_route_post",
+      "app_api_v1_skills_route",
+      "app_api_v1_skills_route_get",
+      "app_api_v1_state_route",
+      "app_api_v1_state_route_get",
+      "app_api_v1_tasks_route",
+      "app_api_v1_tasks_route_post",
+      "app_api_v1_tutor_route",
+      "app_api_v1_tutor_route_post",
+      "server_core_listauditevents",
+      "server_http",
+      "server_http_body",
+      "server_http_cookie",
+      "server_http_errorresponse",
+      "server_http_handle",
+      "server_http_idempotent",
+      "server_http_json",
+      "server_http_requiresameorigin",
+      "server_http_requireuser",
+      "server_jobs_getjob",
+      "server_skills",
+      "server_skills_buildskillprompt",
+      "server_skills_definitions",
+      "server_skills_getskill",
+      "server_skills_listskills",
+      "server_skills_runtutor",
+      "server_skills_skillschema",
+      "server_skills_tutorschema",
+      "server_skills_workloadforskill"
+    ],
+    "2": [
       "app_calendar_page",
       "app_calendar_page_blankevent",
       "app_calendar_page_calendarpage",
@@ -93,11 +138,6 @@
       "app_capture_page_statusicon",
       "app_capture_page_statusmeta",
       "app_capture_page_timefor",
-      "app_coding_compiler_page",
-      "app_coding_compiler_page_compilerpage",
-      "app_coding_compiler_page_language",
-      "app_coding_compiler_page_result",
-      "app_coding_compiler_page_starters",
       "app_components_appstate",
       "app_components_appstate_api",
       "app_components_appstate_appdata",
@@ -119,14 +159,19 @@
       "app_components_appstate_taskdependency",
       "app_components_appstate_useappstate",
       "app_components_appstate_writequeue",
+      "app_components_pwaregister",
+      "app_components_pwaregister_pwaregister",
+      "app_components_servicenotice",
+      "app_components_servicenotice_servicenotice",
+      "app_components_servicenotice_showunavailable",
       "app_components_tutorpanel",
       "app_components_tutorpanel_message",
       "app_components_tutorpanel_props",
       "app_components_tutorpanel_tutorpanel",
-      "app_page",
-      "app_page_activity",
-      "app_page_nav",
-      "app_page_today",
+      "app_layout",
+      "app_layout_metadata",
+      "app_layout_rootlayout",
+      "app_layout_viewport",
       "app_tasks_page",
       "app_tasks_page_blanktask",
       "app_tasks_page_taskspage",
@@ -135,7 +180,7 @@
       "app_vault_page_rendermarkdown",
       "app_vault_page_vaultpage"
     ],
-    "2": [
+    "3": [
       "app_api_v1_automations_id_runs_route",
       "app_api_v1_automations_id_runs_route_get",
       "app_api_v1_automations_id_runs_route_post",
@@ -189,60 +234,49 @@
       "server_modules_text",
       "server_modules_version"
     ],
-    "3": [
-      "app_api_v1_audit_id_undo_route",
-      "app_api_v1_audit_id_undo_route_post",
-      "app_api_v1_audit_route",
-      "app_api_v1_audit_route_get",
-      "app_api_v1_auth_login_route",
-      "app_api_v1_auth_login_route_post",
-      "app_api_v1_auth_logout_route",
-      "app_api_v1_auth_logout_route_post",
-      "app_api_v1_captures_id_apply_route",
-      "app_api_v1_captures_id_apply_route_post",
-      "app_api_v1_captures_id_interpret_route",
-      "app_api_v1_captures_id_interpret_route_post",
-      "app_api_v1_captures_id_route",
-      "app_api_v1_captures_id_route_patch",
-      "app_api_v1_captures_route",
-      "app_api_v1_captures_route_post",
+    "4": [
       "app_api_v1_compiler_run_route",
       "app_api_v1_compiler_run_route_post",
-      "app_api_v1_events_route",
-      "app_api_v1_events_route_post",
-      "app_api_v1_jobs_id_approve_route",
-      "app_api_v1_jobs_id_approve_route_post",
-      "app_api_v1_jobs_id_cancel_route",
-      "app_api_v1_jobs_id_cancel_route_post",
-      "app_api_v1_jobs_id_route",
-      "app_api_v1_jobs_id_route_get",
-      "app_api_v1_notes_route",
-      "app_api_v1_notes_route_get",
-      "app_api_v1_notes_route_post",
-      "app_api_v1_skills_name_run_route",
-      "app_api_v1_skills_name_run_route_post",
-      "app_api_v1_skills_route",
-      "app_api_v1_skills_route_get",
-      "app_api_v1_state_route",
-      "app_api_v1_state_route_get",
-      "app_api_v1_tasks_route",
-      "app_api_v1_tasks_route_post",
-      "app_api_v1_tutor_route",
-      "app_api_v1_tutor_route_post",
-      "server_core_listauditevents",
-      "server_http",
-      "server_http_body",
-      "server_http_cookie",
-      "server_http_errorresponse",
-      "server_http_handle",
-      "server_http_idempotent",
-      "server_http_json",
-      "server_http_requiresameorigin",
-      "server_http_requireuser",
-      "server_jobs_getjob",
-      "server_skills_listskills"
+      "app_api_v1_extract_handwriting_route",
+      "app_api_v1_extract_handwriting_route_post",
+      "app_api_v1_jobs_id_events_route",
+      "app_api_v1_jobs_id_events_route_get",
+      "app_api_v1_jobs_id_events_route_terminal",
+      "scripts_backup",
+      "scripts_backup_backup",
+      "scripts_import_v1",
+      "scripts_verify_backup",
+      "server_config",
+      "server_config_absolute",
+      "server_config_ensuredatadirs",
+      "server_config_loadconfig",
+      "server_config_root",
+      "server_db",
+      "server_db_closedatabase",
+      "server_db_ensurecolumn",
+      "server_db_getdatabase",
+      "server_db_opendatabase",
+      "server_extract",
+      "server_extract_execfileasync",
+      "server_extract_extracthandwriting",
+      "server_extract_extracttext",
+      "server_extract_stripxml",
+      "server_modules_crondue",
+      "server_modules_runscheduledautomations",
+      "server_ops",
+      "server_ops_createbackup",
+      "server_ops_healthreport",
+      "server_ops_keyfor",
+      "server_ops_log",
+      "server_ops_mimes",
+      "server_ops_redact",
+      "server_ops_verifybackup",
+      "server_worker",
+      "server_worker_runone",
+      "server_worker_schema",
+      "server_worker_startworker"
     ],
-    "4": [
+    "5": [
       "next",
       "package",
       "package_dependencies",
@@ -277,10 +311,7 @@
       "types_react_dom",
       "typescript"
     ],
-    "5": [
-      "app_activity_page",
-      "app_activity_page_activitypage",
-      "app_activity_page_entries",
+    "6": [
       "app_automations_page",
       "app_automations_page_automations",
       "app_automations_page_automationspage",
@@ -289,81 +320,26 @@
       "app_coding_page",
       "app_coding_page_codingpage",
       "app_coding_page_sessions",
+      "app_components_modaldialog",
+      "app_components_modaldialog_modaldialog",
       "app_components_moduleshell",
       "app_components_moduleshell_moduleshell",
       "app_components_moduleshell_nav",
       "app_help_page",
       "app_help_page_helppage",
       "app_help_page_shortcuts",
+      "app_page",
+      "app_page_activity",
+      "app_page_nav",
+      "app_page_today",
       "app_projects_page",
       "app_projects_page_projects",
       "app_projects_page_projectspage",
       "app_settings_page",
       "app_settings_page_sections",
-      "app_settings_page_settingspage",
-      "app_study_page",
-      "app_study_page_courses",
-      "app_study_page_studypage",
-      "app_study_page_workspace"
-    ],
-    "6": [
-      "app_api_v1_jobs_id_events_route",
-      "app_api_v1_jobs_id_events_route_get",
-      "app_api_v1_jobs_id_events_route_terminal",
-      "server_config",
-      "server_config_absolute",
-      "server_config_ensuredatadirs",
-      "server_config_loadconfig",
-      "server_config_root",
-      "server_db",
-      "server_db_closedatabase",
-      "server_db_ensurecolumn",
-      "server_db_getdatabase",
-      "server_db_opendatabase",
-      "server_modules_crondue",
-      "server_modules_runscheduledautomations",
-      "server_skills",
-      "server_skills_buildskillprompt",
-      "server_skills_definitions",
-      "server_skills_getskill",
-      "server_skills_runtutor",
-      "server_skills_skillschema",
-      "server_skills_tutorschema",
-      "server_skills_workloadforskill",
-      "server_worker",
-      "server_worker_runone",
-      "server_worker_schema",
-      "server_worker_startworker"
+      "app_settings_page_settingspage"
     ],
     "7": [
-      "app_api_v1_assets_id_route",
-      "app_api_v1_assets_id_route_get",
-      "app_api_v1_assets_route",
-      "app_api_v1_assets_route_post",
-      "server_ai",
-      "server_ai_geminischema",
-      "server_ai_iscapacityerror",
-      "server_ai_runai",
-      "server_ai_runfallback",
-      "server_ai_rungemini",
-      "server_ai_rungeminimultimodal",
-      "server_ai_runopenai",
-      "server_ai_schemakeys",
-      "server_ai_selectopenaimodel",
-      "server_extract",
-      "server_extract_execfileasync",
-      "server_extract_extracttext",
-      "server_extract_stripxml",
-      "server_objects",
-      "server_objects_allowedmimes",
-      "server_objects_assetpath",
-      "server_objects_assetsforcapture",
-      "server_objects_attachassets",
-      "server_objects_getasset",
-      "server_objects_now",
-      "server_objects_storeasset"
-    ],
-    "8": [
       "ref_dom",
       "ref_dom_iterable",
       "ref_esnext",
@@ -391,7 +367,7 @@
       "tsconfig_exclude",
       "tsconfig_include"
     ],
-    "9": [
+    "8": [
       "app_api_v1_auth_sessions_id_route",
       "app_api_v1_auth_sessions_id_route_delete",
       "app_api_v1_auth_sessions_route",
@@ -411,18 +387,48 @@
       "server_auth_scrypt",
       "server_auth_verifypassword"
     ],
+    "9": [
+      "app_api_v1_health_route",
+      "app_api_v1_health_route_get",
+      "server_compiler",
+      "server_compiler_availablelanguages",
+      "server_compiler_buildcommand",
+      "server_compiler_cleanupworktree",
+      "server_compiler_compilercapabilities",
+      "server_compiler_execute",
+      "server_compiler_hascommand",
+      "server_compiler_isinsidegitrepo",
+      "server_compiler_languages",
+      "server_compiler_prepareworktree",
+      "server_compiler_runcode"
+    ],
     "10": [
-      "app_components_pwaregister",
-      "app_components_pwaregister_pwaregister",
-      "app_components_servicenotice",
-      "app_components_servicenotice_servicenotice",
-      "app_components_servicenotice_showunavailable",
-      "app_layout",
-      "app_layout_metadata",
-      "app_layout_rootlayout",
-      "app_layout_viewport"
+      "app_api_v1_assets_id_route",
+      "app_api_v1_assets_id_route_get",
+      "app_api_v1_assets_route",
+      "app_api_v1_assets_route_post",
+      "server_objects",
+      "server_objects_allowedmimes",
+      "server_objects_assetpath",
+      "server_objects_assetsforcapture",
+      "server_objects_attachassets",
+      "server_objects_getasset",
+      "server_objects_now",
+      "server_objects_storeasset"
     ],
     "11": [
+      "server_ai",
+      "server_ai_geminischema",
+      "server_ai_iscapacityerror",
+      "server_ai_runai",
+      "server_ai_runfallback",
+      "server_ai_rungemini",
+      "server_ai_rungeminimultimodal",
+      "server_ai_runopenai",
+      "server_ai_schemakeys",
+      "server_ai_selectopenaimodel"
+    ],
+    "12": [
       "server_jobs",
       "server_jobs_addjobevent",
       "server_jobs_canceljob",
@@ -432,7 +438,7 @@
       "server_jobs_finishjob",
       "server_jobs_now"
     ],
-    "12": [
+    "13": [
       "test_backend_test",
       "test_backend_test_assert",
       "test_backend_test_join",
@@ -441,7 +447,7 @@
       "test_backend_test_test",
       "test_backend_test_tmpdir"
     ],
-    "13": [
+    "14": [
       "test_frontend_test",
       "test_frontend_test_assert",
       "test_frontend_test_fs",
@@ -450,114 +456,135 @@
       "test_frontend_test_root",
       "test_frontend_test_test"
     ],
-    "14": [
-      "server_compiler",
-      "server_compiler_availablelanguages",
-      "server_compiler_execute",
-      "server_compiler_languages",
-      "server_compiler_runcode"
-    ],
     "15": [
+      "app_activity_page",
+      "app_activity_page_activitypage",
+      "app_activity_page_auditevent",
+      "app_activity_page_icons",
+      "app_activity_page_time"
+    ],
+    "16": [
+      "app_coding_compiler_page",
+      "app_coding_compiler_page_compilerpage",
+      "app_coding_compiler_page_language",
+      "app_coding_compiler_page_result",
+      "app_coding_compiler_page_starters"
+    ],
+    "17": [
+      "app_study_page",
+      "app_study_page_courses",
+      "app_study_page_studypage",
+      "app_study_page_workspace"
+    ],
+    "18": [
       "app_api_v1_projects_id_route",
       "app_api_v1_projects_id_route_delete",
       "app_api_v1_projects_id_route_patch"
     ],
-    "16": [
+    "19": [
       "app_api_v1_projects_route",
       "app_api_v1_projects_route_get",
       "app_api_v1_projects_route_post"
     ],
-    "17": [
+    "20": [
       "server_codex",
       "server_codex_codexargs",
       "server_codex_runcodex"
     ],
-    "18": [
+    "21": [
       "app_error",
       "app_error_errorpage"
     ],
-    "19": [
+    "22": [
       "app_loading",
       "app_loading_loading"
     ],
-    "20": [
+    "23": [
       "app_login_page",
       "app_login_page_loginpage"
     ],
-    "21": [
+    "24": [
       "app_not_found",
       "app_not_found_notfound"
     ],
-    "22": [
+    "25": [
       "next_config",
       "next_config_config"
     ],
-    "23": [
+    "26": [
       "next_env_d",
       "next_env_d_rationale_5"
     ],
-    "24": [
+    "27": [
       "public_sw",
       "public_sw_shell"
     ],
-    "25": [
+    "28": [
       "server_mjs_d",
       "server_mjs_d_mjs"
     ]
   },
   "cohesion": {
-    "0": 0.06293965198074787,
-    "1": 0.05513784461152882,
-    "2": 0.08748114630467571,
-    "3": 0.16549019607843138,
-    "4": 0.06060606060606061,
-    "5": 0.09686609686609686,
-    "6": 0.1396011396011396,
-    "7": 0.1476923076923077,
-    "8": 0.07692307692307693,
-    "9": 0.24183006535947713,
-    "10": 0.2777777777777778,
-    "11": 0.6428571428571429,
-    "12": 0.2857142857142857,
+    "0": 0.08022598870056497,
+    "1": 0.13721804511278196,
+    "2": 0.05513784461152882,
+    "3": 0.08748114630467571,
+    "4": 0.10384615384615385,
+    "5": 0.06060606060606061,
+    "6": 0.10153846153846154,
+    "7": 0.07692307692307693,
+    "8": 0.24183006535947713,
+    "9": 0.28205128205128205,
+    "10": 0.30303030303030304,
+    "11": 0.37777777777777777,
+    "12": 0.6428571428571429,
     "13": 0.2857142857142857,
-    "14": 0.5,
-    "15": 0.6666666666666666,
-    "16": 0.6666666666666666,
-    "17": 1.0,
-    "18": 1.0,
-    "19": 1.0,
+    "14": 0.2857142857142857,
+    "15": 0.4,
+    "16": 0.4,
+    "17": 0.5,
+    "18": 0.6666666666666666,
+    "19": 0.6666666666666666,
     "20": 1.0,
     "21": 1.0,
     "22": 1.0,
     "23": 1.0,
     "24": 1.0,
-    "25": 1.0
+    "25": 1.0,
+    "26": 1.0,
+    "27": 1.0,
+    "28": 1.0
   },
   "gods": [
     {
       "id": "server_http_json",
       "label": "json()",
-      "degree": 42
+      "degree": 40
     },
     {
       "id": "server_http_requireuser",
       "label": "requireUser()",
-      "degree": 41
+      "degree": 39
     },
     {
       "id": "server_http_handle",
       "label": "handle()",
-      "degree": 41
+      "degree": 39
     },
     {
       "id": "server_http_body",
       "label": "body()",
-      "degree": 20
+      "degree": 18
     },
     {
       "id": "server_http_idempotent",
       "label": "idempotent()",
       "degree": 17
+    },
+    {
+      "id": "server_config_loadconfig",
+      "label": "loadConfig()",
+      "degree": 16
     },
     {
       "id": "tsconfig_compileroptions",
@@ -573,11 +600,6 @@
       "id": "server_modules_now",
       "label": "now()",
       "degree": 14
-    },
-    {
-      "id": "server_config_loadconfig",
-      "label": "loadConfig()",
-      "degree": 13
     },
     {
       "id": "server_core_stamp",
@@ -598,39 +620,6 @@
       "why": "connects across different repos/directories; bridges separate communities"
     },
     {
-      "source": "POST()",
-      "target": "runCode()",
-      "source_files": [
-        "app/api/v1/compiler/run/route.ts",
-        "server/compiler.mjs"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "calls",
-      "why": "connects across different repos/directories; bridges separate communities"
-    },
-    {
-      "source": "POST()",
-      "target": "ensureDataDirs()",
-      "source_files": [
-        "app/api/v1/compiler/run/route.ts",
-        "server/config.mjs"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "calls",
-      "why": "connects across different repos/directories; bridges separate communities"
-    },
-    {
-      "source": "POST()",
-      "target": "loadConfig()",
-      "source_files": [
-        "app/api/v1/compiler/run/route.ts",
-        "server/config.mjs"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "calls",
-      "why": "connects across different repos/directories; bridges separate communities"
-    },
-    {
       "source": "GET()",
       "target": "listState()",
       "source_files": [
@@ -640,10 +629,76 @@
       "confidence": "EXTRACTED",
       "relation": "calls",
       "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "POST()",
+      "target": "undoAuditEvent()",
+      "source_files": [
+        "app/api/v1/audit/[id]/undo/route.ts",
+        "server/core.mjs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "POST()",
+      "target": "ensureOwner()",
+      "source_files": [
+        "app/api/v1/auth/login/route.ts",
+        "server/auth.mjs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "POST()",
+      "target": "login()",
+      "source_files": [
+        "app/api/v1/auth/login/route.ts",
+        "server/auth.mjs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
     }
   ],
-  "tokens": {
-    "input": 0,
-    "output": 0
-  }
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `getDatabase()` connect `ops.mjs` to `core.mjs`, `json`, `modules.mjs`, `auth.mjs`, `objects.mjs`, `jobs.mjs`?",
+      "why": "High betweenness centrality (0.069) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `loadConfig()` connect `ops.mjs` to `core.mjs`, `json`?",
+      "why": "High betweenness centrality (0.033) - this node is a cross-community bridge."
+    },
+    {
+      "type": "bridge_node",
+      "question": "Why does `requireUser()` connect `json` to `auth.mjs`, `ops.mjs`?",
+      "why": "High betweenness centrality (0.013) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `config`, `target`, `dom` to the rest of the system?",
+      "why": "100 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `core.mjs` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.08022598870056497 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `json` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.13721804511278196 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `AppState.tsx` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.05513784461152882 - nodes in this community are weakly interconnected."
+    }
+  ]
 }

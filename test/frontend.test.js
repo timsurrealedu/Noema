@@ -24,8 +24,13 @@ test("Vault and compiler expose the contextual tutor",()=>{
 test("shared shell exposes keyboard search and accessible navigation",()=>{
   const shell=read("app/components/ModuleShell.tsx");
   assert.match(shell,/metaKey\|\|event\.ctrlKey/);
-  assert.match(shell,/aria-label="Search LifeOS"/);
+  assert.match(read("app/components/ModalDialog.tsx"),/aria-label="Search LifeOS"/);
   assert.match(shell,/Skip to main content/);
+});
+
+test("command palettes use a focus-trapping native modal",()=>{
+  assert.match(read("app/components/ModalDialog.tsx"),/showModal\(\)/);
+  for(const file of ["app/page.tsx","app/components/ModuleShell.tsx"])assert.match(read(file),/<ModalDialog/);
 });
 
 test("PWA includes offline shell, share target, and raster icons",()=>{
@@ -62,4 +67,11 @@ test("offline mutations queue durably and replay idempotently",()=>{
   assert.match(state,/lifeos-offline-queue-v1/);
   assert.match(state,/addEventListener\("online"/);
   assert.match(state,/Idempotency-Key/);
+});
+
+test("Activity reads durable audit events and executes undo",()=>{
+  const activity=read("app/activity/page.tsx");
+  assert.match(activity,/\/api\/v1\/audit\?limit=100/);
+  assert.match(activity,/\/api\/v1\/audit\/\$\{event\.id\}\/undo/);
+  assert.match(activity,/Idempotency-Key/);
 });
