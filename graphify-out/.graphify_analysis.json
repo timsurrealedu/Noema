@@ -73,14 +73,69 @@
       "server_core_stamp",
       "server_core_timestamp",
       "server_core_undoauditevent",
-      "server_core_updatecapture",
-      "server_worker",
-      "server_worker_optimizationschema",
-      "server_worker_runone",
-      "server_worker_schema",
-      "server_worker_startworker"
+      "server_core_updatecapture"
     ],
     "1": [
+      "app_api_v1_audit_id_undo_route",
+      "app_api_v1_audit_id_undo_route_post",
+      "app_api_v1_audit_route",
+      "app_api_v1_audit_route_get",
+      "app_api_v1_auth_login_route",
+      "app_api_v1_auth_login_route_post",
+      "app_api_v1_auth_logout_route",
+      "app_api_v1_auth_logout_route_post",
+      "app_api_v1_auth_sessions_id_route",
+      "app_api_v1_auth_sessions_id_route_delete",
+      "app_api_v1_auth_totp_route",
+      "app_api_v1_auth_totp_route_delete",
+      "app_api_v1_auth_totp_route_get",
+      "app_api_v1_auth_totp_route_post",
+      "app_api_v1_captures_id_apply_route",
+      "app_api_v1_captures_id_apply_route_post",
+      "app_api_v1_captures_id_interpret_route",
+      "app_api_v1_captures_id_interpret_route_post",
+      "app_api_v1_captures_id_route",
+      "app_api_v1_captures_id_route_patch",
+      "app_api_v1_captures_route",
+      "app_api_v1_captures_route_post",
+      "app_api_v1_events_route",
+      "app_api_v1_events_route_post",
+      "app_api_v1_jobs_id_approve_route",
+      "app_api_v1_jobs_id_approve_route_post",
+      "app_api_v1_jobs_id_cancel_route",
+      "app_api_v1_jobs_id_cancel_route_post",
+      "app_api_v1_jobs_id_route",
+      "app_api_v1_jobs_id_route_get",
+      "app_api_v1_notes_route",
+      "app_api_v1_notes_route_get",
+      "app_api_v1_notes_route_post",
+      "app_api_v1_skills_name_run_route",
+      "app_api_v1_skills_name_run_route_post",
+      "app_api_v1_skills_route",
+      "app_api_v1_skills_route_get",
+      "app_api_v1_state_route",
+      "app_api_v1_state_route_get",
+      "app_api_v1_tasks_route",
+      "app_api_v1_tasks_route_post",
+      "server_auth_mfastatus",
+      "server_config",
+      "server_config_absolute",
+      "server_config_loadconfig",
+      "server_config_root",
+      "server_core_listauditevents",
+      "server_http",
+      "server_http_body",
+      "server_http_cookie",
+      "server_http_errorresponse",
+      "server_http_handle",
+      "server_http_idempotent",
+      "server_http_json",
+      "server_http_requiremfa",
+      "server_http_requiresameorigin",
+      "server_http_requireuser",
+      "server_skills_listskills"
+    ],
+    "2": [
       "app_api_v1_automations_id_runs_route",
       "app_api_v1_automations_id_runs_route_get",
       "app_api_v1_automations_id_runs_route_post",
@@ -139,7 +194,7 @@
       "server_modules_text",
       "server_modules_version"
     ],
-    "2": [
+    "3": [
       "app_calendar_page",
       "app_calendar_page_blankevent",
       "app_calendar_page_calendarpage",
@@ -197,110 +252,7 @@
       "app_tasks_page_remindervalue",
       "app_tasks_page_taskspage"
     ],
-    "3": [
-      "app_api_v1_audit_id_undo_route",
-      "app_api_v1_audit_id_undo_route_post",
-      "app_api_v1_audit_route",
-      "app_api_v1_audit_route_get",
-      "app_api_v1_auth_login_route",
-      "app_api_v1_auth_login_route_post",
-      "app_api_v1_auth_logout_route",
-      "app_api_v1_auth_logout_route_post",
-      "app_api_v1_auth_sessions_id_route",
-      "app_api_v1_auth_sessions_id_route_delete",
-      "app_api_v1_auth_totp_route",
-      "app_api_v1_auth_totp_route_delete",
-      "app_api_v1_auth_totp_route_get",
-      "app_api_v1_auth_totp_route_post",
-      "app_api_v1_captures_id_apply_route",
-      "app_api_v1_captures_id_apply_route_post",
-      "app_api_v1_captures_id_interpret_route",
-      "app_api_v1_captures_id_interpret_route_post",
-      "app_api_v1_captures_id_route",
-      "app_api_v1_captures_id_route_patch",
-      "app_api_v1_captures_route",
-      "app_api_v1_captures_route_post",
-      "app_api_v1_events_route",
-      "app_api_v1_events_route_post",
-      "app_api_v1_jobs_id_approve_route",
-      "app_api_v1_jobs_id_approve_route_post",
-      "app_api_v1_jobs_id_cancel_route",
-      "app_api_v1_jobs_id_cancel_route_post",
-      "app_api_v1_jobs_id_route",
-      "app_api_v1_jobs_id_route_get",
-      "app_api_v1_notes_route",
-      "app_api_v1_notes_route_get",
-      "app_api_v1_notes_route_post",
-      "app_api_v1_skills_name_run_route",
-      "app_api_v1_skills_name_run_route_post",
-      "app_api_v1_skills_route",
-      "app_api_v1_skills_route_get",
-      "app_api_v1_state_route",
-      "app_api_v1_state_route_get",
-      "app_api_v1_tasks_route",
-      "app_api_v1_tasks_route_post",
-      "server_auth_mfastatus",
-      "server_core_listauditevents",
-      "server_http",
-      "server_http_body",
-      "server_http_cookie",
-      "server_http_errorresponse",
-      "server_http_handle",
-      "server_http_idempotent",
-      "server_http_json",
-      "server_http_requiremfa",
-      "server_http_requiresameorigin",
-      "server_http_requireuser",
-      "server_jobs_getjob",
-      "server_skills_listskills"
-    ],
     "4": [
-      "app_api_v1_export_route",
-      "app_api_v1_export_route_get",
-      "app_api_v1_export_route_safe",
-      "app_api_v1_jobs_id_events_route",
-      "app_api_v1_jobs_id_events_route_get",
-      "app_api_v1_jobs_id_events_route_terminal",
-      "app_api_v1_recommendations_id_route",
-      "app_api_v1_recommendations_id_route_patch",
-      "app_api_v1_recommendations_route",
-      "app_api_v1_recommendations_route_get",
-      "scripts_backup",
-      "scripts_backup_backup",
-      "scripts_import_v1",
-      "scripts_verify_backup",
-      "server_db",
-      "server_db_closedatabase",
-      "server_db_ensurecolumn",
-      "server_db_getdatabase",
-      "server_db_opendatabase",
-      "server_jobs",
-      "server_jobs_addjobevent",
-      "server_jobs_canceljob",
-      "server_jobs_claimjob",
-      "server_jobs_enqueuejob",
-      "server_jobs_failjob",
-      "server_jobs_finishjob",
-      "server_jobs_now",
-      "server_ops",
-      "server_ops_createbackup",
-      "server_ops_exporttables",
-      "server_ops_exportworkspace",
-      "server_ops_healthreport",
-      "server_ops_importv1",
-      "server_ops_keyfor",
-      "server_ops_log",
-      "server_ops_mimes",
-      "server_ops_redact",
-      "server_ops_verifybackup",
-      "server_recommendations",
-      "server_recommendations_buildrecommendations",
-      "server_recommendations_deciderecommendation",
-      "server_recommendations_now",
-      "server_recommendations_recommendations",
-      "server_recommendations_view"
-    ],
-    "5": [
       "next",
       "package",
       "package_dependencies",
@@ -339,7 +291,7 @@
       "types_tar_stream",
       "typescript"
     ],
-    "6": [
+    "5": [
       "app_api_v1_auth_recovery_route",
       "app_api_v1_auth_recovery_route_post",
       "app_api_v1_auth_sessions_route",
@@ -374,6 +326,41 @@
       "server_auth_totp",
       "server_auth_verifypassword",
       "server_auth_verifytotp"
+    ],
+    "6": [
+      "app_api_v1_export_route",
+      "app_api_v1_export_route_get",
+      "app_api_v1_export_route_safe",
+      "app_api_v1_recommendations_id_route",
+      "app_api_v1_recommendations_id_route_patch",
+      "app_api_v1_recommendations_route",
+      "app_api_v1_recommendations_route_get",
+      "scripts_backup",
+      "scripts_backup_backup",
+      "scripts_import_v1",
+      "scripts_verify_backup",
+      "server_db",
+      "server_db_closedatabase",
+      "server_db_ensurecolumn",
+      "server_db_getdatabase",
+      "server_db_opendatabase",
+      "server_ops",
+      "server_ops_createbackup",
+      "server_ops_exporttables",
+      "server_ops_exportworkspace",
+      "server_ops_healthreport",
+      "server_ops_importv1",
+      "server_ops_keyfor",
+      "server_ops_log",
+      "server_ops_mimes",
+      "server_ops_redact",
+      "server_ops_verifybackup",
+      "server_recommendations",
+      "server_recommendations_buildrecommendations",
+      "server_recommendations_deciderecommendation",
+      "server_recommendations_now",
+      "server_recommendations_recommendations",
+      "server_recommendations_view"
     ],
     "7": [
       "app_automations_page",
@@ -467,6 +454,29 @@
       "tsconfig_include"
     ],
     "10": [
+      "app_api_v1_jobs_id_events_route",
+      "app_api_v1_jobs_id_events_route_get",
+      "app_api_v1_jobs_id_events_route_terminal",
+      "app_api_v1_jobs_id_retry_route",
+      "app_api_v1_jobs_id_retry_route_post",
+      "server_jobs",
+      "server_jobs_addjobevent",
+      "server_jobs_assertnotcancelled",
+      "server_jobs_canceljob",
+      "server_jobs_claimjob",
+      "server_jobs_enqueuejob",
+      "server_jobs_failjob",
+      "server_jobs_finishjob",
+      "server_jobs_getjob",
+      "server_jobs_now",
+      "server_jobs_retryjob",
+      "server_worker",
+      "server_worker_optimizationschema",
+      "server_worker_runone",
+      "server_worker_schema",
+      "server_worker_startworker"
+    ],
+    "11": [
       "app_api_v1_approvals_id_approve_route",
       "app_api_v1_approvals_id_approve_route_post",
       "app_api_v1_approvals_route",
@@ -485,7 +495,7 @@
       "server_approvals_now",
       "server_approvals_view"
     ],
-    "11": [
+    "12": [
       "app_api_v1_assets_id_annotations_annotationid_route",
       "app_api_v1_assets_id_annotations_annotationid_route_delete",
       "app_api_v1_assets_id_annotations_annotationid_route_patch",
@@ -504,7 +514,7 @@
       "server_annotations_saveannotation",
       "server_annotations_target"
     ],
-    "12": [
+    "13": [
       "app_api_v1_tutor_messages_id_insert_route",
       "app_api_v1_tutor_messages_id_insert_route_post",
       "app_api_v1_tutor_route",
@@ -522,7 +532,7 @@
       "server_skills_tutorschema",
       "server_skills_workloadforskill"
     ],
-    "13": [
+    "14": [
       "app_api_v1_health_route",
       "app_api_v1_health_route_get",
       "server_compiler",
@@ -537,7 +547,7 @@
       "server_compiler_prepareworktree",
       "server_compiler_runcode"
     ],
-    "14": [
+    "15": [
       "app_api_v1_assets_id_route",
       "app_api_v1_assets_id_route_get",
       "app_api_v1_assets_route",
@@ -550,20 +560,6 @@
       "server_objects_getasset",
       "server_objects_now",
       "server_objects_storeasset"
-    ],
-    "15": [
-      "app_api_v1_extract_handwriting_route",
-      "app_api_v1_extract_handwriting_route_post",
-      "server_config",
-      "server_config_absolute",
-      "server_config_ensuredatadirs",
-      "server_config_loadconfig",
-      "server_config_root",
-      "server_extract",
-      "server_extract_execfileasync",
-      "server_extract_extracthandwriting",
-      "server_extract_extracttext",
-      "server_extract_stripxml"
     ],
     "16": [
       "app_api_v1_settings_route",
@@ -626,6 +622,16 @@
       "app_settings_page_toggle"
     ],
     "21": [
+      "app_api_v1_extract_handwriting_route",
+      "app_api_v1_extract_handwriting_route_post",
+      "server_config_ensuredatadirs",
+      "server_extract",
+      "server_extract_execfileasync",
+      "server_extract_extracthandwriting",
+      "server_extract_extracttext",
+      "server_extract_stripxml"
+    ],
+    "22": [
       "test_backend_test",
       "test_backend_test_assert",
       "test_backend_test_join",
@@ -634,7 +640,7 @@
       "test_backend_test_test",
       "test_backend_test_tmpdir"
     ],
-    "22": [
+    "23": [
       "test_frontend_test",
       "test_frontend_test_assert",
       "test_frontend_test_fs",
@@ -643,7 +649,7 @@
       "test_frontend_test_root",
       "test_frontend_test_test"
     ],
-    "23": [
+    "24": [
       "app_coding_compiler_page",
       "app_coding_compiler_page_approval",
       "app_coding_compiler_page_compilerpage",
@@ -651,108 +657,108 @@
       "app_coding_compiler_page_result",
       "app_coding_compiler_page_starters"
     ],
-    "24": [
+    "25": [
       "app_activity_page",
       "app_activity_page_activitypage",
       "app_activity_page_auditevent",
       "app_activity_page_icons",
       "app_activity_page_time"
     ],
-    "25": [
+    "26": [
       "app_components_tutorpanel",
       "app_components_tutorpanel_message",
       "app_components_tutorpanel_props",
       "app_components_tutorpanel_tutorpanel"
     ],
-    "26": [
+    "27": [
       "app_page",
       "app_page_activity",
       "app_page_nav",
       "app_page_today"
     ],
-    "27": [
+    "28": [
       "app_api_v1_projects_route",
       "app_api_v1_projects_route_get",
       "app_api_v1_projects_route_post"
     ],
-    "28": [
+    "29": [
       "app_assets_id_annotate_page",
       "app_assets_id_annotate_page_annotatepdfpage",
       "app_assets_id_annotate_page_annotation"
     ],
-    "29": [
+    "30": [
       "server_codex",
       "server_codex_codexargs",
       "server_codex_runcodex"
     ],
-    "30": [
+    "31": [
       "app_components_modaldialog",
       "app_components_modaldialog_modaldialog"
     ],
-    "31": [
+    "32": [
       "app_error",
       "app_error_errorpage"
     ],
-    "32": [
+    "33": [
       "app_loading",
       "app_loading_loading"
     ],
-    "33": [
+    "34": [
       "app_login_page",
       "app_login_page_loginpage"
     ],
-    "34": [
+    "35": [
       "app_not_found",
       "app_not_found_notfound"
     ],
-    "35": [
+    "36": [
       "next_config",
       "next_config_config"
     ],
-    "36": [
+    "37": [
       "next_env_d",
       "next_env_d_rationale_5"
     ],
-    "37": [
+    "38": [
       "public_sw",
       "public_sw_shell"
     ],
-    "38": [
+    "39": [
       "server_mjs_d",
       "server_mjs_d_mjs"
     ]
   },
   "cohesion": {
-    "0": 0.06027306027306027,
-    "1": 0.07894736842105263,
-    "2": 0.07337662337662337,
-    "3": 0.15016835016835017,
-    "4": 0.08985200845665962,
-    "5": 0.05405405405405406,
-    "6": 0.1532976827094474,
+    "0": 0.06430745814307458,
+    "1": 0.14216575922565033,
+    "2": 0.07894736842105263,
+    "3": 0.07337662337662337,
+    "4": 0.05405405405405406,
+    "5": 0.1532976827094474,
+    "6": 0.11363636363636363,
     "7": 0.08143939393939394,
     "8": 0.1476923076923077,
     "9": 0.07692307692307693,
-    "10": 0.25,
-    "11": 0.2426470588235294,
-    "12": 0.21666666666666667,
-    "13": 0.28205128205128205,
-    "14": 0.30303030303030304,
-    "15": 0.3333333333333333,
+    "10": 0.23333333333333334,
+    "11": 0.25,
+    "12": 0.2426470588235294,
+    "13": 0.21666666666666667,
+    "14": 0.28205128205128205,
+    "15": 0.30303030303030304,
     "16": 0.34545454545454546,
     "17": 0.28888888888888886,
     "18": 0.24444444444444444,
     "19": 0.37777777777777777,
     "20": 0.25,
-    "21": 0.2857142857142857,
+    "21": 0.42857142857142855,
     "22": 0.2857142857142857,
-    "23": 0.3333333333333333,
-    "24": 0.4,
-    "25": 0.5,
+    "23": 0.2857142857142857,
+    "24": 0.3333333333333333,
+    "25": 0.4,
     "26": 0.5,
-    "27": 0.6666666666666666,
+    "27": 0.5,
     "28": 0.6666666666666666,
-    "29": 1.0,
+    "29": 0.6666666666666666,
     "30": 1.0,
     "31": 1.0,
     "32": 1.0,
@@ -761,7 +767,8 @@
     "35": 1.0,
     "36": 1.0,
     "37": 1.0,
-    "38": 1.0
+    "38": 1.0,
+    "39": 1.0
   },
   "gods": [
     {
@@ -777,7 +784,7 @@
     {
       "id": "server_http_requireuser",
       "label": "requireUser()",
-      "degree": 39
+      "degree": 37
     },
     {
       "id": "server_http_body",
@@ -795,11 +802,6 @@
       "degree": 17
     },
     {
-      "id": "server_db_getdatabase",
-      "label": "getDatabase()",
-      "degree": 17
-    },
-    {
       "id": "server_auth_now",
       "label": "now()",
       "degree": 16
@@ -813,6 +815,11 @@
       "id": "server_modules_now",
       "label": "now()",
       "degree": 14
+    },
+    {
+      "id": "server_core_audit",
+      "label": "audit()",
+      "degree": 13
     }
   ],
   "surprises": [
@@ -821,6 +828,17 @@
       "target": "enqueueJob()",
       "source_files": [
         "app/api/v1/captures/[id]/interpret/route.ts",
+        "server/jobs.mjs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "GET()",
+      "target": "getJob()",
+      "source_files": [
+        "app/api/v1/jobs/[id]/route.ts",
         "server/jobs.mjs"
       ],
       "confidence": "EXTRACTED",
@@ -855,17 +873,6 @@
       "source_files": [
         "app/api/v1/auth/logout/route.ts",
         "server/auth.mjs"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "calls",
-      "why": "connects across different repos/directories; bridges separate communities"
-    },
-    {
-      "source": "POST()",
-      "target": "applyCaptureInterpretation()",
-      "source_files": [
-        "app/api/v1/captures/[id]/apply/route.ts",
-        "server/core.mjs"
       ],
       "confidence": "EXTRACTED",
       "relation": "calls",

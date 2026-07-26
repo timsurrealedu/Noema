@@ -169,7 +169,7 @@ test("queued jobs accept a cancellation flag exactly once per state",async()=>{
   try{
     const id=jobs.enqueueJob("interpret-capture",{captureId:"c1"},db);
     assert.equal(jobs.cancelJob(id,db),true);assert.equal(jobs.getJob(id,db).cancel_requested,1);
-    jobs.finishJob(id,{ok:true},db);assert.equal(jobs.cancelJob(id,db),false);
+    assert.throws(()=>jobs.finishJob(id,{ok:true},db),error=>error.status===409);assert.equal(jobs.cancelJob(id,db),false);
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
@@ -262,7 +262,7 @@ test("failed jobs retry up to max attempts and expired leases are reclaimed",asy
     let job=jobs.getJob(id,db);assert.equal(job.state,"queued");assert.equal(job.attempts,1);assert.equal(job.events.at(-1).type,"retry-scheduled");
     jobs.claimJob(["interpret-capture"],60,db);jobs.failJob(id,"boom",db);
     jobs.claimJob(["interpret-capture"],60,db);jobs.failJob(id,"boom",db);
-    job=jobs.getJob(id,db);assert.equal(job.state,"failed");assert.equal(job.attempts,3);assert.equal(job.events.at(-1).type,"failed");
+    job=jobs.getJob(id,db);assert.equal(job.state,"failed");assert.equal(job.attempts,3);assert.equal(job.events.at(-1).type,"failed");job=jobs.retryJob(id,db);assert.equal(job.state,"queued");assert.equal(job.attempts,0);assert.equal(job.events.at(-1).type,"retry-now");
     const stuck=jobs.enqueueJob("skill-run",{skill:"assistant"},db);
     jobs.claimJob(["skill-run"],60,db);
     db.prepare("UPDATE jobs SET lease_until=? WHERE id=?").run(new Date(Date.now()-1000).toISOString(),stuck);
