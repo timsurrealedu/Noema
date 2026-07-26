@@ -19,7 +19,8 @@
     "next": "^15.4.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
-    "tar-stream": "^3.2.0"
+    "tar-stream": "^3.2.0",
+    "web-push": "^3.6.7"
   },
   "devDependencies": {
     "@types/node": "^24.1.0",

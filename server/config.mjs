@@ -15,6 +15,7 @@ export function loadConfig(env=process.env){
     codexPath:env.LIFEOS_CODEX_PATH||"codex",sessionHours:Number(env.LIFEOS_SESSION_HOURS||24*30),compileTimeoutMs:Number(env.LIFEOS_COMPILE_TIMEOUT_MS||10000),maxOutputBytes:Number(env.LIFEOS_MAX_OUTPUT_BYTES||262144),
     compilerIsolate:env.LIFEOS_COMPILER_ISOLATE!=="false",compilerUseCgroups:env.LIFEOS_COMPILER_CGROUPS==="true",compilerMemoryLimitBytes:Number(env.LIFEOS_COMPILER_MEMORY_LIMIT_BYTES||268435456),compilerCpuQuotaPercent:Number(env.LIFEOS_COMPILER_CPU_QUOTA_PERCENT||50),
     backupKey:env.LIFEOS_BACKUP_KEY||"",backupRetention:Number(env.LIFEOS_BACKUP_RETENTION||14),minFreeBytes:Number(env.LIFEOS_MIN_FREE_BYTES||1073741824),
+    vapidPublicKey:env.LIFEOS_VAPID_PUBLIC_KEY||"",vapidPrivateKey:env.LIFEOS_VAPID_PRIVATE_KEY||"",vapidSubject:env.LIFEOS_VAPID_SUBJECT||"mailto:admin@localhost",
   };
   if(!Number.isFinite(config.sessionHours)||config.sessionHours<=0)throw new Error("LIFEOS_SESSION_HOURS must be positive");
   if(config.totpSecret&&(config.totpSecret.length<32||!/^[A-Z2-7]+$/.test(config.totpSecret)))throw new Error("LIFEOS_TOTP_SECRET must be at least 32 base32 characters");
