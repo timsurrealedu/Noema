@@ -55,7 +55,7 @@ Supported MVP targets:
 - [ ] Google Calendar synchronization
   - Complete when account connect/revoke, initial import, incremental two-way sync, token refresh, deduplication, conflict handling, deletion, retry, and last-sync/error UI pass integration tests.
 - [~] Notifications, automation execution, job logs, metrics, and schedules
-  - Header notifications read API state and persist read status. Complete when the Automations page reads API state instead of fixtures and create, pause/resume, cancel, retry, schedule, logs, metrics, delivery, and reconnecting live updates pass browser tests.
+  - Header notifications persist read status. Automations reads API definitions, enablement, schedules, manual runs, history, logs, and metrics. Complete when durable cancellation/retry, push delivery, and reconnecting live updates pass browser tests.
 - [~] Global search, backlink indexing, and relationship persistence
   - Global palette queries `/api/v1/search`; unified results cover notes, tasks, events, projects, and captures, and selection opens the specific object. Complete when semantic ranking is optional and source-attributed, and unavailable embeddings degrade to FTS without losing results.
 - [ ] Privacy-safe analytics

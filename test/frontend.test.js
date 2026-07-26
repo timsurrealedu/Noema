@@ -98,3 +98,11 @@ test("Settings workspace export downloads a streamed archive",()=>{
   assert.match(read("app/components/ServiceNotice.tsx"),/location\.assign\("\/api\/v1\/export"\)/);
   const route=read("app/api/v1/export/route.ts");assert.match(route,/requireMfa/);assert.match(route,/application\/x-tar/);assert.match(route,/workspace\.json/);assert.match(route,/assets\//);
 });
+
+test("Automations use durable API state and runs",()=>{
+  const page=read("app/automations/page.tsx");
+  assert.match(page,/\/api\/v1\/automations/);
+  assert.match(page,/\/runs/);
+  assert.match(page,/metrics/);
+  assert.doesNotMatch(page,/Stewie Channel Pipeline/);
+});
