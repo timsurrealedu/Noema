@@ -242,6 +242,8 @@ test("captures link uploaded assets and expose them in state",async()=>{
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
+test("PDF annotations validate coordinates, link objects, and export",async()=>{const dir=temp();const {openDatabase}=await import("../server/db.mjs"),annotations=await import("../server/annotations.mjs"),db=openDatabase(join(dir,"test.sqlite"));try{const time=new Date().toISOString();db.prepare("INSERT INTO assets(id,sha256,name,mime,size,created_at) VALUES(?,?,?,?,?,?)").run("pdf","a".repeat(64),"source.pdf","application/pdf",10,time);db.prepare("INSERT INTO notes(id,title,excerpt,content,created_at,updated_at) VALUES(?,?,?,?,?,?)").run("note","Linked","","",time,time);const saved=annotations.saveAnnotation("pdf",{page:2,kind:"highlight",geometry:{x:.1,y:.2,width:.3,height:.1},comment:"Important",linkType:"note",linkId:"note"},db,"owner");assert.equal(saved.page,2);assert.throws(()=>annotations.saveAnnotation("pdf",{page:1,kind:"text",geometry:{x:.9,y:.1,width:.2,height:.1}},db),/normalized/);assert.equal(annotations.exportAnnotations("pdf",db).annotations.length,1);annotations.deleteAnnotation(saved.id,"pdf",db,"owner");assert.equal(annotations.listAnnotations("pdf",db).length,0)}finally{db.close();rmSync(dir,{recursive:true,force:true})}});
+
 test("file capture creates a capture with a stored asset",async()=>{
   const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
   const config={dataDir:dir,objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs")};require("node:fs").mkdirSync(config.objectsDir,{recursive:true});require("node:fs").mkdirSync(config.jobsDir,{recursive:true});

@@ -135,9 +135,9 @@
     "semantic_hash": "94a3e68c25c7819d85cdab31fa26af47"
   },
   "test/frontend.test.js": {
-    "mtime": 1785087274.4508693,
-    "ast_hash": "ecbc9f39777505bf2fbae0f46a6f9052",
-    "semantic_hash": "ecbc9f39777505bf2fbae0f46a6f9052"
+    "mtime": 1785087398.347473,
+    "ast_hash": "03e98aaeace561f61d7c003974b9ee34",
+    "semantic_hash": "03e98aaeace561f61d7c003974b9ee34"
   },
   "app/api/v1/auth/login/route.ts": {
     "mtime": 1785085599.0668235,
@@ -230,9 +230,9 @@
     "semantic_hash": "43214d9be9af45e36d50823672078d2e"
   },
   "server/db.mjs": {
-    "mtime": 1785086926.6190062,
-    "ast_hash": "77ea5d2106c10c0817258c68458313ef",
-    "semantic_hash": "77ea5d2106c10c0817258c68458313ef"
+    "mtime": 1785087365.946684,
+    "ast_hash": "c48ff4254f29a3b63a0732e713cf75cd",
+    "semantic_hash": "c48ff4254f29a3b63a0732e713cf75cd"
   },
   "server/http.mjs": {
     "mtime": 1785085628.5097716,
@@ -255,9 +255,9 @@
     "semantic_hash": "a2c81a01294d41f2e3abfc43cd413370"
   },
   "test/backend.test.js": {
-    "mtime": 1785087045.3117697,
-    "ast_hash": "421ff0ae83a2ea8547758640a15b834e",
-    "semantic_hash": "421ff0ae83a2ea8547758640a15b834e"
+    "mtime": 1785087398.2454705,
+    "ast_hash": "0030ca4759ad943ec0e26f443af6df21",
+    "semantic_hash": "0030ca4759ad943ec0e26f443af6df21"
   },
   "app/api/v1/audit/[id]/undo/route.ts": {
     "mtime": 1784954491.5351684,
@@ -603,5 +603,30 @@
     "mtime": 1785087262.592135,
     "ast_hash": "25417f2ce12e1c39c0cc029cfab2ed11",
     "semantic_hash": "25417f2ce12e1c39c0cc029cfab2ed11"
+  },
+  "app/api/v1/assets/[id]/annotations/[annotationId]/route.ts": {
+    "mtime": 1785087366.3716948,
+    "ast_hash": "39066eb4abec771967deb52053f3543b",
+    "semantic_hash": "39066eb4abec771967deb52053f3543b"
+  },
+  "app/api/v1/assets/[id]/annotations/export/route.ts": {
+    "mtime": 1785087366.5296988,
+    "ast_hash": "6e0d1975179b8255c8c0ef0bd6e1985b",
+    "semantic_hash": "6e0d1975179b8255c8c0ef0bd6e1985b"
+  },
+  "app/api/v1/assets/[id]/annotations/route.ts": {
+    "mtime": 1785087366.2106907,
+    "ast_hash": "37d6e8c8eee07ac03d0a90aa984c904c",
+    "semantic_hash": "37d6e8c8eee07ac03d0a90aa984c904c"
+  },
+  "app/assets/[id]/annotate/page.tsx": {
+    "mtime": 1785087398.1454682,
+    "ast_hash": "f0bd5e3b905cb69e61351473c364193e",
+    "semantic_hash": "f0bd5e3b905cb69e61351473c364193e"
+  },
+  "server/annotations.mjs": {
+    "mtime": 1785087366.0466864,
+    "ast_hash": "4b3d7237ca149f88146c172972963916",
+    "semantic_hash": "4b3d7237ca149f88146c172972963916"
   }
 }
