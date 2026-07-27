@@ -20,9 +20,9 @@
     "semantic_hash": "9111ac6dabdd40ac4854382c2e1623d1"
   },
   "package.json": {
-    "mtime": 1785087585.3485177,
-    "ast_hash": "a2d43e19a30791bdd33ec4ec228ee4d3",
-    "semantic_hash": "a2d43e19a30791bdd33ec4ec228ee4d3"
+    "mtime": 1785171529.427672,
+    "ast_hash": "262b18754e2a7e5db0fd4c2b6bf98c7c",
+    "semantic_hash": "262b18754e2a7e5db0fd4c2b6bf98c7c"
   },
   "tsconfig.json": {
     "mtime": 1784828798.4083743,
@@ -733,5 +733,15 @@
     "mtime": 1785170958.9375143,
     "ast_hash": "f0fffe70eba3a03b537670675105066f",
     "semantic_hash": "f0fffe70eba3a03b537670675105066f"
+  },
+  "playwright.config.ts": {
+    "mtime": 1785171585.1697562,
+    "ast_hash": "1634bb23557b26e59de312398a657c06",
+    "semantic_hash": "1634bb23557b26e59de312398a657c06"
+  },
+  "test/browser/auth.spec.ts": {
+    "mtime": 1785171775.9489472,
+    "ast_hash": "ec86a4f40a233d53b524049ba1fa7603",
+    "semantic_hash": "ec86a4f40a233d53b524049ba1fa7603"
   }
 }

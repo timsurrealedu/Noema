@@ -224,6 +224,7 @@
       "server_http_requiremfa",
       "server_http_requiresameorigin",
       "server_http_requireuser",
+      "server_skills_getskill",
       "server_skills_listskills"
     ],
     "3": [
@@ -284,6 +285,7 @@
       "package_dependencies_tar_stream",
       "package_dependencies_web_push",
       "package_devdependencies",
+      "package_devdependencies_playwright_test",
       "package_devdependencies_types_node",
       "package_devdependencies_types_react",
       "package_devdependencies_types_react_dom",
@@ -300,10 +302,12 @@
       "package_scripts_start",
       "package_scripts_test",
       "package_scripts_test_backend",
+      "package_scripts_test_browser",
       "package_scripts_verify_backup",
       "package_scripts_worker",
       "package_version",
       "phosphor_icons_react",
+      "playwright_test",
       "react",
       "react_dom",
       "tar_stream",
@@ -608,7 +612,6 @@
       "server_skills",
       "server_skills_buildskillprompt",
       "server_skills_definitions",
-      "server_skills_getskill",
       "server_skills_inserttutormessage",
       "server_skills_loadtutorsession",
       "server_skills_runtutor",
@@ -799,58 +802,68 @@
       "app_page_today"
     ],
     "34": [
+      "test_browser_auth_spec",
+      "test_browser_auth_spec_loginwithtotp",
+      "test_browser_auth_spec_passwordstep",
+      "test_browser_auth_spec_totp"
+    ],
+    "35": [
       "app_api_v1_projects_route",
       "app_api_v1_projects_route_get",
       "app_api_v1_projects_route_post"
     ],
-    "35": [
+    "36": [
       "app_assets_id_annotate_page",
       "app_assets_id_annotate_page_annotatepdfpage",
       "app_assets_id_annotate_page_annotation"
     ],
-    "36": [
+    "37": [
       "app_coding_page",
       "app_coding_page_approval",
       "app_coding_page_codingpage"
     ],
-    "37": [
+    "38": [
       "server_codex",
       "server_codex_codexargs",
       "server_codex_runcodex"
     ],
-    "38": [
+    "39": [
       "app_components_modaldialog",
       "app_components_modaldialog_modaldialog"
     ],
-    "39": [
+    "40": [
       "app_error",
       "app_error_errorpage"
     ],
-    "40": [
+    "41": [
       "app_loading",
       "app_loading_loading"
     ],
-    "41": [
+    "42": [
       "app_login_page",
       "app_login_page_loginpage"
     ],
-    "42": [
+    "43": [
       "app_not_found",
       "app_not_found_notfound"
     ],
-    "43": [
+    "44": [
       "next_config",
       "next_config_config"
     ],
-    "44": [
+    "45": [
       "next_env_d",
       "next_env_d_rationale_5"
     ],
-    "45": [
+    "46": [
+      "playwright_config",
+      "playwright_config_datadir"
+    ],
+    "47": [
       "public_sw",
       "public_sw_shell"
     ],
-    "46": [
+    "48": [
       "server_mjs_d",
       "server_mjs_d_mjs"
     ]
@@ -858,9 +871,9 @@
   "cohesion": {
     "0": 0.06160506160506161,
     "1": 0.05719298245614035,
-    "2": 0.11794871794871795,
+    "2": 0.11533242876526459,
     "3": 0.08383838383838384,
-    "4": 0.05128205128205128,
+    "4": 0.047619047619047616,
     "5": 0.07657657657657657,
     "6": 0.1532976827094474,
     "7": 0.1476923076923077,
@@ -872,7 +885,7 @@
     "13": 0.25,
     "14": 0.2426470588235294,
     "15": 0.275,
-    "16": 0.21666666666666667,
+    "16": 0.22857142857142856,
     "17": 0.15384615384615385,
     "18": 0.28205128205128205,
     "19": 0.3333333333333333,
@@ -890,10 +903,10 @@
     "31": 0.5,
     "32": 0.5,
     "33": 0.5,
-    "34": 0.6666666666666666,
+    "34": 0.8333333333333334,
     "35": 0.6666666666666666,
     "36": 0.6666666666666666,
-    "37": 1.0,
+    "37": 0.6666666666666666,
     "38": 1.0,
     "39": 1.0,
     "40": 1.0,
@@ -902,7 +915,9 @@
     "43": 1.0,
     "44": 1.0,
     "45": 1.0,
-    "46": 1.0
+    "46": 1.0,
+    "47": 1.0,
+    "48": 1.0
   },
   "gods": [
     {

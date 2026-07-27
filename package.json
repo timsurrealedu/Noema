@@ -10,6 +10,7 @@
     "lint": "next lint",
     "test": "node --test test/backend.test.js && node --test test/frontend.test.js",
     "test:backend": "node --test test/backend.test.js",
+    "test:browser": "playwright test",
     "backup": "node scripts/backup.mjs",
     "verify:backup": "node scripts/verify-backup.mjs",
     "import:v1": "node scripts/import-v1.mjs"
@@ -23,6 +24,7 @@
     "web-push": "^3.6.7"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.0",
     "@types/node": "^24.1.0",
     "@types/react": "^19.1.9",
     "@types/react-dom": "^19.1.7",

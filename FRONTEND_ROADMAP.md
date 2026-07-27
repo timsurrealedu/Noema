@@ -49,7 +49,7 @@ Supported MVP targets:
 
 ## Backend integration backlog
 
-- [~] Authentication, sessions, optional TOTP login, and revocation
+- [x] Authentication, sessions, optional TOTP login, and revocation
   - Complete when Settings enrolls/disables TOTP, recovery codes are generated once and stored hashed, recovery invalidates used codes, and browser tests cover enrollment, login, recovery, and revocation.
 - [x] Durable database persistence, synchronization, encrypted backup, and full workspace export
 - [~] Codex interpretation service with review, approval, cancellation, and audit records
