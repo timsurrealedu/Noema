@@ -157,8 +157,11 @@ test("Calendar reviews sync conflicts and chooses a Google destination",()=>{con
 test("Automations use durable API state and runs",()=>{
   const page=read("app/automations/page.tsx");
   assert.match(page,/\/api\/v1\/automations/);
+  assert.match(page,/\/preview/);
   assert.match(page,/\/runs/);
   assert.match(page,/metrics/);
+  for(const action of ["Edit","Duplicate","Delete","Preview"])assert.match(page,new RegExp(action));
+  assert.match(read("app/api/v1/automations/[id]/route.ts"),/deleteAutomation/);
   assert.doesNotMatch(page,/Stewie Channel Pipeline/);
 });
 

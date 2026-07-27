@@ -4,12 +4,12 @@
 - cluster-only mode — file stats not available
 
 ## Summary
-- 785 nodes · 1577 edges · 52 communities (41 shown, 11 thin omitted)
+- 789 nodes · 1582 edges · 52 communities (41 shown, 11 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 6 edges (avg confidence: 0.55)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `77940f2b`
+- Built from commit: `04039795`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -33,14 +33,14 @@
 - page.tsx
 - compiler.mjs
 - route.ts
+- objects.mjs
+- page.tsx
 - push.mjs
 - ModuleShell.tsx
-- recommendations.mjs
 - page.tsx
 - page.tsx
 - ai.mjs
 - search.mjs
-- page.tsx
 - backend.test.js
 - frontend.test.js
 - page.tsx
@@ -102,7 +102,7 @@ Nodes (43): POST(), GET(), POST(), POST(), DELETE(), DELETE(), GET(), POST() (+3
 
 ### Community 3 - "db.mjs"
 Cohesion: 0.08
-Nodes (33): GET(), POST(), GET(), safe(), GET(), PATCH(), backup, ensureColumn() (+25 more)
+Nodes (32): GET(), safe(), PATCH(), GET(), GET(), PATCH(), backup, ensureColumn() (+24 more)
 
 ### Community 4 - "scripts"
 Cohesion: 0.05
@@ -164,37 +164,37 @@ Nodes (10): GET(), buildCommand(), cleanupWorktree(), compilerCapabilities(), ex
 Cohesion: 0.33
 Nodes (10): DELETE(), GET(), PATCH(), POST(), analyticsStatus(), deleteAnalytics(), recordAnalytics(), schemas (+2 more)
 
-### Community 19 - "push.mjs"
+### Community 19 - "objects.mjs"
+Cohesion: 0.30
+Nodes (8): GET(), POST(), allowedMimes, assetPath(), attachAssets(), getAsset(), now(), storeAsset()
+
+### Community 20 - "page.tsx"
+Cohesion: 0.21
+Nodes (10): Automation, AutomationsPage(), Draft, editDraft(), empty, Metrics, Preview, request() (+2 more)
+
+### Community 21 - "push.mjs"
 Cohesion: 0.38
 Nodes (8): PATCH(), GET(), claimDelivery(), deliverOne(), listDeliveries(), now(), resolveDelivery(), retryDelivery()
 
-### Community 20 - "ModuleShell.tsx"
+### Community 22 - "ModuleShell.tsx"
 Cohesion: 0.22
 Nodes (6): ModuleShell(), nav, Notification, Recommendation, SearchHit, shortcuts
 
-### Community 21 - "recommendations.mjs"
-Cohesion: 0.44
-Nodes (7): PATCH(), GET(), buildRecommendations(), decideRecommendation(), now(), recommendations(), view()
-
-### Community 22 - "page.tsx"
+### Community 23 - "page.tsx"
 Cohesion: 0.29
 Nodes (6): basic(), MarkdownContent(), blankNote(), Optimization, renderMarkdown(), VaultPage()
 
-### Community 23 - "page.tsx"
+### Community 24 - "page.tsx"
 Cohesion: 0.24
 Nodes (9): Assignment, Card, Course, post(), Question, Quiz, request(), StudyPage() (+1 more)
 
-### Community 24 - "ai.mjs"
+### Community 25 - "ai.mjs"
 Cohesion: 0.38
 Nodes (9): geminiSchema(), isCapacityError(), runAI(), runFallback(), runGemini(), runGeminiMultimodal(), runOpenAI(), schemaKeys (+1 more)
 
-### Community 25 - "search.mjs"
+### Community 26 - "search.mjs"
 Cohesion: 0.36
 Nodes (7): GET(), candidates(), cosine(), key(), searchWorkspace(), text, types
-
-### Community 26 - "page.tsx"
-Cohesion: 0.32
-Nodes (7): Automation, AutomationsPage(), empty, Metrics, request(), Run, when()
 
 ### Community 27 - "backend.test.js"
 Cohesion: 0.29
@@ -221,7 +221,7 @@ Cohesion: 0.83
 Nodes (3): loginWithTotp(), passwordStep(), totp()
 
 ## Knowledge Gaps
-- **144 isolated node(s):** `config`, `target`, `dom`, `dom.iterable`, `esnext` (+139 more)
+- **146 isolated node(s):** `config`, `target`, `dom`, `dom.iterable`, `esnext` (+141 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -235,12 +235,12 @@ Nodes (3): loginWithTotp(), passwordStep(), totp()
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDatabase()` connect `db.mjs` to `core.mjs`, `json`, `projects.mjs`, `google-calendar.mjs`, `approvals.mjs`, `annotations.mjs`, `skills.mjs`, `push.mjs`, `recommendations.mjs`?**
-  _High betweenness centrality (0.076) - this node is a cross-community bridge._
+- **Why does `getDatabase()` connect `db.mjs` to `core.mjs`, `json`, `projects.mjs`, `google-calendar.mjs`, `approvals.mjs`, `annotations.mjs`, `skills.mjs`, `objects.mjs`, `push.mjs`?**
+  _High betweenness centrality (0.075) - this node is a cross-community bridge._
 - **Why does `loadConfig()` connect `json` to `search.mjs`?**
   _High betweenness centrality (0.012) - this node is a cross-community bridge._
 - **What connects `config`, `target`, `dom` to the rest of the system?**
-  _144 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _146 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `modules.mjs` be split into smaller, more focused modules?**
   _Cohesion score 0.05042016806722689 - nodes in this community are weakly interconnected._
 - **Should `core.mjs` be split into smaller, more focused modules?**
@@ -248,4 +248,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `json` be split into smaller, more focused modules?**
   _Cohesion score 0.11794871794871795 - nodes in this community are weakly interconnected._
 - **Should `db.mjs` be split into smaller, more focused modules?**
-  _Cohesion score 0.07678075855689177 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08383838383838384 - nodes in this community are weakly interconnected._

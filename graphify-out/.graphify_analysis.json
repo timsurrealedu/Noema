@@ -236,13 +236,13 @@
       "server_skills_listskills"
     ],
     "3": [
-      "app_api_v1_assets_id_route",
-      "app_api_v1_assets_id_route_get",
-      "app_api_v1_assets_route",
-      "app_api_v1_assets_route_post",
       "app_api_v1_export_route",
       "app_api_v1_export_route_get",
       "app_api_v1_export_route_safe",
+      "app_api_v1_recommendations_id_route",
+      "app_api_v1_recommendations_id_route_patch",
+      "app_api_v1_recommendations_route",
+      "app_api_v1_recommendations_route_get",
       "app_api_v1_settings_route",
       "app_api_v1_settings_route_get",
       "app_api_v1_settings_route_patch",
@@ -256,14 +256,6 @@
       "server_db_getdatabase",
       "server_db_migratelegacyevents",
       "server_db_opendatabase",
-      "server_objects",
-      "server_objects_allowedmimes",
-      "server_objects_assetpath",
-      "server_objects_assetsforcapture",
-      "server_objects_attachassets",
-      "server_objects_getasset",
-      "server_objects_now",
-      "server_objects_storeasset",
       "server_ops",
       "server_ops_createbackup",
       "server_ops_exporttables",
@@ -275,6 +267,12 @@
       "server_ops_mimes",
       "server_ops_redact",
       "server_ops_verifybackup",
+      "server_recommendations",
+      "server_recommendations_buildrecommendations",
+      "server_recommendations_deciderecommendation",
+      "server_recommendations_now",
+      "server_recommendations_recommendations",
+      "server_recommendations_view",
       "server_settings",
       "server_settings_clean",
       "server_settings_defaults",
@@ -666,6 +664,34 @@
       "server_analytics_validate"
     ],
     "19": [
+      "app_api_v1_assets_id_route",
+      "app_api_v1_assets_id_route_get",
+      "app_api_v1_assets_route",
+      "app_api_v1_assets_route_post",
+      "server_objects",
+      "server_objects_allowedmimes",
+      "server_objects_assetpath",
+      "server_objects_assetsforcapture",
+      "server_objects_attachassets",
+      "server_objects_getasset",
+      "server_objects_now",
+      "server_objects_storeasset"
+    ],
+    "20": [
+      "app_automations_page",
+      "app_automations_page_automation",
+      "app_automations_page_automationspage",
+      "app_automations_page_draft",
+      "app_automations_page_editdraft",
+      "app_automations_page_empty",
+      "app_automations_page_metrics",
+      "app_automations_page_payload",
+      "app_automations_page_preview",
+      "app_automations_page_request",
+      "app_automations_page_run",
+      "app_automations_page_when"
+    ],
+    "21": [
       "app_api_v1_notification_deliveries_id_route",
       "app_api_v1_notification_deliveries_id_route_patch",
       "app_api_v1_notification_deliveries_route",
@@ -678,7 +704,7 @@
       "server_push_resolvedelivery",
       "server_push_retrydelivery"
     ],
-    "20": [
+    "22": [
       "app_canvas_page",
       "app_canvas_page_canvaspage",
       "app_components_moduleshell",
@@ -691,19 +717,7 @@
       "app_help_page_helppage",
       "app_help_page_shortcuts"
     ],
-    "21": [
-      "app_api_v1_recommendations_id_route",
-      "app_api_v1_recommendations_id_route_patch",
-      "app_api_v1_recommendations_route",
-      "app_api_v1_recommendations_route_get",
-      "server_recommendations",
-      "server_recommendations_buildrecommendations",
-      "server_recommendations_deciderecommendation",
-      "server_recommendations_now",
-      "server_recommendations_recommendations",
-      "server_recommendations_view"
-    ],
-    "22": [
+    "23": [
       "app_components_markdowncontent",
       "app_components_markdowncontent_basic",
       "app_components_markdowncontent_chart",
@@ -715,7 +729,7 @@
       "app_vault_page_rendermarkdown",
       "app_vault_page_vaultpage"
     ],
-    "23": [
+    "24": [
       "app_study_page",
       "app_study_page_assignment",
       "app_study_page_card",
@@ -727,7 +741,7 @@
       "app_study_page_studypage",
       "app_study_page_workspace"
     ],
-    "24": [
+    "25": [
       "server_ai",
       "server_ai_geminischema",
       "server_ai_iscapacityerror",
@@ -739,7 +753,7 @@
       "server_ai_schemakeys",
       "server_ai_selectopenaimodel"
     ],
-    "25": [
+    "26": [
       "app_api_v1_search_route",
       "app_api_v1_search_route_get",
       "server_search",
@@ -749,16 +763,6 @@
       "server_search_searchworkspace",
       "server_search_text",
       "server_search_types"
-    ],
-    "26": [
-      "app_automations_page",
-      "app_automations_page_automation",
-      "app_automations_page_automationspage",
-      "app_automations_page_empty",
-      "app_automations_page_metrics",
-      "app_automations_page_request",
-      "app_automations_page_run",
-      "app_automations_page_when"
     ],
     "27": [
       "test_backend_test",
@@ -894,7 +898,7 @@
     "0": 0.05042016806722689,
     "1": 0.06160506160506161,
     "2": 0.11794871794871795,
-    "3": 0.07678075855689177,
+    "3": 0.08383838383838384,
     "4": 0.045454545454545456,
     "5": 0.07439024390243902,
     "6": 0.1532976827094474,
@@ -910,14 +914,14 @@
     "16": 0.15384615384615385,
     "17": 0.28205128205128205,
     "18": 0.3333333333333333,
-    "19": 0.38181818181818183,
-    "20": 0.21818181818181817,
-    "21": 0.4444444444444444,
-    "22": 0.28888888888888886,
-    "23": 0.24444444444444444,
-    "24": 0.37777777777777777,
-    "25": 0.3611111111111111,
-    "26": 0.32142857142857145,
+    "19": 0.30303030303030304,
+    "20": 0.21212121212121213,
+    "21": 0.38181818181818183,
+    "22": 0.21818181818181817,
+    "23": 0.28888888888888886,
+    "24": 0.24444444444444444,
+    "25": 0.37777777777777777,
+    "26": 0.3611111111111111,
     "27": 0.2857142857142857,
     "28": 0.2857142857142857,
     "29": 0.3333333333333333,
@@ -1056,8 +1060,8 @@
   "questions": [
     {
       "type": "bridge_node",
-      "question": "Why does `getDatabase()` connect `db.mjs` to `core.mjs`, `json`, `projects.mjs`, `google-calendar.mjs`, `approvals.mjs`, `annotations.mjs`, `skills.mjs`, `push.mjs`, `recommendations.mjs`?",
-      "why": "High betweenness centrality (0.076) - this node is a cross-community bridge."
+      "question": "Why does `getDatabase()` connect `db.mjs` to `core.mjs`, `json`, `projects.mjs`, `google-calendar.mjs`, `approvals.mjs`, `annotations.mjs`, `skills.mjs`, `objects.mjs`, `push.mjs`?",
+      "why": "High betweenness centrality (0.075) - this node is a cross-community bridge."
     },
     {
       "type": "bridge_node",
@@ -1067,7 +1071,7 @@
     {
       "type": "isolated_nodes",
       "question": "What connects `config`, `target`, `dom` to the rest of the system?",
-      "why": "144 weakly-connected nodes found - possible documentation gaps or missing edges."
+      "why": "146 weakly-connected nodes found - possible documentation gaps or missing edges."
     },
     {
       "type": "low_cohesion",
@@ -1087,7 +1091,7 @@
     {
       "type": "low_cohesion",
       "question": "Should `db.mjs` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.07678075855689177 - nodes in this community are weakly interconnected."
+      "why": "Cohesion score 0.08383838383838384 - nodes in this community are weakly interconnected."
     }
   ]
 }
