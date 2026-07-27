@@ -9,7 +9,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f337964e`
+- Built from commit: `54b15bcd`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -75,7 +75,7 @@
 7. `now()` - 20 edges
 8. `stamp()` - 20 edges
 9. `idempotent()` - 19 edges
-10. `getDatabase()` - 19 edges
+10. `getDatabase()` - 18 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `POST()` --calls--> `handle()`  [EXTRACTED]
@@ -265,12 +265,12 @@ Nodes (3): loginWithTotp(), passwordStep(), totp()
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDatabase()` connect `db.mjs` to `core.mjs`, `modules.mjs`, `plugins.mjs`, `auth.mjs`, `collaboration.mjs`, `repositories.mjs`, `google-calendar.mjs`, `projects.mjs`, `dashboards.mjs`, `skills.mjs`, `approvals.mjs`, `annotations.mjs`, `recommendations.mjs`?**
-  _High betweenness centrality (0.124) - this node is a cross-community bridge._
+- **Why does `getDatabase()` connect `db.mjs` to `core.mjs`, `modules.mjs`, `plugins.mjs`, `auth.mjs`, `collaboration.mjs`, `repositories.mjs`, `google-calendar.mjs`, `dashboards.mjs`, `skills.mjs`, `approvals.mjs`, `annotations.mjs`, `recommendations.mjs`?**
+  _High betweenness centrality (0.109) - this node is a cross-community bridge._
 - **Why does `loadConfig()` connect `plugins.mjs` to `repositories.mjs`, `auth.mjs`?**
-  _High betweenness centrality (0.022) - this node is a cross-community bridge._
+  _High betweenness centrality (0.026) - this node is a cross-community bridge._
 - **Why does `handle()` connect `core.mjs` to `skills.mjs`, `auth.mjs`?**
-  _High betweenness centrality (0.016) - this node is a cross-community bridge._
+  _High betweenness centrality (0.018) - this node is a cross-community bridge._
 - **What connects `config`, `target`, `dom` to the rest of the system?**
   _189 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `core.mjs` be split into smaller, more focused modules?**

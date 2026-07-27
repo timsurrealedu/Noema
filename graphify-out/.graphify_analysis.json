@@ -1153,7 +1153,7 @@
     "11": 0.07692307692307693,
     "12": 0.19333333333333333,
     "13": 0.17753623188405798,
-    "14": 0.1857707509881423,
+    "14": 0.19367588932806323,
     "15": 0.18181818181818182,
     "16": 0.21904761904761905,
     "17": 0.14210526315789473,
@@ -1247,7 +1247,7 @@
     {
       "id": "server_db_getdatabase",
       "label": "getDatabase()",
-      "degree": 19
+      "degree": 18
     }
   ],
   "surprises": [
@@ -1310,18 +1310,18 @@
   "questions": [
     {
       "type": "bridge_node",
-      "question": "Why does `getDatabase()` connect `db.mjs` to `core.mjs`, `modules.mjs`, `plugins.mjs`, `auth.mjs`, `collaboration.mjs`, `repositories.mjs`, `google-calendar.mjs`, `projects.mjs`, `dashboards.mjs`, `skills.mjs`, `approvals.mjs`, `annotations.mjs`, `recommendations.mjs`?",
-      "why": "High betweenness centrality (0.124) - this node is a cross-community bridge."
+      "question": "Why does `getDatabase()` connect `db.mjs` to `core.mjs`, `modules.mjs`, `plugins.mjs`, `auth.mjs`, `collaboration.mjs`, `repositories.mjs`, `google-calendar.mjs`, `dashboards.mjs`, `skills.mjs`, `approvals.mjs`, `annotations.mjs`, `recommendations.mjs`?",
+      "why": "High betweenness centrality (0.109) - this node is a cross-community bridge."
     },
     {
       "type": "bridge_node",
       "question": "Why does `loadConfig()` connect `plugins.mjs` to `repositories.mjs`, `auth.mjs`?",
-      "why": "High betweenness centrality (0.022) - this node is a cross-community bridge."
+      "why": "High betweenness centrality (0.026) - this node is a cross-community bridge."
     },
     {
       "type": "bridge_node",
       "question": "Why does `handle()` connect `core.mjs` to `skills.mjs`, `auth.mjs`?",
-      "why": "High betweenness centrality (0.016) - this node is a cross-community bridge."
+      "why": "High betweenness centrality (0.018) - this node is a cross-community bridge."
     },
     {
       "type": "isolated_nodes",

@@ -2611,83 +2611,6 @@
       "id": "app_study_page_studypage"
     },
     {
-      "label": "route.ts",
-      "file_type": "code",
-      "source_file": "app/api/v1/projects/[id]/blockers/route.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "route.ts",
-      "community_name": "projects.mjs",
-      "id": "app_api_v1_projects_id_blockers_route"
-    },
-    {
-      "label": "POST()",
-      "file_type": "code",
-      "source_file": "app/api/v1/projects/[id]/blockers/route.ts",
-      "source_location": "L4",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "post()",
-      "community_name": "projects.mjs",
-      "id": "app_api_v1_projects_id_blockers_route_post"
-    },
-    {
-      "label": "route.ts",
-      "file_type": "code",
-      "source_file": "app/api/v1/projects/[id]/milestones/route.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "route.ts",
-      "community_name": "projects.mjs",
-      "id": "app_api_v1_projects_id_milestones_route"
-    },
-    {
-      "label": "POST()",
-      "file_type": "code",
-      "source_file": "app/api/v1/projects/[id]/milestones/route.ts",
-      "source_location": "L4",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "post()",
-      "community_name": "projects.mjs",
-      "id": "app_api_v1_projects_id_milestones_route_post"
-    },
-    {
-      "label": "route.ts",
-      "file_type": "code",
-      "source_file": "app/api/v1/relationships/route.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "route.ts",
-      "community_name": "projects.mjs",
-      "id": "app_api_v1_relationships_route"
-    },
-    {
-      "label": "POST()",
-      "file_type": "code",
-      "source_file": "app/api/v1/relationships/route.ts",
-      "source_location": "L4",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "post()",
-      "community_name": "projects.mjs",
-      "id": "app_api_v1_relationships_route_post"
-    },
-    {
-      "label": "DELETE()",
-      "file_type": "code",
-      "source_file": "app/api/v1/relationships/route.ts",
-      "source_location": "L5",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "delete()",
-      "community_name": "projects.mjs",
-      "id": "app_api_v1_relationships_route_delete"
-    },
-    {
       "label": "page.tsx",
       "file_type": "code",
       "source_file": "app/projects/page.tsx",
@@ -8342,127 +8265,6 @@
       "id": "server_objects_attachassets"
     },
     {
-      "label": "projects.mjs",
-      "file_type": "code",
-      "source_file": "server/projects.mjs",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "projects.mjs",
-      "community_name": "projects.mjs",
-      "id": "server_projects"
-    },
-    {
-      "label": "now()",
-      "file_type": "code",
-      "source_file": "server/projects.mjs",
-      "source_location": "L4",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "now()",
-      "community_name": "projects.mjs",
-      "id": "server_projects_now"
-    },
-    {
-      "label": "types",
-      "file_type": "code",
-      "source_file": "server/projects.mjs",
-      "source_location": "L4",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "types",
-      "community_name": "projects.mjs",
-      "id": "server_projects_types"
-    },
-    {
-      "label": "actorInfo()",
-      "file_type": "code",
-      "source_file": "server/projects.mjs",
-      "source_location": "L5",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "actorinfo()",
-      "community_name": "projects.mjs",
-      "id": "server_projects_actorinfo"
-    },
-    {
-      "label": "project()",
-      "file_type": "code",
-      "source_file": "server/projects.mjs",
-      "source_location": "L6",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "project()",
-      "community_name": "projects.mjs",
-      "id": "server_projects_project"
-    },
-    {
-      "label": "audit()",
-      "file_type": "code",
-      "source_file": "server/projects.mjs",
-      "source_location": "L7",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "audit()",
-      "community_name": "projects.mjs",
-      "id": "server_projects_audit"
-    },
-    {
-      "label": "linkProject()",
-      "file_type": "code",
-      "source_file": "server/projects.mjs",
-      "source_location": "L8",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "linkproject()",
-      "community_name": "projects.mjs",
-      "id": "server_projects_linkproject"
-    },
-    {
-      "label": "unlinkProject()",
-      "file_type": "code",
-      "source_file": "server/projects.mjs",
-      "source_location": "L9",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "unlinkproject()",
-      "community_name": "projects.mjs",
-      "id": "server_projects_unlinkproject"
-    },
-    {
-      "label": "saveMilestone()",
-      "file_type": "code",
-      "source_file": "server/projects.mjs",
-      "source_location": "L10",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "savemilestone()",
-      "community_name": "projects.mjs",
-      "id": "server_projects_savemilestone"
-    },
-    {
-      "label": "saveBlocker()",
-      "file_type": "code",
-      "source_file": "server/projects.mjs",
-      "source_location": "L11",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "saveblocker()",
-      "community_name": "projects.mjs",
-      "id": "server_projects_saveblocker"
-    },
-    {
-      "label": "projectWorkspace()",
-      "file_type": "code",
-      "source_file": "server/projects.mjs",
-      "source_location": "L12",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "projectworkspace()",
-      "community_name": "projects.mjs",
-      "id": "server_projects_projectworkspace"
-    },
-    {
       "label": "route.ts",
       "file_type": "code",
       "source_file": "app/api/v1/study/assignments/route.ts",
@@ -10131,8 +9933,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "route.ts",
-      "id": "app_api_v1_captures_id_interpret_route",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "app_api_v1_captures_id_interpret_route"
     },
     {
       "label": "POST()",
@@ -10142,8 +9944,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "post()",
-      "id": "app_api_v1_captures_id_interpret_route_post",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "app_api_v1_captures_id_interpret_route_post"
     },
     {
       "label": "route.ts",
@@ -10153,8 +9955,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "route.ts",
-      "id": "app_api_v1_jobs_id_approve_route",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "app_api_v1_jobs_id_approve_route"
     },
     {
       "label": "POST()",
@@ -10164,8 +9966,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "post()",
-      "id": "app_api_v1_jobs_id_approve_route_post",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "app_api_v1_jobs_id_approve_route_post"
     },
     {
       "label": "route.ts",
@@ -10175,8 +9977,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "route.ts",
-      "id": "app_api_v1_jobs_id_cancel_route",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "app_api_v1_jobs_id_cancel_route"
     },
     {
       "label": "POST()",
@@ -10186,8 +9988,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "post()",
-      "id": "app_api_v1_jobs_id_cancel_route_post",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "app_api_v1_jobs_id_cancel_route_post"
     },
     {
       "label": "route.ts",
@@ -10197,8 +9999,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "route.ts",
-      "id": "app_api_v1_jobs_id_events_route",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "app_api_v1_jobs_id_events_route"
     },
     {
       "label": "terminal",
@@ -10208,8 +10010,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "terminal",
-      "id": "app_api_v1_jobs_id_events_route_terminal",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "app_api_v1_jobs_id_events_route_terminal"
     },
     {
       "label": "GET()",
@@ -10219,8 +10021,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "get()",
-      "id": "app_api_v1_jobs_id_events_route_get",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "app_api_v1_jobs_id_events_route_get"
     },
     {
       "label": "route.ts",
@@ -10230,8 +10032,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "route.ts",
-      "id": "app_api_v1_jobs_id_retry_route",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "app_api_v1_jobs_id_retry_route"
     },
     {
       "label": "POST()",
@@ -10241,8 +10043,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "post()",
-      "id": "app_api_v1_jobs_id_retry_route_post",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "app_api_v1_jobs_id_retry_route_post"
     },
     {
       "label": "route.ts",
@@ -10252,8 +10054,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "route.ts",
-      "id": "app_api_v1_jobs_id_route",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "app_api_v1_jobs_id_route"
     },
     {
       "label": "GET()",
@@ -10263,8 +10065,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "get()",
-      "id": "app_api_v1_jobs_id_route_get",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "app_api_v1_jobs_id_route_get"
     },
     {
       "label": "route.ts",
@@ -10274,8 +10076,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "route.ts",
-      "id": "app_api_v1_knowledge_graph_path_route",
-      "community_name": "knowledge-graph.mjs"
+      "community_name": "knowledge-graph.mjs",
+      "id": "app_api_v1_knowledge_graph_path_route"
     },
     {
       "label": "GET()",
@@ -10285,8 +10087,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "get()",
-      "id": "app_api_v1_knowledge_graph_path_route_get",
-      "community_name": "knowledge-graph.mjs"
+      "community_name": "knowledge-graph.mjs",
+      "id": "app_api_v1_knowledge_graph_path_route_get"
     },
     {
       "label": "route.ts",
@@ -10296,8 +10098,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "route.ts",
-      "id": "app_api_v1_knowledge_graph_route",
-      "community_name": "knowledge-graph.mjs"
+      "community_name": "knowledge-graph.mjs",
+      "id": "app_api_v1_knowledge_graph_route"
     },
     {
       "label": "GET()",
@@ -10307,8 +10109,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "get()",
-      "id": "app_api_v1_knowledge_graph_route_get",
-      "community_name": "knowledge-graph.mjs"
+      "community_name": "knowledge-graph.mjs",
+      "id": "app_api_v1_knowledge_graph_route_get"
     },
     {
       "label": "route.ts",
@@ -10318,8 +10120,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "route.ts",
-      "id": "app_api_v1_skills_name_run_route",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "app_api_v1_skills_name_run_route"
     },
     {
       "label": "POST()",
@@ -10329,8 +10131,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "post()",
-      "id": "app_api_v1_skills_name_run_route_post",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "app_api_v1_skills_name_run_route_post"
     },
     {
       "label": "core.mjs",
@@ -10340,8 +10142,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "core.mjs",
-      "id": "server_core",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core"
     },
     {
       "label": "stamp()",
@@ -10351,8 +10153,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "stamp()",
-      "id": "server_core_stamp",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_stamp"
     },
     {
       "label": "formatSize()",
@@ -10362,8 +10164,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "formatsize()",
-      "id": "server_core_formatsize",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_formatsize"
     },
     {
       "label": "fileKind()",
@@ -10373,8 +10175,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "filekind()",
-      "id": "server_core_filekind",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_filekind"
     },
     {
       "label": "parse()",
@@ -10384,8 +10186,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "parse()",
-      "id": "server_core_parse",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_parse"
     },
     {
       "label": "required()",
@@ -10395,8 +10197,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "required()",
-      "id": "server_core_required",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_required"
     },
     {
       "label": "timestamp()",
@@ -10406,8 +10208,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "timestamp()",
-      "id": "server_core_timestamp",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_timestamp"
     },
     {
       "label": "absolute()",
@@ -10417,8 +10219,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "absolute()",
-      "id": "server_core_absolute",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_absolute"
     },
     {
       "label": "eventPosition()",
@@ -10428,8 +10230,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "eventposition()",
-      "id": "server_core_eventposition",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_eventposition"
     },
     {
       "label": "eventRow()",
@@ -10439,8 +10241,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "eventrow()",
-      "id": "server_core_eventrow",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_eventrow"
     },
     {
       "label": "queueCalendarWrite()",
@@ -10450,8 +10252,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "queuecalendarwrite()",
-      "id": "server_core_queuecalendarwrite",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_queuecalendarwrite"
     },
     {
       "label": "actorInfo()",
@@ -10461,8 +10263,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "actorinfo()",
-      "id": "server_core_actorinfo",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_actorinfo"
     },
     {
       "label": "findOwned()",
@@ -10472,8 +10274,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "findowned()",
-      "id": "server_core_findowned",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_findowned"
     },
     {
       "label": "requireVersion()",
@@ -10483,8 +10285,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "requireversion()",
-      "id": "server_core_requireversion",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_requireversion"
     },
     {
       "label": "audit()",
@@ -10494,8 +10296,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "audit()",
-      "id": "server_core_audit",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_audit"
     },
     {
       "label": "objectTables",
@@ -10505,8 +10307,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "objecttables",
-      "id": "server_core_objecttables",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_objecttables"
     },
     {
       "label": "insertRow()",
@@ -10516,8 +10318,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "insertrow()",
-      "id": "server_core_insertrow",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_insertrow"
     },
     {
       "label": "deleteObject()",
@@ -10527,8 +10329,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "deleteobject()",
-      "id": "server_core_deleteobject",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_deleteobject"
     },
     {
       "label": "reindexNote()",
@@ -10538,8 +10340,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "reindexnote()",
-      "id": "server_core_reindexnote",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_reindexnote"
     },
     {
       "label": "listState()",
@@ -10549,8 +10351,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "liststate()",
-      "id": "server_core_liststate",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_liststate"
     },
     {
       "label": "saveTask()",
@@ -10560,8 +10362,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "savetask()",
-      "id": "server_core_savetask",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_savetask"
     },
     {
       "label": "saveEvent()",
@@ -10571,8 +10373,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "saveevent()",
-      "id": "server_core_saveevent",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_saveevent"
     },
     {
       "label": "deleteEvent()",
@@ -10582,8 +10384,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "deleteevent()",
-      "id": "server_core_deleteevent",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_deleteevent"
     },
     {
       "label": "saveNote()",
@@ -10593,8 +10395,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "savenote()",
-      "id": "server_core_savenote",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_savenote"
     },
     {
       "label": "createCapture()",
@@ -10604,8 +10406,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "createcapture()",
-      "id": "server_core_createcapture",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_createcapture"
     },
     {
       "label": "createFileCapture()",
@@ -10615,8 +10417,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "createfilecapture()",
-      "id": "server_core_createfilecapture",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_createfilecapture"
     },
     {
       "label": "updateCapture()",
@@ -10626,8 +10428,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "updatecapture()",
-      "id": "server_core_updatecapture",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_updatecapture"
     },
     {
       "label": "saveInterpretation()",
@@ -10637,8 +10439,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "saveinterpretation()",
-      "id": "server_core_saveinterpretation",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_saveinterpretation"
     },
     {
       "label": "applyCaptureInterpretation()",
@@ -10648,8 +10450,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "applycaptureinterpretation()",
-      "id": "server_core_applycaptureinterpretation",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_applycaptureinterpretation"
     },
     {
       "label": "listAuditEvents()",
@@ -10659,8 +10461,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "listauditevents()",
-      "id": "server_core_listauditevents",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_listauditevents"
     },
     {
       "label": "applyInverse()",
@@ -10670,8 +10472,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "applyinverse()",
-      "id": "server_core_applyinverse",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_applyinverse"
     },
     {
       "label": "undoAuditEvent()",
@@ -10681,8 +10483,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "undoauditevent()",
-      "id": "server_core_undoauditevent",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_undoauditevent"
     },
     {
       "label": "searchNotes()",
@@ -10692,8 +10494,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "searchnotes()",
-      "id": "server_core_searchnotes",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_searchnotes"
     },
     {
       "label": "noteVersions()",
@@ -10703,8 +10505,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "noteversions()",
-      "id": "server_core_noteversions",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_noteversions"
     },
     {
       "label": "restoreNoteVersion()",
@@ -10714,8 +10516,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "restorenoteversion()",
-      "id": "server_core_restorenoteversion",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_restorenoteversion"
     },
     {
       "label": "importMarkdown()",
@@ -10725,8 +10527,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "importmarkdown()",
-      "id": "server_core_importmarkdown",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_importmarkdown"
     },
     {
       "label": "exportMarkdown()",
@@ -10736,8 +10538,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "exportmarkdown()",
-      "id": "server_core_exportmarkdown",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_exportmarkdown"
     },
     {
       "label": "requestNoteOptimization()",
@@ -10747,8 +10549,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "requestnoteoptimization()",
-      "id": "server_core_requestnoteoptimization",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_requestnoteoptimization"
     },
     {
       "label": "noteOptimizations()",
@@ -10758,8 +10560,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "noteoptimizations()",
-      "id": "server_core_noteoptimizations",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_noteoptimizations"
     },
     {
       "label": "finishNoteOptimization()",
@@ -10769,8 +10571,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "finishnoteoptimization()",
-      "id": "server_core_finishnoteoptimization",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_finishnoteoptimization"
     },
     {
       "label": "failNoteOptimization()",
@@ -10780,8 +10582,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "failnoteoptimization()",
-      "id": "server_core_failnoteoptimization",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_failnoteoptimization"
     },
     {
       "label": "applyNoteOptimization()",
@@ -10791,8 +10593,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "applynoteoptimization()",
-      "id": "server_core_applynoteoptimization",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_applynoteoptimization"
     },
     {
       "label": "rejectNoteOptimization()",
@@ -10802,8 +10604,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "rejectnoteoptimization()",
-      "id": "server_core_rejectnoteoptimization",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_rejectnoteoptimization"
     },
     {
       "label": "searchAll()",
@@ -10813,8 +10615,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "searchall()",
-      "id": "server_core_searchall",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_searchall"
     },
     {
       "label": "saveProject()",
@@ -10824,8 +10626,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "saveproject()",
-      "id": "server_core_saveproject",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_saveproject"
     },
     {
       "label": "deleteProject()",
@@ -10835,8 +10637,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "deleteproject()",
-      "id": "server_core_deleteproject",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_deleteproject"
     },
     {
       "label": "saveTaskDependency()",
@@ -10846,8 +10648,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "savetaskdependency()",
-      "id": "server_core_savetaskdependency",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_savetaskdependency"
     },
     {
       "label": "removeTaskDependency()",
@@ -10857,8 +10659,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "removetaskdependency()",
-      "id": "server_core_removetaskdependency",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_removetaskdependency"
     },
     {
       "label": "dependenciesForTask()",
@@ -10868,8 +10670,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "dependenciesfortask()",
-      "id": "server_core_dependenciesfortask",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_dependenciesfortask"
     },
     {
       "label": "dependentsForTask()",
@@ -10879,8 +10681,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "dependentsfortask()",
-      "id": "server_core_dependentsfortask",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_dependentsfortask"
     },
     {
       "label": "noteLinks()",
@@ -10890,8 +10692,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "notelinks()",
-      "id": "server_core_notelinks",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_notelinks"
     },
     {
       "label": "reindexNoteLinks()",
@@ -10901,8 +10703,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "reindexnotelinks()",
-      "id": "server_core_reindexnotelinks",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_reindexnotelinks"
     },
     {
       "label": "linksForNote()",
@@ -10912,8 +10714,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "linksfornote()",
-      "id": "server_core_linksfornote",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_linksfornote"
     },
     {
       "label": "backlinksForNote()",
@@ -10923,8 +10725,8 @@
       "_origin": "ast",
       "community": 0,
       "norm_label": "backlinksfornote()",
-      "id": "server_core_backlinksfornote",
-      "community_name": "core.mjs"
+      "community_name": "core.mjs",
+      "id": "server_core_backlinksfornote"
     },
     {
       "label": "jobs.mjs",
@@ -10934,8 +10736,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "jobs.mjs",
-      "id": "server_jobs",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "server_jobs"
     },
     {
       "label": "now()",
@@ -10945,8 +10747,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "now()",
-      "id": "server_jobs_now",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "server_jobs_now"
     },
     {
       "label": "enqueueJob()",
@@ -10956,8 +10758,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "enqueuejob()",
-      "id": "server_jobs_enqueuejob",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "server_jobs_enqueuejob"
     },
     {
       "label": "addJobEvent()",
@@ -10967,8 +10769,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "addjobevent()",
-      "id": "server_jobs_addjobevent",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "server_jobs_addjobevent"
     },
     {
       "label": "claimJob()",
@@ -10978,8 +10780,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "claimjob()",
-      "id": "server_jobs_claimjob",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "server_jobs_claimjob"
     },
     {
       "label": "finishJob()",
@@ -10989,8 +10791,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "finishjob()",
-      "id": "server_jobs_finishjob",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "server_jobs_finishjob"
     },
     {
       "label": "failJob()",
@@ -11000,8 +10802,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "failjob()",
-      "id": "server_jobs_failjob",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "server_jobs_failjob"
     },
     {
       "label": "cancelJob()",
@@ -11011,8 +10813,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "canceljob()",
-      "id": "server_jobs_canceljob",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "server_jobs_canceljob"
     },
     {
       "label": "assertNotCancelled()",
@@ -11022,8 +10824,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "assertnotcancelled()",
-      "id": "server_jobs_assertnotcancelled",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "server_jobs_assertnotcancelled"
     },
     {
       "label": "retryJob()",
@@ -11033,8 +10835,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "retryjob()",
-      "id": "server_jobs_retryjob",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "server_jobs_retryjob"
     },
     {
       "label": "getJob()",
@@ -11044,8 +10846,8 @@
       "_origin": "ast",
       "community": 13,
       "norm_label": "getjob()",
-      "id": "server_jobs_getjob",
-      "community_name": "jobs.mjs"
+      "community_name": "jobs.mjs",
+      "id": "server_jobs_getjob"
     },
     {
       "label": "knowledge-graph.mjs",
@@ -11055,8 +10857,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "knowledge-graph.mjs",
-      "id": "server_knowledge_graph",
-      "community_name": "knowledge-graph.mjs"
+      "community_name": "knowledge-graph.mjs",
+      "id": "server_knowledge_graph"
     },
     {
       "label": "nodeId()",
@@ -11066,8 +10868,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "nodeid()",
-      "id": "server_knowledge_graph_nodeid",
-      "community_name": "knowledge-graph.mjs"
+      "community_name": "knowledge-graph.mjs",
+      "id": "server_knowledge_graph_nodeid"
     },
     {
       "label": "edgeId()",
@@ -11077,8 +10879,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "edgeid()",
-      "id": "server_knowledge_graph_edgeid",
-      "community_name": "knowledge-graph.mjs"
+      "community_name": "knowledge-graph.mjs",
+      "id": "server_knowledge_graph_edgeid"
     },
     {
       "label": "href",
@@ -11088,8 +10890,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "href",
-      "id": "server_knowledge_graph_href",
-      "community_name": "knowledge-graph.mjs"
+      "community_name": "knowledge-graph.mjs",
+      "id": "server_knowledge_graph_href"
     },
     {
       "label": "tableSpecs",
@@ -11099,8 +10901,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "tablespecs",
-      "id": "server_knowledge_graph_tablespecs",
-      "community_name": "knowledge-graph.mjs"
+      "community_name": "knowledge-graph.mjs",
+      "id": "server_knowledge_graph_tablespecs"
     },
     {
       "label": "clean()",
@@ -11110,8 +10912,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "clean()",
-      "id": "server_knowledge_graph_clean",
-      "community_name": "knowledge-graph.mjs"
+      "community_name": "knowledge-graph.mjs",
+      "id": "server_knowledge_graph_clean"
     },
     {
       "label": "syncKnowledgeGraph()",
@@ -11121,8 +10923,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "syncknowledgegraph()",
-      "id": "server_knowledge_graph_syncknowledgegraph",
-      "community_name": "knowledge-graph.mjs"
+      "community_name": "knowledge-graph.mjs",
+      "id": "server_knowledge_graph_syncknowledgegraph"
     },
     {
       "label": "viewNode()",
@@ -11132,8 +10934,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "viewnode()",
-      "id": "server_knowledge_graph_viewnode",
-      "community_name": "knowledge-graph.mjs"
+      "community_name": "knowledge-graph.mjs",
+      "id": "server_knowledge_graph_viewnode"
     },
     {
       "label": "queryKnowledgeGraph()",
@@ -11143,8 +10945,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "queryknowledgegraph()",
-      "id": "server_knowledge_graph_queryknowledgegraph",
-      "community_name": "knowledge-graph.mjs"
+      "community_name": "knowledge-graph.mjs",
+      "id": "server_knowledge_graph_queryknowledgegraph"
     },
     {
       "label": "knowledgePath()",
@@ -11154,8 +10956,206 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "knowledgepath()",
-      "id": "server_knowledge_graph_knowledgepath",
-      "community_name": "knowledge-graph.mjs"
+      "community_name": "knowledge-graph.mjs",
+      "id": "server_knowledge_graph_knowledgepath"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "app/api/v1/projects/[id]/blockers/route.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "route.ts",
+      "id": "app_api_v1_projects_id_blockers_route",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "app/api/v1/projects/[id]/blockers/route.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "post()",
+      "id": "app_api_v1_projects_id_blockers_route_post",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "app/api/v1/projects/[id]/milestones/route.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "route.ts",
+      "id": "app_api_v1_projects_id_milestones_route",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "app/api/v1/projects/[id]/milestones/route.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "post()",
+      "id": "app_api_v1_projects_id_milestones_route_post",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "app/api/v1/relationships/route.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "route.ts",
+      "id": "app_api_v1_relationships_route",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "app/api/v1/relationships/route.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "post()",
+      "id": "app_api_v1_relationships_route_post",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "DELETE()",
+      "file_type": "code",
+      "source_file": "app/api/v1/relationships/route.ts",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "delete()",
+      "id": "app_api_v1_relationships_route_delete",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "projects.mjs",
+      "file_type": "code",
+      "source_file": "server/projects.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "projects.mjs",
+      "id": "server_projects",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "now()",
+      "file_type": "code",
+      "source_file": "server/projects.mjs",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "now()",
+      "id": "server_projects_now",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "types",
+      "file_type": "code",
+      "source_file": "server/projects.mjs",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "types",
+      "id": "server_projects_types",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "actorInfo()",
+      "file_type": "code",
+      "source_file": "server/projects.mjs",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "actorinfo()",
+      "id": "server_projects_actorinfo",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "project()",
+      "file_type": "code",
+      "source_file": "server/projects.mjs",
+      "source_location": "L6",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "project()",
+      "id": "server_projects_project",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "audit()",
+      "file_type": "code",
+      "source_file": "server/projects.mjs",
+      "source_location": "L7",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "audit()",
+      "id": "server_projects_audit",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "linkProject()",
+      "file_type": "code",
+      "source_file": "server/projects.mjs",
+      "source_location": "L8",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "linkproject()",
+      "id": "server_projects_linkproject",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "unlinkProject()",
+      "file_type": "code",
+      "source_file": "server/projects.mjs",
+      "source_location": "L9",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "unlinkproject()",
+      "id": "server_projects_unlinkproject",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "saveMilestone()",
+      "file_type": "code",
+      "source_file": "server/projects.mjs",
+      "source_location": "L10",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "savemilestone()",
+      "id": "server_projects_savemilestone",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "saveBlocker()",
+      "file_type": "code",
+      "source_file": "server/projects.mjs",
+      "source_location": "L11",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "saveblocker()",
+      "id": "server_projects_saveblocker",
+      "community_name": "projects.mjs"
+    },
+    {
+      "label": "projectWorkspace()",
+      "file_type": "code",
+      "source_file": "server/projects.mjs",
+      "source_location": "L12",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "projectworkspace()",
+      "id": "server_projects_projectworkspace",
+      "community_name": "projects.mjs"
     },
     {
       "label": "backend.test.js",
@@ -16730,182 +16730,6 @@
       "confidence_score": 1.0,
       "source": "app_study_page_studypage",
       "target": "app_study_page_request"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/projects/[id]/blockers/route.ts",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_projects_id_blockers_route",
-      "target": "app_api_v1_projects_id_blockers_route_post"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/projects/[id]/blockers/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_projects_id_blockers_route",
-      "target": "server_projects"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/projects/[id]/blockers/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_projects_id_blockers_route",
-      "target": "server_projects_saveblocker"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/api/v1/projects/[id]/blockers/route.ts",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_api_v1_projects_id_blockers_route_post",
-      "target": "server_projects_saveblocker"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/projects/[id]/milestones/route.ts",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_projects_id_milestones_route",
-      "target": "app_api_v1_projects_id_milestones_route_post"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/projects/[id]/milestones/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_projects_id_milestones_route",
-      "target": "server_projects"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/projects/[id]/milestones/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_projects_id_milestones_route",
-      "target": "server_projects_savemilestone"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/api/v1/projects/[id]/milestones/route.ts",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_api_v1_projects_id_milestones_route_post",
-      "target": "server_projects_savemilestone"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/relationships/route.ts",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_relationships_route",
-      "target": "app_api_v1_relationships_route_delete"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/relationships/route.ts",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_relationships_route",
-      "target": "app_api_v1_relationships_route_post"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/relationships/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_relationships_route",
-      "target": "server_projects"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/relationships/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_relationships_route",
-      "target": "server_projects_linkproject"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/relationships/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_relationships_route",
-      "target": "server_projects_unlinkproject"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/api/v1/relationships/route.ts",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_api_v1_relationships_route_post",
-      "target": "server_projects_linkproject"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/api/v1/relationships/route.ts",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_api_v1_relationships_route_delete",
-      "target": "server_projects_unlinkproject"
     },
     {
       "relation": "contains",
@@ -30082,332 +29906,6 @@
       "target": "server_objects_getasset"
     },
     {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L2",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects",
-      "target": "server_db"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L2",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects",
-      "target": "server_db_getdatabase"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects",
-      "target": "server_projects_actorinfo"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L7",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects",
-      "target": "server_projects_audit"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L8",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects",
-      "target": "server_projects_linkproject"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects",
-      "target": "server_projects_now"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L6",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects",
-      "target": "server_projects_project"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L12",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects",
-      "target": "server_projects_projectworkspace"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects",
-      "target": "server_projects_saveblocker"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L10",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects",
-      "target": "server_projects_savemilestone"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects",
-      "target": "server_projects_types"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L9",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects",
-      "target": "server_projects_unlinkproject"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L7",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_audit",
-      "target": "server_projects_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L8",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_linkproject",
-      "target": "server_projects_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_saveblocker",
-      "target": "server_projects_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L10",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_savemilestone",
-      "target": "server_projects_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L7",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_audit",
-      "target": "server_projects_actorinfo"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L8",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_linkproject",
-      "target": "server_projects_actorinfo"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L9",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_unlinkproject",
-      "target": "server_projects_actorinfo"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L8",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_linkproject",
-      "target": "server_projects_project"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L12",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_projectworkspace",
-      "target": "server_projects_project"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_saveblocker",
-      "target": "server_projects_project"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L10",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_savemilestone",
-      "target": "server_projects_project"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L9",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_unlinkproject",
-      "target": "server_projects_project"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L8",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_linkproject",
-      "target": "server_projects_audit"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_saveblocker",
-      "target": "server_projects_audit"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L10",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_savemilestone",
-      "target": "server_projects_audit"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L9",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects_unlinkproject",
-      "target": "server_projects_audit"
-    },
-    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "app/api/v1/study/assignments/route.ts",
@@ -37620,6 +37118,508 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/projects/[id]/blockers/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_projects_id_blockers_route",
+      "target": "app_api_v1_projects_id_blockers_route_post"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/projects/[id]/blockers/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_projects_id_blockers_route",
+      "target": "server_projects"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/projects/[id]/blockers/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_projects_id_blockers_route",
+      "target": "server_projects_saveblocker"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/projects/[id]/blockers/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_projects_id_blockers_route_post",
+      "target": "server_projects_saveblocker"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/projects/[id]/milestones/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_projects_id_milestones_route",
+      "target": "app_api_v1_projects_id_milestones_route_post"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/projects/[id]/milestones/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_projects_id_milestones_route",
+      "target": "server_projects"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/projects/[id]/milestones/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_projects_id_milestones_route",
+      "target": "server_projects_savemilestone"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/projects/[id]/milestones/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_projects_id_milestones_route_post",
+      "target": "server_projects_savemilestone"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/relationships/route.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_relationships_route",
+      "target": "app_api_v1_relationships_route_delete"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/relationships/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_relationships_route",
+      "target": "app_api_v1_relationships_route_post"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/relationships/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_relationships_route",
+      "target": "server_projects"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/relationships/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_relationships_route",
+      "target": "server_projects_linkproject"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/relationships/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_relationships_route",
+      "target": "server_projects_unlinkproject"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/relationships/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_relationships_route_post",
+      "target": "server_projects_linkproject"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/relationships/route.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_relationships_route_delete",
+      "target": "server_projects_unlinkproject"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects",
+      "target": "server_projects_actorinfo"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects",
+      "target": "server_projects_audit"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects",
+      "target": "server_projects_linkproject"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects",
+      "target": "server_projects_now"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects",
+      "target": "server_projects_project"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects",
+      "target": "server_projects_projectworkspace"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects",
+      "target": "server_projects_saveblocker"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects",
+      "target": "server_projects_savemilestone"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects",
+      "target": "server_projects_types"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects",
+      "target": "server_projects_unlinkproject"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_audit",
+      "target": "server_projects_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_linkproject",
+      "target": "server_projects_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_saveblocker",
+      "target": "server_projects_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_savemilestone",
+      "target": "server_projects_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_audit",
+      "target": "server_projects_actorinfo"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_linkproject",
+      "target": "server_projects_actorinfo"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_saveblocker",
+      "target": "server_projects_actorinfo"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_savemilestone",
+      "target": "server_projects_actorinfo"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_unlinkproject",
+      "target": "server_projects_actorinfo"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_linkproject",
+      "target": "server_projects_project"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_projectworkspace",
+      "target": "server_projects_project"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_saveblocker",
+      "target": "server_projects_project"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_savemilestone",
+      "target": "server_projects_project"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_unlinkproject",
+      "target": "server_projects_project"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_linkproject",
+      "target": "server_projects_audit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_saveblocker",
+      "target": "server_projects_audit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_savemilestone",
+      "target": "server_projects_audit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects_unlinkproject",
+      "target": "server_projects_audit"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "test/backend.test.js",
       "source_location": "L2",
       "weight": 1.0,
@@ -37685,5 +37685,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "f337964e3f7eff00827b36eae336ce77908dfdcf"
+  "built_at_commit": "54b15bcd2c096f7c3bb81bb1d09e0bb58509364b"
 }
