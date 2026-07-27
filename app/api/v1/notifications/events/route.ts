@@ -1,0 +1,5 @@
+import {listNotifications} from "../../../../../server/modules.mjs";
+import {listDeliveries} from "../../../../../server/push.mjs";
+import {handle,requireUser} from "../../../../../server/http.mjs";
+export const runtime="nodejs",dynamic="force-dynamic";
+export function GET(request:Request){try{requireUser(request);const encoder=new TextEncoder();let timer:ReturnType<typeof setInterval>,heartbeat:ReturnType<typeof setInterval>,closed=false,last="";const stream=new ReadableStream({start(controller){const send=()=>{if(closed)return;const data=JSON.stringify({notifications:listNotifications(),deliveries:listDeliveries()});if(data!==last){last=data;controller.enqueue(encoder.encode(`id: ${Date.now()}\nevent: snapshot\ndata: ${data}\n\n`))}};controller.enqueue(encoder.encode("retry: 3000\n\n"));send();timer=setInterval(send,1000);heartbeat=setInterval(()=>!closed&&controller.enqueue(encoder.encode(": heartbeat\n\n")),15000)},cancel(){closed=true;clearInterval(timer);clearInterval(heartbeat)}});return new Response(stream,{headers:{"Content-Type":"text/event-stream","Cache-Control":"no-store","Connection":"keep-alive"}})}catch(error){return handle(error)}}

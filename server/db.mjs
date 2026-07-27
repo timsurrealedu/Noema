@@ -102,6 +102,7 @@ export function openDatabase(path){
   ensureColumn(db,"notes","draft","INTEGER NOT NULL DEFAULT 0");
   ensureColumn(db,"notifications","related_type","TEXT");
   ensureColumn(db,"notifications","related_id","TEXT");
+  ensureColumn(db,"automation_runs","job_id","TEXT REFERENCES jobs(id) ON DELETE SET NULL");
   db.exec("CREATE INDEX IF NOT EXISTS tasks_reminders ON tasks(reminder_at,reminder_sent_at); CREATE INDEX IF NOT EXISTS events_reminders ON events(reminder_at,reminder_sent_at);");
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(1,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(2,?)").run(new Date().toISOString());
@@ -129,6 +130,7 @@ export function openDatabase(path){
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(23,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(24,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(25,?)").run(new Date().toISOString());
+  db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(26,?)").run(new Date().toISOString());
   return db;
 }
 

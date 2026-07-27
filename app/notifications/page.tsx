@@ -8,7 +8,7 @@ const href=(item:Notice)=>item.related_type==="task"?`/tasks?open=${item.related
 export default function NotificationsPage(){
   const [notices,setNotices]=useState<Notice[]>([]),[deliveries,setDeliveries]=useState<Delivery[]>([]),[filter,setFilter]=useState("all"),[error,setError]=useState("");
   const load=()=>Promise.all([fetch("/api/v1/notifications").then(r=>r.json()),fetch("/api/v1/notification-deliveries").then(r=>r.json())]).then(([a,b])=>{setNotices(a.notifications||[]);setDeliveries(b.deliveries||[])}).catch(reason=>setError(reason.message));
-  useEffect(()=>{void load()},[]);
+  useEffect(()=>{void load();const source=new EventSource("/api/v1/notifications/events");source.addEventListener("snapshot",event=>{const data=JSON.parse((event as MessageEvent).data);setNotices(data.notifications);setDeliveries(data.deliveries)});return()=>source.close()},[]);
   async function allRead(){await fetch("/api/v1/notifications/read-all",{method:"POST"});setNotices(current=>current.map(item=>({...item,read_at:item.read_at||new Date().toISOString()})))}
   async function deliveryAction(id:string,action:"retry"|"resolve"){const response=await fetch(`/api/v1/notification-deliveries/${id}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({action})});if(response.ok)void load();else setError((await response.json()).error?.message||"Action failed")}
   const shown=notices.filter(item=>filter==="all"||filter==="unread"&&!item.read_at||item.kind===filter),groups=new Map<string,Notice[]>();for(const item of shown){const day=new Date(item.created_at).toDateString();groups.set(day,[...(groups.get(day)||[]),item])}
