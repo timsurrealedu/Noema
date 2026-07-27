@@ -9,8 +9,6 @@
       "app_api_v1_audit_id_undo_route_post",
       "app_api_v1_audit_route",
       "app_api_v1_audit_route_get",
-      "app_api_v1_auth_logout_route",
-      "app_api_v1_auth_logout_route_post",
       "app_api_v1_captures_file_route",
       "app_api_v1_captures_file_route_post",
       "app_api_v1_captures_id_apply_route",
@@ -25,10 +23,6 @@
       "app_api_v1_events_route_post",
       "app_api_v1_jobs_id_approve_route",
       "app_api_v1_jobs_id_approve_route_post",
-      "app_api_v1_jobs_id_cancel_route",
-      "app_api_v1_jobs_id_cancel_route_post",
-      "app_api_v1_jobs_id_route",
-      "app_api_v1_jobs_id_route_get",
       "app_api_v1_notes_id_backlinks_route",
       "app_api_v1_notes_id_backlinks_route_get",
       "app_api_v1_notes_id_export_route",
@@ -57,10 +51,6 @@
       "app_api_v1_projects_route",
       "app_api_v1_projects_route_get",
       "app_api_v1_projects_route_post",
-      "app_api_v1_skills_name_run_route",
-      "app_api_v1_skills_name_run_route_post",
-      "app_api_v1_skills_route",
-      "app_api_v1_skills_route_get",
       "app_api_v1_state_route",
       "app_api_v1_state_route_get",
       "app_api_v1_tasks_id_dependencies_route",
@@ -128,15 +118,11 @@
       "server_core_updatecapture",
       "server_http",
       "server_http_body",
-      "server_http_cookie",
       "server_http_errorresponse",
       "server_http_handle",
       "server_http_idempotent",
       "server_http_json",
-      "server_http_requiresameorigin",
-      "server_http_requireuser",
-      "server_http_requireworkspace",
-      "server_skills_listskills"
+      "server_http_requireworkspace"
     ],
     "1": [
       "app_api_v1_automations_id_events_route",
@@ -350,6 +336,57 @@
       "server_search_types"
     ],
     "4": [
+      "app_api_v1_auth_login_route",
+      "app_api_v1_auth_login_route_post",
+      "app_api_v1_auth_logout_route",
+      "app_api_v1_auth_logout_route_post",
+      "app_api_v1_auth_recovery_route",
+      "app_api_v1_auth_recovery_route_post",
+      "app_api_v1_auth_sessions_id_route",
+      "app_api_v1_auth_sessions_id_route_delete",
+      "app_api_v1_auth_sessions_route",
+      "app_api_v1_auth_sessions_route_get",
+      "app_api_v1_auth_totp_route",
+      "app_api_v1_auth_totp_route_delete",
+      "app_api_v1_auth_totp_route_get",
+      "app_api_v1_auth_totp_route_post",
+      "app_api_v1_settings_password_route",
+      "app_api_v1_settings_password_route_post",
+      "server_auth",
+      "server_auth_auditsecurity",
+      "server_auth_authenticate",
+      "server_auth_base32",
+      "server_auth_begintotpenrollment",
+      "server_auth_changepassword",
+      "server_auth_clearloginratelimit",
+      "server_auth_confirmtotpenrollment",
+      "server_auth_consumerecoverycode",
+      "server_auth_decrypt",
+      "server_auth_disabletotp",
+      "server_auth_encodebase32",
+      "server_auth_encrypt",
+      "server_auth_encryptionkey",
+      "server_auth_enforceloginratelimit",
+      "server_auth_ensureowner",
+      "server_auth_hashpassword",
+      "server_auth_hashtoken",
+      "server_auth_listsessions",
+      "server_auth_login",
+      "server_auth_mfastatus",
+      "server_auth_now",
+      "server_auth_regeneraterecoverycodes",
+      "server_auth_revokesession",
+      "server_auth_revokesessionbyid",
+      "server_auth_scrypt",
+      "server_auth_totp",
+      "server_auth_verifypassword",
+      "server_auth_verifytotp",
+      "server_http_cookie",
+      "server_http_requiremfa",
+      "server_http_requiresameorigin",
+      "server_http_requireuser"
+    ],
+    "5": [
       "app_api_v1_auth_invite_route",
       "app_api_v1_auth_invite_route_post",
       "app_api_v1_workspaces_id_accept_route",
@@ -397,52 +434,6 @@
       "server_collaboration_updatepresence",
       "server_collaboration_workspaceaccess",
       "server_collaboration_workspacedetail"
-    ],
-    "5": [
-      "app_api_v1_auth_login_route",
-      "app_api_v1_auth_login_route_post",
-      "app_api_v1_auth_recovery_route",
-      "app_api_v1_auth_recovery_route_post",
-      "app_api_v1_auth_sessions_id_route",
-      "app_api_v1_auth_sessions_id_route_delete",
-      "app_api_v1_auth_sessions_route",
-      "app_api_v1_auth_sessions_route_get",
-      "app_api_v1_auth_totp_route",
-      "app_api_v1_auth_totp_route_delete",
-      "app_api_v1_auth_totp_route_get",
-      "app_api_v1_auth_totp_route_post",
-      "app_api_v1_settings_password_route",
-      "app_api_v1_settings_password_route_post",
-      "server_auth",
-      "server_auth_auditsecurity",
-      "server_auth_authenticate",
-      "server_auth_base32",
-      "server_auth_begintotpenrollment",
-      "server_auth_changepassword",
-      "server_auth_clearloginratelimit",
-      "server_auth_confirmtotpenrollment",
-      "server_auth_consumerecoverycode",
-      "server_auth_decrypt",
-      "server_auth_disabletotp",
-      "server_auth_encodebase32",
-      "server_auth_encrypt",
-      "server_auth_encryptionkey",
-      "server_auth_enforceloginratelimit",
-      "server_auth_ensureowner",
-      "server_auth_hashpassword",
-      "server_auth_hashtoken",
-      "server_auth_listsessions",
-      "server_auth_login",
-      "server_auth_mfastatus",
-      "server_auth_now",
-      "server_auth_regeneraterecoverycodes",
-      "server_auth_revokesession",
-      "server_auth_revokesessionbyid",
-      "server_auth_scrypt",
-      "server_auth_totp",
-      "server_auth_verifypassword",
-      "server_auth_verifytotp",
-      "server_http_requiremfa"
     ],
     "6": [
       "axe_core_playwright",
@@ -689,6 +680,32 @@
       "server_google_calendar_tokenfor"
     ],
     "13": [
+      "app_api_v1_captures_id_interpret_route",
+      "app_api_v1_captures_id_interpret_route_post",
+      "app_api_v1_jobs_id_cancel_route",
+      "app_api_v1_jobs_id_cancel_route_post",
+      "app_api_v1_jobs_id_events_route",
+      "app_api_v1_jobs_id_events_route_get",
+      "app_api_v1_jobs_id_events_route_terminal",
+      "app_api_v1_jobs_id_retry_route",
+      "app_api_v1_jobs_id_retry_route_post",
+      "app_api_v1_jobs_id_route",
+      "app_api_v1_jobs_id_route_get",
+      "app_api_v1_skills_name_run_route",
+      "app_api_v1_skills_name_run_route_post",
+      "server_jobs",
+      "server_jobs_addjobevent",
+      "server_jobs_assertnotcancelled",
+      "server_jobs_canceljob",
+      "server_jobs_claimjob",
+      "server_jobs_enqueuejob",
+      "server_jobs_failjob",
+      "server_jobs_finishjob",
+      "server_jobs_getjob",
+      "server_jobs_now",
+      "server_jobs_retryjob"
+    ],
+    "14": [
       "app_api_v1_projects_id_blockers_route",
       "app_api_v1_projects_id_blockers_route_post",
       "app_api_v1_projects_id_milestones_route",
@@ -713,7 +730,7 @@
       "server_projects_types",
       "server_projects_unlinkproject"
     ],
-    "14": [
+    "15": [
       "app_api_v1_dashboards_id_route",
       "app_api_v1_dashboards_id_route_delete",
       "app_api_v1_dashboards_id_route_get",
@@ -737,7 +754,7 @@
       "server_dashboards_widgetdata",
       "server_dashboards_widgettypes"
     ],
-    "15": [
+    "16": [
       "app_api_v1_calendar_sync_conflicts_id_route",
       "app_api_v1_calendar_sync_conflicts_id_route_post",
       "app_api_v1_calendar_sync_route",
@@ -760,7 +777,7 @@
       "server_calendar_sync_resolvecalendarconflict",
       "server_calendar_sync_snapshot"
     ],
-    "16": [
+    "17": [
       "app_automations_automationbuilder",
       "app_automations_automationbuilder_automationbuilder",
       "app_automations_automationbuilder_condition",
@@ -782,27 +799,28 @@
       "app_automations_page_stepdraft",
       "app_automations_page_when"
     ],
-    "17": [
-      "app_api_v1_captures_id_interpret_route",
-      "app_api_v1_captures_id_interpret_route_post",
-      "app_api_v1_jobs_id_events_route",
-      "app_api_v1_jobs_id_events_route_get",
-      "app_api_v1_jobs_id_events_route_terminal",
-      "app_api_v1_jobs_id_retry_route",
-      "app_api_v1_jobs_id_retry_route_post",
-      "server_jobs",
-      "server_jobs_addjobevent",
-      "server_jobs_assertnotcancelled",
-      "server_jobs_canceljob",
-      "server_jobs_claimjob",
-      "server_jobs_enqueuejob",
-      "server_jobs_failjob",
-      "server_jobs_finishjob",
-      "server_jobs_getjob",
-      "server_jobs_now",
-      "server_jobs_retryjob"
-    ],
     "18": [
+      "app_api_v1_skills_route",
+      "app_api_v1_skills_route_get",
+      "app_api_v1_tutor_messages_id_insert_route",
+      "app_api_v1_tutor_messages_id_insert_route_post",
+      "app_api_v1_tutor_route",
+      "app_api_v1_tutor_route_get",
+      "app_api_v1_tutor_route_post",
+      "server_skills",
+      "server_skills_buildskillprompt",
+      "server_skills_definitions",
+      "server_skills_getskill",
+      "server_skills_inserttutormessage",
+      "server_skills_listskills",
+      "server_skills_loadtutorsession",
+      "server_skills_runtutor",
+      "server_skills_skillschema",
+      "server_skills_tutormessages",
+      "server_skills_tutorschema",
+      "server_skills_workloadforskill"
+    ],
+    "19": [
       "app_api_v1_approvals_id_approve_route",
       "app_api_v1_approvals_id_approve_route_post",
       "app_api_v1_approvals_route",
@@ -821,7 +839,7 @@
       "server_approvals_now",
       "server_approvals_view"
     ],
-    "19": [
+    "20": [
       "app_api_v1_assets_id_annotations_annotationid_route",
       "app_api_v1_assets_id_annotations_annotationid_route_delete",
       "app_api_v1_assets_id_annotations_annotationid_route_patch",
@@ -839,24 +857,6 @@
       "server_annotations_parse",
       "server_annotations_saveannotation",
       "server_annotations_target"
-    ],
-    "20": [
-      "app_api_v1_tutor_messages_id_insert_route",
-      "app_api_v1_tutor_messages_id_insert_route_post",
-      "app_api_v1_tutor_route",
-      "app_api_v1_tutor_route_get",
-      "app_api_v1_tutor_route_post",
-      "server_skills",
-      "server_skills_buildskillprompt",
-      "server_skills_definitions",
-      "server_skills_getskill",
-      "server_skills_inserttutormessage",
-      "server_skills_loadtutorsession",
-      "server_skills_runtutor",
-      "server_skills_skillschema",
-      "server_skills_tutormessages",
-      "server_skills_tutorschema",
-      "server_skills_workloadforskill"
     ],
     "21": [
       "app_api_v1_knowledge_graph_path_route",
@@ -1139,12 +1139,12 @@
     ]
   },
   "cohesion": {
-    "0": 0.0644880174291939,
+    "0": 0.07248340333288172,
     "1": 0.05083986562150056,
     "2": 0.06531986531986532,
     "3": 0.09023569023569024,
-    "4": 0.11378353376503238,
-    "5": 0.11945031712473574,
+    "4": 0.1096938775510204,
+    "5": 0.11378353376503238,
     "6": 0.045454545454545456,
     "7": 0.07439024390243902,
     "8": 0.0766488413547237,
@@ -1152,14 +1152,14 @@
     "10": 0.16502463054187191,
     "11": 0.07692307692307693,
     "12": 0.19333333333333333,
-    "13": 0.1857707509881423,
-    "14": 0.18181818181818182,
-    "15": 0.21904761904761905,
-    "16": 0.14210526315789473,
-    "17": 0.24183006535947713,
-    "18": 0.25,
-    "19": 0.2426470588235294,
-    "20": 0.21666666666666667,
+    "13": 0.17753623188405798,
+    "14": 0.1857707509881423,
+    "15": 0.18181818181818182,
+    "16": 0.21904761904761905,
+    "17": 0.14210526315789473,
+    "18": 0.18128654970760233,
+    "19": 0.25,
+    "20": 0.2426470588235294,
     "21": 0.26373626373626374,
     "22": 0.15384615384615385,
     "23": 0.28205128205128205,
@@ -1202,12 +1202,12 @@
     {
       "id": "server_http_handle",
       "label": "handle()",
-      "degree": 83
+      "degree": 73
     },
     {
       "id": "server_http_json",
       "label": "json()",
-      "degree": 82
+      "degree": 72
     },
     {
       "id": "server_http_requireworkspace",
@@ -1217,12 +1217,7 @@
     {
       "id": "server_http_body",
       "label": "body()",
-      "degree": 31
-    },
-    {
-      "id": "server_http_idempotent",
-      "label": "idempotent()",
-      "degree": 21
+      "degree": 29
     },
     {
       "id": "server_core_findowned",
@@ -1235,8 +1230,8 @@
       "degree": 20
     },
     {
-      "id": "server_db_getdatabase",
-      "label": "getDatabase()",
+      "id": "server_modules_now",
+      "label": "now()",
       "degree": 20
     },
     {
@@ -1245,9 +1240,14 @@
       "degree": 20
     },
     {
-      "id": "server_modules_now",
-      "label": "now()",
-      "degree": 20
+      "id": "server_http_idempotent",
+      "label": "idempotent()",
+      "degree": 19
+    },
+    {
+      "id": "server_db_getdatabase",
+      "label": "getDatabase()",
+      "degree": 19
     }
   ],
   "surprises": [
@@ -1255,7 +1255,7 @@
       "source": "POST()",
       "target": "handle()",
       "source_files": [
-        "app/api/v1/captures/[id]/interpret/route.ts",
+        "app/api/v1/auth/logout/route.ts",
         "server/http.mjs"
       ],
       "confidence": "EXTRACTED",
@@ -1266,18 +1266,7 @@
       "source": "POST()",
       "target": "json()",
       "source_files": [
-        "app/api/v1/captures/[id]/interpret/route.ts",
-        "server/http.mjs"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "calls",
-      "why": "connects across different repos/directories; bridges separate communities"
-    },
-    {
-      "source": "POST()",
-      "target": "requireUser()",
-      "source_files": [
-        "app/api/v1/captures/[id]/interpret/route.ts",
+        "app/api/v1/auth/logout/route.ts",
         "server/http.mjs"
       ],
       "confidence": "EXTRACTED",
@@ -1286,21 +1275,32 @@
     },
     {
       "source": "GET()",
-      "target": "getJob()",
+      "target": "handle()",
       "source_files": [
-        "app/api/v1/jobs/[id]/route.ts",
-        "server/jobs.mjs"
+        "app/api/v1/skills/route.ts",
+        "server/http.mjs"
       ],
       "confidence": "EXTRACTED",
       "relation": "calls",
       "why": "connects across different repos/directories; bridges separate communities"
     },
     {
-      "source": "POST()",
-      "target": "revokeSession()",
+      "source": "GET()",
+      "target": "json()",
       "source_files": [
-        "app/api/v1/auth/logout/route.ts",
-        "server/auth.mjs"
+        "app/api/v1/skills/route.ts",
+        "server/http.mjs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "GET()",
+      "target": "requireUser()",
+      "source_files": [
+        "app/api/v1/skills/route.ts",
+        "server/http.mjs"
       ],
       "confidence": "EXTRACTED",
       "relation": "calls",
@@ -1310,18 +1310,18 @@
   "questions": [
     {
       "type": "bridge_node",
-      "question": "Why does `getDatabase()` connect `db.mjs` to `handle`, `modules.mjs`, `plugins.mjs`, `collaboration.mjs`, `auth.mjs`, `repositories.mjs`, `google-calendar.mjs`, `projects.mjs`, `dashboards.mjs`, `approvals.mjs`, `annotations.mjs`, `skills.mjs`, `knowledge-graph.mjs`, `recommendations.mjs`?",
-      "why": "High betweenness centrality (0.108) - this node is a cross-community bridge."
+      "question": "Why does `getDatabase()` connect `db.mjs` to `core.mjs`, `modules.mjs`, `plugins.mjs`, `auth.mjs`, `collaboration.mjs`, `repositories.mjs`, `google-calendar.mjs`, `projects.mjs`, `dashboards.mjs`, `skills.mjs`, `approvals.mjs`, `annotations.mjs`, `recommendations.mjs`?",
+      "why": "High betweenness centrality (0.124) - this node is a cross-community bridge."
     },
     {
       "type": "bridge_node",
-      "question": "Why does `handle()` connect `handle` to `jobs.mjs`, `auth.mjs`?",
-      "why": "High betweenness centrality (0.026) - this node is a cross-community bridge."
+      "question": "Why does `loadConfig()` connect `plugins.mjs` to `repositories.mjs`, `auth.mjs`?",
+      "why": "High betweenness centrality (0.022) - this node is a cross-community bridge."
     },
     {
       "type": "bridge_node",
-      "question": "Why does `json()` connect `handle` to `jobs.mjs`, `auth.mjs`?",
-      "why": "High betweenness centrality (0.025) - this node is a cross-community bridge."
+      "question": "Why does `handle()` connect `core.mjs` to `skills.mjs`, `auth.mjs`?",
+      "why": "High betweenness centrality (0.016) - this node is a cross-community bridge."
     },
     {
       "type": "isolated_nodes",
@@ -1330,8 +1330,8 @@
     },
     {
       "type": "low_cohesion",
-      "question": "Should `handle` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.0644880174291939 - nodes in this community are weakly interconnected."
+      "question": "Should `core.mjs` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.07248340333288172 - nodes in this community are weakly interconnected."
     },
     {
       "type": "low_cohesion",
