@@ -6241,248 +6241,6 @@
       "id": "app_api_v1_knowledge_graph_route_get"
     },
     {
-      "label": "route.ts",
-      "file_type": "code",
-      "source_file": "app/api/v1/dashboards/[id]/route.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "route.ts",
-      "community_name": "dashboards.mjs",
-      "id": "app_api_v1_dashboards_id_route"
-    },
-    {
-      "label": "GET()",
-      "file_type": "code",
-      "source_file": "app/api/v1/dashboards/[id]/route.ts",
-      "source_location": "L4",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "get()",
-      "community_name": "dashboards.mjs",
-      "id": "app_api_v1_dashboards_id_route_get"
-    },
-    {
-      "label": "POST()",
-      "file_type": "code",
-      "source_file": "app/api/v1/dashboards/[id]/route.ts",
-      "source_location": "L5",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "post()",
-      "community_name": "dashboards.mjs",
-      "id": "app_api_v1_dashboards_id_route_post"
-    },
-    {
-      "label": "DELETE()",
-      "file_type": "code",
-      "source_file": "app/api/v1/dashboards/[id]/route.ts",
-      "source_location": "L6",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "delete()",
-      "community_name": "dashboards.mjs",
-      "id": "app_api_v1_dashboards_id_route_delete"
-    },
-    {
-      "label": "route.ts",
-      "file_type": "code",
-      "source_file": "app/api/v1/dashboards/reorder/route.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "route.ts",
-      "community_name": "dashboards.mjs",
-      "id": "app_api_v1_dashboards_reorder_route"
-    },
-    {
-      "label": "POST()",
-      "file_type": "code",
-      "source_file": "app/api/v1/dashboards/reorder/route.ts",
-      "source_location": "L4",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "post()",
-      "community_name": "dashboards.mjs",
-      "id": "app_api_v1_dashboards_reorder_route_post"
-    },
-    {
-      "label": "route.ts",
-      "file_type": "code",
-      "source_file": "app/api/v1/dashboards/route.ts",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "route.ts",
-      "community_name": "dashboards.mjs",
-      "id": "app_api_v1_dashboards_route"
-    },
-    {
-      "label": "GET()",
-      "file_type": "code",
-      "source_file": "app/api/v1/dashboards/route.ts",
-      "source_location": "L4",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "get()",
-      "community_name": "dashboards.mjs",
-      "id": "app_api_v1_dashboards_route_get"
-    },
-    {
-      "label": "POST()",
-      "file_type": "code",
-      "source_file": "app/api/v1/dashboards/route.ts",
-      "source_location": "L5",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "post()",
-      "community_name": "dashboards.mjs",
-      "id": "app_api_v1_dashboards_route_post"
-    },
-    {
-      "label": "dashboards.mjs",
-      "file_type": "code",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "dashboards.mjs",
-      "community_name": "dashboards.mjs",
-      "id": "server_dashboards"
-    },
-    {
-      "label": "widgetTypes",
-      "file_type": "code",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L4",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "widgettypes",
-      "community_name": "dashboards.mjs",
-      "id": "server_dashboards_widgettypes"
-    },
-    {
-      "label": "text()",
-      "file_type": "code",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L5",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "text()",
-      "community_name": "dashboards.mjs",
-      "id": "server_dashboards_text"
-    },
-    {
-      "label": "widget()",
-      "file_type": "code",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L6",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "widget()",
-      "community_name": "dashboards.mjs",
-      "id": "server_dashboards_widget"
-    },
-    {
-      "label": "layout()",
-      "file_type": "code",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L7",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "layout()",
-      "community_name": "dashboards.mjs",
-      "id": "server_dashboards_layout"
-    },
-    {
-      "label": "rowView()",
-      "file_type": "code",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L8",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "rowview()",
-      "community_name": "dashboards.mjs",
-      "id": "server_dashboards_rowview"
-    },
-    {
-      "label": "saveDashboard()",
-      "file_type": "code",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L10",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "savedashboard()",
-      "community_name": "dashboards.mjs",
-      "id": "server_dashboards_savedashboard"
-    },
-    {
-      "label": "listDashboards()",
-      "file_type": "code",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L11",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "listdashboards()",
-      "community_name": "dashboards.mjs",
-      "id": "server_dashboards_listdashboards"
-    },
-    {
-      "label": "duplicateDashboard()",
-      "file_type": "code",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L12",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "duplicatedashboard()",
-      "community_name": "dashboards.mjs",
-      "id": "server_dashboards_duplicatedashboard"
-    },
-    {
-      "label": "deleteDashboard()",
-      "file_type": "code",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L13",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "deletedashboard()",
-      "community_name": "dashboards.mjs",
-      "id": "server_dashboards_deletedashboard"
-    },
-    {
-      "label": "reorderDashboards()",
-      "file_type": "code",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L14",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "reorderdashboards()",
-      "community_name": "dashboards.mjs",
-      "id": "server_dashboards_reorderdashboards"
-    },
-    {
-      "label": "widgetData()",
-      "file_type": "code",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L16",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "widgetdata()",
-      "community_name": "dashboards.mjs",
-      "id": "server_dashboards_widgetdata"
-    },
-    {
-      "label": "dashboardView()",
-      "file_type": "code",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L19",
-      "_origin": "ast",
-      "community": 14,
-      "norm_label": "dashboardview()",
-      "community_name": "dashboards.mjs",
-      "id": "server_dashboards_dashboardview"
-    },
-    {
       "label": "page.tsx",
       "file_type": "code",
       "source_file": "app/dashboards/page.tsx",
@@ -9211,270 +8969,6 @@
       "id": "app_collaboration_page_collaborationpage"
     },
     {
-      "label": "collaboration.mjs",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "collaboration.mjs",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration"
-    },
-    {
-      "label": "roles",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L5",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "roles",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_roles"
-    },
-    {
-      "label": "now()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L5",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "now()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_now"
-    },
-    {
-      "label": "hash()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L5",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "hash()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_hash"
-    },
-    {
-      "label": "fail()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L5",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "fail()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_fail"
-    },
-    {
-      "label": "clean()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L6",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "clean()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_clean"
-    },
-    {
-      "label": "audit()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L7",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "audit()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_audit"
-    },
-    {
-      "label": "ensureDefaultWorkspace()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L8",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "ensuredefaultworkspace()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_ensuredefaultworkspace"
-    },
-    {
-      "label": "workspaceAccess()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L9",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "workspaceaccess()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_workspaceaccess"
-    },
-    {
-      "label": "listWorkspaces()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L10",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "listworkspaces()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_listworkspaces"
-    },
-    {
-      "label": "createWorkspace()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L11",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "createworkspace()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_createworkspace"
-    },
-    {
-      "label": "workspaceDetail()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L12",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "workspacedetail()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_workspacedetail"
-    },
-    {
-      "label": "createInvitation()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L13",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "createinvitation()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_createinvitation"
-    },
-    {
-      "label": "invitationForToken()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L14",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "invitationfortoken()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_invitationfortoken"
-    },
-    {
-      "label": "acceptInvitation()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L15",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "acceptinvitation()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_acceptinvitation"
-    },
-    {
-      "label": "registerWithInvitation()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L16",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "registerwithinvitation()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_registerwithinvitation"
-    },
-    {
-      "label": "revokeInvitation()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L17",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "revokeinvitation()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_revokeinvitation"
-    },
-    {
-      "label": "changeMember()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L18",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "changemember()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_changemember"
-    },
-    {
-      "label": "saveComment()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L19",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "savecomment()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_savecomment"
-    },
-    {
-      "label": "listComments()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L20",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "listcomments()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_listcomments"
-    },
-    {
-      "label": "updatePresence()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L21",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "updatepresence()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_updatepresence"
-    },
-    {
-      "label": "listPresence()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L22",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "listpresence()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_listpresence"
-    },
-    {
-      "label": "recordConflict()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L23",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "recordconflict()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_recordconflict"
-    },
-    {
-      "label": "listConflicts()",
-      "file_type": "code",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L24",
-      "_origin": "ast",
-      "community": 4,
-      "norm_label": "listconflicts()",
-      "community_name": "collaboration.mjs",
-      "id": "server_collaboration_listconflicts"
-    },
-    {
       "label": "core.mjs",
       "file_type": "code",
       "source_file": "server/core.mjs",
@@ -10069,72 +9563,6 @@
       "id": "server_core_backlinksfornote"
     },
     {
-      "label": "db.mjs",
-      "file_type": "code",
-      "source_file": "server/db.mjs",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 2,
-      "norm_label": "db.mjs",
-      "community_name": "db.mjs",
-      "id": "server_db"
-    },
-    {
-      "label": "openDatabase()",
-      "file_type": "code",
-      "source_file": "server/db.mjs",
-      "source_location": "L101",
-      "_origin": "ast",
-      "community": 2,
-      "norm_label": "opendatabase()",
-      "community_name": "db.mjs",
-      "id": "server_db_opendatabase"
-    },
-    {
-      "label": "ensureColumn()",
-      "file_type": "code",
-      "source_file": "server/db.mjs",
-      "source_location": "L166",
-      "_origin": "ast",
-      "community": 2,
-      "norm_label": "ensurecolumn()",
-      "community_name": "db.mjs",
-      "id": "server_db_ensurecolumn"
-    },
-    {
-      "label": "migrateLegacyEvents()",
-      "file_type": "code",
-      "source_file": "server/db.mjs",
-      "source_location": "L167",
-      "_origin": "ast",
-      "community": 2,
-      "norm_label": "migratelegacyevents()",
-      "community_name": "db.mjs",
-      "id": "server_db_migratelegacyevents"
-    },
-    {
-      "label": "getDatabase()",
-      "file_type": "code",
-      "source_file": "server/db.mjs",
-      "source_location": "L169",
-      "_origin": "ast",
-      "community": 2,
-      "norm_label": "getdatabase()",
-      "community_name": "db.mjs",
-      "id": "server_db_getdatabase"
-    },
-    {
-      "label": "closeDatabase()",
-      "file_type": "code",
-      "source_file": "server/db.mjs",
-      "source_location": "L174",
-      "_origin": "ast",
-      "community": 2,
-      "norm_label": "closedatabase()",
-      "community_name": "db.mjs",
-      "id": "server_db_closedatabase"
-    },
-    {
       "label": "http.mjs",
       "file_type": "code",
       "source_file": "server/http.mjs",
@@ -10472,8 +9900,8 @@
       "_origin": "ast",
       "community": 27,
       "norm_label": "route.ts",
-      "id": "app_api_v1_study_assignments_route",
-      "community_name": "saveAssignment"
+      "community_name": "saveAssignment",
+      "id": "app_api_v1_study_assignments_route"
     },
     {
       "label": "GET()",
@@ -10483,8 +9911,8 @@
       "_origin": "ast",
       "community": 27,
       "norm_label": "get()",
-      "id": "app_api_v1_study_assignments_route_get",
-      "community_name": "saveAssignment"
+      "community_name": "saveAssignment",
+      "id": "app_api_v1_study_assignments_route_get"
     },
     {
       "label": "POST()",
@@ -10494,8 +9922,8 @@
       "_origin": "ast",
       "community": 27,
       "norm_label": "post()",
-      "id": "app_api_v1_study_assignments_route_post",
-      "community_name": "saveAssignment"
+      "community_name": "saveAssignment",
+      "id": "app_api_v1_study_assignments_route_post"
     },
     {
       "label": "route.ts",
@@ -10505,8 +9933,8 @@
       "_origin": "ast",
       "community": 35,
       "norm_label": "route.ts",
-      "id": "app_api_v1_study_cards_id_review_route",
-      "community_name": "scoped"
+      "community_name": "scoped",
+      "id": "app_api_v1_study_cards_id_review_route"
     },
     {
       "label": "POST()",
@@ -10516,8 +9944,8 @@
       "_origin": "ast",
       "community": 35,
       "norm_label": "post()",
-      "id": "app_api_v1_study_cards_id_review_route_post",
-      "community_name": "scoped"
+      "community_name": "scoped",
+      "id": "app_api_v1_study_cards_id_review_route_post"
     },
     {
       "label": "route.ts",
@@ -10527,8 +9955,8 @@
       "_origin": "ast",
       "community": 43,
       "norm_label": "route.ts",
-      "id": "app_api_v1_study_cards_route",
-      "community_name": "saveCard"
+      "community_name": "saveCard",
+      "id": "app_api_v1_study_cards_route"
     },
     {
       "label": "GET()",
@@ -10538,8 +9966,8 @@
       "_origin": "ast",
       "community": 43,
       "norm_label": "get()",
-      "id": "app_api_v1_study_cards_route_get",
-      "community_name": "saveCard"
+      "community_name": "saveCard",
+      "id": "app_api_v1_study_cards_route_get"
     },
     {
       "label": "POST()",
@@ -10549,8 +9977,8 @@
       "_origin": "ast",
       "community": 43,
       "norm_label": "post()",
-      "id": "app_api_v1_study_cards_route_post",
-      "community_name": "saveCard"
+      "community_name": "saveCard",
+      "id": "app_api_v1_study_cards_route_post"
     },
     {
       "label": "route.ts",
@@ -10560,8 +9988,8 @@
       "_origin": "ast",
       "community": 44,
       "norm_label": "route.ts",
-      "id": "app_api_v1_study_courses_route",
-      "community_name": "saveCourse"
+      "community_name": "saveCourse",
+      "id": "app_api_v1_study_courses_route"
     },
     {
       "label": "GET()",
@@ -10571,8 +9999,8 @@
       "_origin": "ast",
       "community": 44,
       "norm_label": "get()",
-      "id": "app_api_v1_study_courses_route_get",
-      "community_name": "saveCourse"
+      "community_name": "saveCourse",
+      "id": "app_api_v1_study_courses_route_get"
     },
     {
       "label": "POST()",
@@ -10582,8 +10010,8 @@
       "_origin": "ast",
       "community": 44,
       "norm_label": "post()",
-      "id": "app_api_v1_study_courses_route_post",
-      "community_name": "saveCourse"
+      "community_name": "saveCourse",
+      "id": "app_api_v1_study_courses_route_post"
     },
     {
       "label": "route.ts",
@@ -10593,8 +10021,8 @@
       "_origin": "ast",
       "community": 35,
       "norm_label": "route.ts",
-      "id": "app_api_v1_study_quizzes_id_attempts_route",
-      "community_name": "scoped"
+      "community_name": "scoped",
+      "id": "app_api_v1_study_quizzes_id_attempts_route"
     },
     {
       "label": "POST()",
@@ -10604,8 +10032,8 @@
       "_origin": "ast",
       "community": 35,
       "norm_label": "post()",
-      "id": "app_api_v1_study_quizzes_id_attempts_route_post",
-      "community_name": "scoped"
+      "community_name": "scoped",
+      "id": "app_api_v1_study_quizzes_id_attempts_route_post"
     },
     {
       "label": "route.ts",
@@ -10615,8 +10043,8 @@
       "_origin": "ast",
       "community": 45,
       "norm_label": "route.ts",
-      "id": "app_api_v1_study_quizzes_route",
-      "community_name": "saveQuiz"
+      "community_name": "saveQuiz",
+      "id": "app_api_v1_study_quizzes_route"
     },
     {
       "label": "GET()",
@@ -10626,8 +10054,8 @@
       "_origin": "ast",
       "community": 45,
       "norm_label": "get()",
-      "id": "app_api_v1_study_quizzes_route_get",
-      "community_name": "saveQuiz"
+      "community_name": "saveQuiz",
+      "id": "app_api_v1_study_quizzes_route_get"
     },
     {
       "label": "POST()",
@@ -10637,8 +10065,8 @@
       "_origin": "ast",
       "community": 45,
       "norm_label": "post()",
-      "id": "app_api_v1_study_quizzes_route_post",
-      "community_name": "saveQuiz"
+      "community_name": "saveQuiz",
+      "id": "app_api_v1_study_quizzes_route_post"
     },
     {
       "label": "modules.mjs",
@@ -10648,8 +10076,8 @@
       "_origin": "ast",
       "community": 24,
       "norm_label": "modules.mjs",
-      "id": "server_modules",
-      "community_name": "modules.mjs"
+      "community_name": "modules.mjs",
+      "id": "server_modules"
     },
     {
       "label": "now()",
@@ -10659,8 +10087,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "now()",
-      "id": "server_modules_now",
-      "community_name": "now"
+      "community_name": "now",
+      "id": "server_modules_now"
     },
     {
       "label": "text()",
@@ -10670,8 +10098,8 @@
       "_origin": "ast",
       "community": 24,
       "norm_label": "text()",
-      "id": "server_modules_text",
-      "community_name": "modules.mjs"
+      "community_name": "modules.mjs",
+      "id": "server_modules_text"
     },
     {
       "label": "version()",
@@ -10681,8 +10109,8 @@
       "_origin": "ast",
       "community": 27,
       "norm_label": "version()",
-      "id": "server_modules_version",
-      "community_name": "saveAssignment"
+      "community_name": "saveAssignment",
+      "id": "server_modules_version"
     },
     {
       "label": "scoped()",
@@ -10692,8 +10120,8 @@
       "_origin": "ast",
       "community": 35,
       "norm_label": "scoped()",
-      "id": "server_modules_scoped",
-      "community_name": "scoped"
+      "community_name": "scoped",
+      "id": "server_modules_scoped"
     },
     {
       "label": "saveCourse()",
@@ -10703,8 +10131,8 @@
       "_origin": "ast",
       "community": 44,
       "norm_label": "savecourse()",
-      "id": "server_modules_savecourse",
-      "community_name": "saveCourse"
+      "community_name": "saveCourse",
+      "id": "server_modules_savecourse"
     },
     {
       "label": "listCourses()",
@@ -10714,8 +10142,8 @@
       "_origin": "ast",
       "community": 44,
       "norm_label": "listcourses()",
-      "id": "server_modules_listcourses",
-      "community_name": "saveCourse"
+      "community_name": "saveCourse",
+      "id": "server_modules_listcourses"
     },
     {
       "label": "saveAssignment()",
@@ -10725,8 +10153,8 @@
       "_origin": "ast",
       "community": 27,
       "norm_label": "saveassignment()",
-      "id": "server_modules_saveassignment",
-      "community_name": "saveAssignment"
+      "community_name": "saveAssignment",
+      "id": "server_modules_saveassignment"
     },
     {
       "label": "listAssignments()",
@@ -10736,8 +10164,8 @@
       "_origin": "ast",
       "community": 27,
       "norm_label": "listassignments()",
-      "id": "server_modules_listassignments",
-      "community_name": "saveAssignment"
+      "community_name": "saveAssignment",
+      "id": "server_modules_listassignments"
     },
     {
       "label": "saveCard()",
@@ -10747,8 +10175,8 @@
       "_origin": "ast",
       "community": 43,
       "norm_label": "savecard()",
-      "id": "server_modules_savecard",
-      "community_name": "saveCard"
+      "community_name": "saveCard",
+      "id": "server_modules_savecard"
     },
     {
       "label": "reviewCard()",
@@ -10758,8 +10186,8 @@
       "_origin": "ast",
       "community": 35,
       "norm_label": "reviewcard()",
-      "id": "server_modules_reviewcard",
-      "community_name": "scoped"
+      "community_name": "scoped",
+      "id": "server_modules_reviewcard"
     },
     {
       "label": "dueCards()",
@@ -10769,8 +10197,8 @@
       "_origin": "ast",
       "community": 43,
       "norm_label": "duecards()",
-      "id": "server_modules_duecards",
-      "community_name": "saveCard"
+      "community_name": "saveCard",
+      "id": "server_modules_duecards"
     },
     {
       "label": "saveQuiz()",
@@ -10780,8 +10208,8 @@
       "_origin": "ast",
       "community": 45,
       "norm_label": "savequiz()",
-      "id": "server_modules_savequiz",
-      "community_name": "saveQuiz"
+      "community_name": "saveQuiz",
+      "id": "server_modules_savequiz"
     },
     {
       "label": "listQuizzes()",
@@ -10791,8 +10219,8 @@
       "_origin": "ast",
       "community": 45,
       "norm_label": "listquizzes()",
-      "id": "server_modules_listquizzes",
-      "community_name": "saveQuiz"
+      "community_name": "saveQuiz",
+      "id": "server_modules_listquizzes"
     },
     {
       "label": "submitQuiz()",
@@ -10802,8 +10230,8 @@
       "_origin": "ast",
       "community": 35,
       "norm_label": "submitquiz()",
-      "id": "server_modules_submitquiz",
-      "community_name": "scoped"
+      "community_name": "scoped",
+      "id": "server_modules_submitquiz"
     },
     {
       "label": "createNotification()",
@@ -10813,8 +10241,8 @@
       "_origin": "ast",
       "community": 34,
       "norm_label": "createnotification()",
-      "id": "server_modules_createnotification",
-      "community_name": "createNotification"
+      "community_name": "createNotification",
+      "id": "server_modules_createnotification"
     },
     {
       "label": "listNotifications()",
@@ -10824,8 +10252,8 @@
       "_origin": "ast",
       "community": 34,
       "norm_label": "listnotifications()",
-      "id": "server_modules_listnotifications",
-      "community_name": "createNotification"
+      "community_name": "createNotification",
+      "id": "server_modules_listnotifications"
     },
     {
       "label": "readNotification()",
@@ -10835,8 +10263,8 @@
       "_origin": "ast",
       "community": 53,
       "norm_label": "readnotification()",
-      "id": "server_modules_readnotification",
-      "community_name": "readNotification"
+      "community_name": "readNotification",
+      "id": "server_modules_readnotification"
     },
     {
       "label": "readAllNotifications()",
@@ -10846,8 +10274,8 @@
       "_origin": "ast",
       "community": 54,
       "norm_label": "readallnotifications()",
-      "id": "server_modules_readallnotifications",
-      "community_name": "readAllNotifications"
+      "community_name": "readAllNotifications",
+      "id": "server_modules_readallnotifications"
     },
     {
       "label": "deliverDueReminders()",
@@ -10857,8 +10285,8 @@
       "_origin": "ast",
       "community": 32,
       "norm_label": "deliverduereminders()",
-      "id": "server_modules_deliverduereminders",
-      "community_name": "worker.mjs"
+      "community_name": "worker.mjs",
+      "id": "server_modules_deliverduereminders"
     },
     {
       "label": "savePushSubscription()",
@@ -10868,8 +10296,8 @@
       "_origin": "ast",
       "community": 39,
       "norm_label": "savepushsubscription()",
-      "id": "server_modules_savepushsubscription",
-      "community_name": "route.ts"
+      "community_name": "route.ts",
+      "id": "server_modules_savepushsubscription"
     },
     {
       "label": "deletePushSubscription()",
@@ -10879,8 +10307,8 @@
       "_origin": "ast",
       "community": 39,
       "norm_label": "deletepushsubscription()",
-      "id": "server_modules_deletepushsubscription",
-      "community_name": "route.ts"
+      "community_name": "route.ts",
+      "id": "server_modules_deletepushsubscription"
     },
     {
       "label": "cronField()",
@@ -10890,8 +10318,8 @@
       "_origin": "ast",
       "community": 24,
       "norm_label": "cronfield()",
-      "id": "server_modules_cronfield",
-      "community_name": "modules.mjs"
+      "community_name": "modules.mjs",
+      "id": "server_modules_cronfield"
     },
     {
       "label": "validCron()",
@@ -10901,8 +10329,8 @@
       "_origin": "ast",
       "community": 24,
       "norm_label": "validcron()",
-      "id": "server_modules_validcron",
-      "community_name": "modules.mjs"
+      "community_name": "modules.mjs",
+      "id": "server_modules_validcron"
     },
     {
       "label": "normalizeStep()",
@@ -10912,8 +10340,8 @@
       "_origin": "ast",
       "community": 24,
       "norm_label": "normalizestep()",
-      "id": "server_modules_normalizestep",
-      "community_name": "modules.mjs"
+      "community_name": "modules.mjs",
+      "id": "server_modules_normalizestep"
     },
     {
       "label": "automationDefinition()",
@@ -10923,8 +10351,8 @@
       "_origin": "ast",
       "community": 24,
       "norm_label": "automationdefinition()",
-      "id": "server_modules_automationdefinition",
-      "community_name": "modules.mjs"
+      "community_name": "modules.mjs",
+      "id": "server_modules_automationdefinition"
     },
     {
       "label": "stepLabel()",
@@ -10934,8 +10362,8 @@
       "_origin": "ast",
       "community": 24,
       "norm_label": "steplabel()",
-      "id": "server_modules_steplabel",
-      "community_name": "modules.mjs"
+      "community_name": "modules.mjs",
+      "id": "server_modules_steplabel"
     },
     {
       "label": "previewAutomation()",
@@ -10945,8 +10373,8 @@
       "_origin": "ast",
       "community": 24,
       "norm_label": "previewautomation()",
-      "id": "server_modules_previewautomation",
-      "community_name": "modules.mjs"
+      "community_name": "modules.mjs",
+      "id": "server_modules_previewautomation"
     },
     {
       "label": "saveAutomation()",
@@ -10956,8 +10384,8 @@
       "_origin": "ast",
       "community": 27,
       "norm_label": "saveautomation()",
-      "id": "server_modules_saveautomation",
-      "community_name": "saveAssignment"
+      "community_name": "saveAssignment",
+      "id": "server_modules_saveautomation"
     },
     {
       "label": "listAutomations()",
@@ -10967,8 +10395,8 @@
       "_origin": "ast",
       "community": 27,
       "norm_label": "listautomations()",
-      "id": "server_modules_listautomations",
-      "community_name": "saveAssignment"
+      "community_name": "saveAssignment",
+      "id": "server_modules_listautomations"
     },
     {
       "label": "deleteAutomation()",
@@ -10978,8 +10406,8 @@
       "_origin": "ast",
       "community": 24,
       "norm_label": "deleteautomation()",
-      "id": "server_modules_deleteautomation",
-      "community_name": "modules.mjs"
+      "community_name": "modules.mjs",
+      "id": "server_modules_deleteautomation"
     },
     {
       "label": "startAutomationRun()",
@@ -10989,8 +10417,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "startautomationrun()",
-      "id": "server_modules_startautomationrun",
-      "community_name": "now"
+      "community_name": "now",
+      "id": "server_modules_startautomationrun"
     },
     {
       "label": "finishAutomationRun()",
@@ -11000,8 +10428,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "finishautomationrun()",
-      "id": "server_modules_finishautomationrun",
-      "community_name": "now"
+      "community_name": "now",
+      "id": "server_modules_finishautomationrun"
     },
     {
       "label": "runView()",
@@ -11011,8 +10439,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "runview()",
-      "id": "server_modules_runview",
-      "community_name": "now"
+      "community_name": "now",
+      "id": "server_modules_runview"
     },
     {
       "label": "automationRuns()",
@@ -11022,8 +10450,8 @@
       "_origin": "ast",
       "community": 38,
       "norm_label": "automationruns()",
-      "id": "server_modules_automationruns",
-      "community_name": "route.ts"
+      "community_name": "route.ts",
+      "id": "server_modules_automationruns"
     },
     {
       "label": "conditionMatches()",
@@ -11033,8 +10461,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "conditionmatches()",
-      "id": "server_modules_conditionmatches",
-      "community_name": "now"
+      "community_name": "now",
+      "id": "server_modules_conditionmatches"
     },
     {
       "label": "advanceAutomationRun()",
@@ -11044,8 +10472,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "advanceautomationrun()",
-      "id": "server_modules_advanceautomationrun",
-      "community_name": "now"
+      "community_name": "now",
+      "id": "server_modules_advanceautomationrun"
     },
     {
       "label": "executeAutomation()",
@@ -11055,8 +10483,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "executeautomation()",
-      "id": "server_modules_executeautomation",
-      "community_name": "now"
+      "community_name": "now",
+      "id": "server_modules_executeautomation"
     },
     {
       "label": "testAutomation()",
@@ -11066,8 +10494,8 @@
       "_origin": "ast",
       "community": 52,
       "norm_label": "testautomation()",
-      "id": "server_modules_testautomation",
-      "community_name": "testAutomation"
+      "community_name": "testAutomation",
+      "id": "server_modules_testautomation"
     },
     {
       "label": "completeAutomationSkillStep()",
@@ -11077,8 +10505,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "completeautomationskillstep()",
-      "id": "server_modules_completeautomationskillstep",
-      "community_name": "now"
+      "community_name": "now",
+      "id": "server_modules_completeautomationskillstep"
     },
     {
       "label": "failAutomationSkillStep()",
@@ -11088,8 +10516,8 @@
       "_origin": "ast",
       "community": 32,
       "norm_label": "failautomationskillstep()",
-      "id": "server_modules_failautomationskillstep",
-      "community_name": "worker.mjs"
+      "community_name": "worker.mjs",
+      "id": "server_modules_failautomationskillstep"
     },
     {
       "label": "cancelAutomationRun()",
@@ -11099,8 +10527,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "cancelautomationrun()",
-      "id": "server_modules_cancelautomationrun",
-      "community_name": "now"
+      "community_name": "now",
+      "id": "server_modules_cancelautomationrun"
     },
     {
       "label": "retryAutomationRun()",
@@ -11110,8 +10538,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "retryautomationrun()",
-      "id": "server_modules_retryautomationrun",
-      "community_name": "now"
+      "community_name": "now",
+      "id": "server_modules_retryautomationrun"
     },
     {
       "label": "cronDue()",
@@ -11121,8 +10549,8 @@
       "_origin": "ast",
       "community": 32,
       "norm_label": "crondue()",
-      "id": "server_modules_crondue",
-      "community_name": "worker.mjs"
+      "community_name": "worker.mjs",
+      "id": "server_modules_crondue"
     },
     {
       "label": "runScheduledAutomations()",
@@ -11132,8 +10560,8 @@
       "_origin": "ast",
       "community": 32,
       "norm_label": "runscheduledautomations()",
-      "id": "server_modules_runscheduledautomations",
-      "community_name": "worker.mjs"
+      "community_name": "worker.mjs",
+      "id": "server_modules_runscheduledautomations"
     },
     {
       "label": "runCaptureAutomations()",
@@ -11143,8 +10571,8 @@
       "_origin": "ast",
       "community": 21,
       "norm_label": "runcaptureautomations()",
-      "id": "server_modules_runcaptureautomations",
-      "community_name": "now"
+      "community_name": "now",
+      "id": "server_modules_runcaptureautomations"
     },
     {
       "label": "automationMetrics()",
@@ -11154,8 +10582,580 @@
       "_origin": "ast",
       "community": 38,
       "norm_label": "automationmetrics()",
-      "id": "server_modules_automationmetrics",
-      "community_name": "route.ts"
+      "community_name": "route.ts",
+      "id": "server_modules_automationmetrics"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "route.ts",
+      "id": "app_api_v1_dashboards_id_route",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "get()",
+      "id": "app_api_v1_dashboards_id_route_get",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "post()",
+      "id": "app_api_v1_dashboards_id_route_post",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "DELETE()",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L6",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "delete()",
+      "id": "app_api_v1_dashboards_id_route_delete",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/reorder/route.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "route.ts",
+      "id": "app_api_v1_dashboards_reorder_route",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/reorder/route.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "post()",
+      "id": "app_api_v1_dashboards_reorder_route_post",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "route.ts",
+      "id": "app_api_v1_dashboards_route",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "get()",
+      "id": "app_api_v1_dashboards_route_get",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "post()",
+      "id": "app_api_v1_dashboards_route_post",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "collaboration.mjs",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "collaboration.mjs",
+      "id": "server_collaboration",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "roles",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "roles",
+      "id": "server_collaboration_roles",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "now()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "now()",
+      "id": "server_collaboration_now",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "hash()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "hash()",
+      "id": "server_collaboration_hash",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "fail()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "fail()",
+      "id": "server_collaboration_fail",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "clean()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L6",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "clean()",
+      "id": "server_collaboration_clean",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "audit()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L7",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "audit()",
+      "id": "server_collaboration_audit",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "ensureDefaultWorkspace()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L8",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "ensuredefaultworkspace()",
+      "id": "server_collaboration_ensuredefaultworkspace",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "workspaceAccess()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L9",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "workspaceaccess()",
+      "id": "server_collaboration_workspaceaccess",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "listWorkspaces()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L10",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "listworkspaces()",
+      "id": "server_collaboration_listworkspaces",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "createWorkspace()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L11",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "createworkspace()",
+      "id": "server_collaboration_createworkspace",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "workspaceDetail()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L12",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "workspacedetail()",
+      "id": "server_collaboration_workspacedetail",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "createInvitation()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L13",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "createinvitation()",
+      "id": "server_collaboration_createinvitation",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "invitationForToken()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L14",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "invitationfortoken()",
+      "id": "server_collaboration_invitationfortoken",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "acceptInvitation()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L15",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "acceptinvitation()",
+      "id": "server_collaboration_acceptinvitation",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "registerWithInvitation()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L16",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "registerwithinvitation()",
+      "id": "server_collaboration_registerwithinvitation",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "revokeInvitation()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L17",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "revokeinvitation()",
+      "id": "server_collaboration_revokeinvitation",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "changeMember()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L18",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "changemember()",
+      "id": "server_collaboration_changemember",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "saveComment()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L19",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "savecomment()",
+      "id": "server_collaboration_savecomment",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "listComments()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L20",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "listcomments()",
+      "id": "server_collaboration_listcomments",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "updatePresence()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L21",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "updatepresence()",
+      "id": "server_collaboration_updatepresence",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "listPresence()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L22",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "listpresence()",
+      "id": "server_collaboration_listpresence",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "recordConflict()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L23",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "recordconflict()",
+      "id": "server_collaboration_recordconflict",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "listConflicts()",
+      "file_type": "code",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L24",
+      "_origin": "ast",
+      "community": 4,
+      "norm_label": "listconflicts()",
+      "id": "server_collaboration_listconflicts",
+      "community_name": "collaboration.mjs"
+    },
+    {
+      "label": "dashboards.mjs",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "dashboards.mjs",
+      "id": "server_dashboards",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "widgetTypes",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "widgettypes",
+      "id": "server_dashboards_widgettypes",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "text()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "text()",
+      "id": "server_dashboards_text",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "widget()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L6",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "widget()",
+      "id": "server_dashboards_widget",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "layout()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L7",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "layout()",
+      "id": "server_dashboards_layout",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "rowView()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L8",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "rowview()",
+      "id": "server_dashboards_rowview",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "saveDashboard()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L10",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "savedashboard()",
+      "id": "server_dashboards_savedashboard",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "listDashboards()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L11",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "listdashboards()",
+      "id": "server_dashboards_listdashboards",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "duplicateDashboard()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L12",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "duplicatedashboard()",
+      "id": "server_dashboards_duplicatedashboard",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "deleteDashboard()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L13",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "deletedashboard()",
+      "id": "server_dashboards_deletedashboard",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "reorderDashboards()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L14",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "reorderdashboards()",
+      "id": "server_dashboards_reorderdashboards",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "widgetData()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L16",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "widgetdata()",
+      "id": "server_dashboards_widgetdata",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "dashboardView()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L19",
+      "_origin": "ast",
+      "community": 14,
+      "norm_label": "dashboardview()",
+      "id": "server_dashboards_dashboardview",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "db.mjs",
+      "file_type": "code",
+      "source_file": "server/db.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 2,
+      "norm_label": "db.mjs",
+      "id": "server_db",
+      "community_name": "db.mjs"
+    },
+    {
+      "label": "openDatabase()",
+      "file_type": "code",
+      "source_file": "server/db.mjs",
+      "source_location": "L101",
+      "_origin": "ast",
+      "community": 2,
+      "norm_label": "opendatabase()",
+      "id": "server_db_opendatabase",
+      "community_name": "db.mjs"
+    },
+    {
+      "label": "ensureColumn()",
+      "file_type": "code",
+      "source_file": "server/db.mjs",
+      "source_location": "L166",
+      "_origin": "ast",
+      "community": 2,
+      "norm_label": "ensurecolumn()",
+      "id": "server_db_ensurecolumn",
+      "community_name": "db.mjs"
+    },
+    {
+      "label": "migrateLegacyEvents()",
+      "file_type": "code",
+      "source_file": "server/db.mjs",
+      "source_location": "L167",
+      "_origin": "ast",
+      "community": 2,
+      "norm_label": "migratelegacyevents()",
+      "id": "server_db_migratelegacyevents",
+      "community_name": "db.mjs"
+    },
+    {
+      "label": "getDatabase()",
+      "file_type": "code",
+      "source_file": "server/db.mjs",
+      "source_location": "L169",
+      "_origin": "ast",
+      "community": 2,
+      "norm_label": "getdatabase()",
+      "id": "server_db_getdatabase",
+      "community_name": "db.mjs"
+    },
+    {
+      "label": "closeDatabase()",
+      "file_type": "code",
+      "source_file": "server/db.mjs",
+      "source_location": "L174",
+      "_origin": "ast",
+      "community": 2,
+      "norm_label": "closedatabase()",
+      "id": "server_db_closedatabase",
+      "community_name": "db.mjs"
     },
     {
       "label": "backend.test.js",
@@ -23584,516 +23584,6 @@
       "target": "server_knowledge_graph_queryknowledgegraph"
     },
     {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/dashboards/[id]/route.ts",
-      "source_location": "L6",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_dashboards_id_route",
-      "target": "app_api_v1_dashboards_id_route_delete"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/dashboards/[id]/route.ts",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_dashboards_id_route",
-      "target": "app_api_v1_dashboards_id_route_get"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/dashboards/[id]/route.ts",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_dashboards_id_route",
-      "target": "app_api_v1_dashboards_id_route_post"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/dashboards/[id]/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_dashboards_id_route",
-      "target": "server_dashboards"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/dashboards/[id]/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_dashboards_id_route",
-      "target": "server_dashboards_dashboardview"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/dashboards/[id]/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_dashboards_id_route",
-      "target": "server_dashboards_deletedashboard"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/dashboards/[id]/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_dashboards_id_route",
-      "target": "server_dashboards_duplicatedashboard"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/api/v1/dashboards/[id]/route.ts",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_api_v1_dashboards_id_route_get",
-      "target": "server_dashboards_dashboardview"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/api/v1/dashboards/[id]/route.ts",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_api_v1_dashboards_id_route_post",
-      "target": "server_dashboards_duplicatedashboard"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/api/v1/dashboards/[id]/route.ts",
-      "source_location": "L6",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_api_v1_dashboards_id_route_delete",
-      "target": "server_dashboards_deletedashboard"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/dashboards/reorder/route.ts",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_dashboards_reorder_route",
-      "target": "app_api_v1_dashboards_reorder_route_post"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/dashboards/reorder/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_dashboards_reorder_route",
-      "target": "server_dashboards"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/dashboards/reorder/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_dashboards_reorder_route",
-      "target": "server_dashboards_reorderdashboards"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/api/v1/dashboards/reorder/route.ts",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_api_v1_dashboards_reorder_route_post",
-      "target": "server_dashboards_reorderdashboards"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/dashboards/route.ts",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_dashboards_route",
-      "target": "app_api_v1_dashboards_route_get"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/dashboards/route.ts",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_dashboards_route",
-      "target": "app_api_v1_dashboards_route_post"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/dashboards/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_dashboards_route",
-      "target": "server_dashboards"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/dashboards/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_dashboards_route",
-      "target": "server_dashboards_listdashboards"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "app/api/v1/dashboards/route.ts",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "app_api_v1_dashboards_route",
-      "target": "server_dashboards_savedashboard"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/api/v1/dashboards/route.ts",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_api_v1_dashboards_route_get",
-      "target": "server_dashboards_listdashboards"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "app/api/v1/dashboards/route.ts",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "app_api_v1_dashboards_route_post",
-      "target": "server_dashboards_savedashboard"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L19",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards",
-      "target": "server_dashboards_dashboardview"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards",
-      "target": "server_dashboards_deletedashboard"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L12",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards",
-      "target": "server_dashboards_duplicatedashboard"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L7",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards",
-      "target": "server_dashboards_layout"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards",
-      "target": "server_dashboards_listdashboards"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L14",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards",
-      "target": "server_dashboards_reorderdashboards"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L8",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards",
-      "target": "server_dashboards_rowview"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L10",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards",
-      "target": "server_dashboards_savedashboard"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards",
-      "target": "server_dashboards_text"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L6",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards",
-      "target": "server_dashboards_widget"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L16",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards",
-      "target": "server_dashboards_widgetdata"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards",
-      "target": "server_dashboards_widgettypes"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L2",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards",
-      "target": "server_db"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L2",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards",
-      "target": "server_db_getdatabase"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L10",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards_savedashboard",
-      "target": "server_dashboards_text"
-    },
-    {
-      "relation": "indirect_call",
-      "context": "argument",
-      "confidence": "INFERRED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L7",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 0.5,
-      "source": "server_dashboards_layout",
-      "target": "server_dashboards_widget"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L10",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards_savedashboard",
-      "target": "server_dashboards_layout"
-    },
-    {
-      "relation": "indirect_call",
-      "context": "argument",
-      "confidence": "INFERRED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 0.5,
-      "source": "server_dashboards_listdashboards",
-      "target": "server_dashboards_rowview"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L10",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards_savedashboard",
-      "target": "server_dashboards_rowview"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L12",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards_duplicatedashboard",
-      "target": "server_dashboards_savedashboard"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L19",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards_dashboardview",
-      "target": "server_dashboards_listdashboards"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L14",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards_reorderdashboards",
-      "target": "server_dashboards_listdashboards"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/dashboards.mjs",
-      "source_location": "L19",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_dashboards_dashboardview",
-      "target": "server_dashboards_widgetdata"
-    },
-    {
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -32430,283 +31920,6 @@
       "target": "app_collaboration_page_workspace"
     },
     {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L15",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_acceptinvitation"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L7",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_audit"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L18",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_changemember"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L6",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_clean"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_createinvitation"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_createworkspace"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L8",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_ensuredefaultworkspace"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_fail"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_hash"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L14",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_invitationfortoken"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L20",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_listcomments"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L24",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_listconflicts"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L22",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_listpresence"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L10",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_listworkspaces"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_now"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L23",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_recordconflict"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L16",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_registerwithinvitation"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L17",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_revokeinvitation"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_roles"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L19",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_savecomment"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L21",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_updatepresence"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L9",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_workspaceaccess"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L12",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_collaboration_workspacedetail"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L2",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_db"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L2",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration",
-      "target": "server_db_getdatabase"
-    },
-    {
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -32719,654 +31932,6 @@
       "target": "server_collaboration"
     },
     {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "server/http.mjs",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_http",
-      "target": "server_collaboration"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L15",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_acceptinvitation",
-      "target": "server_collaboration_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L7",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_audit",
-      "target": "server_collaboration_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L18",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_changemember",
-      "target": "server_collaboration_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_createinvitation",
-      "target": "server_collaboration_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_createworkspace",
-      "target": "server_collaboration_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L8",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_ensuredefaultworkspace",
-      "target": "server_collaboration_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L14",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_invitationfortoken",
-      "target": "server_collaboration_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L22",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_listpresence",
-      "target": "server_collaboration_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L23",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_recordconflict",
-      "target": "server_collaboration_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L16",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_registerwithinvitation",
-      "target": "server_collaboration_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L17",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_revokeinvitation",
-      "target": "server_collaboration_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L19",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_savecomment",
-      "target": "server_collaboration_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L21",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_updatepresence",
-      "target": "server_collaboration_now"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L15",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_acceptinvitation",
-      "target": "server_collaboration_fail"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L18",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_changemember",
-      "target": "server_collaboration_fail"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L6",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_clean",
-      "target": "server_collaboration_fail"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_createinvitation",
-      "target": "server_collaboration_fail"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L14",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_invitationfortoken",
-      "target": "server_collaboration_fail"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L16",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_registerwithinvitation",
-      "target": "server_collaboration_fail"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L17",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_revokeinvitation",
-      "target": "server_collaboration_fail"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L19",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_savecomment",
-      "target": "server_collaboration_fail"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L21",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_updatepresence",
-      "target": "server_collaboration_fail"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L9",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_workspaceaccess",
-      "target": "server_collaboration_fail"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_createworkspace",
-      "target": "server_collaboration_clean"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L19",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_savecomment",
-      "target": "server_collaboration_clean"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L21",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_updatepresence",
-      "target": "server_collaboration_clean"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L15",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_acceptinvitation",
-      "target": "server_collaboration_audit"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L18",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_changemember",
-      "target": "server_collaboration_audit"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_createinvitation",
-      "target": "server_collaboration_audit"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_createworkspace",
-      "target": "server_collaboration_audit"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L8",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_ensuredefaultworkspace",
-      "target": "server_collaboration_audit"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L23",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_recordconflict",
-      "target": "server_collaboration_audit"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L16",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_registerwithinvitation",
-      "target": "server_collaboration_audit"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L17",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_revokeinvitation",
-      "target": "server_collaboration_audit"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L19",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_savecomment",
-      "target": "server_collaboration_audit"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L10",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_listworkspaces",
-      "target": "server_collaboration_ensuredefaultworkspace"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L9",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_workspaceaccess",
-      "target": "server_collaboration_ensuredefaultworkspace"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L15",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_acceptinvitation",
-      "target": "server_collaboration_workspaceaccess"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L18",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_changemember",
-      "target": "server_collaboration_workspaceaccess"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L13",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_createinvitation",
-      "target": "server_collaboration_workspaceaccess"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L11",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_createworkspace",
-      "target": "server_collaboration_workspaceaccess"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L20",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_listcomments",
-      "target": "server_collaboration_workspaceaccess"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L24",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_listconflicts",
-      "target": "server_collaboration_workspaceaccess"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L22",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_listpresence",
-      "target": "server_collaboration_workspaceaccess"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L17",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_revokeinvitation",
-      "target": "server_collaboration_workspaceaccess"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L19",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_savecomment",
-      "target": "server_collaboration_workspaceaccess"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L21",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_updatepresence",
-      "target": "server_collaboration_workspaceaccess"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L12",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_workspacedetail",
-      "target": "server_collaboration_workspaceaccess"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "server/http.mjs",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_http",
-      "target": "server_collaboration_workspaceaccess"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "server/http.mjs",
-      "source_location": "L21",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "server_http_requireworkspace",
-      "target": "server_collaboration_workspaceaccess"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L15",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_acceptinvitation",
-      "target": "server_collaboration_invitationfortoken"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L16",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_registerwithinvitation",
-      "target": "server_collaboration_invitationfortoken"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/collaboration.mjs",
-      "source_location": "L21",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_collaboration_updatepresence",
-      "target": "server_collaboration_listpresence"
-    },
-    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -33376,18 +31941,6 @@
       "_origin": "ast",
       "confidence_score": 1.0,
       "source": "server_core",
-      "target": "server_collaboration_recordconflict"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/core.mjs",
-      "source_location": "L21",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_core_requireversion",
       "target": "server_collaboration_recordconflict"
     },
     {
@@ -35046,6 +33599,18 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "server/core.mjs",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_core_requireversion",
+      "target": "server_collaboration_recordconflict"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/core.mjs",
       "source_location": "L50",
       "weight": 1.0,
       "_origin": "ast",
@@ -35486,59 +34051,28 @@
       "target": "server_core_notelinks"
     },
     {
-      "relation": "contains",
+      "relation": "imports_from",
+      "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L174",
+      "source_file": "server/http.mjs",
+      "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
       "confidence_score": 1.0,
-      "source": "server_db",
-      "target": "server_db_closedatabase"
+      "source": "server_http",
+      "target": "server_collaboration"
     },
     {
-      "relation": "contains",
+      "relation": "imports",
+      "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L166",
+      "source_file": "server/http.mjs",
+      "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
       "confidence_score": 1.0,
-      "source": "server_db",
-      "target": "server_db_ensurecolumn"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L169",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_db",
-      "target": "server_db_getdatabase"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L167",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_db",
-      "target": "server_db_migratelegacyevents"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L101",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_db",
-      "target": "server_db_opendatabase"
+      "source": "server_http",
+      "target": "server_collaboration_workspaceaccess"
     },
     {
       "relation": "imports_from",
@@ -35553,66 +34087,6 @@
       "target": "server_db"
     },
     {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "server/objects.mjs",
-      "source_location": "L6",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_objects",
-      "target": "server_db"
-    },
-    {
-      "relation": "imports_from",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L2",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects",
-      "target": "server_db"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L170",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_db_getdatabase",
-      "target": "server_db_opendatabase"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L105",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_db_opendatabase",
-      "target": "server_db_ensurecolumn"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L149",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_db_opendatabase",
-      "target": "server_db_migratelegacyevents"
-    },
-    {
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -35622,42 +34096,6 @@
       "_origin": "ast",
       "confidence_score": 1.0,
       "source": "server_http",
-      "target": "server_db_getdatabase"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "server/http.mjs",
-      "source_location": "L20",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "server_http_requiremfa",
-      "target": "server_db_getdatabase"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "server/objects.mjs",
-      "source_location": "L6",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_objects",
-      "target": "server_db_getdatabase"
-    },
-    {
-      "relation": "imports",
-      "context": "import",
-      "confidence": "EXTRACTED",
-      "source_file": "server/projects.mjs",
-      "source_location": "L2",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_projects",
       "target": "server_db_getdatabase"
     },
     {
@@ -35867,6 +34305,54 @@
       "target": "server_http_requireuser"
     },
     {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "server/http.mjs",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_http_requiremfa",
+      "target": "server_db_getdatabase"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "server/http.mjs",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "server_http_requireworkspace",
+      "target": "server_collaboration_workspaceaccess"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/objects.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_objects",
+      "target": "server_db"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/objects.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_objects",
+      "target": "server_db_getdatabase"
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "server/objects.mjs",
@@ -35978,6 +34464,30 @@
       "confidence_score": 1.0,
       "source": "server_objects_attachassets",
       "target": "server_objects_getasset"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects",
+      "target": "server_db"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/projects.mjs",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_projects",
+      "target": "server_db_getdatabase"
     },
     {
       "relation": "contains",
@@ -37968,6 +36478,1496 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_id_route",
+      "target": "app_api_v1_dashboards_id_route_delete"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_id_route",
+      "target": "app_api_v1_dashboards_id_route_get"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_id_route",
+      "target": "app_api_v1_dashboards_id_route_post"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_id_route",
+      "target": "server_dashboards"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_id_route",
+      "target": "server_dashboards_dashboardview"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_id_route",
+      "target": "server_dashboards_deletedashboard"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_id_route",
+      "target": "server_dashboards_duplicatedashboard"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_dashboards_id_route_get",
+      "target": "server_dashboards_dashboardview"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_dashboards_id_route_post",
+      "target": "server_dashboards_duplicatedashboard"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_dashboards_id_route_delete",
+      "target": "server_dashboards_deletedashboard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/reorder/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_reorder_route",
+      "target": "app_api_v1_dashboards_reorder_route_post"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/reorder/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_reorder_route",
+      "target": "server_dashboards"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/reorder/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_reorder_route",
+      "target": "server_dashboards_reorderdashboards"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/dashboards/reorder/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_dashboards_reorder_route_post",
+      "target": "server_dashboards_reorderdashboards"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_route",
+      "target": "app_api_v1_dashboards_route_get"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_route",
+      "target": "app_api_v1_dashboards_route_post"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_route",
+      "target": "server_dashboards"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_route",
+      "target": "server_dashboards_listdashboards"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_route",
+      "target": "server_dashboards_savedashboard"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_dashboards_route_get",
+      "target": "server_dashboards_listdashboards"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_dashboards_route_post",
+      "target": "server_dashboards_savedashboard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_acceptinvitation"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_audit"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_changemember"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_clean"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_createinvitation"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_createworkspace"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_ensuredefaultworkspace"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_fail"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_hash"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_invitationfortoken"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_listcomments"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L24",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_listconflicts"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L22",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_listpresence"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_listworkspaces"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_now"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L23",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_recordconflict"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L16",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_registerwithinvitation"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_revokeinvitation"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_roles"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_savecomment"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_updatepresence"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_workspaceaccess"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_collaboration_workspacedetail"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_db"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration",
+      "target": "server_db_getdatabase"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_acceptinvitation",
+      "target": "server_collaboration_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_audit",
+      "target": "server_collaboration_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_changemember",
+      "target": "server_collaboration_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_createinvitation",
+      "target": "server_collaboration_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_createworkspace",
+      "target": "server_collaboration_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_ensuredefaultworkspace",
+      "target": "server_collaboration_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_invitationfortoken",
+      "target": "server_collaboration_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L22",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_listpresence",
+      "target": "server_collaboration_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L23",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_recordconflict",
+      "target": "server_collaboration_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L16",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_registerwithinvitation",
+      "target": "server_collaboration_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_revokeinvitation",
+      "target": "server_collaboration_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_savecomment",
+      "target": "server_collaboration_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_updatepresence",
+      "target": "server_collaboration_now"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_acceptinvitation",
+      "target": "server_collaboration_fail"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_changemember",
+      "target": "server_collaboration_fail"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_clean",
+      "target": "server_collaboration_fail"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_createinvitation",
+      "target": "server_collaboration_fail"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_invitationfortoken",
+      "target": "server_collaboration_fail"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L16",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_registerwithinvitation",
+      "target": "server_collaboration_fail"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_revokeinvitation",
+      "target": "server_collaboration_fail"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_savecomment",
+      "target": "server_collaboration_fail"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_updatepresence",
+      "target": "server_collaboration_fail"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_workspaceaccess",
+      "target": "server_collaboration_fail"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_createworkspace",
+      "target": "server_collaboration_clean"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_savecomment",
+      "target": "server_collaboration_clean"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_updatepresence",
+      "target": "server_collaboration_clean"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_acceptinvitation",
+      "target": "server_collaboration_audit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_changemember",
+      "target": "server_collaboration_audit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_createinvitation",
+      "target": "server_collaboration_audit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_createworkspace",
+      "target": "server_collaboration_audit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_ensuredefaultworkspace",
+      "target": "server_collaboration_audit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L23",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_recordconflict",
+      "target": "server_collaboration_audit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L16",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_registerwithinvitation",
+      "target": "server_collaboration_audit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_revokeinvitation",
+      "target": "server_collaboration_audit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_savecomment",
+      "target": "server_collaboration_audit"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_listworkspaces",
+      "target": "server_collaboration_ensuredefaultworkspace"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_workspaceaccess",
+      "target": "server_collaboration_ensuredefaultworkspace"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_acceptinvitation",
+      "target": "server_collaboration_workspaceaccess"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_changemember",
+      "target": "server_collaboration_workspaceaccess"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_createinvitation",
+      "target": "server_collaboration_workspaceaccess"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_createworkspace",
+      "target": "server_collaboration_workspaceaccess"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_listcomments",
+      "target": "server_collaboration_workspaceaccess"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L24",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_listconflicts",
+      "target": "server_collaboration_workspaceaccess"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L22",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_listpresence",
+      "target": "server_collaboration_workspaceaccess"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_revokeinvitation",
+      "target": "server_collaboration_workspaceaccess"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_savecomment",
+      "target": "server_collaboration_workspaceaccess"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_updatepresence",
+      "target": "server_collaboration_workspaceaccess"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_workspacedetail",
+      "target": "server_collaboration_workspaceaccess"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_acceptinvitation",
+      "target": "server_collaboration_invitationfortoken"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L16",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_registerwithinvitation",
+      "target": "server_collaboration_invitationfortoken"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/collaboration.mjs",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_collaboration_updatepresence",
+      "target": "server_collaboration_listpresence"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_dashboardview"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_deletedashboard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_duplicatedashboard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_layout"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_listdashboards"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_reorderdashboards"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_rowview"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_savedashboard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_text"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_widget"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L16",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_widgetdata"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_widgettypes"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_db"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_db_getdatabase"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards_savedashboard",
+      "target": "server_dashboards_text"
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 0.5,
+      "source": "server_dashboards_layout",
+      "target": "server_dashboards_widget"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards_savedashboard",
+      "target": "server_dashboards_layout"
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 0.5,
+      "source": "server_dashboards_listdashboards",
+      "target": "server_dashboards_rowview"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards_savedashboard",
+      "target": "server_dashboards_rowview"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards_duplicatedashboard",
+      "target": "server_dashboards_savedashboard"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards_dashboardview",
+      "target": "server_dashboards_listdashboards"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards_reorderdashboards",
+      "target": "server_dashboards_listdashboards"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards_dashboardview",
+      "target": "server_dashboards_widgetdata"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L174",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db",
+      "target": "server_db_closedatabase"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L166",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db",
+      "target": "server_db_ensurecolumn"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L169",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db",
+      "target": "server_db_getdatabase"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L167",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db",
+      "target": "server_db_migratelegacyevents"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L101",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db",
+      "target": "server_db_opendatabase"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L170",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db_getdatabase",
+      "target": "server_db_opendatabase"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L105",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db_opendatabase",
+      "target": "server_db_ensurecolumn"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L149",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db_opendatabase",
+      "target": "server_db_migratelegacyevents"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "test/backend.test.js",
       "source_location": "L2",
       "weight": 1.0,
@@ -38033,5 +38033,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "c415256e13b25b402cc91f0e8a79359265782da0"
+  "built_at_commit": "5a43771e574628c3cf44f4a3279174c377a2b120"
 }
