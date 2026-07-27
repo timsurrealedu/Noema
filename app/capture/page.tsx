@@ -25,7 +25,7 @@ function timeFor(value:string){return new Intl.DateTimeFormat("en-US",{hour:"num
 function matches(capture:Capture,filter:Filter){return filter==="All"||capture.status===({"Needs review":"review","Processing":"processing","Failed":"failed"} as const)[filter as Exclude<Filter,"All">]}
 
 export default function CaptureInbox(){
-  const {addCapture,captures,confirmCapture,requestInterpretation,updateCapture}=useAppState();
+  const {addCapture,cancelInterpretation,captures,confirmCapture,requestInterpretation,updateCapture}=useAppState();
   const [filter,setFilter]=useState<Filter>("All");
   const visible=useMemo(()=>captures.filter(item=>item.status!=="dismissed"&&matches(item,filter)),[captures,filter]);
   const [selectedId,setSelectedId]=useState<string|null>(null);
@@ -64,7 +64,7 @@ export default function CaptureInbox(){
         {selected?<>
           <header className="inspector-head"><button className="icon-button mobile-detail-back" aria-label="Back to capture list" onClick={()=>setDetailOpen(false)}><ArrowLeft/></button><div><span>Original capture</span><time>{timeFor(selected.createdAt)}</time></div><span className={`capture-source ${selected.source}`}><SourceIcon source={selected.source}/>{sourceMeta[selected.source].label}</span></header>
           <div className="original-capture"><p>{selected.text}</p><span>{selected.sourceLabel}</span></div>
-          {selected.status==="processing"&&<section className="processing-panel" aria-live="polite"><CircleNotch className="spin"/><div><strong>Interpreting this capture</strong><span>Reading the source and identifying useful objects.</span><i><b style={{width:`${selected.progress??28}%`}}/></i></div><em>{selected.progress??28}%</em></section>}
+          {selected.status==="processing"&&<section className="processing-panel" aria-live="polite"><CircleNotch className="spin"/><div><strong>Interpreting this capture</strong><span>Reading the source and identifying useful objects.</span><i><b style={{width:`${selected.progress??28}%`}}/></i></div><em>{selected.progress??28}%</em>{selected.jobId&&<button className="secondary" onClick={()=>cancelInterpretation(selected.id)}>Cancel</button>}</section>}
           {selected.status==="failed"&&<section className="failure-panel" role="alert"><WarningCircle/><div><strong>Processing failed</strong><p>{selected.error}</p></div><button className="secondary" onClick={()=>retry(selected)}><ArrowClockwise/>Try again</button></section>}
           {(selected.status==="review"||selected.status==="confirmed")&&<>
             <section className="interpretation-head"><div><Sparkle/><span><strong>Interpretation</strong><small>{selected.status==="review"?"Check the detected objects before confirming.":"This interpretation has been confirmed."}</small></span></div><span className={`capture-status status-${selected.status}`}><StatusIcon capture={selected}/>{statusMeta[selected.status].label}</span></section>

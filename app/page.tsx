@@ -24,7 +24,7 @@ const activity = [
 ] as const;
 
 export default function Today() {
-  const {addCapture,addFileCapture,captures,events,tasks,toggleTask,updateCapture}=useAppState();
+  const {addAndInterpretCapture,addFileCapture,captures,confirmCapture,events,tasks,toggleTask,updateCapture}=useAppState();
   const [theme,setTheme] = useState<"dark"|"light">("dark");
   const [capture,setCapture] = useState("");
   const [reviewId,setReviewId] = useState<string|null>(null);
@@ -50,8 +50,9 @@ export default function Today() {
   const todayEvents=events.filter(event=>event.day===4).toSorted((a,b)=>a.time.localeCompare(b.time));
   const todayTasks=tasks.filter(task=>task.due==="Today");
   const pendingCaptures=captures.filter(item=>item.status==="review").length;
-  function submit(e:FormEvent) {e.preventDefault();if(capture.trim())setReviewId(addCapture(capture.trim()))}
-  function closeReview(status:"confirmed"|"dismissed") {if(reviewId)updateCapture(reviewId,status);setReviewId(null);if(status==="confirmed")setCapture("")}
+  const review=captures.find(item=>item.id===reviewId);
+  function submit(e:FormEvent) {e.preventDefault();if(capture.trim())setReviewId(addAndInterpretCapture(capture.trim()))}
+  function closeReview(status:"confirmed"|"dismissed") {if(reviewId){if(status==="confirmed")confirmCapture(reviewId);else updateCapture(reviewId,status)}setReviewId(null);if(status==="confirmed")setCapture("")}
 
   return <div className="app-shell">
     <a className="skip" href="#main">Skip to main content</a>
@@ -77,7 +78,7 @@ export default function Today() {
         <p>Two meetings, three tasks due, and <Link className="text-link" href="/capture">{pendingCaptures || "no"} capture{pendingCaptures===1?"":"s"} need review</Link>.</p>
       </section>
 
-      <form className="capture" id="capture" onSubmit={submit}>
+      <form className="capture" id="quick-capture" onSubmit={submit}>
         <label htmlFor="capture">Quick capture</label>
         <Plus aria-hidden="true"/>
         <input ref={input} id="capture" value={capture} onChange={e=>setCapture(e.target.value)} placeholder="Capture a thought, task, event, file, or command…"/>
@@ -88,13 +89,10 @@ export default function Today() {
         <kbd>⌘ ⇧ C</kbd>
       </form>
 
-      {reviewId&&<section className="review" aria-live="polite">
-        <div className="review-head"><span><Sparkle/>Sample interpretation</span><button aria-label="Dismiss review" onClick={()=>closeReview("dismissed")}><X/></button></div>
-        <div className="review-items">
-          <article><CalendarBlank/><div><strong>Meeting with Dian</strong><span>Tomorrow · 1:00–2:00 PM · Reminder 12:00 PM</span></div></article>
-          <article><CheckSquare/><div><strong>Review proposal</strong><span>Due tomorrow · RevoU Partnership</span></div></article>
-        </div>
-        <div className="review-actions"><button className="secondary" onClick={()=>setReviewId(null)}>Edit</button><button className="primary" onClick={()=>closeReview("confirmed")}><Check/>Confirm all</button></div>
+      {review&&<section className="review" aria-live="polite">
+        <div className="review-head"><span><Sparkle/>{review.status==="processing"?"Interpreting capture":review.status==="failed"?"Interpretation failed":"Interpretation ready"}</span><button aria-label="Dismiss review" onClick={()=>closeReview("dismissed")}><X/></button></div>
+        {review.status==="processing"?<p>Reading the capture and identifying useful objects…</p>:review.status==="failed"?<p role="alert">{review.error||"Processing failed. Open Capture to retry."}</p>:<div className="review-items">{review.objects.map((object,index)=><article key={`${object.type}-${index}`}>{object.type==="event"?<CalendarBlank/>:object.type==="task"?<CheckSquare/>:<FileText/>}<div><strong>{object.title}</strong><span>{object.detail}</span></div></article>)}</div>}
+        <div className="review-actions"><Link className="secondary" href={`/capture?open=${review.id}`}>{review.status==="processing"?"Continue in Capture":"Edit"}</Link>{review.status==="review"&&review.objects.length>0&&<button className="primary" onClick={()=>closeReview("confirmed")}><Check/>Confirm all</button>}</div>
       </section>}
 
       <section className="timeline" aria-labelledby="timeline-title">

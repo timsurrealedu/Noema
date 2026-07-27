@@ -52,7 +52,7 @@ Supported MVP targets:
 - [x] Authentication, sessions, optional TOTP login, and revocation
   - Complete when Settings enrolls/disables TOTP, recovery codes are generated once and stored hashed, recovery invalidates used codes, and browser tests cover enrollment, login, recovery, and revocation.
 - [x] Durable database persistence, synchronization, encrypted backup, and full workspace export
-- [~] Codex interpretation service with review, approval, cancellation, and audit records
+- [x] Codex interpretation service with review, approval, cancellation, and audit records
   - Complete when quick capture uses real interpretation results, sensitive execution shows the actual command/diff, approval is MFA-bound and single-use, SSE reconnects without duplicate events, and cancel/retry paths have browser coverage.
 - [x] File/object storage, OCR, transcription, source preservation, and attachment retrieval
 - [x] Google Calendar synchronization

@@ -275,6 +275,53 @@
       "server_settings_stamp"
     ],
     "4": [
+      "app_calendar_page",
+      "app_calendar_page_blankevent",
+      "app_calendar_page_calendarpage",
+      "app_calendar_page_days",
+      "app_calendar_page_monday",
+      "app_calendar_page_positionfor",
+      "app_calendar_page_remindervalue",
+      "app_calendar_page_syncstatus",
+      "app_calendar_page_weekdays",
+      "app_capture_page",
+      "app_capture_page_captureinbox",
+      "app_capture_page_capturerow",
+      "app_capture_page_filter",
+      "app_capture_page_filters",
+      "app_capture_page_matches",
+      "app_capture_page_sourceicon",
+      "app_capture_page_sourcemeta",
+      "app_capture_page_statusicon",
+      "app_capture_page_statusmeta",
+      "app_capture_page_timefor",
+      "app_components_appstate",
+      "app_components_appstate_api",
+      "app_components_appstate_appdata",
+      "app_components_appstate_appstate",
+      "app_components_appstate_appstateprovider",
+      "app_components_appstate_capture",
+      "app_components_appstate_captureobject",
+      "app_components_appstate_capturesource",
+      "app_components_appstate_context",
+      "app_components_appstate_event",
+      "app_components_appstate_note",
+      "app_components_appstate_notelink",
+      "app_components_appstate_project",
+      "app_components_appstate_seed",
+      "app_components_appstate_task",
+      "app_components_appstate_taskdependency",
+      "app_components_appstate_useappstate",
+      "app_page",
+      "app_page_activity",
+      "app_page_nav",
+      "app_page_today",
+      "app_tasks_page",
+      "app_tasks_page_blanktask",
+      "app_tasks_page_remindervalue",
+      "app_tasks_page_taskspage"
+    ],
+    "5": [
       "next",
       "package",
       "package_dependencies",
@@ -318,45 +365,6 @@
       "typescript",
       "web_push"
     ],
-    "5": [
-      "app_calendar_page",
-      "app_calendar_page_blankevent",
-      "app_calendar_page_calendarpage",
-      "app_calendar_page_days",
-      "app_calendar_page_monday",
-      "app_calendar_page_positionfor",
-      "app_calendar_page_remindervalue",
-      "app_calendar_page_syncstatus",
-      "app_calendar_page_weekdays",
-      "app_components_appstate",
-      "app_components_appstate_api",
-      "app_components_appstate_appdata",
-      "app_components_appstate_appstate",
-      "app_components_appstate_appstateprovider",
-      "app_components_appstate_capture",
-      "app_components_appstate_captureobject",
-      "app_components_appstate_capturesource",
-      "app_components_appstate_context",
-      "app_components_appstate_event",
-      "app_components_appstate_note",
-      "app_components_appstate_notelink",
-      "app_components_appstate_project",
-      "app_components_appstate_seed",
-      "app_components_appstate_task",
-      "app_components_appstate_taskdependency",
-      "app_components_appstate_useappstate",
-      "app_components_servicenotice",
-      "app_components_servicenotice_servicenotice",
-      "app_components_servicenotice_showunavailable",
-      "app_layout",
-      "app_layout_metadata",
-      "app_layout_rootlayout",
-      "app_layout_viewport",
-      "app_tasks_page",
-      "app_tasks_page_blanktask",
-      "app_tasks_page_remindervalue",
-      "app_tasks_page_taskspage"
-    ],
     "6": [
       "app_api_v1_auth_recovery_route",
       "app_api_v1_auth_recovery_route_post",
@@ -394,6 +402,37 @@
       "server_auth_verifytotp"
     ],
     "7": [
+      "app_components_pwaregister",
+      "app_components_pwaregister_pwaregister",
+      "app_components_servicenotice",
+      "app_components_servicenotice_servicenotice",
+      "app_components_servicenotice_showunavailable",
+      "app_layout",
+      "app_layout_metadata",
+      "app_layout_rootlayout",
+      "app_layout_viewport",
+      "app_lib_offlinequeue",
+      "app_lib_offlinequeue_announce",
+      "app_lib_offlinequeue_database",
+      "app_lib_offlinequeue_flushqueue",
+      "app_lib_offlinequeue_listofflinecaptures",
+      "app_lib_offlinequeue_listpending",
+      "app_lib_offlinequeue_listqueued",
+      "app_lib_offlinequeue_observequeue",
+      "app_lib_offlinequeue_offlinecapture",
+      "app_lib_offlinequeue_pendingitem",
+      "app_lib_offlinequeue_queuedrequest",
+      "app_lib_offlinequeue_queueofflinecapture",
+      "app_lib_offlinequeue_queuerequest",
+      "app_lib_offlinequeue_queuestatus",
+      "app_lib_offlinequeue_registersync",
+      "app_lib_offlinequeue_replay",
+      "app_lib_offlinequeue_replaycaptures",
+      "app_lib_offlinequeue_requestresult",
+      "app_lib_offlinequeue_retryqueued",
+      "app_lib_offlinequeue_store"
+    ],
+    "8": [
       "app_api_v1_projects_id_blockers_route",
       "app_api_v1_projects_id_blockers_route_post",
       "app_api_v1_projects_id_milestones_route",
@@ -421,7 +460,7 @@
       "server_projects_types",
       "server_projects_unlinkproject"
     ],
-    "8": [
+    "9": [
       "ref_dom",
       "ref_dom_iterable",
       "ref_esnext",
@@ -449,7 +488,7 @@
       "tsconfig_exclude",
       "tsconfig_include"
     ],
-    "9": [
+    "10": [
       "app_api_v1_integrations_google_calendars_route",
       "app_api_v1_integrations_google_calendars_route_get",
       "app_api_v1_integrations_google_calendars_route_put",
@@ -476,55 +515,7 @@
       "server_google_calendar_selectgooglecalendars",
       "server_google_calendar_tokenfor"
     ],
-    "10": [
-      "app_canvas_page",
-      "app_canvas_page_canvaspage",
-      "app_capture_page",
-      "app_capture_page_captureinbox",
-      "app_capture_page_capturerow",
-      "app_capture_page_filter",
-      "app_capture_page_filters",
-      "app_capture_page_matches",
-      "app_capture_page_sourceicon",
-      "app_capture_page_sourcemeta",
-      "app_capture_page_statusicon",
-      "app_capture_page_statusmeta",
-      "app_capture_page_timefor",
-      "app_components_moduleshell",
-      "app_components_moduleshell_moduleshell",
-      "app_components_moduleshell_nav",
-      "app_components_moduleshell_notification",
-      "app_components_moduleshell_recommendation",
-      "app_components_moduleshell_searchhit",
-      "app_help_page",
-      "app_help_page_helppage",
-      "app_help_page_shortcuts"
-    ],
     "11": [
-      "app_components_pwaregister",
-      "app_components_pwaregister_pwaregister",
-      "app_lib_offlinequeue",
-      "app_lib_offlinequeue_announce",
-      "app_lib_offlinequeue_database",
-      "app_lib_offlinequeue_flushqueue",
-      "app_lib_offlinequeue_listofflinecaptures",
-      "app_lib_offlinequeue_listpending",
-      "app_lib_offlinequeue_listqueued",
-      "app_lib_offlinequeue_observequeue",
-      "app_lib_offlinequeue_offlinecapture",
-      "app_lib_offlinequeue_pendingitem",
-      "app_lib_offlinequeue_queuedrequest",
-      "app_lib_offlinequeue_queueofflinecapture",
-      "app_lib_offlinequeue_queuerequest",
-      "app_lib_offlinequeue_queuestatus",
-      "app_lib_offlinequeue_registersync",
-      "app_lib_offlinequeue_replay",
-      "app_lib_offlinequeue_replaycaptures",
-      "app_lib_offlinequeue_requestresult",
-      "app_lib_offlinequeue_retryqueued",
-      "app_lib_offlinequeue_store"
-    ],
-    "12": [
       "app_api_v1_calendar_sync_conflicts_id_route",
       "app_api_v1_calendar_sync_conflicts_id_route_post",
       "app_api_v1_calendar_sync_route",
@@ -547,7 +538,7 @@
       "server_calendar_sync_resolvecalendarconflict",
       "server_calendar_sync_snapshot"
     ],
-    "13": [
+    "12": [
       "app_api_v1_approvals_id_approve_route",
       "app_api_v1_approvals_id_approve_route_post",
       "app_api_v1_approvals_route",
@@ -566,7 +557,7 @@
       "server_approvals_now",
       "server_approvals_view"
     ],
-    "14": [
+    "13": [
       "app_api_v1_assets_id_annotations_annotationid_route",
       "app_api_v1_assets_id_annotations_annotationid_route_delete",
       "app_api_v1_assets_id_annotations_annotationid_route_patch",
@@ -585,7 +576,7 @@
       "server_annotations_saveannotation",
       "server_annotations_target"
     ],
-    "15": [
+    "14": [
       "app_api_v1_jobs_id_events_route",
       "app_api_v1_jobs_id_events_route_get",
       "app_api_v1_jobs_id_events_route_terminal",
@@ -603,7 +594,7 @@
       "server_jobs_now",
       "server_jobs_retryjob"
     ],
-    "16": [
+    "15": [
       "app_api_v1_tutor_messages_id_insert_route",
       "app_api_v1_tutor_messages_id_insert_route_post",
       "app_api_v1_tutor_route",
@@ -620,7 +611,7 @@
       "server_skills_tutorschema",
       "server_skills_workloadforskill"
     ],
-    "17": [
+    "16": [
       "app_settings_page",
       "app_settings_page_analytics",
       "app_settings_page_applicationkey",
@@ -636,7 +627,7 @@
       "app_settings_page_settingspage",
       "app_settings_page_toggle"
     ],
-    "18": [
+    "17": [
       "app_api_v1_health_route",
       "app_api_v1_health_route_get",
       "server_compiler",
@@ -651,7 +642,7 @@
       "server_compiler_prepareworktree",
       "server_compiler_runcode"
     ],
-    "19": [
+    "18": [
       "app_api_v1_analytics_route",
       "app_api_v1_analytics_route_delete",
       "app_api_v1_analytics_route_get",
@@ -665,7 +656,7 @@
       "server_analytics_setanalyticsenabled",
       "server_analytics_validate"
     ],
-    "20": [
+    "19": [
       "app_api_v1_assets_id_route",
       "app_api_v1_assets_id_route_get",
       "app_api_v1_assets_route",
@@ -679,7 +670,7 @@
       "server_objects_now",
       "server_objects_storeasset"
     ],
-    "21": [
+    "20": [
       "app_api_v1_notification_deliveries_id_route",
       "app_api_v1_notification_deliveries_id_route_patch",
       "app_api_v1_notification_deliveries_route",
@@ -691,6 +682,19 @@
       "server_push_now",
       "server_push_resolvedelivery",
       "server_push_retrydelivery"
+    ],
+    "21": [
+      "app_canvas_page",
+      "app_canvas_page_canvaspage",
+      "app_components_moduleshell",
+      "app_components_moduleshell_moduleshell",
+      "app_components_moduleshell_nav",
+      "app_components_moduleshell_notification",
+      "app_components_moduleshell_recommendation",
+      "app_components_moduleshell_searchhit",
+      "app_help_page",
+      "app_help_page_helppage",
+      "app_help_page_shortcuts"
     ],
     "22": [
       "app_components_markdowncontent",
@@ -796,76 +800,73 @@
       "app_components_tutorpanel_tutorpanel"
     ],
     "33": [
-      "app_page",
-      "app_page_activity",
-      "app_page_nav",
-      "app_page_today"
-    ],
-    "34": [
       "test_browser_auth_spec",
       "test_browser_auth_spec_loginwithtotp",
       "test_browser_auth_spec_passwordstep",
       "test_browser_auth_spec_totp"
     ],
-    "35": [
+    "34": [
       "app_api_v1_projects_route",
       "app_api_v1_projects_route_get",
       "app_api_v1_projects_route_post"
     ],
-    "36": [
+    "35": [
       "app_assets_id_annotate_page",
       "app_assets_id_annotate_page_annotatepdfpage",
       "app_assets_id_annotate_page_annotation"
     ],
-    "37": [
+    "36": [
       "app_coding_page",
       "app_coding_page_approval",
       "app_coding_page_codingpage"
     ],
-    "38": [
+    "37": [
       "server_codex",
       "server_codex_codexargs",
       "server_codex_runcodex"
     ],
-    "39": [
+    "38": [
       "app_components_modaldialog",
       "app_components_modaldialog_modaldialog"
     ],
-    "40": [
+    "39": [
       "app_error",
       "app_error_errorpage"
     ],
-    "41": [
+    "40": [
       "app_loading",
       "app_loading_loading"
     ],
-    "42": [
+    "41": [
       "app_login_page",
       "app_login_page_loginpage"
     ],
-    "43": [
+    "42": [
       "app_not_found",
       "app_not_found_notfound"
     ],
-    "44": [
+    "43": [
       "next_config",
       "next_config_config"
     ],
-    "45": [
+    "44": [
       "next_env_d",
       "next_env_d_rationale_5"
     ],
-    "46": [
+    "45": [
       "playwright_config",
       "playwright_config_datadir"
     ],
-    "47": [
+    "46": [
       "public_sw",
       "public_sw_shell"
     ],
-    "48": [
+    "47": [
       "server_mjs_d",
       "server_mjs_d_mjs"
+    ],
+    "48": [
+      "test_browser_00_capture_spec"
     ]
   },
   "cohesion": {
@@ -873,24 +874,24 @@
     "1": 0.05719298245614035,
     "2": 0.11533242876526459,
     "3": 0.08383838383838384,
-    "4": 0.047619047619047616,
-    "5": 0.07657657657657657,
+    "4": 0.06767676767676768,
+    "5": 0.047619047619047616,
     "6": 0.1532976827094474,
-    "7": 0.1476923076923077,
-    "8": 0.07692307692307693,
-    "9": 0.19333333333333333,
-    "10": 0.12121212121212122,
-    "11": 0.2510822510822511,
-    "12": 0.21904761904761905,
-    "13": 0.25,
-    "14": 0.2426470588235294,
-    "15": 0.275,
-    "16": 0.22857142857142856,
-    "17": 0.15384615384615385,
-    "18": 0.28205128205128205,
-    "19": 0.3333333333333333,
-    "20": 0.30303030303030304,
-    "21": 0.38181818181818183,
+    "7": 0.16502463054187191,
+    "8": 0.1476923076923077,
+    "9": 0.07692307692307693,
+    "10": 0.19333333333333333,
+    "11": 0.21904761904761905,
+    "12": 0.25,
+    "13": 0.2426470588235294,
+    "14": 0.275,
+    "15": 0.22857142857142856,
+    "16": 0.15384615384615385,
+    "17": 0.28205128205128205,
+    "18": 0.3333333333333333,
+    "19": 0.30303030303030304,
+    "20": 0.38181818181818183,
+    "21": 0.21818181818181817,
     "22": 0.28888888888888886,
     "23": 0.24444444444444444,
     "24": 0.37777777777777777,
@@ -902,11 +903,11 @@
     "30": 0.4,
     "31": 0.5,
     "32": 0.5,
-    "33": 0.5,
-    "34": 0.8333333333333334,
+    "33": 0.8333333333333334,
+    "34": 0.6666666666666666,
     "35": 0.6666666666666666,
     "36": 0.6666666666666666,
-    "37": 0.6666666666666666,
+    "37": 1.0,
     "38": 1.0,
     "39": 1.0,
     "40": 1.0,

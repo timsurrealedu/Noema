@@ -11,7 +11,7 @@ export type CaptureSource = "typed"|"voice"|"file"|"link";
 export type CaptureObject = {type:"task"|"event"|"note"; title:string; detail:string};
 export type Capture = {
   id:string; text:string; createdAt:string; status:"processing"|"review"|"confirmed"|"failed"|"dismissed";
-  source:CaptureSource; sourceLabel:string; progress?:number; error?:string; objects:CaptureObject[]; assets?:{id:string;name:string;mime:string;size:number}[]; version?:number;
+  source:CaptureSource; sourceLabel:string; progress?:number; error?:string; jobId?:string; objects:CaptureObject[]; assets?:{id:string;name:string;mime:string;size:number}[]; version?:number;
 };
 export type Project = {id:string; name:string; status:"Active"|"Planned"|"Archived"; summary:string; version?:number};
 export type TaskDependency = {taskId:string; dependsOnTaskId:string; createdAt:string};
@@ -20,9 +20,11 @@ export type NoteLink = {sourceNoteId:string; targetNoteId:string; linkText:strin
 type AppData = {tasks:Task[]; events:Event[]; notes:Note[]; captures:Capture[]; projects:Project[]; taskDependencies:TaskDependency[]; noteLinks:NoteLink[]};
 type AppState = AppData & {
   addCapture:(text:string)=>string;
+  addAndInterpretCapture:(text:string)=>string;
   addFileCapture:(file:File)=>string;
   updateCapture:(id:string,status:Capture["status"])=>void;
   confirmCapture:(id:string)=>void;
+  cancelInterpretation:(id:string)=>void;
   requestInterpretation:(id:string)=>void;
   toggleTask:(id:string)=>void;
   saveTask:(task:Task)=>void;
@@ -93,6 +95,13 @@ export function AppStateProvider({children}:{children:ReactNode}) {
 
   const persist=(path:string,method:string,value:unknown)=>{const idempotencyKey=crypto.randomUUID();void api(path,method,value,idempotencyKey).catch(error=>{if(!error.status||error.status>=500)void queueRequest({path,method,body:value,idempotencyKey,dependencies:[]});showUnavailable(`${error.message} Your change remains saved in this browser and will retry when the server is reachable.`)});};
   const patchCapture=(id:string,patch:Partial<Capture>)=>setData(current=>({...current,captures:current.captures.map(item=>item.id===id?{...item,...patch}:item)}));
+  const interpret=(capture:Capture)=>api(`/captures/${capture.id}/interpret`,"POST",{}).then(({jobId})=>{patchCapture(capture.id,{jobId});
+    const source=new EventSource(`/api/v1/jobs/${jobId}/events`),close=(patch:Partial<Capture>)=>{source.close();patchCapture(capture.id,patch)};
+    source.addEventListener("state",event=>{const info=JSON.parse((event as MessageEvent).data);
+      if(info.state==="completed")api(`/jobs/${jobId}`).then(job=>close({status:"review",objects:job.result?.objects||[],progress:undefined,jobId:undefined})).catch(()=>close({status:"failed",error:"The completed interpretation could not be loaded.",progress:undefined,jobId:undefined}));
+      else if(info.state==="failed"||info.state==="cancelled"||info.state==="expired")close({status:"failed",error:info.state==="cancelled"?"Interpretation cancelled.":"Processing failed on the server. Try again.",progress:undefined,jobId:undefined});
+    });
+  }).catch(error=>{showUnavailable(`${error.message} Server interpretation is unavailable.`);patchCapture(capture.id,{status:"failed",error:error.message,progress:undefined})});
   const applyObjects=(created:{type:string;object:any}[])=>setData(current=>{
     const tasks=[...current.tasks],events=[...current.events],notes=[...current.notes];
     for(const {type,object} of created){
@@ -104,6 +113,7 @@ export function AppStateProvider({children}:{children:ReactNode}) {
   });
   const value:AppState={...data,
     addCapture:text=>{const capture={id:crypto.randomUUID(),text,createdAt:new Date().toISOString(),status:"review" as const,source:"typed" as const,sourceLabel:"Typed capture",objects:[],version:1};setData(current=>({...current,captures:[capture,...current.captures]}));persist("/captures","POST",capture);return capture.id},
+    addAndInterpretCapture:text=>{const capture={id:crypto.randomUUID(),text,createdAt:new Date().toISOString(),status:"processing" as const,source:"typed" as const,sourceLabel:"Typed capture",objects:[],progress:10,version:1};setData(current=>({...current,captures:[capture,...current.captures]}));api("/captures","POST",capture).then(()=>interpret(capture)).catch(error=>{showUnavailable(`${error.message} The capture remains saved in this browser.`);patchCapture(capture.id,{status:"failed",error:error.message,progress:undefined})});return capture.id},
     addFileCapture:file=>{const size=file.size>1024*1024?`${(file.size/1048576).toFixed(1)} MB`:`${Math.max(1,Math.round(file.size/1024))} KB`;const kind=file.type.startsWith("image/")?"Image":file.type.startsWith("audio/")?"Audio":file.type==="application/pdf"?"Document":"File";
       const capture={id:crypto.randomUUID(),text:file.name,createdAt:new Date().toISOString(),status:"review" as const,source:"file" as const,sourceLabel:`${kind} · ${size}`,objects:[],version:1};
       setData(current=>({...current,captures:[capture,...current.captures]}));
@@ -121,17 +131,10 @@ export function AppStateProvider({children}:{children:ReactNode}) {
         applyObjects(capture.objects.map(object=>({type:object.type,object:object.type==="task"?{id:crypto.randomUUID(),title:object.title,project:"Inbox",due:"No date",priority:"Medium",completed:false,version:1}:object.type==="event"?{id:crypto.randomUUID(),title:object.title,day:new Date().getDay(),time:"09:00",top:0,height:58,location:undefined,active:false,version:1}:{id:crypto.randomUUID(),title:object.title,excerpt:object.detail.slice(0,140),content:object.detail||object.title,tags_json:"[]",updated_at:new Date().toISOString(),ai:true,version:1}})));
       });
     },
+    cancelInterpretation:id=>{const capture=data.captures.find(item=>item.id===id);if(!capture?.jobId)return;void api(`/jobs/${capture.jobId}/cancel`,"POST",{}).catch(error=>showUnavailable(error.message))},
     requestInterpretation:id=>{const capture=data.captures.find(item=>item.id===id);if(!capture)return;
       patchCapture(id,{status:"processing",progress:10,error:undefined});
-      api(`/captures/${id}/interpret`,"POST",{}).then(({jobId})=>{
-        const source=new EventSource(`/api/v1/jobs/${jobId}/events`);
-        const close=(patch:Partial<Capture>)=>{source.close();patchCapture(id,patch)};
-        source.addEventListener("state",event=>{const info=JSON.parse((event as MessageEvent).data);
-          if(info.state==="completed")api(`/jobs/${jobId}`).then(job=>close({status:"review",objects:job.result?.objects||capture.objects,progress:undefined})).catch(()=>close({status:"review",progress:undefined}));
-          else if(info.state==="failed"||info.state==="cancelled"||info.state==="expired")close({status:"failed",error:"Processing failed on the server. Try again.",progress:undefined});
-        });
-        source.onerror=()=>close({status:"review",progress:undefined});
-      }).catch(error=>{showUnavailable(`${error.message} Server interpretation is unavailable.`);patchCapture(id,{status:"review",progress:undefined})});
+      void interpret(capture);
     },
     toggleTask:id=>{const task=data.tasks.find(item=>item.id===id);if(!task)return;const changed={...task,completed:!task.completed};setData(current=>({...current,tasks:current.tasks.map(item=>item.id===id?{...changed,version:(task.version||0)+1}:item)}));persist("/tasks","POST",changed)},
     saveTask:task=>{const stored={...task,version:task.version?task.version+1:1};setData(current=>({...current,tasks:current.tasks.some(item=>item.id===task.id)?current.tasks.map(item=>item.id===task.id?stored:item):[stored,...current.tasks]}));persist("/tasks","POST",task)},

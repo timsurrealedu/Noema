@@ -67,7 +67,8 @@ test("remote actions disclose missing AI and persistence",()=>{
   assert.match(notice,/AI and server persistence aren’t connected yet/);
   assert.doesNotMatch(read("app/login/page.tsx"),/secure sign-in link was sent/i);
   const today=read("app/page.tsx");
-  assert.match(today,/Sample interpretation/);
+  assert.match(today,/addAndInterpretCapture/);
+  assert.match(today,/Interpretation ready/);
   assert.doesNotMatch(today,/AI interpretation is not connected/);
   assert.doesNotMatch(today,/File captured\. Server interpretation/);
 });

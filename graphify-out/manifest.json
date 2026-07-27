@@ -5,9 +5,9 @@
     "semantic_hash": "736fcf2bed1b4000341f505c030d5616"
   },
   "app/page.tsx": {
-    "mtime": 1785081229.1243262,
-    "ast_hash": "429d0821ffdfceb5ad811f8406bce244",
-    "semantic_hash": "429d0821ffdfceb5ad811f8406bce244"
+    "mtime": 1785172159.089024,
+    "ast_hash": "71598a57601e5cf103457e8ff8cdf40d",
+    "semantic_hash": "71598a57601e5cf103457e8ff8cdf40d"
   },
   "next-env.d.ts": {
     "mtime": 1784828845.45338,
@@ -80,14 +80,14 @@
     "semantic_hash": "6fd74c99ad5bff5106e54665aa66190a"
   },
   "app/capture/page.tsx": {
-    "mtime": 1785082628.2510667,
-    "ast_hash": "49930ff4e4a77b09ef89f3e7a0bd128e",
-    "semantic_hash": "49930ff4e4a77b09ef89f3e7a0bd128e"
+    "mtime": 1785172067.4550323,
+    "ast_hash": "9f87b2576511384b74e25a87192cbade",
+    "semantic_hash": "9f87b2576511384b74e25a87192cbade"
   },
   "app/components/AppState.tsx": {
-    "mtime": 1785089205.5687597,
-    "ast_hash": "b2da37da3d6140417b5fd421eb787452",
-    "semantic_hash": "b2da37da3d6140417b5fd421eb787452"
+    "mtime": 1785172067.3260324,
+    "ast_hash": "614100b2b288c86a25c8fbff9085111e",
+    "semantic_hash": "614100b2b288c86a25c8fbff9085111e"
   },
   "app/components/PWARegister.tsx": {
     "mtime": 1785086521.7942295,
@@ -135,9 +135,9 @@
     "semantic_hash": "b7aada1af5db919a62edc6982849c94a"
   },
   "test/frontend.test.js": {
-    "mtime": 1785171189.8727508,
-    "ast_hash": "303e681910779cdcd8f1aad14796c344",
-    "semantic_hash": "303e681910779cdcd8f1aad14796c344"
+    "mtime": 1785172021.6270313,
+    "ast_hash": "783408e775beddae498b1fb09696f737",
+    "semantic_hash": "783408e775beddae498b1fb09696f737"
   },
   "app/api/v1/auth/login/route.ts": {
     "mtime": 1785085599.0668235,
@@ -743,5 +743,10 @@
     "mtime": 1785171775.9489472,
     "ast_hash": "ec86a4f40a233d53b524049ba1fa7603",
     "semantic_hash": "ec86a4f40a233d53b524049ba1fa7603"
+  },
+  "test/browser/00-capture.spec.ts": {
+    "mtime": 1785172067.7310324,
+    "ast_hash": "3bf0737a0272bf3e67dafaab8911c9df",
+    "semantic_hash": "3bf0737a0272bf3e67dafaab8911c9df"
   }
 }
