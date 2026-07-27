@@ -1,13 +1,16 @@
 import AxeBuilder from "@axe-core/playwright";
+import {createHmac} from "node:crypto";
 import {expect,test,type Page} from "@playwright/test";
 
-const routes=["/","/capture","/tasks","/calendar","/vault","/graph","/projects","/study","/coding","/coding/compiler","/automations","/dashboards","/notifications","/activity","/settings","/help"];
+const routes=["/","/capture","/tasks","/calendar","/vault","/graph","/projects","/study","/coding","/coding/compiler","/automations","/dashboards","/plugins","/notifications","/activity","/settings","/help"];
 
 async function login(page:Page){
   await page.goto("/login");await page.getByLabel("Email address").fill("owner@example.com");
   await page.getByLabel("Password").fill("correct horse battery staple");
   await page.getByRole("button",{name:"Continue securely"}).click();await expect(page).toHaveURL("/");
 }
+function totp(secret:string){const alphabet="ABCDEFGHIJKLMNOPQRSTUVWXYZ234567",bytes:number[]=[];let bits=0,value=0;for(const char of secret){value=(value<<5)|alphabet.indexOf(char);bits+=5;if(bits>=8){bytes.push(value>>>(bits-8)&255);bits-=8}}const counter=Buffer.alloc(8);counter.writeBigUInt64BE(BigInt(Math.floor(Date.now()/30_000)));const digest=createHmac("sha1",Buffer.from(bytes)).update(counter).digest(),offset=digest[19]&15;return String((digest.readUInt32BE(offset)&0x7fffffff)%1_000_000).padStart(6,"0")}
+async function verifyRecentMfa(page:Page){const secret=await page.evaluate(async()=>{const response=await fetch("/api/v1/auth/totp",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"}),body=await response.json();if(!response.ok)throw new Error(body.error?.message);return body.secret}),code=totp(secret);await page.evaluate(async code=>{const response=await fetch("/api/v1/auth/totp",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code})});if(!response.ok)throw new Error(await response.text())},code)}
 
 test("primary routes work at desktop and mobile widths",async({page})=>{
   test.setTimeout(240_000);await login(page);
@@ -19,7 +22,7 @@ test("primary routes work at desktop and mobile widths",async({page})=>{
 
 test("primary surfaces pass automated WCAG 2.2 AA rules",async({page})=>{
   test.setTimeout(120_000);await login(page);
-  for(const route of ["/","/capture","/tasks","/calendar","/vault","/graph","/dashboards","/settings","/login"]){
+  for(const route of ["/","/capture","/tasks","/calendar","/vault","/graph","/dashboards","/plugins","/settings","/login"]){
     await page.goto(route);const result=await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa","wcag22aa"]).analyze();
     expect(result.violations,`${route}: ${result.violations.map(item=>item.id).join(", ")}`).toEqual([]);
   }
@@ -69,6 +72,11 @@ test("mobile repository IDE registers, browses, edits, and reviews an isolated c
   expect(await page.evaluate(async()=>fetch(`/api/v1/repositories/${location.pathname.split("/").pop()}?path=../PROJECT.md`).then(response=>response.status))).toBe(403);await page.getByRole("button",{name:/package.json/}).click();const editor=page.getByLabel(/Editing package.json/);await expect(editor).toBeVisible();await editor.press("End");await page.getByRole("button",{name:"Tab",exact:true}).click();await expect(page.getByRole("button",{name:/Save 1/})).toBeEnabled();
   page.once("dialog",dialog=>dialog.accept());await page.getByRole("button",{name:"status",exact:true}).click();await expect(page.getByText(/status · exit 0/)).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
   expect((await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa","wcag22aa"]).analyze()).violations).toEqual([]);
+});
+
+test("plugin marketplace inspects, installs, runs, disables, and uninstalls safely",async({page})=>{
+  test.setTimeout(90_000);await login(page);await verifyRecentMfa(page);await page.goto("/plugins");await page.getByRole("button",{name:"Inspect source"}).click();const dialog=page.getByRole("dialog");await expect(dialog).toContainText("notifications:write");await expect(dialog).toContainText("process.stdin");page.once("dialog",value=>value.accept());await dialog.getByRole("button",{name:"Install verified package"}).click();await expect(page.getByText("Browser plugin 1.0.0 installed")).toBeVisible();
+  page.once("dialog",value=>value.accept());await page.getByRole("button",{name:"Run",exact:true}).click();await expect(page.getByText(/Browser plugin completed · 1 notification effect/)).toBeVisible();page.once("dialog",value=>value.accept());await page.getByRole("button",{name:"Disable",exact:true}).click();await expect(page.getByText("disabled",{exact:true})).toBeVisible();page.once("dialog",value=>value.accept());await page.getByRole("button",{name:"Uninstall",exact:true}).click();await expect(page.getByText("Browser plugin uninstalled")).toBeVisible();await expect(page.getByText("No plugins installed")).toBeVisible();await page.evaluate(async()=>{const response=await fetch("/api/v1/auth/totp",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:"correct horse battery staple"})});if(!response.ok)throw new Error(await response.text())});
 });
 
 for(const width of [375,768,1024,1440])test(`Today visual baseline at ${width}px`,async({page})=>{

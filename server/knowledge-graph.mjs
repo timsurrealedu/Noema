@@ -18,7 +18,7 @@ const tableSpecs=[
 const clean=value=>String(value||"Untitled").replace(/[\r\n\t]+/g," ").trim().slice(0,300);
 
 export function syncKnowledgeGraph(db=getDatabase()){
-  const nodes=[],edges=[],stamp=new Date().toISOString(),known=new Set();
+  const nodes=[],edges=[],previous=db.prepare("SELECT MAX(updated_at) value FROM knowledge_nodes").get()?.value,stamp=new Date(Math.max(Date.now(),previous?Date.parse(previous)+1:0)).toISOString(),known=new Set();
   for(const [type,table,columns,where,label] of tableSpecs)for(const row of db.prepare(`SELECT ${columns} FROM ${table} WHERE ${where}`).all()){const id=nodeId(type,row.id);known.add(id);nodes.push({id,type,objectId:row.id,label:clean(label(row)),href:href[type](row.id)})}
   const add=(sourceType,sourceId,targetType,targetId,kind,provenance)=>{const source=nodeId(sourceType,sourceId),target=nodeId(targetType,targetId);if(source!==target&&known.has(source)&&known.has(target))edges.push({id:edgeId(source,target,kind,provenance),source,target,kind,provenance})};
   for(const row of db.prepare("SELECT id,project FROM tasks WHERE archived=0 AND project<>''").all()){const project=db.prepare("SELECT id FROM projects WHERE name=? COLLATE NOCASE").get(row.project);if(project)add("task",row.id,"project",project.id,"belongs-to","tasks.project")}

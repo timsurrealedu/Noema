@@ -32,12 +32,12 @@
 
 ## 4 — Plugin marketplace
 
-- [ ] Define a versioned manifest, permissions, compatibility, and integrity model
-- [ ] Browse installed and explicitly configured catalog plugins
-- [ ] Inspect permissions and source before installation or upgrade
-- [ ] Install, enable, disable, update, and uninstall transactionally
-- [ ] Isolate plugin execution and audit permission-sensitive operations
-- [ ] Verify malicious manifests, integrity failures, rollback, and offline behavior
+- [x] Define a versioned manifest, permissions, compatibility, and integrity model
+- [x] Browse installed and explicitly configured catalog plugins
+- [x] Inspect permissions and source before installation or upgrade
+- [x] Install, enable, disable, update, and uninstall transactionally
+- [x] Isolate plugin execution and audit permission-sensitive operations
+- [x] Verify malicious manifests, integrity failures, rollback, and offline behavior
 
 ## 5 — Custom dashboard builder
 
