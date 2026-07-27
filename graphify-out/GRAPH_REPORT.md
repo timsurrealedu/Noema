@@ -4,18 +4,18 @@
 - cluster-only mode — file stats not available
 
 ## Summary
-- 776 nodes · 1560 edges · 52 communities (41 shown, 11 thin omitted)
+- 785 nodes · 1577 edges · 52 communities (41 shown, 11 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 6 edges (avg confidence: 0.55)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `92b358da`
+- Built from commit: `77940f2b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- core.mjs
 - modules.mjs
+- core.mjs
 - json
 - db.mjs
 - scripts
@@ -33,9 +33,9 @@
 - page.tsx
 - compiler.mjs
 - route.ts
-- objects.mjs
 - push.mjs
 - ModuleShell.tsx
+- recommendations.mjs
 - page.tsx
 - page.tsx
 - ai.mjs
@@ -88,21 +88,21 @@
 
 ## Communities (52 total, 11 thin omitted)
 
-### Community 0 - "core.mjs"
+### Community 0 - "modules.mjs"
+Cohesion: 0.05
+Nodes (63): DELETE(), GET(), POST(), PATCH(), POST(), GET(), POST(), POST() (+55 more)
+
+### Community 1 - "core.mjs"
 Cohesion: 0.06
 Nodes (65): POST(), DELETE(), GET(), GET(), GET(), GET(), POST(), GET() (+57 more)
 
-### Community 1 - "modules.mjs"
-Cohesion: 0.06
-Nodes (56): GET(), POST(), PATCH(), GET(), POST(), POST(), POST(), GET() (+48 more)
-
 ### Community 2 - "json"
 Cohesion: 0.12
-Nodes (44): POST(), GET(), POST(), POST(), DELETE(), DELETE(), GET(), POST() (+36 more)
+Nodes (43): POST(), GET(), POST(), POST(), DELETE(), DELETE(), GET(), POST() (+35 more)
 
 ### Community 3 - "db.mjs"
 Cohesion: 0.08
-Nodes (32): GET(), safe(), PATCH(), GET(), GET(), PATCH(), backup, ensureColumn() (+24 more)
+Nodes (33): GET(), POST(), GET(), safe(), GET(), PATCH(), backup, ensureColumn() (+25 more)
 
 ### Community 4 - "scripts"
 Cohesion: 0.05
@@ -149,8 +149,8 @@ Cohesion: 0.28
 Nodes (12): GET(), terminal, POST(), addJobEvent(), cancelJob(), claimJob(), enqueueJob(), failJob() (+4 more)
 
 ### Community 15 - "skills.mjs"
-Cohesion: 0.23
-Nodes (12): POST(), GET(), POST(), buildSkillPrompt(), definitions, insertTutorMessage(), loadTutorSession(), runTutor() (+4 more)
+Cohesion: 0.22
+Nodes (13): POST(), GET(), POST(), buildSkillPrompt(), definitions, getSkill(), insertTutorMessage(), loadTutorSession() (+5 more)
 
 ### Community 16 - "page.tsx"
 Cohesion: 0.15
@@ -164,17 +164,17 @@ Nodes (10): GET(), buildCommand(), cleanupWorktree(), compilerCapabilities(), ex
 Cohesion: 0.33
 Nodes (10): DELETE(), GET(), PATCH(), POST(), analyticsStatus(), deleteAnalytics(), recordAnalytics(), schemas (+2 more)
 
-### Community 19 - "objects.mjs"
-Cohesion: 0.30
-Nodes (8): GET(), POST(), allowedMimes, assetPath(), attachAssets(), getAsset(), now(), storeAsset()
-
-### Community 20 - "push.mjs"
+### Community 19 - "push.mjs"
 Cohesion: 0.38
 Nodes (8): PATCH(), GET(), claimDelivery(), deliverOne(), listDeliveries(), now(), resolveDelivery(), retryDelivery()
 
-### Community 21 - "ModuleShell.tsx"
+### Community 20 - "ModuleShell.tsx"
 Cohesion: 0.22
 Nodes (6): ModuleShell(), nav, Notification, Recommendation, SearchHit, shortcuts
+
+### Community 21 - "recommendations.mjs"
+Cohesion: 0.44
+Nodes (7): PATCH(), GET(), buildRecommendations(), decideRecommendation(), now(), recommendations(), view()
 
 ### Community 22 - "page.tsx"
 Cohesion: 0.29
@@ -235,17 +235,17 @@ Nodes (3): loginWithTotp(), passwordStep(), totp()
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getDatabase()` connect `db.mjs` to `core.mjs`, `json`, `projects.mjs`, `google-calendar.mjs`, `approvals.mjs`, `annotations.mjs`, `skills.mjs`, `objects.mjs`, `push.mjs`?**
-  _High betweenness centrality (0.078) - this node is a cross-community bridge._
+- **Why does `getDatabase()` connect `db.mjs` to `core.mjs`, `json`, `projects.mjs`, `google-calendar.mjs`, `approvals.mjs`, `annotations.mjs`, `skills.mjs`, `push.mjs`, `recommendations.mjs`?**
+  _High betweenness centrality (0.076) - this node is a cross-community bridge._
 - **Why does `loadConfig()` connect `json` to `search.mjs`?**
   _High betweenness centrality (0.012) - this node is a cross-community bridge._
 - **What connects `config`, `target`, `dom` to the rest of the system?**
   _144 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `modules.mjs` be split into smaller, more focused modules?**
+  _Cohesion score 0.05042016806722689 - nodes in this community are weakly interconnected._
 - **Should `core.mjs` be split into smaller, more focused modules?**
   _Cohesion score 0.06160506160506161 - nodes in this community are weakly interconnected._
-- **Should `modules.mjs` be split into smaller, more focused modules?**
-  _Cohesion score 0.05719298245614035 - nodes in this community are weakly interconnected._
 - **Should `json` be split into smaller, more focused modules?**
-  _Cohesion score 0.11533242876526459 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.11794871794871795 - nodes in this community are weakly interconnected._
 - **Should `db.mjs` be split into smaller, more focused modules?**
-  _Cohesion score 0.08383838383838384 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07678075855689177 - nodes in this community are weakly interconnected._
