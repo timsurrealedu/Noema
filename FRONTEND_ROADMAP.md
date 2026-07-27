@@ -61,7 +61,7 @@ Supported MVP targets:
   - Header notifications persist read status. Automations reads API definitions, enablement, schedules, manual runs, history, logs, and metrics. Complete when durable cancellation/retry, push delivery, and reconnecting live updates pass browser tests.
 - [~] Global search, backlink indexing, and relationship persistence
   - Global palette queries `/api/v1/search`; unified results cover notes, tasks, events, projects, and captures, and selection opens the specific object. Complete when semantic ranking is optional and source-attributed, and unavailable embeddings degrade to FTS without losing results.
-- [ ] Privacy-safe analytics
+- [x] Privacy-safe analytics
   - Complete when an allowlisted schema excludes note/capture bodies, attachments, prompts, and extracted text; opt-out and deletion work; and tests reject private-content fields and values.
 
 ## MVP acceptance matrix
@@ -85,7 +85,7 @@ Supported MVP targets:
 | 15 | Automation status separated from Today | Done | Executor/API done; Automations page still uses sample state |
 | 16 | Keyboard primary flows | Done | Formal audit pending |
 | 17 | Light/dark modes | Done | Browser-local |
-| 18 | Private notes excluded from analytics | Done policy | Analytics not implemented |
+| 18 | Private notes excluded from analytics | Done | Opt-in local allowlist rejects content and identifiers; deletion verified |
 | 19 | Portable note export | Done | Local Markdown |
 | 20 | Sensitive actions require confirmation | Prototype UI | Compiler and AI endpoints require MFA; real approval UI remains |
 

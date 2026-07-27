@@ -35,9 +35,9 @@
     "semantic_hash": "d21cd3653f123cd55ce91814e75b4bd3"
   },
   "app/components/ModuleShell.tsx": {
-    "mtime": 1785087093.330793,
-    "ast_hash": "54fcdba053213718ac589e6c0f152b7a",
-    "semantic_hash": "54fcdba053213718ac589e6c0f152b7a"
+    "mtime": 1785169488.2907124,
+    "ast_hash": "0bf43efd8f8020d5a21627e09b7edf8b",
+    "semantic_hash": "0bf43efd8f8020d5a21627e09b7edf8b"
   },
   "app/tasks/page.tsx": {
     "mtime": 1785083801.8071837,
@@ -125,9 +125,9 @@
     "semantic_hash": "c6551491a1707311a7537381e92f546b"
   },
   "app/settings/page.tsx": {
-    "mtime": 1785089213.439624,
-    "ast_hash": "578bf2987bad8382eedc7489f62f6ec3",
-    "semantic_hash": "578bf2987bad8382eedc7489f62f6ec3"
+    "mtime": 1785169378.0767908,
+    "ast_hash": "21b01d8139daa8351410e2af7410080f",
+    "semantic_hash": "21b01d8139daa8351410e2af7410080f"
   },
   "public/sw.js": {
     "mtime": 1785085431.7957878,
@@ -135,9 +135,9 @@
     "semantic_hash": "94a3e68c25c7819d85cdab31fa26af47"
   },
   "test/frontend.test.js": {
-    "mtime": 1785089322.1007395,
-    "ast_hash": "45e1ddbfc9716b2f52e8e102848dc4a3",
-    "semantic_hash": "45e1ddbfc9716b2f52e8e102848dc4a3"
+    "mtime": 1785169488.4067104,
+    "ast_hash": "816abd3facbabadbdff58dc06ba71c8e",
+    "semantic_hash": "816abd3facbabadbdff58dc06ba71c8e"
   },
   "app/api/v1/auth/login/route.ts": {
     "mtime": 1785085599.0668235,
@@ -230,9 +230,9 @@
     "semantic_hash": "f124ac657cc93af6d04d20002c6d6e9d"
   },
   "server/db.mjs": {
-    "mtime": 1785089000.9002247,
-    "ast_hash": "c887998e14077b6810a7bd8896466f2b",
-    "semantic_hash": "c887998e14077b6810a7bd8896466f2b"
+    "mtime": 1785169397.404044,
+    "ast_hash": "d1b6624fb02cb2abbdc4940a886c58d1",
+    "semantic_hash": "d1b6624fb02cb2abbdc4940a886c58d1"
   },
   "server/http.mjs": {
     "mtime": 1785085628.5097716,
@@ -255,9 +255,9 @@
     "semantic_hash": "c2abed0fa746b30405a48ed07b8c3850"
   },
   "test/backend.test.js": {
-    "mtime": 1785089495.5352592,
-    "ast_hash": "b31f9f8254ee1682bedf50c0b9bb94e0",
-    "semantic_hash": "b31f9f8254ee1682bedf50c0b9bb94e0"
+    "mtime": 1785169635.7651622,
+    "ast_hash": "00e3b5954d53be1e19b3d523fb1fb622",
+    "semantic_hash": "00e3b5954d53be1e19b3d523fb1fb622"
   },
   "app/api/v1/audit/[id]/undo/route.ts": {
     "mtime": 1784954491.5351684,
@@ -703,5 +703,15 @@
     "mtime": 1785089205.4457617,
     "ast_hash": "f22c0a72cbbc84471b65c463cca5f252",
     "semantic_hash": "f22c0a72cbbc84471b65c463cca5f252"
+  },
+  "app/api/v1/analytics/route.ts": {
+    "mtime": 1785169377.954796,
+    "ast_hash": "fbfaa4989ae756d3415e9bb00f9342b1",
+    "semantic_hash": "fbfaa4989ae756d3415e9bb00f9342b1"
+  },
+  "server/analytics.mjs": {
+    "mtime": 1785169622.352242,
+    "ast_hash": "d7adcf3b4dd725c970fd6b5020a4c072",
+    "semantic_hash": "d7adcf3b4dd725c970fd6b5020a4c072"
   }
 }

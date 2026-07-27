@@ -53,6 +53,8 @@ CREATE TABLE IF NOT EXISTS automation_runs(id TEXT PRIMARY KEY,automation_id TEX
 CREATE TABLE IF NOT EXISTS note_optimizations(id TEXT PRIMARY KEY,note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,mode TEXT NOT NULL,state TEXT NOT NULL,before_content TEXT NOT NULL,after_content TEXT,summary TEXT,provider TEXT,error TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,applied_at TEXT);
 CREATE TABLE IF NOT EXISTS tutor_sessions(id TEXT PRIMARY KEY,kind TEXT NOT NULL,subject_id TEXT,subject_title TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS tutor_messages(id TEXT PRIMARY KEY,session_id TEXT NOT NULL REFERENCES tutor_sessions(id) ON DELETE CASCADE,role TEXT NOT NULL,content TEXT NOT NULL,citations_json TEXT NOT NULL DEFAULT '[]',replacement TEXT,provider TEXT,inserted_note_id TEXT REFERENCES notes(id) ON DELETE SET NULL,inserted_note_version INTEGER,created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS analytics_preferences(user_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,enabled INTEGER NOT NULL DEFAULT 0,updated_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS analytics_events(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,event TEXT NOT NULL,properties_json TEXT NOT NULL,created_at TEXT NOT NULL);
 CREATE INDEX IF NOT EXISTS login_attempts_key ON login_attempts(key,attempted_at);
 CREATE INDEX IF NOT EXISTS sessions_token ON sessions(token_hash,expires_at);
 CREATE INDEX IF NOT EXISTS jobs_claim ON jobs(state,created_at);
@@ -70,6 +72,7 @@ CREATE INDEX IF NOT EXISTS automation_runs_automation ON automation_runs(automat
 CREATE INDEX IF NOT EXISTS note_optimizations_note ON note_optimizations(note_id,created_at DESC);
 CREATE INDEX IF NOT EXISTS tutor_sessions_subject ON tutor_sessions(kind,subject_id,updated_at DESC);
 CREATE INDEX IF NOT EXISTS tutor_messages_session ON tutor_messages(session_id,created_at);
+CREATE INDEX IF NOT EXISTS analytics_events_user_created ON analytics_events(user_id,created_at);
 CREATE INDEX IF NOT EXISTS google_oauth_states_expiry ON google_oauth_states(expires_at);
 CREATE INDEX IF NOT EXISTS calendar_conflicts_state ON calendar_conflicts(state,created_at);
 CREATE INDEX IF NOT EXISTS calendar_sync_writes_due ON calendar_sync_writes(state,next_attempt_at);
@@ -125,6 +128,7 @@ export function openDatabase(path){
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(22,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(23,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(24,?)").run(new Date().toISOString());
+  db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(25,?)").run(new Date().toISOString());
   return db;
 }
 
