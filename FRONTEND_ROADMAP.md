@@ -87,7 +87,7 @@ Supported MVP targets:
 | 17 | Light/dark modes | Done | Browser-local |
 | 18 | Private notes excluded from analytics | Done | Opt-in local allowlist rejects content and identifiers; deletion verified |
 | 19 | Portable note export | Done | Local Markdown |
-| 20 | Sensitive actions require confirmation | Prototype UI | Compiler and AI endpoints require MFA; real approval UI remains |
+| 20 | Sensitive actions require confirmation | Done | Exact command, file, and source review; recent MFA; session-bound single-use approval |
 
 ## Deferred beyond MVP
 

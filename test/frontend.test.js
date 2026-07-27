@@ -20,6 +20,8 @@ test("compiler requires an exact reviewable approval before execution",()=>{
   const page=read("app/coding/compiler/page.tsx"),route=read("app/api/v1/compiler/run/route.ts");assert.match(page,/\/api\/v1\/approvals/);assert.match(page,/Affected files/);assert.match(page,/Approval required/);assert.match(route,/consumeApproval/);
 });
 
+test("Coding dashboard uses persisted approvals without prototype actions",()=>{const page=read("app/coding/page.tsx");assert.match(page,/\/api\/v1\/approvals/);assert.match(page,/Approval history/);assert.match(page,/Editing the source invalidates/);assert.doesNotMatch(page,/Run staging database migration|Approve once|const sessions=/) });
+
 test("Vault and compiler expose the contextual tutor",()=>{
   for(const file of ["app/vault/page.tsx","app/coding/compiler/page.tsx"])assert.match(read(file),/TutorPanel/);
   const panel=read("app/components/TutorPanel.tsx");assert.match(panel,/lifeos-tutor-mobile-mode/);assert.match(panel,/Apply to editor/);assert.match(panel,/Add to note/);
