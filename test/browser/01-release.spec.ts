@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import {expect,test,type Page} from "@playwright/test";
 
-const routes=["/","/capture","/tasks","/calendar","/vault","/projects","/study","/coding","/coding/compiler","/automations","/notifications","/activity","/settings","/help"];
+const routes=["/","/capture","/tasks","/calendar","/vault","/graph","/projects","/study","/coding","/coding/compiler","/automations","/notifications","/activity","/settings","/help"];
 
 async function login(page:Page){
   await page.goto("/login");await page.getByLabel("Email address").fill("owner@example.com");
@@ -19,7 +19,7 @@ test("primary routes work at desktop and mobile widths",async({page})=>{
 
 test("primary surfaces pass automated WCAG 2.2 AA rules",async({page})=>{
   test.setTimeout(120_000);await login(page);
-  for(const route of ["/","/capture","/tasks","/calendar","/vault","/settings","/login"]){
+  for(const route of ["/","/capture","/tasks","/calendar","/vault","/graph","/settings","/login"]){
     await page.goto(route);const result=await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa","wcag22aa"]).analyze();
     expect(result.violations,`${route}: ${result.violations.map(item=>item.id).join(", ")}`).toEqual([]);
   }
@@ -48,6 +48,13 @@ test("automation builder composes, previews, runs, and exposes step history",asy
   await page.getByRole("button",{name:"Create automation"}).click();await page.getByRole("button",{name:/Browser workflow/}).first().click();
   await page.getByRole("button",{name:"Run now"}).click();await page.getByRole("button",{name:"Steps"}).click();await expect(page.getByText("notification").first()).toBeVisible();
   await expect(page.getByText("completed").first()).toBeVisible();
+});
+
+test("knowledge graph renders relationships, provenance, and shortest paths",async({page})=>{
+  await login(page);const created=await page.evaluate(async()=>{const post=async(path:string,body:object)=>{const response=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":crypto.randomUUID()},body:JSON.stringify(body)});if(!response.ok)throw new Error(await response.text());return response.json()};const project=await post("/api/v1/projects",{name:"Graph browser project",summary:"private browser summary"}),task=await post("/api/v1/tasks",{title:"Graph browser task",project:"Graph browser project",due:"Today",priority:"Medium"});return {project,task}});
+  await page.goto("/graph");await expect(page.getByRole("img",{name:"LifeOS knowledge graph"})).toBeVisible();await expect(page.getByText("tasks.project")).toBeVisible();
+  await page.getByLabel("From").selectOption(`task:${created.task.id}`);await page.getByLabel("To").selectOption(`project:${created.project.id}`);await page.getByRole("button",{name:"Trace path"}).click();
+  await expect(page.getByRole("list",{name:"Shortest path"})).toContainText("belongs-to via tasks.project");await expect(page.getByText("private browser summary")).toHaveCount(0);
 });
 
 for(const width of [375,768,1024,1440])test(`Today visual baseline at ${width}px`,async({page})=>{

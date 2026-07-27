@@ -23,12 +23,12 @@
 
 ## 3 — Knowledge-graph visualization
 
-- [ ] Persist typed nodes and relationships from LifeOS objects
-- [ ] Provide authenticated filtered neighborhood and path APIs
-- [ ] Render an accessible, responsive graph with list/table equivalents
-- [ ] Open source objects and expose relationship provenance
-- [ ] Support incremental rebuilds without leaking private object content
-- [ ] Verify traversal correctness, keyboard access, and large-graph limits
+- [x] Persist typed nodes and relationships from LifeOS objects
+- [x] Provide authenticated filtered neighborhood and path APIs
+- [x] Render an accessible, responsive graph with list/table equivalents
+- [x] Open source objects and expose relationship provenance
+- [x] Support incremental rebuilds without leaking private object content
+- [x] Verify traversal correctness, keyboard access, and large-graph limits
 
 ## 4 — Plugin marketplace
 
