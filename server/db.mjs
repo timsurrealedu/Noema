@@ -51,6 +51,8 @@ CREATE TABLE IF NOT EXISTS push_subscriptions(id TEXT PRIMARY KEY,endpoint TEXT 
 CREATE TABLE IF NOT EXISTS automations(id TEXT PRIMARY KEY,name TEXT NOT NULL,trigger_kind TEXT NOT NULL,schedule TEXT,action_kind TEXT NOT NULL,config_json TEXT NOT NULL DEFAULT '{}',enabled INTEGER NOT NULL DEFAULT 1,last_run_at TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
 CREATE TABLE IF NOT EXISTS automation_runs(id TEXT PRIMARY KEY,automation_id TEXT NOT NULL REFERENCES automations(id) ON DELETE CASCADE,state TEXT NOT NULL,started_at TEXT NOT NULL,finished_at TEXT,output_json TEXT,error TEXT);
 CREATE TABLE IF NOT EXISTS automation_run_steps(id TEXT PRIMARY KEY,run_id TEXT NOT NULL REFERENCES automation_runs(id) ON DELETE CASCADE,position INTEGER NOT NULL,kind TEXT NOT NULL,config_json TEXT NOT NULL,state TEXT NOT NULL DEFAULT 'pending',output_json TEXT,error TEXT,started_at TEXT,finished_at TEXT,UNIQUE(run_id,position));
+CREATE TABLE IF NOT EXISTS knowledge_nodes(id TEXT PRIMARY KEY,object_type TEXT NOT NULL,object_id TEXT NOT NULL,label TEXT NOT NULL,href TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(object_type,object_id));
+CREATE TABLE IF NOT EXISTS knowledge_edges(id TEXT PRIMARY KEY,source_id TEXT NOT NULL REFERENCES knowledge_nodes(id) ON DELETE CASCADE,target_id TEXT NOT NULL REFERENCES knowledge_nodes(id) ON DELETE CASCADE,kind TEXT NOT NULL,provenance TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(source_id,target_id,kind,provenance));
 CREATE TABLE IF NOT EXISTS note_optimizations(id TEXT PRIMARY KEY,note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,mode TEXT NOT NULL,state TEXT NOT NULL,before_content TEXT NOT NULL,after_content TEXT,summary TEXT,provider TEXT,error TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,applied_at TEXT);
 CREATE TABLE IF NOT EXISTS tutor_sessions(id TEXT PRIMARY KEY,kind TEXT NOT NULL,subject_id TEXT,subject_title TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS tutor_messages(id TEXT PRIMARY KEY,session_id TEXT NOT NULL REFERENCES tutor_sessions(id) ON DELETE CASCADE,role TEXT NOT NULL,content TEXT NOT NULL,citations_json TEXT NOT NULL DEFAULT '[]',replacement TEXT,provider TEXT,inserted_note_id TEXT REFERENCES notes(id) ON DELETE SET NULL,inserted_note_version INTEGER,created_at TEXT NOT NULL);
@@ -71,6 +73,9 @@ CREATE INDEX IF NOT EXISTS notifications_unread ON notifications(read_at,created
 CREATE INDEX IF NOT EXISTS automations_enabled ON automations(enabled,trigger_kind);
 CREATE INDEX IF NOT EXISTS automation_runs_automation ON automation_runs(automation_id,started_at DESC);
 CREATE INDEX IF NOT EXISTS automation_run_steps_run ON automation_run_steps(run_id,position);
+CREATE INDEX IF NOT EXISTS knowledge_nodes_type ON knowledge_nodes(object_type,label);
+CREATE INDEX IF NOT EXISTS knowledge_edges_source ON knowledge_edges(source_id);
+CREATE INDEX IF NOT EXISTS knowledge_edges_target ON knowledge_edges(target_id);
 CREATE INDEX IF NOT EXISTS note_optimizations_note ON note_optimizations(note_id,created_at DESC);
 CREATE INDEX IF NOT EXISTS tutor_sessions_subject ON tutor_sessions(kind,subject_id,updated_at DESC);
 CREATE INDEX IF NOT EXISTS tutor_messages_session ON tutor_messages(session_id,created_at);
@@ -134,6 +139,7 @@ export function openDatabase(path){
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(25,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(26,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(27,?)").run(new Date().toISOString());
+  db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(28,?)").run(new Date().toISOString());
   return db;
 }
 
