@@ -124,7 +124,7 @@ export function openDatabase(path){
   ensureColumn(db,"notifications","related_id","TEXT");
   ensureColumn(db,"automation_runs","job_id","TEXT REFERENCES jobs(id) ON DELETE SET NULL");
   ensureColumn(db,"audit_events","workspace_id","TEXT REFERENCES workspaces(id) ON DELETE SET NULL");
-  for(const table of ["captures","tasks","events","notes","projects","assets","automations","courses","assignments","study_cards","quizzes","notifications","jobs","knowledge_nodes","knowledge_edges","dashboards","recommendations"]){ensureColumn(db,table,"workspace_id","TEXT")}
+  for(const table of ["captures","tasks","events","notes","projects","assets","automations","courses","assignments","study_cards","quizzes","notifications","jobs","knowledge_nodes","knowledge_edges","dashboards","recommendations","tutor_sessions"]){ensureColumn(db,table,"workspace_id","TEXT")}
   db.exec("CREATE INDEX IF NOT EXISTS tasks_reminders ON tasks(reminder_at,reminder_sent_at); CREATE INDEX IF NOT EXISTS events_reminders ON events(reminder_at,reminder_sent_at);");
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(1,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(2,?)").run(new Date().toISOString());

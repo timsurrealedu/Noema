@@ -1286,18 +1286,18 @@
     },
     {
       "source": "POST()",
-      "target": "runTutor()",
+      "target": "ensureOwner()",
       "source_files": [
-        "app/api/v1/tutor/route.ts",
-        "server/skills.mjs"
+        "app/api/v1/auth/login/route.ts",
+        "server/auth.mjs"
       ],
       "confidence": "EXTRACTED",
       "relation": "calls",
-      "why": "connects across different repos/directories; peripheral node `POST()` unexpectedly reaches hub `runTutor()`"
+      "why": "connects across different repos/directories; bridges separate communities"
     },
     {
       "source": "POST()",
-      "target": "ensureOwner()",
+      "target": "login()",
       "source_files": [
         "app/api/v1/auth/login/route.ts",
         "server/auth.mjs"
@@ -1311,12 +1311,12 @@
     {
       "type": "bridge_node",
       "question": "Why does `getDatabase()` connect `db.mjs` to `modules.mjs`, `handle`, `core.mjs`, `collaboration.mjs`, `plugins.mjs`, `repositories.mjs`, `google-calendar.mjs`, `dashboards.mjs`, `approvals.mjs`, `annotations.mjs`, `skills.mjs`?",
-      "why": "High betweenness centrality (0.114) - this node is a cross-community bridge."
+      "why": "High betweenness centrality (0.110) - this node is a cross-community bridge."
     },
     {
       "type": "bridge_node",
       "question": "Why does `loadConfig()` connect `plugins.mjs` to `handle`, `repositories.mjs`?",
-      "why": "High betweenness centrality (0.015) - this node is a cross-community bridge."
+      "why": "High betweenness centrality (0.017) - this node is a cross-community bridge."
     },
     {
       "type": "isolated_nodes",

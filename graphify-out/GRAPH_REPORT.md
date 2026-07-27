@@ -9,7 +9,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `ca4b9778`
+- Built from commit: `91a5cc9f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -84,9 +84,9 @@
   app/api/v1/health/route.ts → server/compiler.mjs
 - `DELETE()` --calls--> `revokeSessionById()`  [EXTRACTED]
   app/api/v1/auth/sessions/[id]/route.ts → server/auth.mjs
-- `POST()` --calls--> `runTutor()`  [EXTRACTED]
-  app/api/v1/tutor/route.ts → server/skills.mjs
 - `POST()` --calls--> `ensureOwner()`  [EXTRACTED]
+  app/api/v1/auth/login/route.ts → server/auth.mjs
+- `POST()` --calls--> `login()`  [EXTRACTED]
   app/api/v1/auth/login/route.ts → server/auth.mjs
 
 ## Import Cycles
@@ -266,9 +266,9 @@ Nodes (3): loginWithTotp(), passwordStep(), totp()
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `getDatabase()` connect `db.mjs` to `modules.mjs`, `handle`, `core.mjs`, `collaboration.mjs`, `plugins.mjs`, `repositories.mjs`, `google-calendar.mjs`, `dashboards.mjs`, `approvals.mjs`, `annotations.mjs`, `skills.mjs`?**
-  _High betweenness centrality (0.114) - this node is a cross-community bridge._
+  _High betweenness centrality (0.110) - this node is a cross-community bridge._
 - **Why does `loadConfig()` connect `plugins.mjs` to `handle`, `repositories.mjs`?**
-  _High betweenness centrality (0.015) - this node is a cross-community bridge._
+  _High betweenness centrality (0.017) - this node is a cross-community bridge._
 - **What connects `config`, `target`, `dom` to the rest of the system?**
   _189 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `modules.mjs` be split into smaller, more focused modules?**

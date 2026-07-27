@@ -230,9 +230,9 @@
     "semantic_hash": "1203d23a2136a07e3840a542ba5d014e"
   },
   "server/db.mjs": {
-    "mtime": 1785184841.0789196,
-    "ast_hash": "89feef025b2bc3cae65a64f499f6646b",
-    "semantic_hash": "89feef025b2bc3cae65a64f499f6646b"
+    "mtime": 1785185058.6974635,
+    "ast_hash": "e27543af78aac99881cdc850bfc3afcc",
+    "semantic_hash": "e27543af78aac99881cdc850bfc3afcc"
   },
   "server/http.mjs": {
     "mtime": 1785182717.6631699,
@@ -255,9 +255,9 @@
     "semantic_hash": "16f45faaf6c0aeef5c766bfbca4addb1"
   },
   "test/backend.test.js": {
-    "mtime": 1785184926.289351,
-    "ast_hash": "23edf14a6d5aebbf84d93cd8f33f7373",
-    "semantic_hash": "23edf14a6d5aebbf84d93cd8f33f7373"
+    "mtime": 1785185097.7472012,
+    "ast_hash": "f8fe0848aa739f9b4c0b0ce8c8a5ac67",
+    "semantic_hash": "f8fe0848aa739f9b4c0b0ce8c8a5ac67"
   },
   "app/api/v1/audit/[id]/undo/route.ts": {
     "mtime": 1785183137.6762722,
@@ -300,9 +300,9 @@
     "semantic_hash": "0ce5ddc96cd5c5ee458e218a6878b2a8"
   },
   "app/api/v1/tutor/route.ts": {
-    "mtime": 1785084329.5309114,
-    "ast_hash": "08a9579783604be418e53364dd14cf58",
-    "semantic_hash": "08a9579783604be418e53364dd14cf58"
+    "mtime": 1785185074.3113587,
+    "ast_hash": "21781fa7cccceb3449cb4d44a537672e",
+    "semantic_hash": "21781fa7cccceb3449cb4d44a537672e"
   },
   "app/components/TutorPanel.tsx": {
     "mtime": 1785084470.0273714,
@@ -315,9 +315,9 @@
     "semantic_hash": "504eaa2b549abe3a79a674505f92bb28"
   },
   "server/skills.mjs": {
-    "mtime": 1785084317.2978714,
-    "ast_hash": "f9ec0864104712839aff9416805935b4",
-    "semantic_hash": "f9ec0864104712839aff9416805935b4"
+    "mtime": 1785185058.917462,
+    "ast_hash": "176300b5a2b024985536cc4603705b84",
+    "semantic_hash": "176300b5a2b024985536cc4603705b84"
   },
   "app/api/v1/assets/[id]/route.ts": {
     "mtime": 1785183137.4752724,
@@ -515,9 +515,9 @@
     "semantic_hash": "dcdd0a364e350b9d5e3275493bad438e"
   },
   "app/api/v1/tutor/messages/[id]/insert/route.ts": {
-    "mtime": 1785084329.723912,
-    "ast_hash": "340ab888eab139a0998522e54fb00ae9",
-    "semantic_hash": "340ab888eab139a0998522e54fb00ae9"
+    "mtime": 1785185074.412358,
+    "ast_hash": "30584e385b597459db3347e056cae445",
+    "semantic_hash": "30584e385b597459db3347e056cae445"
   },
   "app/api/v1/auth/totp/route.ts": {
     "mtime": 1785085628.614773,
@@ -955,9 +955,9 @@
     "semantic_hash": "470ccd9d928b8ef41a92ceb0b464df87"
   },
   "server/collaboration.mjs": {
-    "mtime": 1785184841.1899188,
-    "ast_hash": "00417c80d020b96b749c7e38f8eaa8d7",
-    "semantic_hash": "00417c80d020b96b749c7e38f8eaa8d7"
+    "mtime": 1785185058.8094628,
+    "ast_hash": "cc8a880eecb6dde02bfd4ef77a2508a6",
+    "semantic_hash": "cc8a880eecb6dde02bfd4ef77a2508a6"
   },
   "app/api/v1/workspaces/[id]/select/route.ts": {
     "mtime": 1785183145.770254,
