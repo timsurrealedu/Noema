@@ -7393,9 +7393,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L1",
       "_origin": "ast",
-      "id": "server_calendar_sync",
       "community": 12,
-      "norm_label": "calendar-sync.mjs"
+      "norm_label": "calendar-sync.mjs",
+      "id": "server_calendar_sync"
     },
     {
       "label": "now()",
@@ -7403,9 +7403,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L7",
       "_origin": "ast",
-      "id": "server_calendar_sync_now",
       "community": 12,
-      "norm_label": "now()"
+      "norm_label": "now()",
+      "id": "server_calendar_sync_now"
     },
     {
       "label": "snapshot()",
@@ -7413,9 +7413,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L8",
       "_origin": "ast",
-      "id": "server_calendar_sync_snapshot",
       "community": 12,
-      "norm_label": "snapshot()"
+      "norm_label": "snapshot()",
+      "id": "server_calendar_sync_snapshot"
     },
     {
       "label": "midnight()",
@@ -7423,9 +7423,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L9",
       "_origin": "ast",
-      "id": "server_calendar_sync_midnight",
       "community": 12,
-      "norm_label": "midnight()"
+      "norm_label": "midnight()",
+      "id": "server_calendar_sync_midnight"
     },
     {
       "label": "normalized()",
@@ -7433,9 +7433,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L31",
       "_origin": "ast",
-      "id": "server_calendar_sync_normalized",
       "community": 12,
-      "norm_label": "normalized()"
+      "norm_label": "normalized()",
+      "id": "server_calendar_sync_normalized"
     },
     {
       "label": "localInput()",
@@ -7443,9 +7443,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L46",
       "_origin": "ast",
-      "id": "server_calendar_sync_localinput",
       "community": 12,
-      "norm_label": "localinput()"
+      "norm_label": "localinput()",
+      "id": "server_calendar_sync_localinput"
     },
     {
       "label": "dateInZone()",
@@ -7453,9 +7453,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L55",
       "_origin": "ast",
-      "id": "server_calendar_sync_dateinzone",
       "community": 12,
-      "norm_label": "dateinzone()"
+      "norm_label": "dateinzone()",
+      "id": "server_calendar_sync_dateinzone"
     },
     {
       "label": "googlePayload()",
@@ -7463,9 +7463,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L68",
       "_origin": "ast",
-      "id": "server_calendar_sync_googlepayload",
       "community": 12,
-      "norm_label": "googlepayload()"
+      "norm_label": "googlepayload()",
+      "id": "server_calendar_sync_googlepayload"
     },
     {
       "label": "applyGoogleEvent()",
@@ -7473,9 +7473,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L95",
       "_origin": "ast",
-      "id": "server_calendar_sync_applygoogleevent",
       "community": 12,
-      "norm_label": "applygoogleevent()"
+      "norm_label": "applygoogleevent()",
+      "id": "server_calendar_sync_applygoogleevent"
     },
     {
       "label": "pullCalendar()",
@@ -7483,9 +7483,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L127",
       "_origin": "ast",
-      "id": "server_calendar_sync_pullcalendar",
       "community": 12,
-      "norm_label": "pullcalendar()"
+      "norm_label": "pullcalendar()",
+      "id": "server_calendar_sync_pullcalendar"
     },
     {
       "label": "pullGoogleCalendar()",
@@ -7493,9 +7493,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L165",
       "_origin": "ast",
-      "id": "server_calendar_sync_pullgooglecalendar",
       "community": 12,
-      "norm_label": "pullgooglecalendar()"
+      "norm_label": "pullgooglecalendar()",
+      "id": "server_calendar_sync_pullgooglecalendar"
     },
     {
       "label": "claimWrite()",
@@ -7503,9 +7503,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L189",
       "_origin": "ast",
-      "id": "server_calendar_sync_claimwrite",
       "community": 12,
-      "norm_label": "claimwrite()"
+      "norm_label": "claimwrite()",
+      "id": "server_calendar_sync_claimwrite"
     },
     {
       "label": "remoteSnapshot()",
@@ -7513,9 +7513,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L201",
       "_origin": "ast",
-      "id": "server_calendar_sync_remotesnapshot",
       "community": 12,
-      "norm_label": "remotesnapshot()"
+      "norm_label": "remotesnapshot()",
+      "id": "server_calendar_sync_remotesnapshot"
     },
     {
       "label": "pushGoogleCalendar()",
@@ -7523,9 +7523,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L215",
       "_origin": "ast",
-      "id": "server_calendar_sync_pushgooglecalendar",
       "community": 12,
-      "norm_label": "pushgooglecalendar()"
+      "norm_label": "pushgooglecalendar()",
+      "id": "server_calendar_sync_pushgooglecalendar"
     },
     {
       "label": "resolveCalendarConflict()",
@@ -7533,9 +7533,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L293",
       "_origin": "ast",
-      "id": "server_calendar_sync_resolvecalendarconflict",
       "community": 12,
-      "norm_label": "resolvecalendarconflict()"
+      "norm_label": "resolvecalendarconflict()",
+      "id": "server_calendar_sync_resolvecalendarconflict"
     },
     {
       "label": "calendarSyncStatus()",
@@ -7543,9 +7543,9 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L355",
       "_origin": "ast",
-      "id": "server_calendar_sync_calendarsyncstatus",
       "community": 12,
-      "norm_label": "calendarsyncstatus()"
+      "norm_label": "calendarsyncstatus()",
+      "id": "server_calendar_sync_calendarsyncstatus"
     }
   ],
   "links": [
@@ -24667,9 +24667,9 @@
       "source_location": "L95",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync",
-      "target": "server_calendar_sync_applygoogleevent",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_applygoogleevent"
     },
     {
       "relation": "contains",
@@ -24678,9 +24678,9 @@
       "source_location": "L355",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync",
-      "target": "server_calendar_sync_calendarsyncstatus",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_calendarsyncstatus"
     },
     {
       "relation": "contains",
@@ -24689,9 +24689,9 @@
       "source_location": "L189",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync",
-      "target": "server_calendar_sync_claimwrite",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_claimwrite"
     },
     {
       "relation": "contains",
@@ -24700,9 +24700,9 @@
       "source_location": "L55",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync",
-      "target": "server_calendar_sync_dateinzone",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_dateinzone"
     },
     {
       "relation": "contains",
@@ -24711,9 +24711,9 @@
       "source_location": "L68",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync",
-      "target": "server_calendar_sync_googlepayload",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_googlepayload"
     },
     {
       "relation": "contains",
@@ -24722,9 +24722,9 @@
       "source_location": "L46",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync",
-      "target": "server_calendar_sync_localinput",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_localinput"
     },
     {
       "relation": "contains",
@@ -24733,9 +24733,9 @@
       "source_location": "L9",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync",
-      "target": "server_calendar_sync_midnight",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_midnight"
     },
     {
       "relation": "contains",
@@ -24744,9 +24744,9 @@
       "source_location": "L31",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync",
-      "target": "server_calendar_sync_normalized",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_normalized"
     },
     {
       "relation": "contains",
@@ -24755,9 +24755,9 @@
       "source_location": "L7",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync",
-      "target": "server_calendar_sync_now",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_now"
     },
     {
       "relation": "contains",
@@ -24766,9 +24766,9 @@
       "source_location": "L127",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync",
-      "target": "server_calendar_sync_pullcalendar",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_pullcalendar"
     },
     {
       "relation": "contains",
@@ -24777,9 +24777,9 @@
       "source_location": "L165",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync",
-      "target": "server_calendar_sync_pullgooglecalendar",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_pullgooglecalendar"
     },
     {
       "relation": "contains",
@@ -24788,9 +24788,9 @@
       "source_location": "L215",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync",
-      "target": "server_calendar_sync_pushgooglecalendar",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_pushgooglecalendar"
     },
     {
       "relation": "contains",
@@ -24799,9 +24799,9 @@
       "source_location": "L201",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync",
-      "target": "server_calendar_sync_remotesnapshot",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_remotesnapshot"
     },
     {
       "relation": "contains",
@@ -24810,9 +24810,9 @@
       "source_location": "L293",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync",
-      "target": "server_calendar_sync_resolvecalendarconflict",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_resolvecalendarconflict"
     },
     {
       "relation": "contains",
@@ -24821,9 +24821,9 @@
       "source_location": "L8",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync",
-      "target": "server_calendar_sync_snapshot",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_snapshot"
     },
     {
       "relation": "calls",
@@ -24833,9 +24833,9 @@
       "source_location": "L100",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_applygoogleevent",
-      "target": "server_calendar_sync_now",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_now"
     },
     {
       "relation": "calls",
@@ -24845,9 +24845,9 @@
       "source_location": "L192",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_claimwrite",
-      "target": "server_calendar_sync_now",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_now"
     },
     {
       "relation": "calls",
@@ -24857,9 +24857,9 @@
       "source_location": "L162",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_pullcalendar",
-      "target": "server_calendar_sync_now",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_now"
     },
     {
       "relation": "calls",
@@ -24869,9 +24869,9 @@
       "source_location": "L230",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_pushgooglecalendar",
-      "target": "server_calendar_sync_now",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_now"
     },
     {
       "relation": "calls",
@@ -24881,9 +24881,9 @@
       "source_location": "L299",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_resolvecalendarconflict",
-      "target": "server_calendar_sync_now",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_now"
     },
     {
       "relation": "calls",
@@ -24893,9 +24893,9 @@
       "source_location": "L100",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_applygoogleevent",
-      "target": "server_calendar_sync_snapshot",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_snapshot"
     },
     {
       "relation": "calls",
@@ -24905,9 +24905,9 @@
       "source_location": "L268",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_pushgooglecalendar",
-      "target": "server_calendar_sync_snapshot",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_snapshot"
     },
     {
       "relation": "calls",
@@ -24917,9 +24917,9 @@
       "source_location": "L34",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_normalized",
-      "target": "server_calendar_sync_midnight",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_midnight"
     },
     {
       "relation": "calls",
@@ -24929,9 +24929,9 @@
       "source_location": "L116",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_applygoogleevent",
-      "target": "server_calendar_sync_normalized",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_normalized"
     },
     {
       "relation": "calls",
@@ -24941,9 +24941,9 @@
       "source_location": "L332",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_resolvecalendarconflict",
-      "target": "server_calendar_sync_normalized",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_normalized"
     },
     {
       "relation": "calls",
@@ -24953,9 +24953,9 @@
       "source_location": "L312",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_resolvecalendarconflict",
-      "target": "server_calendar_sync_localinput",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_localinput"
     },
     {
       "relation": "calls",
@@ -24965,9 +24965,9 @@
       "source_location": "L78",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_googlepayload",
-      "target": "server_calendar_sync_dateinzone",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_dateinzone"
     },
     {
       "relation": "calls",
@@ -24977,9 +24977,9 @@
       "source_location": "L251",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_pushgooglecalendar",
-      "target": "server_calendar_sync_googlepayload",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_googlepayload"
     },
     {
       "relation": "calls",
@@ -24989,9 +24989,9 @@
       "source_location": "L157",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_pullcalendar",
-      "target": "server_calendar_sync_applygoogleevent",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_applygoogleevent"
     },
     {
       "relation": "calls",
@@ -25001,9 +25001,9 @@
       "source_location": "L180",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_pullgooglecalendar",
-      "target": "server_calendar_sync_pullcalendar",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_pullcalendar"
     },
     {
       "relation": "calls",
@@ -25013,9 +25013,9 @@
       "source_location": "L225",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_pushgooglecalendar",
-      "target": "server_calendar_sync_claimwrite",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_claimwrite"
     },
     {
       "relation": "calls",
@@ -25025,11 +25025,11 @@
       "source_location": "L267",
       "weight": 1.0,
       "_origin": "ast",
+      "confidence_score": 1.0,
       "source": "server_calendar_sync_pushgooglecalendar",
-      "target": "server_calendar_sync_remotesnapshot",
-      "confidence_score": 1.0
+      "target": "server_calendar_sync_remotesnapshot"
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "4779c462d087f740c76d5f1f11affdd2912504ef"
+  "built_at_commit": "5f737c34a8a48cb033afd4499120468af1053de7"
 }

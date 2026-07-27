@@ -55,7 +55,7 @@ Supported MVP targets:
 - [~] Codex interpretation service with review, approval, cancellation, and audit records
   - Complete when quick capture uses real interpretation results, sensitive execution shows the actual command/diff, approval is MFA-bound and single-use, SSE reconnects without duplicate events, and cancel/retry paths have browser coverage.
 - [x] File/object storage, OCR, transcription, source preservation, and attachment retrieval
-- [ ] Google Calendar synchronization
+- [x] Google Calendar synchronization
   - Complete when account connect/revoke, initial import, incremental two-way sync, token refresh, deduplication, conflict handling, deletion, retry, and last-sync/error UI pass integration tests.
 - [~] Notifications, automation execution, job logs, metrics, and schedules
   - Header notifications persist read status. Automations reads API definitions, enablement, schedules, manual runs, history, logs, and metrics. Complete when durable cancellation/retry, push delivery, and reconnecting live updates pass browser tests.
