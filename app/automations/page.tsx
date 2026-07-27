@@ -7,13 +7,14 @@ import {ModuleShell} from "../components/ModuleShell";
 type Automation={id:string;name:string;trigger_kind:"manual"|"schedule"|"capture";schedule:string|null;action_kind:"notification"|"skill";config_json:string;enabled:number;last_run_at:string|null;version:number};
 type Run={id:string;state:string;job_id:string|null;started_at:string;finished_at:string|null;output_json:string|null;error:string|null};
 type Metrics={total:number;states:Record<string,number>;lastRun:{state:string;startedAt:string;finishedAt:string|null;error:string|null}|null};
-type Draft={id?:string;version?:number;name:string;triggerKind:string;schedule:string;actionKind:string;title:string;body:string;skill:string;enabled:boolean};
-type Preview={trigger:string;action:string;enabled:boolean};
-const empty:Draft={name:"",triggerKind:"manual",schedule:"",actionKind:"notification",title:"",body:"",skill:"weekly-review",enabled:true};
+type Condition={field:"source"|"text";operator:"equals"|"contains";value:string};
+type Draft={id?:string;version?:number;name:string;triggerKind:string;schedule:string;actionKind:string;title:string;body:string;skill:string;conditions:Condition[];enabled:boolean};
+type Preview={trigger:string;conditions:Condition[];action:string;enabled:boolean};
+const empty:Draft={name:"",triggerKind:"manual",schedule:"",actionKind:"notification",title:"",body:"",skill:"weekly-review",conditions:[],enabled:true};
 const request=async(path:string,init?:RequestInit)=>{const response=await fetch(path,init),data=await response.json();if(!response.ok)throw new Error(data.error?.message||"Request failed");return data};
 const when=(value:string|null)=>value?new Date(value).toLocaleString():"Never";
-const payload=(draft:Draft)=>({id:draft.id,version:draft.version,name:draft.name,triggerKind:draft.triggerKind,schedule:draft.triggerKind==="schedule"?draft.schedule:null,actionKind:draft.actionKind,config:draft.actionKind==="notification"?{title:draft.title||draft.name,body:draft.body}:{skill:draft.skill,input:{}},enabled:draft.enabled});
-const editDraft=(item:Automation):Draft=>{const config=JSON.parse(item.config_json);return {id:item.id,version:item.version,name:item.name,triggerKind:item.trigger_kind,schedule:item.schedule||"",actionKind:item.action_kind,title:config.title||item.name,body:config.body||"",skill:config.skill||"weekly-review",enabled:!!item.enabled}};
+const payload=(draft:Draft)=>({id:draft.id,version:draft.version,name:draft.name,triggerKind:draft.triggerKind,schedule:draft.triggerKind==="schedule"?draft.schedule:null,actionKind:draft.actionKind,config:draft.actionKind==="notification"?{title:draft.title||draft.name,body:draft.body,conditions:draft.conditions}:{skill:draft.skill,input:{},conditions:draft.conditions},enabled:draft.enabled});
+const editDraft=(item:Automation):Draft=>{const config=JSON.parse(item.config_json);return {id:item.id,version:item.version,name:item.name,triggerKind:item.trigger_kind,schedule:item.schedule||"",actionKind:item.action_kind,title:config.title||item.name,body:config.body||"",skill:config.skill||"weekly-review",conditions:config.conditions||[],enabled:!!item.enabled}};
 
 export default function AutomationsPage(){
   const [automations,setAutomations]=useState<Automation[]>([]),[selected,setSelected]=useState<Automation|null>(null),[runs,setRuns]=useState<Run[]>([]),[metrics,setMetrics]=useState<Metrics|null>(null),[skills,setSkills]=useState<{id:string;description:string}[]>([]);

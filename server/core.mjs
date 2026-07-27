@@ -1,5 +1,6 @@
 import {createHash,randomUUID} from "node:crypto";
 import {getDatabase} from "./db.mjs";
+import {runCaptureAutomations} from "./modules.mjs";
 import {assetsForCapture,attachAssets,storeAsset} from "./objects.mjs";
 import {loadConfig} from "./config.mjs";
 import {enqueueJob} from "./jobs.mjs";
@@ -65,7 +66,7 @@ export function saveNote(input,db=getDatabase(),actor=null){
 
 export function createCapture(input,db=getDatabase(),actor=null){
   const id=input.id||randomUUID(),text=required(input.text,"text",50000),source=["typed","voice","file","link"].includes(input.source)?input.source:"typed",time=stamp();
-  db.prepare("INSERT INTO captures(id,text,source,status,source_label,objects_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)").run(id,text,source,"review",input.sourceLabel||"Typed capture","[]",time,time);attachAssets(id,input.assetIds,db);audit(db,"create","capture",id,text.slice(0,120),{op:"delete"},actor);return {id,text,source,status:"review",sourceLabel:input.sourceLabel||"Typed capture",objects:[],assets:assetsForCapture(id,db).map(asset=>({id:asset.id,name:asset.name,mime:asset.mime,size:asset.size})),createdAt:time,version:1};
+  db.prepare("INSERT INTO captures(id,text,source,status,source_label,objects_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)").run(id,text,source,"review",input.sourceLabel||"Typed capture","[]",time,time);attachAssets(id,input.assetIds,db);audit(db,"create","capture",id,text.slice(0,120),{op:"delete"},actor);const capture={id,text,source,status:"review",sourceLabel:input.sourceLabel||"Typed capture",objects:[],assets:assetsForCapture(id,db).map(asset=>({id:asset.id,name:asset.name,mime:asset.mime,size:asset.size})),createdAt:time,version:1};runCaptureAutomations(capture,db);return capture;
 }
 
 export async function createFileCapture(file,db=getDatabase(),actor=null){
