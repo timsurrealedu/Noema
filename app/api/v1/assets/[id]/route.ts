@@ -1,13 +1,13 @@
 import {createReadStream,existsSync} from "node:fs";
 import {Readable} from "node:stream";
-import {handle,json,requireUser} from "../../../../../server/http.mjs";
+import {handle,json,requireWorkspace} from "../../../../../server/http.mjs";
 import {assetPath,getAsset} from "../../../../../server/objects.mjs";
 
 export const runtime="nodejs";
 export async function GET(request:Request,{params}:{params:Promise<{id:string}>}){
   try{
-    requireUser(request);
-    const {id}=await params,asset=getAsset(id);
+    const user=requireWorkspace(request);
+    const {id}=await params,asset=getAsset(id,undefined,user.workspace.id);
     if(!asset)return json({error:{code:"NOT_FOUND",message:"Asset not found",retryable:false}},404);
     const path=assetPath(asset.sha256);
     if(!existsSync(path))return json({error:{code:"OBJECT_MISSING",message:"Stored object is missing from disk.",retryable:false}},500);

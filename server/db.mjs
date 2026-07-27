@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS audit_events(id TEXT PRIMARY KEY,actor_id TEXT,action
 CREATE TABLE IF NOT EXISTS idempotency_keys(actor_id TEXT NOT NULL,key TEXT NOT NULL,request_hash TEXT NOT NULL,response_json TEXT NOT NULL,created_at TEXT NOT NULL,PRIMARY KEY(actor_id,key));
 CREATE TABLE IF NOT EXISTS assets(id TEXT PRIMARY KEY,sha256 TEXT UNIQUE NOT NULL,name TEXT NOT NULL,mime TEXT NOT NULL,size INTEGER NOT NULL,created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS capture_assets(capture_id TEXT NOT NULL REFERENCES captures(id) ON DELETE CASCADE,asset_id TEXT NOT NULL REFERENCES assets(id) ON DELETE CASCADE,PRIMARY KEY(capture_id,asset_id));
+CREATE TABLE IF NOT EXISTS workspace_assets(workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,asset_id TEXT NOT NULL REFERENCES assets(id) ON DELETE CASCADE,created_at TEXT NOT NULL,PRIMARY KEY(workspace_id,asset_id));
 CREATE TABLE IF NOT EXISTS login_attempts(key TEXT NOT NULL,attempted_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS totp_uses(user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,counter INTEGER NOT NULL,used_at TEXT NOT NULL,PRIMARY KEY(user_id,counter));
 CREATE TABLE IF NOT EXISTS recovery_codes(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,code_hash TEXT NOT NULL,created_at TEXT NOT NULL,used_at TEXT);
@@ -123,6 +124,7 @@ export function openDatabase(path){
   ensureColumn(db,"notifications","related_id","TEXT");
   ensureColumn(db,"automation_runs","job_id","TEXT REFERENCES jobs(id) ON DELETE SET NULL");
   ensureColumn(db,"audit_events","workspace_id","TEXT REFERENCES workspaces(id) ON DELETE SET NULL");
+  for(const table of ["captures","tasks","events","notes","projects","assets","automations","courses","assignments","study_cards","quizzes","notifications","jobs","knowledge_nodes","knowledge_edges"]){ensureColumn(db,table,"workspace_id","TEXT")}
   db.exec("CREATE INDEX IF NOT EXISTS tasks_reminders ON tasks(reminder_at,reminder_sent_at); CREATE INDEX IF NOT EXISTS events_reminders ON events(reminder_at,reminder_sent_at);");
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(1,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(2,?)").run(new Date().toISOString());
@@ -157,6 +159,7 @@ export function openDatabase(path){
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(30,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(31,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(32,?)").run(new Date().toISOString());
+  db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(33,?)").run(new Date().toISOString());
   return db;
 }
 
