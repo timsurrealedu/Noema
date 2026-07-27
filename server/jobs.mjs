@@ -2,7 +2,7 @@ import {randomUUID} from "node:crypto";
 import {getDatabase} from "./db.mjs";
 
 const now=()=>new Date().toISOString();
-export function enqueueJob(kind,input,db=getDatabase()){const id=randomUUID(),time=now();db.prepare("INSERT INTO jobs(id,kind,state,input_json,created_at,updated_at) VALUES(?,?,?,?,?,?)").run(id,kind,"queued",JSON.stringify(input),time,time);addJobEvent(id,"queued",{},db);return id}
+export function enqueueJob(kind,input,db=getDatabase(),workspaceId=null){const id=randomUUID(),time=now();db.prepare("INSERT INTO jobs(id,kind,state,input_json,created_at,updated_at,workspace_id) VALUES(?,?,?,?,?,?,?)").run(id,kind,"queued",JSON.stringify(input),time,time,workspaceId);addJobEvent(id,"queued",{},db);return id}
 export function addJobEvent(id,type,data,db=getDatabase()){db.prepare("INSERT INTO job_events(job_id,type,data_json,created_at) VALUES(?,?,?,?)").run(id,type,JSON.stringify(data),now())}
 export function claimJob(kinds,leaseSeconds=60,db=getDatabase()){
   const placeholders=kinds.map(()=>"?").join(",");db.exec("BEGIN IMMEDIATE");

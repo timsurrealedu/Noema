@@ -1,4 +1,4 @@
 import {readAllNotifications} from "../../../../../server/modules.mjs";
-import {handle,json,requireUser} from "../../../../../server/http.mjs";
+import {handle,json,requireWorkspace} from "../../../../../server/http.mjs";
 export const runtime="nodejs";
-export function POST(request:Request){try{requireUser(request);return json(readAllNotifications())}catch(error){return handle(error)}}
+export function POST(request:Request){try{const user=requireWorkspace(request,"editor");return json(readAllNotifications(undefined,user.workspace.id))}catch(error){return handle(error)}}
