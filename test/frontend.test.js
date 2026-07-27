@@ -39,6 +39,8 @@ test("shared shell exposes keyboard search and accessible navigation",()=>{
   assert.match(shell,/Skip to main content/);
 });
 
+test("global search exposes optional attributed semantic ranking",()=>{const shell=read("app/components/ModuleShell.tsx"),route=read("app/api/v1/search/route.ts"),search=read("server/search.mjs");assert.match(shell,/Semantic ranking/);assert.match(shell,/configured OpenAI embedding model/);assert.match(shell,/ranking\.source/);assert.match(route,/semantic:params\.get\("semantic"\)===\"true\"/);assert.match(search,/SQLite FTS\/LIKE/);assert.match(search,/selected\.add/);assert.match(search,/fallback:/) });
+
 test("command palettes use a focus-trapping native modal",()=>{
   assert.match(read("app/components/ModalDialog.tsx"),/showModal\(\)/);
   for(const file of ["app/page.tsx","app/components/ModuleShell.tsx"])assert.match(read(file),/<ModalDialog/);

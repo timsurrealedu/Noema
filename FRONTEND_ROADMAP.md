@@ -59,7 +59,7 @@ Supported MVP targets:
   - Complete when account connect/revoke, initial import, incremental two-way sync, token refresh, deduplication, conflict handling, deletion, retry, and last-sync/error UI pass integration tests.
 - [~] Notifications, automation execution, job logs, metrics, and schedules
   - Header notifications persist read status. Automations reads API definitions, enablement, schedules, manual runs, history, logs, and metrics. Complete when durable cancellation/retry, push delivery, and reconnecting live updates pass browser tests.
-- [~] Global search, backlink indexing, and relationship persistence
+- [x] Global search, backlink indexing, and relationship persistence
   - Global palette queries `/api/v1/search`; unified results cover notes, tasks, events, projects, and captures, and selection opens the specific object. Complete when semantic ranking is optional and source-attributed, and unavailable embeddings degrade to FTS without losing results.
 - [x] Privacy-safe analytics
   - Complete when an allowlisted schema excludes note/capture bodies, attachments, prompts, and extracted text; opt-out and deletion work; and tests reject private-content fields and values.
