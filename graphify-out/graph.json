@@ -1087,7 +1087,7 @@
       "source_file": "server/ai.mjs",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "ai.mjs",
       "community_name": "ai.mjs",
       "id": "server_ai"
@@ -1098,7 +1098,7 @@
       "source_file": "server/ai.mjs",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "schemakeys",
       "community_name": "ai.mjs",
       "id": "server_ai_schemakeys"
@@ -1109,7 +1109,7 @@
       "source_file": "server/ai.mjs",
       "source_location": "L6",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "iscapacityerror()",
       "community_name": "ai.mjs",
       "id": "server_ai_iscapacityerror"
@@ -1120,7 +1120,7 @@
       "source_file": "server/ai.mjs",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "geminischema()",
       "community_name": "ai.mjs",
       "id": "server_ai_geminischema"
@@ -1131,7 +1131,7 @@
       "source_file": "server/ai.mjs",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "rungemini()",
       "community_name": "ai.mjs",
       "id": "server_ai_rungemini"
@@ -1142,7 +1142,7 @@
       "source_file": "server/ai.mjs",
       "source_location": "L20",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "rungeminimultimodal()",
       "community_name": "ai.mjs",
       "id": "server_ai_rungeminimultimodal"
@@ -1153,7 +1153,7 @@
       "source_file": "server/ai.mjs",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "selectopenaimodel()",
       "community_name": "ai.mjs",
       "id": "server_ai_selectopenaimodel"
@@ -1164,7 +1164,7 @@
       "source_file": "server/ai.mjs",
       "source_location": "L33",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "runopenai()",
       "community_name": "ai.mjs",
       "id": "server_ai_runopenai"
@@ -1175,7 +1175,7 @@
       "source_file": "server/ai.mjs",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "runfallback()",
       "community_name": "ai.mjs",
       "id": "server_ai_runfallback"
@@ -1186,7 +1186,7 @@
       "source_file": "server/ai.mjs",
       "source_location": "L49",
       "_origin": "ast",
-      "community": 28,
+      "community": 29,
       "norm_label": "runai()",
       "community_name": "ai.mjs",
       "id": "server_ai_runai"
@@ -1285,7 +1285,7 @@
       "source_file": "app/api/v1/automations/[id]/runs/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 33,
+      "community": 35,
       "norm_label": "route.ts",
       "community_name": "route.ts",
       "id": "app_api_v1_automations_id_runs_route"
@@ -1296,7 +1296,7 @@
       "source_file": "app/api/v1/automations/[id]/runs/route.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 33,
+      "community": 35,
       "norm_label": "get()",
       "community_name": "route.ts",
       "id": "app_api_v1_automations_id_runs_route_get"
@@ -1307,7 +1307,7 @@
       "source_file": "app/api/v1/automations/[id]/runs/route.ts",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 18,
+      "community": 20,
       "norm_label": "post()",
       "community_name": "now",
       "id": "app_api_v1_automations_id_runs_route_post"
@@ -1318,9 +1318,9 @@
       "source_file": "app/api/v1/automations/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 38,
+      "community": 25,
       "norm_label": "route.ts",
-      "community_name": "saveAutomation",
+      "community_name": "saveAssignment",
       "id": "app_api_v1_automations_route"
     },
     {
@@ -1329,9 +1329,9 @@
       "source_file": "app/api/v1/automations/route.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 38,
+      "community": 25,
       "norm_label": "get()",
-      "community_name": "saveAutomation",
+      "community_name": "saveAssignment",
       "id": "app_api_v1_automations_route_get"
     },
     {
@@ -1340,9 +1340,9 @@
       "source_file": "app/api/v1/automations/route.ts",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 38,
+      "community": 25,
       "norm_label": "post()",
-      "community_name": "saveAutomation",
+      "community_name": "saveAssignment",
       "id": "app_api_v1_automations_route_post"
     },
     {
@@ -1450,7 +1450,7 @@
       "source_file": "app/api/v1/notifications/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 30,
+      "community": 32,
       "norm_label": "route.ts",
       "community_name": "createNotification",
       "id": "app_api_v1_notifications_route"
@@ -1461,7 +1461,7 @@
       "source_file": "app/api/v1/notifications/route.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 30,
+      "community": 32,
       "norm_label": "get()",
       "community_name": "createNotification",
       "id": "app_api_v1_notifications_route_get"
@@ -1472,7 +1472,7 @@
       "source_file": "app/api/v1/notifications/route.ts",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 30,
+      "community": 32,
       "norm_label": "post()",
       "community_name": "createNotification",
       "id": "app_api_v1_notifications_route_post"
@@ -1483,7 +1483,7 @@
       "source_file": "app/api/v1/study/assignments/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 35,
+      "community": 25,
       "norm_label": "route.ts",
       "community_name": "saveAssignment",
       "id": "app_api_v1_study_assignments_route"
@@ -1494,7 +1494,7 @@
       "source_file": "app/api/v1/study/assignments/route.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 35,
+      "community": 25,
       "norm_label": "get()",
       "community_name": "saveAssignment",
       "id": "app_api_v1_study_assignments_route_get"
@@ -1505,7 +1505,7 @@
       "source_file": "app/api/v1/study/assignments/route.ts",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 35,
+      "community": 25,
       "norm_label": "post()",
       "community_name": "saveAssignment",
       "id": "app_api_v1_study_assignments_route_post"
@@ -1670,9 +1670,9 @@
       "source_file": "app/api/v1/extract/handwriting/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 11,
+      "community": 1,
       "norm_label": "route.ts",
-      "community_name": "config.mjs",
+      "community_name": "json",
       "id": "app_api_v1_extract_handwriting_route"
     },
     {
@@ -1681,9 +1681,9 @@
       "source_file": "app/api/v1/extract/handwriting/route.ts",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 11,
+      "community": 1,
       "norm_label": "post()",
-      "community_name": "config.mjs",
+      "community_name": "json",
       "id": "app_api_v1_extract_handwriting_route_post"
     },
     {
@@ -1868,9 +1868,9 @@
       "source_file": "server/extract.mjs",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 11,
+      "community": 1,
       "norm_label": "extract.mjs",
-      "community_name": "config.mjs",
+      "community_name": "json",
       "id": "server_extract"
     },
     {
@@ -1879,9 +1879,9 @@
       "source_file": "server/extract.mjs",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 11,
+      "community": 1,
       "norm_label": "execfileasync",
-      "community_name": "config.mjs",
+      "community_name": "json",
       "id": "server_extract_execfileasync"
     },
     {
@@ -1890,9 +1890,9 @@
       "source_file": "server/extract.mjs",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 11,
+      "community": 1,
       "norm_label": "stripxml()",
-      "community_name": "config.mjs",
+      "community_name": "json",
       "id": "server_extract_stripxml"
     },
     {
@@ -1901,9 +1901,9 @@
       "source_file": "server/extract.mjs",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 11,
+      "community": 1,
       "norm_label": "extracttext()",
-      "community_name": "config.mjs",
+      "community_name": "json",
       "id": "server_extract_extracttext"
     },
     {
@@ -1912,9 +1912,9 @@
       "source_file": "server/extract.mjs",
       "source_location": "L49",
       "_origin": "ast",
-      "community": 11,
+      "community": 1,
       "norm_label": "extracthandwriting()",
-      "community_name": "config.mjs",
+      "community_name": "json",
       "id": "server_extract_extracthandwriting"
     },
     {
@@ -1945,7 +1945,7 @@
       "source_file": "app/activity/page.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 37,
+      "community": 38,
       "norm_label": "page.tsx",
       "community_name": "page.tsx",
       "id": "app_activity_page"
@@ -1956,7 +1956,7 @@
       "source_file": "app/activity/page.tsx",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 37,
+      "community": 38,
       "norm_label": "auditevent",
       "community_name": "page.tsx",
       "id": "app_activity_page_auditevent"
@@ -1967,7 +1967,7 @@
       "source_file": "app/activity/page.tsx",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 37,
+      "community": 38,
       "norm_label": "icons",
       "community_name": "page.tsx",
       "id": "app_activity_page_icons"
@@ -1978,7 +1978,7 @@
       "source_file": "app/activity/page.tsx",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 37,
+      "community": 38,
       "norm_label": "time",
       "community_name": "page.tsx",
       "id": "app_activity_page_time"
@@ -1989,7 +1989,7 @@
       "source_file": "app/activity/page.tsx",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 37,
+      "community": 38,
       "norm_label": "activitypage()",
       "community_name": "page.tsx",
       "id": "app_activity_page_activitypage"
@@ -2858,7 +2858,7 @@
       "source_file": "app/coding/compiler/page.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 36,
+      "community": 37,
       "norm_label": "page.tsx",
       "community_name": "page.tsx",
       "id": "app_coding_compiler_page"
@@ -2869,7 +2869,7 @@
       "source_file": "app/coding/compiler/page.tsx",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 36,
+      "community": 37,
       "norm_label": "starters",
       "community_name": "page.tsx",
       "id": "app_coding_compiler_page_starters"
@@ -2880,7 +2880,7 @@
       "source_file": "app/coding/compiler/page.tsx",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 36,
+      "community": 37,
       "norm_label": "language",
       "community_name": "page.tsx",
       "id": "app_coding_compiler_page_language"
@@ -2891,7 +2891,7 @@
       "source_file": "app/coding/compiler/page.tsx",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 36,
+      "community": 37,
       "norm_label": "result",
       "community_name": "page.tsx",
       "id": "app_coding_compiler_page_result"
@@ -2902,7 +2902,7 @@
       "source_file": "app/coding/compiler/page.tsx",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 36,
+      "community": 37,
       "norm_label": "approval",
       "community_name": "page.tsx",
       "id": "app_coding_compiler_page_approval"
@@ -2913,7 +2913,7 @@
       "source_file": "app/coding/compiler/page.tsx",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 36,
+      "community": 37,
       "norm_label": "compilerpage()",
       "community_name": "page.tsx",
       "id": "app_coding_compiler_page_compilerpage"
@@ -3672,7 +3672,7 @@
       "source_file": "app/study/page.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "page.tsx",
       "community_name": "page.tsx",
       "id": "app_study_page"
@@ -3683,7 +3683,7 @@
       "source_file": "app/study/page.tsx",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "course",
       "community_name": "page.tsx",
       "id": "app_study_page_course"
@@ -3694,7 +3694,7 @@
       "source_file": "app/study/page.tsx",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "assignment",
       "community_name": "page.tsx",
       "id": "app_study_page_assignment"
@@ -3705,7 +3705,7 @@
       "source_file": "app/study/page.tsx",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "card",
       "community_name": "page.tsx",
       "id": "app_study_page_card"
@@ -3716,7 +3716,7 @@
       "source_file": "app/study/page.tsx",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "question",
       "community_name": "page.tsx",
       "id": "app_study_page_question"
@@ -3727,7 +3727,7 @@
       "source_file": "app/study/page.tsx",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "quiz",
       "community_name": "page.tsx",
       "id": "app_study_page_quiz"
@@ -3738,7 +3738,7 @@
       "source_file": "app/study/page.tsx",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "workspace",
       "community_name": "page.tsx",
       "id": "app_study_page_workspace"
@@ -3749,7 +3749,7 @@
       "source_file": "app/study/page.tsx",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "request()",
       "community_name": "page.tsx",
       "id": "app_study_page_request"
@@ -3760,7 +3760,7 @@
       "source_file": "app/study/page.tsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "post()",
       "community_name": "page.tsx",
       "id": "app_study_page_post"
@@ -3771,7 +3771,7 @@
       "source_file": "app/study/page.tsx",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 27,
+      "community": 28,
       "norm_label": "studypage()",
       "community_name": "page.tsx",
       "id": "app_study_page_studypage"
@@ -4178,7 +4178,7 @@
       "source_file": "app/components/MarkdownContent.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "markdowncontent.tsx",
       "community_name": "page.tsx",
       "id": "app_components_markdowncontent"
@@ -4189,7 +4189,7 @@
       "source_file": "app/components/MarkdownContent.tsx",
       "source_location": "L2",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "basic()",
       "community_name": "page.tsx",
       "id": "app_components_markdowncontent_basic"
@@ -4200,7 +4200,7 @@
       "source_file": "app/components/MarkdownContent.tsx",
       "source_location": "L3",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "mermaid()",
       "community_name": "page.tsx",
       "id": "app_components_markdowncontent_mermaid"
@@ -4211,7 +4211,7 @@
       "source_file": "app/components/MarkdownContent.tsx",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "chart()",
       "community_name": "page.tsx",
       "id": "app_components_markdowncontent_chart"
@@ -4222,7 +4222,7 @@
       "source_file": "app/components/MarkdownContent.tsx",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "markdowncontent()",
       "community_name": "page.tsx",
       "id": "app_components_markdowncontent_markdowncontent"
@@ -4233,7 +4233,7 @@
       "source_file": "app/vault/page.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "page.tsx",
       "community_name": "page.tsx",
       "id": "app_vault_page"
@@ -4244,7 +4244,7 @@
       "source_file": "app/vault/page.tsx",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "blanknote()",
       "community_name": "page.tsx",
       "id": "app_vault_page_blanknote"
@@ -4255,7 +4255,7 @@
       "source_file": "app/vault/page.tsx",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "optimization",
       "community_name": "page.tsx",
       "id": "app_vault_page_optimization"
@@ -4266,7 +4266,7 @@
       "source_file": "app/vault/page.tsx",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "rendermarkdown()",
       "community_name": "page.tsx",
       "id": "app_vault_page_rendermarkdown"
@@ -4277,7 +4277,7 @@
       "source_file": "app/vault/page.tsx",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 26,
+      "community": 27,
       "norm_label": "vaultpage()",
       "community_name": "page.tsx",
       "id": "app_vault_page_vaultpage"
@@ -4684,7 +4684,7 @@
       "source_file": "app/api/v1/notification-deliveries/[id]/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "route.ts",
       "community_name": "push.mjs",
       "id": "app_api_v1_notification_deliveries_id_route"
@@ -4695,7 +4695,7 @@
       "source_file": "app/api/v1/notification-deliveries/[id]/route.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "patch()",
       "community_name": "push.mjs",
       "id": "app_api_v1_notification_deliveries_id_route_patch"
@@ -4706,7 +4706,7 @@
       "source_file": "app/api/v1/notification-deliveries/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "route.ts",
       "community_name": "push.mjs",
       "id": "app_api_v1_notification_deliveries_route"
@@ -4717,7 +4717,7 @@
       "source_file": "app/api/v1/notification-deliveries/route.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "get()",
       "community_name": "push.mjs",
       "id": "app_api_v1_notification_deliveries_route_get"
@@ -4728,7 +4728,7 @@
       "source_file": "server/push.mjs",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "push.mjs",
       "community_name": "push.mjs",
       "id": "server_push"
@@ -4739,7 +4739,7 @@
       "source_file": "server/push.mjs",
       "source_location": "L3",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "now()",
       "community_name": "push.mjs",
       "id": "server_push_now"
@@ -4750,7 +4750,7 @@
       "source_file": "server/push.mjs",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "claimdelivery()",
       "community_name": "push.mjs",
       "id": "server_push_claimdelivery"
@@ -4761,7 +4761,7 @@
       "source_file": "server/push.mjs",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "listdeliveries()",
       "community_name": "push.mjs",
       "id": "server_push_listdeliveries"
@@ -4772,7 +4772,7 @@
       "source_file": "server/push.mjs",
       "source_location": "L6",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "retrydelivery()",
       "community_name": "push.mjs",
       "id": "server_push_retrydelivery"
@@ -4783,7 +4783,7 @@
       "source_file": "server/push.mjs",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "resolvedelivery()",
       "community_name": "push.mjs",
       "id": "server_push_resolvedelivery"
@@ -4794,7 +4794,7 @@
       "source_file": "server/push.mjs",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 25,
+      "community": 26,
       "norm_label": "deliverone()",
       "community_name": "push.mjs",
       "id": "server_push_deliverone"
@@ -5124,7 +5124,7 @@
       "source_file": "app/api/v1/calendar-sync/conflicts/[id]/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "route.ts",
       "community_name": "calendar-sync.mjs",
       "id": "app_api_v1_calendar_sync_conflicts_id_route"
@@ -5135,7 +5135,7 @@
       "source_file": "app/api/v1/calendar-sync/conflicts/[id]/route.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "post()",
       "community_name": "calendar-sync.mjs",
       "id": "app_api_v1_calendar_sync_conflicts_id_route_post"
@@ -5146,7 +5146,7 @@
       "source_file": "app/api/v1/calendar-sync/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "route.ts",
       "community_name": "calendar-sync.mjs",
       "id": "app_api_v1_calendar_sync_route"
@@ -5157,7 +5157,7 @@
       "source_file": "app/api/v1/calendar-sync/route.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "get()",
       "community_name": "calendar-sync.mjs",
       "id": "app_api_v1_calendar_sync_route_get"
@@ -5168,7 +5168,7 @@
       "source_file": "app/api/v1/calendar-sync/route.ts",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "post()",
       "community_name": "calendar-sync.mjs",
       "id": "app_api_v1_calendar_sync_route_post"
@@ -5278,7 +5278,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "calendar-sync.mjs",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync"
@@ -5289,7 +5289,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "now()",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync_now"
@@ -5300,7 +5300,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "snapshot()",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync_snapshot"
@@ -5311,7 +5311,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "midnight()",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync_midnight"
@@ -5322,7 +5322,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L31",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "normalized()",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync_normalized"
@@ -5333,7 +5333,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L46",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "localinput()",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync_localinput"
@@ -5344,7 +5344,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L55",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "dateinzone()",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync_dateinzone"
@@ -5355,7 +5355,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L68",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "googlepayload()",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync_googlepayload"
@@ -5366,7 +5366,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L95",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "applygoogleevent()",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync_applygoogleevent"
@@ -5377,7 +5377,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L127",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "pullcalendar()",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync_pullcalendar"
@@ -5388,7 +5388,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L165",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "pullgooglecalendar()",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync_pullgooglecalendar"
@@ -5399,7 +5399,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L189",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "claimwrite()",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync_claimwrite"
@@ -5410,7 +5410,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L201",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "remotesnapshot()",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync_remotesnapshot"
@@ -5421,7 +5421,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L215",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "pushgooglecalendar()",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync_pushgooglecalendar"
@@ -5432,7 +5432,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L293",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "resolvecalendarconflict()",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync_resolvecalendarconflict"
@@ -5443,7 +5443,7 @@
       "source_file": "server/calendar-sync.mjs",
       "source_location": "L355",
       "_origin": "ast",
-      "community": 10,
+      "community": 11,
       "norm_label": "calendarsyncstatus()",
       "community_name": "calendar-sync.mjs",
       "id": "server_calendar_sync_calendarsyncstatus"
@@ -5542,9 +5542,9 @@
       "source_file": "app/api/v1/search/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 11,
+      "community": 30,
       "norm_label": "route.ts",
-      "community_name": "config.mjs",
+      "community_name": "search.mjs",
       "id": "app_api_v1_search_route"
     },
     {
@@ -5553,9 +5553,9 @@
       "source_file": "app/api/v1/search/route.ts",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 11,
+      "community": 30,
       "norm_label": "get()",
-      "community_name": "config.mjs",
+      "community_name": "search.mjs",
       "id": "app_api_v1_search_route_get"
     },
     {
@@ -5564,9 +5564,9 @@
       "source_file": "server/config.mjs",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 11,
+      "community": 1,
       "norm_label": "config.mjs",
-      "community_name": "config.mjs",
+      "community_name": "json",
       "id": "server_config"
     },
     {
@@ -5575,9 +5575,9 @@
       "source_file": "server/config.mjs",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 11,
+      "community": 1,
       "norm_label": "root",
-      "community_name": "config.mjs",
+      "community_name": "json",
       "id": "server_config_root"
     },
     {
@@ -5586,9 +5586,9 @@
       "source_file": "server/config.mjs",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 11,
+      "community": 1,
       "norm_label": "absolute()",
-      "community_name": "config.mjs",
+      "community_name": "json",
       "id": "server_config_absolute"
     },
     {
@@ -5608,9 +5608,9 @@
       "source_file": "server/config.mjs",
       "source_location": "L30",
       "_origin": "ast",
-      "community": 11,
+      "community": 1,
       "norm_label": "ensuredatadirs()",
-      "community_name": "config.mjs",
+      "community_name": "json",
       "id": "server_config_ensuredatadirs"
     },
     {
@@ -5619,9 +5619,9 @@
       "source_file": "server/search.mjs",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 11,
+      "community": 30,
       "norm_label": "search.mjs",
-      "community_name": "config.mjs",
+      "community_name": "search.mjs",
       "id": "server_search"
     },
     {
@@ -5630,9 +5630,9 @@
       "source_file": "server/search.mjs",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 11,
+      "community": 30,
       "norm_label": "types",
-      "community_name": "config.mjs",
+      "community_name": "search.mjs",
       "id": "server_search_types"
     },
     {
@@ -5641,9 +5641,9 @@
       "source_file": "server/search.mjs",
       "source_location": "L6",
       "_origin": "ast",
-      "community": 11,
+      "community": 30,
       "norm_label": "text",
-      "community_name": "config.mjs",
+      "community_name": "search.mjs",
       "id": "server_search_text"
     },
     {
@@ -5652,9 +5652,9 @@
       "source_file": "server/search.mjs",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 11,
+      "community": 30,
       "norm_label": "key()",
-      "community_name": "config.mjs",
+      "community_name": "search.mjs",
       "id": "server_search_key"
     },
     {
@@ -5663,9 +5663,9 @@
       "source_file": "server/search.mjs",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 11,
+      "community": 30,
       "norm_label": "cosine()",
-      "community_name": "config.mjs",
+      "community_name": "search.mjs",
       "id": "server_search_cosine"
     },
     {
@@ -5674,9 +5674,9 @@
       "source_file": "server/search.mjs",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 11,
+      "community": 30,
       "norm_label": "candidates()",
-      "community_name": "config.mjs",
+      "community_name": "search.mjs",
       "id": "server_search_candidates"
     },
     {
@@ -5685,9 +5685,9 @@
       "source_file": "server/search.mjs",
       "source_location": "L17",
       "_origin": "ast",
-      "community": 11,
+      "community": 30,
       "norm_label": "searchworkspace()",
-      "community_name": "config.mjs",
+      "community_name": "search.mjs",
       "id": "server_search_searchworkspace"
     },
     {
@@ -5696,7 +5696,7 @@
       "source_file": "app/api/v1/automations/[id]/events/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 33,
+      "community": 35,
       "norm_label": "route.ts",
       "community_name": "route.ts",
       "id": "app_api_v1_automations_id_events_route"
@@ -5707,7 +5707,7 @@
       "source_file": "app/api/v1/automations/[id]/events/route.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 33,
+      "community": 35,
       "norm_label": "get()",
       "community_name": "route.ts",
       "id": "app_api_v1_automations_id_events_route_get"
@@ -5718,7 +5718,7 @@
       "source_file": "app/api/v1/automations/[id]/runs/[runId]/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 18,
+      "community": 20,
       "norm_label": "route.ts",
       "community_name": "now",
       "id": "app_api_v1_automations_id_runs_runid_route"
@@ -5729,7 +5729,7 @@
       "source_file": "app/api/v1/automations/[id]/runs/[runId]/route.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 18,
+      "community": 20,
       "norm_label": "patch()",
       "community_name": "now",
       "id": "app_api_v1_automations_id_runs_runid_route_patch"
@@ -5740,7 +5740,7 @@
       "source_file": "app/api/v1/notifications/events/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 30,
+      "community": 32,
       "norm_label": "route.ts",
       "community_name": "createNotification",
       "id": "app_api_v1_notifications_events_route"
@@ -5751,7 +5751,7 @@
       "source_file": "app/api/v1/notifications/events/route.ts",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 30,
+      "community": 32,
       "norm_label": "get()",
       "community_name": "createNotification",
       "id": "app_api_v1_notifications_events_route_get"
@@ -5817,7 +5817,7 @@
       "source_file": "app/api/v1/push-subscriptions/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 34,
+      "community": 36,
       "norm_label": "route.ts",
       "community_name": "route.ts",
       "id": "app_api_v1_push_subscriptions_route"
@@ -5828,7 +5828,7 @@
       "source_file": "app/api/v1/push-subscriptions/route.ts",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 34,
+      "community": 36,
       "norm_label": "get()",
       "community_name": "route.ts",
       "id": "app_api_v1_push_subscriptions_route_get"
@@ -5839,7 +5839,7 @@
       "source_file": "app/api/v1/push-subscriptions/route.ts",
       "source_location": "L6",
       "_origin": "ast",
-      "community": 34,
+      "community": 36,
       "norm_label": "post()",
       "community_name": "route.ts",
       "id": "app_api_v1_push_subscriptions_route_post"
@@ -5850,7 +5850,7 @@
       "source_file": "app/api/v1/push-subscriptions/route.ts",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 34,
+      "community": 36,
       "norm_label": "delete()",
       "community_name": "route.ts",
       "id": "app_api_v1_push_subscriptions_route_delete"
@@ -5861,7 +5861,7 @@
       "source_file": "app/settings/page.tsx",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 20,
+      "community": 19,
       "norm_label": "page.tsx",
       "community_name": "page.tsx",
       "id": "app_settings_page"
@@ -5872,7 +5872,7 @@
       "source_file": "app/settings/page.tsx",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 20,
+      "community": 19,
       "norm_label": "settings",
       "community_name": "page.tsx",
       "id": "app_settings_page_settings"
@@ -5883,7 +5883,7 @@
       "source_file": "app/settings/page.tsx",
       "source_location": "L8",
       "_origin": "ast",
-      "community": 20,
+      "community": 19,
       "norm_label": "session",
       "community_name": "page.tsx",
       "id": "app_settings_page_session"
@@ -5894,7 +5894,7 @@
       "source_file": "app/settings/page.tsx",
       "source_location": "L9",
       "_origin": "ast",
-      "community": 20,
+      "community": 19,
       "norm_label": "mfa",
       "community_name": "page.tsx",
       "id": "app_settings_page_mfa"
@@ -5905,7 +5905,7 @@
       "source_file": "app/settings/page.tsx",
       "source_location": "L10",
       "_origin": "ast",
-      "community": 20,
+      "community": 19,
       "norm_label": "googlecalendar",
       "community_name": "page.tsx",
       "id": "app_settings_page_googlecalendar"
@@ -5916,7 +5916,7 @@
       "source_file": "app/settings/page.tsx",
       "source_location": "L11",
       "_origin": "ast",
-      "community": 20,
+      "community": 19,
       "norm_label": "googleconnection",
       "community_name": "page.tsx",
       "id": "app_settings_page_googleconnection"
@@ -5927,7 +5927,7 @@
       "source_file": "app/settings/page.tsx",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 20,
+      "community": 19,
       "norm_label": "calendarsync",
       "community_name": "page.tsx",
       "id": "app_settings_page_calendarsync"
@@ -5938,7 +5938,7 @@
       "source_file": "app/settings/page.tsx",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 20,
+      "community": 19,
       "norm_label": "analytics",
       "community_name": "page.tsx",
       "id": "app_settings_page_analytics"
@@ -5949,7 +5949,7 @@
       "source_file": "app/settings/page.tsx",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 20,
+      "community": 19,
       "norm_label": "sections",
       "community_name": "page.tsx",
       "id": "app_settings_page_sections"
@@ -5960,7 +5960,7 @@
       "source_file": "app/settings/page.tsx",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 20,
+      "community": 19,
       "norm_label": "icons",
       "community_name": "page.tsx",
       "id": "app_settings_page_icons"
@@ -5971,7 +5971,7 @@
       "source_file": "app/settings/page.tsx",
       "source_location": "L15",
       "_origin": "ast",
-      "community": 20,
+      "community": 19,
       "norm_label": "request()",
       "community_name": "page.tsx",
       "id": "app_settings_page_request"
@@ -5982,7 +5982,7 @@
       "source_file": "app/settings/page.tsx",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 20,
+      "community": 19,
       "norm_label": "applicationkey()",
       "community_name": "page.tsx",
       "id": "app_settings_page_applicationkey"
@@ -5993,7 +5993,7 @@
       "source_file": "app/settings/page.tsx",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 20,
+      "community": 19,
       "norm_label": "settingspage()",
       "community_name": "page.tsx",
       "id": "app_settings_page_settingspage"
@@ -6004,7 +6004,7 @@
       "source_file": "app/settings/page.tsx",
       "source_location": "L48",
       "_origin": "ast",
-      "community": 20,
+      "community": 19,
       "norm_label": "toggle()",
       "community_name": "page.tsx",
       "id": "app_settings_page_toggle"
@@ -7269,9 +7269,9 @@
       "source_file": "server/core.mjs",
       "source_location": "L77",
       "_origin": "ast",
-      "community": 0,
+      "community": 1,
       "norm_label": "updatecapture()",
-      "community_name": "core.mjs",
+      "community_name": "json",
       "id": "server_core_updatecapture"
     },
     {
@@ -7324,9 +7324,9 @@
       "source_file": "server/core.mjs",
       "source_location": "L121",
       "_origin": "ast",
-      "community": 0,
+      "community": 1,
       "norm_label": "undoauditevent()",
-      "community_name": "core.mjs",
+      "community_name": "json",
       "id": "server_core_undoauditevent"
     },
     {
@@ -7698,7 +7698,7 @@
       "source_file": "server/worker.mjs",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 29,
+      "community": 31,
       "norm_label": "worker.mjs",
       "community_name": "worker.mjs",
       "id": "server_worker"
@@ -7709,7 +7709,7 @@
       "source_file": "server/worker.mjs",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 29,
+      "community": 31,
       "norm_label": "schema",
       "community_name": "worker.mjs",
       "id": "server_worker_schema"
@@ -7720,7 +7720,7 @@
       "source_file": "server/worker.mjs",
       "source_location": "L14",
       "_origin": "ast",
-      "community": 29,
+      "community": 31,
       "norm_label": "optimizationschema",
       "community_name": "worker.mjs",
       "id": "server_worker_optimizationschema"
@@ -7731,7 +7731,7 @@
       "source_file": "server/worker.mjs",
       "source_location": "L16",
       "_origin": "ast",
-      "community": 29,
+      "community": 31,
       "norm_label": "runone()",
       "community_name": "worker.mjs",
       "id": "server_worker_runone"
@@ -7742,7 +7742,7 @@
       "source_file": "server/worker.mjs",
       "source_location": "L32",
       "_origin": "ast",
-      "community": 29,
+      "community": 31,
       "norm_label": "startworker()",
       "community_name": "worker.mjs",
       "id": "server_worker_startworker"
@@ -8006,7 +8006,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 18,
+      "community": 20,
       "norm_label": "now()",
       "community_name": "now",
       "id": "server_modules_now"
@@ -8028,7 +8028,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 35,
+      "community": 25,
       "norm_label": "version()",
       "community_name": "saveAssignment",
       "id": "server_modules_version"
@@ -8061,7 +8061,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L12",
       "_origin": "ast",
-      "community": 35,
+      "community": 25,
       "norm_label": "saveassignment()",
       "community_name": "saveAssignment",
       "id": "server_modules_saveassignment"
@@ -8072,7 +8072,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L13",
       "_origin": "ast",
-      "community": 35,
+      "community": 25,
       "norm_label": "listassignments()",
       "community_name": "saveAssignment",
       "id": "server_modules_listassignments"
@@ -8149,7 +8149,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L23",
       "_origin": "ast",
-      "community": 30,
+      "community": 32,
       "norm_label": "createnotification()",
       "community_name": "createNotification",
       "id": "server_modules_createnotification"
@@ -8160,7 +8160,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L24",
       "_origin": "ast",
-      "community": 30,
+      "community": 32,
       "norm_label": "listnotifications()",
       "community_name": "createNotification",
       "id": "server_modules_listnotifications"
@@ -8193,7 +8193,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L27",
       "_origin": "ast",
-      "community": 29,
+      "community": 31,
       "norm_label": "deliverduereminders()",
       "community_name": "worker.mjs",
       "id": "server_modules_deliverduereminders"
@@ -8204,7 +8204,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L28",
       "_origin": "ast",
-      "community": 34,
+      "community": 36,
       "norm_label": "savepushsubscription()",
       "community_name": "route.ts",
       "id": "server_modules_savepushsubscription"
@@ -8215,7 +8215,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L29",
       "_origin": "ast",
-      "community": 34,
+      "community": 36,
       "norm_label": "deletepushsubscription()",
       "community_name": "route.ts",
       "id": "server_modules_deletepushsubscription"
@@ -8292,9 +8292,9 @@
       "source_file": "server/modules.mjs",
       "source_location": "L37",
       "_origin": "ast",
-      "community": 38,
+      "community": 25,
       "norm_label": "saveautomation()",
-      "community_name": "saveAutomation",
+      "community_name": "saveAssignment",
       "id": "server_modules_saveautomation"
     },
     {
@@ -8303,9 +8303,9 @@
       "source_file": "server/modules.mjs",
       "source_location": "L38",
       "_origin": "ast",
-      "community": 38,
+      "community": 25,
       "norm_label": "listautomations()",
-      "community_name": "saveAutomation",
+      "community_name": "saveAssignment",
       "id": "server_modules_listautomations"
     },
     {
@@ -8325,7 +8325,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L40",
       "_origin": "ast",
-      "community": 18,
+      "community": 20,
       "norm_label": "startautomationrun()",
       "community_name": "now",
       "id": "server_modules_startautomationrun"
@@ -8336,7 +8336,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L41",
       "_origin": "ast",
-      "community": 18,
+      "community": 20,
       "norm_label": "finishautomationrun()",
       "community_name": "now",
       "id": "server_modules_finishautomationrun"
@@ -8347,7 +8347,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L42",
       "_origin": "ast",
-      "community": 18,
+      "community": 20,
       "norm_label": "runview()",
       "community_name": "now",
       "id": "server_modules_runview"
@@ -8358,7 +8358,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L43",
       "_origin": "ast",
-      "community": 33,
+      "community": 35,
       "norm_label": "automationruns()",
       "community_name": "route.ts",
       "id": "server_modules_automationruns"
@@ -8369,7 +8369,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L44",
       "_origin": "ast",
-      "community": 18,
+      "community": 20,
       "norm_label": "conditionmatches()",
       "community_name": "now",
       "id": "server_modules_conditionmatches"
@@ -8380,7 +8380,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L45",
       "_origin": "ast",
-      "community": 18,
+      "community": 20,
       "norm_label": "advanceautomationrun()",
       "community_name": "now",
       "id": "server_modules_advanceautomationrun"
@@ -8391,7 +8391,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L46",
       "_origin": "ast",
-      "community": 18,
+      "community": 20,
       "norm_label": "executeautomation()",
       "community_name": "now",
       "id": "server_modules_executeautomation"
@@ -8413,7 +8413,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L48",
       "_origin": "ast",
-      "community": 18,
+      "community": 20,
       "norm_label": "completeautomationskillstep()",
       "community_name": "now",
       "id": "server_modules_completeautomationskillstep"
@@ -8424,7 +8424,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L49",
       "_origin": "ast",
-      "community": 29,
+      "community": 31,
       "norm_label": "failautomationskillstep()",
       "community_name": "worker.mjs",
       "id": "server_modules_failautomationskillstep"
@@ -8435,7 +8435,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L50",
       "_origin": "ast",
-      "community": 18,
+      "community": 20,
       "norm_label": "cancelautomationrun()",
       "community_name": "now",
       "id": "server_modules_cancelautomationrun"
@@ -8446,7 +8446,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L51",
       "_origin": "ast",
-      "community": 18,
+      "community": 20,
       "norm_label": "retryautomationrun()",
       "community_name": "now",
       "id": "server_modules_retryautomationrun"
@@ -8457,7 +8457,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L52",
       "_origin": "ast",
-      "community": 29,
+      "community": 31,
       "norm_label": "crondue()",
       "community_name": "worker.mjs",
       "id": "server_modules_crondue"
@@ -8468,7 +8468,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L53",
       "_origin": "ast",
-      "community": 29,
+      "community": 31,
       "norm_label": "runscheduledautomations()",
       "community_name": "worker.mjs",
       "id": "server_modules_runscheduledautomations"
@@ -8479,9 +8479,9 @@
       "source_file": "server/modules.mjs",
       "source_location": "L54",
       "_origin": "ast",
-      "community": 18,
+      "community": 0,
       "norm_label": "runcaptureautomations()",
-      "community_name": "now",
+      "community_name": "core.mjs",
       "id": "server_modules_runcaptureautomations"
     },
     {
@@ -8490,7 +8490,7 @@
       "source_file": "server/modules.mjs",
       "source_location": "L55",
       "_origin": "ast",
-      "community": 33,
+      "community": 35,
       "norm_label": "automationmetrics()",
       "community_name": "route.ts",
       "id": "server_modules_automationmetrics"
@@ -8501,7 +8501,7 @@
       "source_file": "app/api/v1/knowledge-graph/path/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 19,
+      "community": 18,
       "norm_label": "route.ts",
       "community_name": "knowledge-graph.mjs",
       "id": "app_api_v1_knowledge_graph_path_route"
@@ -8512,7 +8512,7 @@
       "source_file": "app/api/v1/knowledge-graph/path/route.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 19,
+      "community": 18,
       "norm_label": "get()",
       "community_name": "knowledge-graph.mjs",
       "id": "app_api_v1_knowledge_graph_path_route_get"
@@ -8523,7 +8523,7 @@
       "source_file": "app/api/v1/knowledge-graph/route.ts",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 19,
+      "community": 18,
       "norm_label": "route.ts",
       "community_name": "knowledge-graph.mjs",
       "id": "app_api_v1_knowledge_graph_route"
@@ -8534,76 +8534,10 @@
       "source_file": "app/api/v1/knowledge-graph/route.ts",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 19,
+      "community": 18,
       "norm_label": "get()",
       "community_name": "knowledge-graph.mjs",
       "id": "app_api_v1_knowledge_graph_route_get"
-    },
-    {
-      "label": "db.mjs",
-      "file_type": "code",
-      "source_file": "server/db.mjs",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 2,
-      "norm_label": "db.mjs",
-      "community_name": "db.mjs",
-      "id": "server_db"
-    },
-    {
-      "label": "openDatabase()",
-      "file_type": "code",
-      "source_file": "server/db.mjs",
-      "source_location": "L88",
-      "_origin": "ast",
-      "community": 2,
-      "norm_label": "opendatabase()",
-      "community_name": "db.mjs",
-      "id": "server_db_opendatabase"
-    },
-    {
-      "label": "ensureColumn()",
-      "file_type": "code",
-      "source_file": "server/db.mjs",
-      "source_location": "L146",
-      "_origin": "ast",
-      "community": 2,
-      "norm_label": "ensurecolumn()",
-      "community_name": "db.mjs",
-      "id": "server_db_ensurecolumn"
-    },
-    {
-      "label": "migrateLegacyEvents()",
-      "file_type": "code",
-      "source_file": "server/db.mjs",
-      "source_location": "L147",
-      "_origin": "ast",
-      "community": 2,
-      "norm_label": "migratelegacyevents()",
-      "community_name": "db.mjs",
-      "id": "server_db_migratelegacyevents"
-    },
-    {
-      "label": "getDatabase()",
-      "file_type": "code",
-      "source_file": "server/db.mjs",
-      "source_location": "L149",
-      "_origin": "ast",
-      "community": 2,
-      "norm_label": "getdatabase()",
-      "community_name": "db.mjs",
-      "id": "server_db_getdatabase"
-    },
-    {
-      "label": "closeDatabase()",
-      "file_type": "code",
-      "source_file": "server/db.mjs",
-      "source_location": "L154",
-      "_origin": "ast",
-      "community": 2,
-      "norm_label": "closedatabase()",
-      "community_name": "db.mjs",
-      "id": "server_db_closedatabase"
     },
     {
       "label": "knowledge-graph.mjs",
@@ -8611,7 +8545,7 @@
       "source_file": "server/knowledge-graph.mjs",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 19,
+      "community": 18,
       "norm_label": "knowledge-graph.mjs",
       "community_name": "knowledge-graph.mjs",
       "id": "server_knowledge_graph"
@@ -8622,7 +8556,7 @@
       "source_file": "server/knowledge-graph.mjs",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 19,
+      "community": 18,
       "norm_label": "nodeid()",
       "community_name": "knowledge-graph.mjs",
       "id": "server_knowledge_graph_nodeid"
@@ -8633,7 +8567,7 @@
       "source_file": "server/knowledge-graph.mjs",
       "source_location": "L5",
       "_origin": "ast",
-      "community": 19,
+      "community": 18,
       "norm_label": "edgeid()",
       "community_name": "knowledge-graph.mjs",
       "id": "server_knowledge_graph_edgeid"
@@ -8644,7 +8578,7 @@
       "source_file": "server/knowledge-graph.mjs",
       "source_location": "L6",
       "_origin": "ast",
-      "community": 19,
+      "community": 18,
       "norm_label": "href",
       "community_name": "knowledge-graph.mjs",
       "id": "server_knowledge_graph_href"
@@ -8655,7 +8589,7 @@
       "source_file": "server/knowledge-graph.mjs",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 19,
+      "community": 18,
       "norm_label": "tablespecs",
       "community_name": "knowledge-graph.mjs",
       "id": "server_knowledge_graph_tablespecs"
@@ -8666,7 +8600,7 @@
       "source_file": "server/knowledge-graph.mjs",
       "source_location": "L18",
       "_origin": "ast",
-      "community": 19,
+      "community": 18,
       "norm_label": "clean()",
       "community_name": "knowledge-graph.mjs",
       "id": "server_knowledge_graph_clean"
@@ -8677,7 +8611,7 @@
       "source_file": "server/knowledge-graph.mjs",
       "source_location": "L20",
       "_origin": "ast",
-      "community": 19,
+      "community": 18,
       "norm_label": "syncknowledgegraph()",
       "community_name": "knowledge-graph.mjs",
       "id": "server_knowledge_graph_syncknowledgegraph"
@@ -8688,7 +8622,7 @@
       "source_file": "server/knowledge-graph.mjs",
       "source_location": "L35",
       "_origin": "ast",
-      "community": 19,
+      "community": 18,
       "norm_label": "viewnode()",
       "community_name": "knowledge-graph.mjs",
       "id": "server_knowledge_graph_viewnode"
@@ -8699,7 +8633,7 @@
       "source_file": "server/knowledge-graph.mjs",
       "source_location": "L36",
       "_origin": "ast",
-      "community": 19,
+      "community": 18,
       "norm_label": "queryknowledgegraph()",
       "community_name": "knowledge-graph.mjs",
       "id": "server_knowledge_graph_queryknowledgegraph"
@@ -8710,7 +8644,7 @@
       "source_file": "server/knowledge-graph.mjs",
       "source_location": "L42",
       "_origin": "ast",
-      "community": 19,
+      "community": 18,
       "norm_label": "knowledgepath()",
       "community_name": "knowledge-graph.mjs",
       "id": "server_knowledge_graph_knowledgepath"
@@ -8936,83 +8870,6 @@
       "id": "server_analytics_deleteanalytics"
     },
     {
-      "label": "backend.test.js",
-      "file_type": "code",
-      "source_file": "test/backend.test.js",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 31,
-      "norm_label": "backend.test.js",
-      "community_name": "backend.test.js",
-      "id": "test_backend_test"
-    },
-    {
-      "label": "test",
-      "file_type": "code",
-      "source_file": "test/backend.test.js",
-      "source_location": "L1",
-      "_origin": "ast",
-      "community": 31,
-      "norm_label": "test",
-      "community_name": "backend.test.js",
-      "id": "test_backend_test_test"
-    },
-    {
-      "label": "assert",
-      "file_type": "code",
-      "source_file": "test/backend.test.js",
-      "source_location": "L2",
-      "_origin": "ast",
-      "community": 31,
-      "norm_label": "assert",
-      "community_name": "backend.test.js",
-      "id": "test_backend_test_assert"
-    },
-    {
-      "label": "{mkdtempSync,rmSync}",
-      "file_type": "code",
-      "source_file": "test/backend.test.js",
-      "source_location": "L3",
-      "_origin": "ast",
-      "community": 31,
-      "norm_label": "{mkdtempsync,rmsync}",
-      "community_name": "backend.test.js",
-      "id": "test_backend_test_mkdtempsync_rmsync"
-    },
-    {
-      "label": "{tmpdir}",
-      "file_type": "code",
-      "source_file": "test/backend.test.js",
-      "source_location": "L4",
-      "_origin": "ast",
-      "community": 31,
-      "norm_label": "{tmpdir}",
-      "community_name": "backend.test.js",
-      "id": "test_backend_test_tmpdir"
-    },
-    {
-      "label": "{join}",
-      "file_type": "code",
-      "source_file": "test/backend.test.js",
-      "source_location": "L5",
-      "_origin": "ast",
-      "community": 31,
-      "norm_label": "{join}",
-      "community_name": "backend.test.js",
-      "id": "test_backend_test_join"
-    },
-    {
-      "label": "temp()",
-      "file_type": "code",
-      "source_file": "test/backend.test.js",
-      "source_location": "L7",
-      "_origin": "ast",
-      "community": 31,
-      "norm_label": "temp()",
-      "community_name": "backend.test.js",
-      "id": "test_backend_test_temp"
-    },
-    {
       "label": "01-release.spec.ts",
       "file_type": "code",
       "source_file": "test/browser/01-release.spec.ts",
@@ -9051,7 +8908,7 @@
       "source_file": "test/frontend.test.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 32,
+      "community": 34,
       "norm_label": "frontend.test.js",
       "community_name": "frontend.test.js",
       "id": "test_frontend_test"
@@ -9062,7 +8919,7 @@
       "source_file": "test/frontend.test.js",
       "source_location": "L1",
       "_origin": "ast",
-      "community": 32,
+      "community": 34,
       "norm_label": "test",
       "community_name": "frontend.test.js",
       "id": "test_frontend_test_test"
@@ -9073,7 +8930,7 @@
       "source_file": "test/frontend.test.js",
       "source_location": "L2",
       "_origin": "ast",
-      "community": 32,
+      "community": 34,
       "norm_label": "assert",
       "community_name": "frontend.test.js",
       "id": "test_frontend_test_assert"
@@ -9084,7 +8941,7 @@
       "source_file": "test/frontend.test.js",
       "source_location": "L3",
       "_origin": "ast",
-      "community": 32,
+      "community": 34,
       "norm_label": "fs",
       "community_name": "frontend.test.js",
       "id": "test_frontend_test_fs"
@@ -9095,7 +8952,7 @@
       "source_file": "test/frontend.test.js",
       "source_location": "L4",
       "_origin": "ast",
-      "community": 32,
+      "community": 34,
       "norm_label": "path",
       "community_name": "frontend.test.js",
       "id": "test_frontend_test_path"
@@ -9106,7 +8963,7 @@
       "source_file": "test/frontend.test.js",
       "source_location": "L6",
       "_origin": "ast",
-      "community": 32,
+      "community": 34,
       "norm_label": "root",
       "community_name": "frontend.test.js",
       "id": "test_frontend_test_root"
@@ -9117,10 +8974,395 @@
       "source_file": "test/frontend.test.js",
       "source_location": "L7",
       "_origin": "ast",
-      "community": 32,
+      "community": 34,
       "norm_label": "read()",
       "community_name": "frontend.test.js",
       "id": "test_frontend_test_read"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "route.ts",
+      "id": "app_api_v1_dashboards_id_route",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "get()",
+      "id": "app_api_v1_dashboards_id_route_get",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "post()",
+      "id": "app_api_v1_dashboards_id_route_post",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "DELETE()",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L6",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "delete()",
+      "id": "app_api_v1_dashboards_id_route_delete",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/reorder/route.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "route.ts",
+      "id": "app_api_v1_dashboards_reorder_route",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/reorder/route.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "post()",
+      "id": "app_api_v1_dashboards_reorder_route_post",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "route.ts",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "route.ts",
+      "id": "app_api_v1_dashboards_route",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "GET()",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "get()",
+      "id": "app_api_v1_dashboards_route_get",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "POST()",
+      "file_type": "code",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "post()",
+      "id": "app_api_v1_dashboards_route_post",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "dashboards.mjs",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "dashboards.mjs",
+      "id": "server_dashboards",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "widgetTypes",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "widgettypes",
+      "id": "server_dashboards_widgettypes",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "text()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "text()",
+      "id": "server_dashboards_text",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "widget()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L6",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "widget()",
+      "id": "server_dashboards_widget",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "layout()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L7",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "layout()",
+      "id": "server_dashboards_layout",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "rowView()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L8",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "rowview()",
+      "id": "server_dashboards_rowview",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "saveDashboard()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L10",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "savedashboard()",
+      "id": "server_dashboards_savedashboard",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "listDashboards()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L11",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "listdashboards()",
+      "id": "server_dashboards_listdashboards",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "duplicateDashboard()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L12",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "duplicatedashboard()",
+      "id": "server_dashboards_duplicatedashboard",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "deleteDashboard()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L13",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "deletedashboard()",
+      "id": "server_dashboards_deletedashboard",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "reorderDashboards()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L14",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "reorderdashboards()",
+      "id": "server_dashboards_reorderdashboards",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "widgetData()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L16",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "widgetdata()",
+      "id": "server_dashboards_widgetdata",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "dashboardView()",
+      "file_type": "code",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L19",
+      "_origin": "ast",
+      "community": 10,
+      "norm_label": "dashboardview()",
+      "id": "server_dashboards_dashboardview",
+      "community_name": "dashboards.mjs"
+    },
+    {
+      "label": "db.mjs",
+      "file_type": "code",
+      "source_file": "server/db.mjs",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 2,
+      "norm_label": "db.mjs",
+      "id": "server_db",
+      "community_name": "db.mjs"
+    },
+    {
+      "label": "openDatabase()",
+      "file_type": "code",
+      "source_file": "server/db.mjs",
+      "source_location": "L90",
+      "_origin": "ast",
+      "community": 2,
+      "norm_label": "opendatabase()",
+      "id": "server_db_opendatabase",
+      "community_name": "db.mjs"
+    },
+    {
+      "label": "ensureColumn()",
+      "file_type": "code",
+      "source_file": "server/db.mjs",
+      "source_location": "L149",
+      "_origin": "ast",
+      "community": 2,
+      "norm_label": "ensurecolumn()",
+      "id": "server_db_ensurecolumn",
+      "community_name": "db.mjs"
+    },
+    {
+      "label": "migrateLegacyEvents()",
+      "file_type": "code",
+      "source_file": "server/db.mjs",
+      "source_location": "L150",
+      "_origin": "ast",
+      "community": 2,
+      "norm_label": "migratelegacyevents()",
+      "id": "server_db_migratelegacyevents",
+      "community_name": "db.mjs"
+    },
+    {
+      "label": "getDatabase()",
+      "file_type": "code",
+      "source_file": "server/db.mjs",
+      "source_location": "L152",
+      "_origin": "ast",
+      "community": 2,
+      "norm_label": "getdatabase()",
+      "id": "server_db_getdatabase",
+      "community_name": "db.mjs"
+    },
+    {
+      "label": "closeDatabase()",
+      "file_type": "code",
+      "source_file": "server/db.mjs",
+      "source_location": "L157",
+      "_origin": "ast",
+      "community": 2,
+      "norm_label": "closedatabase()",
+      "id": "server_db_closedatabase",
+      "community_name": "db.mjs"
+    },
+    {
+      "label": "backend.test.js",
+      "file_type": "code",
+      "source_file": "test/backend.test.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 33,
+      "norm_label": "backend.test.js",
+      "id": "test_backend_test",
+      "community_name": "backend.test.js"
+    },
+    {
+      "label": "test",
+      "file_type": "code",
+      "source_file": "test/backend.test.js",
+      "source_location": "L1",
+      "_origin": "ast",
+      "community": 33,
+      "norm_label": "test",
+      "id": "test_backend_test_test",
+      "community_name": "backend.test.js"
+    },
+    {
+      "label": "assert",
+      "file_type": "code",
+      "source_file": "test/backend.test.js",
+      "source_location": "L2",
+      "_origin": "ast",
+      "community": 33,
+      "norm_label": "assert",
+      "id": "test_backend_test_assert",
+      "community_name": "backend.test.js"
+    },
+    {
+      "label": "{mkdtempSync,rmSync}",
+      "file_type": "code",
+      "source_file": "test/backend.test.js",
+      "source_location": "L3",
+      "_origin": "ast",
+      "community": 33,
+      "norm_label": "{mkdtempsync,rmsync}",
+      "id": "test_backend_test_mkdtempsync_rmsync",
+      "community_name": "backend.test.js"
+    },
+    {
+      "label": "{tmpdir}",
+      "file_type": "code",
+      "source_file": "test/backend.test.js",
+      "source_location": "L4",
+      "_origin": "ast",
+      "community": 33,
+      "norm_label": "{tmpdir}",
+      "id": "test_backend_test_tmpdir",
+      "community_name": "backend.test.js"
+    },
+    {
+      "label": "{join}",
+      "file_type": "code",
+      "source_file": "test/backend.test.js",
+      "source_location": "L5",
+      "_origin": "ast",
+      "community": 33,
+      "norm_label": "{join}",
+      "id": "test_backend_test_join",
+      "community_name": "backend.test.js"
+    },
+    {
+      "label": "temp()",
+      "file_type": "code",
+      "source_file": "test/backend.test.js",
+      "source_location": "L7",
+      "_origin": "ast",
+      "community": 33,
+      "norm_label": "temp()",
+      "id": "test_backend_test_temp",
+      "community_name": "backend.test.js"
     }
   ],
   "links": [
@@ -27806,61 +28048,6 @@
       "target": "server_knowledge_graph_queryknowledgegraph"
     },
     {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L154",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_db",
-      "target": "server_db_closedatabase"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L146",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_db",
-      "target": "server_db_ensurecolumn"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L149",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_db",
-      "target": "server_db_getdatabase"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L147",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_db",
-      "target": "server_db_migratelegacyevents"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L88",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_db",
-      "target": "server_db_opendatabase"
-    },
-    {
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -27871,42 +28058,6 @@
       "confidence_score": 1.0,
       "source": "server_knowledge_graph",
       "target": "server_db"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L150",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_db_getdatabase",
-      "target": "server_db_opendatabase"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L92",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_db_opendatabase",
-      "target": "server_db_ensurecolumn"
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "server/db.mjs",
-      "source_location": "L134",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "server_db_opendatabase",
-      "target": "server_db_migratelegacyevents"
     },
     {
       "relation": "imports",
@@ -28365,72 +28516,6 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
-      "source_file": "test/backend.test.js",
-      "source_location": "L2",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "test_backend_test",
-      "target": "test_backend_test_assert"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "test/backend.test.js",
-      "source_location": "L5",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "test_backend_test",
-      "target": "test_backend_test_join"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "test/backend.test.js",
-      "source_location": "L3",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "test_backend_test",
-      "target": "test_backend_test_mkdtempsync_rmsync"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "test/backend.test.js",
-      "source_location": "L7",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "test_backend_test",
-      "target": "test_backend_test_temp"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "test/backend.test.js",
-      "source_location": "L1",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "test_backend_test",
-      "target": "test_backend_test_test"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "test/backend.test.js",
-      "source_location": "L4",
-      "weight": 1.0,
-      "_origin": "ast",
-      "confidence_score": 1.0,
-      "source": "test_backend_test",
-      "target": "test_backend_test_tmpdir"
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
       "source_file": "test/browser/01-release.spec.ts",
       "source_location": "L6",
       "weight": 1.0,
@@ -28515,8 +28600,675 @@
       "confidence_score": 1.0,
       "source": "test_frontend_test",
       "target": "test_frontend_test_test"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_id_route",
+      "target": "app_api_v1_dashboards_id_route_delete"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_id_route",
+      "target": "app_api_v1_dashboards_id_route_get"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_id_route",
+      "target": "app_api_v1_dashboards_id_route_post"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_id_route",
+      "target": "server_dashboards"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_id_route",
+      "target": "server_dashboards_dashboardview"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_id_route",
+      "target": "server_dashboards_deletedashboard"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_id_route",
+      "target": "server_dashboards_duplicatedashboard"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_dashboards_id_route_get",
+      "target": "server_dashboards_dashboardview"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_dashboards_id_route_post",
+      "target": "server_dashboards_duplicatedashboard"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/dashboards/[id]/route.ts",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_dashboards_id_route_delete",
+      "target": "server_dashboards_deletedashboard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/reorder/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_reorder_route",
+      "target": "app_api_v1_dashboards_reorder_route_post"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/reorder/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_reorder_route",
+      "target": "server_dashboards"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/reorder/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_reorder_route",
+      "target": "server_dashboards_reorderdashboards"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/dashboards/reorder/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_dashboards_reorder_route_post",
+      "target": "server_dashboards_reorderdashboards"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_route",
+      "target": "app_api_v1_dashboards_route_get"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_route",
+      "target": "app_api_v1_dashboards_route_post"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_route",
+      "target": "server_dashboards"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_route",
+      "target": "server_dashboards_listdashboards"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "app_api_v1_dashboards_route",
+      "target": "server_dashboards_savedashboard"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_dashboards_route_get",
+      "target": "server_dashboards_listdashboards"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "app/api/v1/dashboards/route.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "app_api_v1_dashboards_route_post",
+      "target": "server_dashboards_savedashboard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_dashboardview"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_deletedashboard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_duplicatedashboard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_layout"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_listdashboards"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_reorderdashboards"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_rowview"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_savedashboard"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_text"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_widget"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L16",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_widgetdata"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_dashboards_widgettypes"
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_db"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards",
+      "target": "server_db_getdatabase"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards_savedashboard",
+      "target": "server_dashboards_text"
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 0.5,
+      "source": "server_dashboards_layout",
+      "target": "server_dashboards_widget"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards_savedashboard",
+      "target": "server_dashboards_layout"
+    },
+    {
+      "relation": "indirect_call",
+      "context": "argument",
+      "confidence": "INFERRED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 0.5,
+      "source": "server_dashboards_listdashboards",
+      "target": "server_dashboards_rowview"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards_savedashboard",
+      "target": "server_dashboards_rowview"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards_duplicatedashboard",
+      "target": "server_dashboards_savedashboard"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards_dashboardview",
+      "target": "server_dashboards_listdashboards"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L14",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards_reorderdashboards",
+      "target": "server_dashboards_listdashboards"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/dashboards.mjs",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_dashboards_dashboardview",
+      "target": "server_dashboards_widgetdata"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L157",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db",
+      "target": "server_db_closedatabase"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L149",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db",
+      "target": "server_db_ensurecolumn"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L152",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db",
+      "target": "server_db_getdatabase"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L150",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db",
+      "target": "server_db_migratelegacyevents"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L90",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db",
+      "target": "server_db_opendatabase"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L153",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db_getdatabase",
+      "target": "server_db_opendatabase"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L94",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db_opendatabase",
+      "target": "server_db_ensurecolumn"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "server/db.mjs",
+      "source_location": "L136",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "server_db_opendatabase",
+      "target": "server_db_migratelegacyevents"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "test/backend.test.js",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "test_backend_test",
+      "target": "test_backend_test_assert"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "test/backend.test.js",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "test_backend_test",
+      "target": "test_backend_test_join"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "test/backend.test.js",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "test_backend_test",
+      "target": "test_backend_test_mkdtempsync_rmsync"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "test/backend.test.js",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "test_backend_test",
+      "target": "test_backend_test_temp"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "test/backend.test.js",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "test_backend_test",
+      "target": "test_backend_test_test"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "test/backend.test.js",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast",
+      "confidence_score": 1.0,
+      "source": "test_backend_test",
+      "target": "test_backend_test_tmpdir"
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "f68277de5e96a5e046971ef59b9124a37289e540"
+  "built_at_commit": "a3762db0c70a8e13d81e4958e0c622ebdf179573"
 }
