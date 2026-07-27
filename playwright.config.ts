@@ -4,6 +4,7 @@ import {join} from "node:path";
 import {defineConfig,devices} from "@playwright/test";
 
 const dataDir=mkdtempSync(join(tmpdir(),"lifeos-browser-"));
+const port=Number(process.env.LIFEOS_TEST_PORT||3107),baseURL=`http://127.0.0.1:${port}`;
 
 export default defineConfig({
   testDir:"test/browser",
@@ -11,14 +12,14 @@ export default defineConfig({
   workers:1,
   reporter:"line",
   expect:{timeout:20_000},
-  use:{baseURL:"http://127.0.0.1:3107",trace:"retain-on-failure"},
+  use:{baseURL,trace:"retain-on-failure"},
   projects:[
     {name:"firefox",testIgnore:"**/install.spec.ts",use:{...devices["Desktop Firefox"]}},
     {name:"mobile-chromium",testMatch:"**/install.spec.ts",use:{...devices["Pixel 7"]}},
   ],
   webServer:{
-    command:"npm run dev -- --hostname 127.0.0.1 --port 3107",
-    url:"http://127.0.0.1:3107/login",
+    command:`npm run dev -- --hostname 127.0.0.1 --port ${port}`,
+    url:`${baseURL}/login`,
     reuseExistingServer:false,
     timeout:120_000,
     env:{

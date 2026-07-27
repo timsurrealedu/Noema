@@ -5,7 +5,7 @@ import {useRouter} from "next/navigation";
 import {ReactNode, useEffect, useState} from "react";
 import {
   Bell, BookOpen, CalendarBlank, CheckSquare, Code, Command, FileText, Folder, Gear,
-  House, Lightning, ListChecks, MagnifyingGlass, Moon, Plus, ShareNetwork, Sparkle, Sun, Tray, X
+  House, Lightning, ListChecks, MagnifyingGlass, Moon, Plus, ShareNetwork, Sparkle, SquaresFour, Sun, Tray, X
 } from "@phosphor-icons/react";
 import {ModalDialog} from "./ModalDialog";
 
@@ -16,7 +16,7 @@ type Recommendation={id:string;proposal:{title:string;priority:string};sources:{
 const nav = [
   ["Today","/",House],["Capture","/capture",Plus],["Calendar","/calendar",CalendarBlank],
   ["Tasks","/tasks",CheckSquare],["Vault","/vault",Folder],["Graph","/graph",ShareNetwork],["Projects","/projects",Tray],
-  ["Study","/study",BookOpen],["Coding","/coding",Code],["Automations","/automations",Lightning]
+  ["Study","/study",BookOpen],["Coding","/coding",Code],["Automations","/automations",Lightning],["Dashboards","/dashboards",SquaresFour]
 ] as const;
 
 export function ModuleShell({active,title,action,assistantContext,children}:{active:string;title:string;action?:ReactNode;assistantContext?:{type:string;id:string};children:ReactNode}) {
@@ -35,7 +35,7 @@ export function ModuleShell({active,title,action,assistantContext,children}:{act
   const [searchError,setSearchError]=useState("");
   const [semanticSearch,setSemanticSearch]=useState(false),[rankingSource,setRankingSource]=useState("");
   useEffect(()=>{const saved=localStorage.getItem("lifeos-theme") as "dark"|"light"|null;if(saved)setTheme(saved)},[]);
-  useEffect(()=>{const area=active.toLowerCase(),allowed=new Set(["today","capture","tasks","calendar","vault","graph","study","projects","coding","automations","settings"]);if(allowed.has(area))void fetch("/api/v1/analytics",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({event:"navigation",properties:{area}})}).catch(()=>{})},[active]);
+  useEffect(()=>{const area=active.toLowerCase(),allowed=new Set(["today","capture","tasks","calendar","vault","graph","study","projects","coding","automations","dashboards","settings"]);if(allowed.has(area))void fetch("/api/v1/analytics",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({event:"navigation",properties:{area}})}).catch(()=>{})},[active]);
   useEffect(()=>{document.documentElement.dataset.theme=theme;localStorage.setItem("lifeos-theme",theme)},[theme]);
   useEffect(()=>{const key=(event:KeyboardEvent)=>{if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==="k"){event.preventDefault();setPalette(true)}if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==="j"){event.preventDefault();setAssistant(true)}if(event.key==="Escape"){setPalette(false);setNotifications(false);setAssistant(false)}};addEventListener("keydown",key);return()=>removeEventListener("keydown",key)},[]);
   useEffect(()=>{if(!notifications)return;setNotificationError("");fetch("/api/v1/notifications").then(async response=>{if(!response.ok)throw new Error(response.status===401?"Sign in to view notifications.":"Notifications are unavailable.");return response.json()}).then(data=>setNotificationItems(data.notifications)).catch(error=>setNotificationError(error.message))},[notifications]);

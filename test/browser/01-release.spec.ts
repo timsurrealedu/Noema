@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import {expect,test,type Page} from "@playwright/test";
 
-const routes=["/","/capture","/tasks","/calendar","/vault","/graph","/projects","/study","/coding","/coding/compiler","/automations","/notifications","/activity","/settings","/help"];
+const routes=["/","/capture","/tasks","/calendar","/vault","/graph","/projects","/study","/coding","/coding/compiler","/automations","/dashboards","/notifications","/activity","/settings","/help"];
 
 async function login(page:Page){
   await page.goto("/login");await page.getByLabel("Email address").fill("owner@example.com");
@@ -19,7 +19,7 @@ test("primary routes work at desktop and mobile widths",async({page})=>{
 
 test("primary surfaces pass automated WCAG 2.2 AA rules",async({page})=>{
   test.setTimeout(120_000);await login(page);
-  for(const route of ["/","/capture","/tasks","/calendar","/vault","/graph","/settings","/login"]){
+  for(const route of ["/","/capture","/tasks","/calendar","/vault","/graph","/dashboards","/settings","/login"]){
     await page.goto(route);const result=await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa","wcag22aa"]).analyze();
     expect(result.violations,`${route}: ${result.violations.map(item=>item.id).join(", ")}`).toEqual([]);
   }
@@ -55,6 +55,13 @@ test("knowledge graph renders relationships, provenance, and shortest paths",asy
   await page.goto("/graph");await expect(page.getByRole("img",{name:"LifeOS knowledge graph"})).toBeVisible();await expect(page.getByText("tasks.project")).toBeVisible();
   await page.getByLabel("From").selectOption(`task:${created.task.id}`);await page.getByLabel("To").selectOption(`project:${created.project.id}`);await page.getByRole("button",{name:"Trace path"}).click();
   await expect(page.getByRole("list",{name:"Shortest path"})).toContainText("belongs-to via tasks.project");await expect(page.getByText("private browser summary")).toHaveCount(0);
+});
+
+test("custom dashboard creates, edits, derives data, duplicates, and reorders",async({page})=>{
+  await login(page);await page.evaluate(async()=>{const response=await fetch("/api/v1/tasks",{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":crypto.randomUUID()},body:JSON.stringify({title:"Dashboard browser task",project:"Inbox",due:"Today",priority:"Medium"})});if(!response.ok)throw new Error(await response.text())});await page.goto("/dashboards");await page.getByRole("button",{name:"New dashboard"}).click();await page.getByLabel("Dashboard name").fill("Browser focus");await page.getByRole("button",{name:"Create",exact:true}).click();
+  await page.getByRole("button",{name:"tasks"}).click();await page.getByLabel("Tasks title").fill("Today tasks");await page.getByRole("button",{name:"Wider"}).click();await page.getByRole("button",{name:"Save layout"}).click();
+  await expect(page.getByText("Today tasks")).toBeVisible();await expect(page.getByText("Dashboard browser task")).toBeVisible();await page.getByRole("button",{name:"Duplicate"}).click();await expect(page.getByRole("button",{name:"Browser focus copy"})).toBeVisible();
+  await page.getByRole("button",{name:"Move dashboard left"}).click();await expect(page.getByRole("button",{name:"Browser focus copy"})).toHaveClass(/active/);
 });
 
 for(const width of [375,768,1024,1440])test(`Today visual baseline at ${width}px`,async({page})=>{

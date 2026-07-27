@@ -41,12 +41,12 @@
 
 ## 5 — Custom dashboard builder
 
-- [ ] Create, rename, duplicate, reorder, and delete dashboards
-- [ ] Add, configure, resize, move, and remove allowlisted widgets
-- [ ] Persist responsive layouts with optimistic version checks
-- [ ] Provide keyboard controls and useful empty/error states
-- [ ] Derive widget data from authenticated canonical APIs
-- [ ] Verify layout validation, mobile adaptation, and accessibility
+- [x] Create, rename, duplicate, reorder, and delete dashboards
+- [x] Add, configure, resize, move, and remove allowlisted widgets
+- [x] Persist responsive layouts with optimistic version checks
+- [x] Provide keyboard controls and useful empty/error states
+- [x] Derive widget data from authenticated canonical APIs
+- [x] Verify layout validation, mobile adaptation, and accessibility
 
 ## 6 — Multiplayer collaboration
 

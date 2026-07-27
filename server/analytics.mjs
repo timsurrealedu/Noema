@@ -2,7 +2,7 @@ import {randomUUID} from "node:crypto";
 import {getDatabase} from "./db.mjs";
 
 const schemas={
-  navigation:{area:["today","capture","tasks","calendar","vault","graph","study","projects","coding","automations","settings"]},
+  navigation:{area:["today","capture","tasks","calendar","vault","graph","study","projects","coding","automations","dashboards","settings"]},
   operation:{kind:["create","update","delete","search","export","sync"],outcome:["success","failure","cancelled"],durationMs:"number"},
   sync:{provider:["google_calendar","offline_queue"],outcome:["success","failure","partial"],itemCount:"number"},
 };

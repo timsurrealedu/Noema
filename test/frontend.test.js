@@ -7,7 +7,7 @@ const root=path.join(__dirname,"..");
 const read=file=>fs.readFileSync(path.join(root,file),"utf8");
 
 test("core frontend routes exist",()=>{
-  for(const route of ["activity","automations","calendar","capture","coding","graph","login","projects","settings","study","tasks","vault"])
+  for(const route of ["activity","automations","calendar","capture","coding","dashboards","graph","login","projects","settings","study","tasks","vault"])
     assert.ok(fs.existsSync(path.join(root,"app",route,"page.tsx")),route);
 });
 
@@ -169,6 +169,7 @@ test("Automations use durable API state and runs",()=>{
 });
 
 test("knowledge graph exposes accessible visual, table, paths, and provenance",()=>{const page=read("app/graph/page.tsx"),shell=read("app/components/ModuleShell.tsx");assert.match(page,/\/api\/v1\/knowledge-graph/);assert.match(page,/role="img"/);assert.match(page,/Accessible relationship table/);assert.match(page,/Trace a path/);assert.match(page,/provenance/);assert.match(page,/Open source/);assert.match(shell,/\["Graph","\/graph"/)});
+test("custom dashboard builder persists responsive keyboard layouts",()=>{const page=read("app/dashboards/page.tsx"),shell=read("app/components/ModuleShell.tsx");assert.match(page,/\/api\/v1\/dashboards/);for(const label of ["Move dashboard left","Add widget","Save layout","Duplicate","Delete","Narrower","Wider","Shorter","Taller"])assert.match(page,new RegExp(label));assert.match(page,/gridColumn/);assert.match(shell,/\["Dashboards","\/dashboards"/)});
 
 test("tasks and events expose durable reminder controls",()=>{
   for(const file of ["app/tasks/page.tsx","app/calendar/page.tsx"])assert.match(read(file),/type="datetime-local"/);
