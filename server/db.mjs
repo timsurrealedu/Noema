@@ -58,6 +58,12 @@ CREATE TABLE IF NOT EXISTS repositories(id TEXT PRIMARY KEY,user_id TEXT NOT NUL
 CREATE TABLE IF NOT EXISTS repository_command_runs(id TEXT PRIMARY KEY,repository_id TEXT NOT NULL REFERENCES repositories(id) ON DELETE CASCADE,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,command_id TEXT NOT NULL,command_text TEXT NOT NULL,state TEXT NOT NULL,exit_code INTEGER,output TEXT NOT NULL DEFAULT '',truncated INTEGER NOT NULL DEFAULT 0,started_at TEXT NOT NULL,finished_at TEXT);
 CREATE TABLE IF NOT EXISTS plugins(id TEXT NOT NULL,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,name TEXT NOT NULL,version TEXT NOT NULL,manifest_json TEXT NOT NULL,install_path TEXT NOT NULL,enabled INTEGER NOT NULL DEFAULT 1,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,PRIMARY KEY(user_id,id));
 CREATE TABLE IF NOT EXISTS plugin_runs(id TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,plugin_id TEXT NOT NULL,input_json TEXT NOT NULL,state TEXT NOT NULL,output_json TEXT,error TEXT,started_at TEXT NOT NULL,finished_at TEXT);
+CREATE TABLE IF NOT EXISTS workspaces(id TEXT PRIMARY KEY,name TEXT NOT NULL,created_by TEXT NOT NULL REFERENCES users(id),created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1);
+CREATE TABLE IF NOT EXISTS workspace_members(workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,role TEXT NOT NULL,joined_at TEXT NOT NULL,revoked_at TEXT,PRIMARY KEY(workspace_id,user_id));
+CREATE TABLE IF NOT EXISTS workspace_invitations(id TEXT PRIMARY KEY,workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,email TEXT NOT NULL,role TEXT NOT NULL,token_hash TEXT NOT NULL UNIQUE,invited_by TEXT NOT NULL REFERENCES users(id),expires_at TEXT NOT NULL,created_at TEXT NOT NULL,accepted_at TEXT,accepted_by TEXT REFERENCES users(id),revoked_at TEXT);
+CREATE TABLE IF NOT EXISTS workspace_comments(id TEXT PRIMARY KEY,workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,object_type TEXT NOT NULL,object_id TEXT NOT NULL,actor_id TEXT NOT NULL REFERENCES users(id),body TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,version INTEGER NOT NULL DEFAULT 1,deleted_at TEXT);
+CREATE TABLE IF NOT EXISTS workspace_presence(workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,location TEXT NOT NULL,object_type TEXT,object_id TEXT,last_seen_at TEXT NOT NULL,expires_at TEXT NOT NULL,PRIMARY KEY(workspace_id,user_id));
+CREATE TABLE IF NOT EXISTS workspace_conflicts(id TEXT PRIMARY KEY,workspace_id TEXT NOT NULL REFERENCES workspaces(id) ON DELETE CASCADE,object_type TEXT NOT NULL,object_id TEXT NOT NULL,actor_id TEXT NOT NULL REFERENCES users(id),base_version INTEGER NOT NULL,current_json TEXT NOT NULL,proposed_json TEXT NOT NULL,created_at TEXT NOT NULL,resolved_at TEXT,resolved_by TEXT REFERENCES users(id),resolution TEXT);
 CREATE TABLE IF NOT EXISTS note_optimizations(id TEXT PRIMARY KEY,note_id TEXT NOT NULL REFERENCES notes(id) ON DELETE CASCADE,job_id TEXT NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,mode TEXT NOT NULL,state TEXT NOT NULL,before_content TEXT NOT NULL,after_content TEXT,summary TEXT,provider TEXT,error TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,applied_at TEXT);
 CREATE TABLE IF NOT EXISTS tutor_sessions(id TEXT PRIMARY KEY,kind TEXT NOT NULL,subject_id TEXT,subject_title TEXT NOT NULL,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS tutor_messages(id TEXT PRIMARY KEY,session_id TEXT NOT NULL REFERENCES tutor_sessions(id) ON DELETE CASCADE,role TEXT NOT NULL,content TEXT NOT NULL,citations_json TEXT NOT NULL DEFAULT '[]',replacement TEXT,provider TEXT,inserted_note_id TEXT REFERENCES notes(id) ON DELETE SET NULL,inserted_note_version INTEGER,created_at TEXT NOT NULL);
@@ -116,6 +122,7 @@ export function openDatabase(path){
   ensureColumn(db,"notifications","related_type","TEXT");
   ensureColumn(db,"notifications","related_id","TEXT");
   ensureColumn(db,"automation_runs","job_id","TEXT REFERENCES jobs(id) ON DELETE SET NULL");
+  ensureColumn(db,"audit_events","workspace_id","TEXT REFERENCES workspaces(id) ON DELETE SET NULL");
   db.exec("CREATE INDEX IF NOT EXISTS tasks_reminders ON tasks(reminder_at,reminder_sent_at); CREATE INDEX IF NOT EXISTS events_reminders ON events(reminder_at,reminder_sent_at);");
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(1,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(2,?)").run(new Date().toISOString());
@@ -149,6 +156,7 @@ export function openDatabase(path){
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(29,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(30,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(31,?)").run(new Date().toISOString());
+  db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(32,?)").run(new Date().toISOString());
   return db;
 }
 
