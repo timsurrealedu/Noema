@@ -14,11 +14,11 @@
 
 ## 2 — Advanced automation builder
 
-- [ ] Create, edit, duplicate, disable, and delete automations
+- [x] Create, edit, duplicate, disable, and delete automations
 - [ ] Compose validated triggers, conditions, and ordered actions
 - [ ] Preview and test workflows without enabling them
-- [ ] Persist versioned definitions and immutable run-step history
-- [ ] Support retry/cancel from a failed step without duplicating completed effects
+- [x] Persist versioned definitions and immutable run-step history
+- [x] Support retry/cancel from a failed step without duplicating completed effects
 - [ ] Verify schedules, event triggers, validation, accessibility, and mobile editing
 
 ## 3 — Knowledge-graph visualization
