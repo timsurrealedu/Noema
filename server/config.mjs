@@ -1,5 +1,5 @@
 import {mkdirSync} from "node:fs";
-import {isAbsolute,resolve} from "node:path";
+import {delimiter,isAbsolute,resolve} from "node:path";
 
 const root=process.cwd();
 const absolute=value=>isAbsolute(value)?value:resolve(root,value);
@@ -9,7 +9,7 @@ export function loadConfig(env=process.env){
   const config={
     dataDir,dbPath:resolve(dataDir,"lifeos.sqlite"),objectsDir:resolve(dataDir,"objects"),jobsDir:resolve(dataDir,"jobs"),backupsDir:resolve(dataDir,"backups"),
     ownerEmail:(env.LIFEOS_OWNER_EMAIL||"").trim().toLowerCase(),ownerPassword:env.LIFEOS_OWNER_PASSWORD||"",totpSecret:(env.LIFEOS_TOTP_SECRET||"").replace(/\s+/g,"").toUpperCase(),appEncryptionKey:env.LIFEOS_ENCRYPTION_KEY||"",
-    codeDir:absolute(env.LIFEOS_CODE_DIR||"."),compilerEnabled:env.LIFEOS_COMPILER_ENABLED==="true",codexEnabled:env.LIFEOS_CODEX_ENABLED==="true",
+    codeDir:absolute(env.LIFEOS_CODE_DIR||"."),repositoryRoots:(env.LIFEOS_REPOSITORY_ROOTS||env.LIFEOS_CODE_DIR||".").split(delimiter).filter(Boolean).map(absolute),compilerEnabled:env.LIFEOS_COMPILER_ENABLED==="true",codexEnabled:env.LIFEOS_CODEX_ENABLED==="true",
     geminiApiKey:env.GEMINI_API_KEY||env.GOOGLE_API_KEY||"",geminiModel:env.LIFEOS_GEMINI_MODEL||"gemini-2.5-flash",
     openaiApiKey:env.OPENAI_API_KEY||"",openaiFastModel:env.LIFEOS_OPENAI_FAST_MODEL||"chat-latest",openaiReasoningModel:env.LIFEOS_OPENAI_REASONING_MODEL||"gpt-5.6",openaiEmbeddingModel:env.LIFEOS_OPENAI_EMBEDDING_MODEL||"text-embedding-3-small",
     codexPath:env.LIFEOS_CODEX_PATH||"codex",sessionHours:Number(env.LIFEOS_SESSION_HOURS||24*30),compileTimeoutMs:Number(env.LIFEOS_COMPILE_TIMEOUT_MS||10000),maxOutputBytes:Number(env.LIFEOS_MAX_OUTPUT_BYTES||262144),

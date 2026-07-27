@@ -4,13 +4,13 @@
 
 ## 1 — Mobile repository IDE
 
-- [ ] Register repositories from explicitly allowed local paths
-- [ ] Browse repository files without path traversal or symlink escape
-- [ ] Edit multiple text files with optimistic version checks and size limits
-- [ ] Review working-tree diffs before writes, commits, or reverts
-- [ ] Run allowlisted terminal commands in isolated, time-limited sessions
-- [ ] Show test/build output, Git status/history, commit, and revert workflows
-- [ ] Verify phone navigation, keyboard editing, approvals, and repository isolation
+- [x] Register repositories from explicitly allowed local paths
+- [x] Browse repository files without path traversal or symlink escape
+- [x] Edit multiple text files with optimistic version checks and size limits
+- [x] Review working-tree diffs before writes, commits, or reverts
+- [x] Run allowlisted terminal commands in isolated, time-limited sessions
+- [x] Show test/build output, Git status/history, commit, and revert workflows
+- [x] Verify phone navigation, keyboard editing, approvals, and repository isolation
 
 ## 2 — Advanced automation builder
 

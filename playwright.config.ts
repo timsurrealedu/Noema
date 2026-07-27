@@ -27,6 +27,7 @@ export default defineConfig({
       LIFEOS_OWNER_EMAIL:"owner@example.com",
       LIFEOS_OWNER_PASSWORD:"correct horse battery staple",
       LIFEOS_ENCRYPTION_KEY:"browser-test-encryption-key-at-least-32-characters",
+      LIFEOS_REPOSITORY_ROOTS:process.cwd(),
     },
   },
 });

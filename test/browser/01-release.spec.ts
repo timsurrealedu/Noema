@@ -64,6 +64,13 @@ test("custom dashboard creates, edits, derives data, duplicates, and reorders",a
   await page.getByRole("button",{name:"Move dashboard left"}).click();await expect(page.getByRole("button",{name:"Browser focus copy"})).toHaveClass(/active/);
 });
 
+test("mobile repository IDE registers, browses, edits, and reviews an isolated command",async({page})=>{
+  await page.setViewportSize({width:375,height:900});await login(page);await page.goto("/coding");await page.getByLabel("Name").fill("LifeOS browser");await page.getByLabel("Allowed local path").fill(process.cwd());await page.getByRole("button",{name:"Register"}).click();await page.getByRole("link",{name:/LifeOS browser/}).click();await expect(page).toHaveURL(/\/coding\/repositories\/[^/]+$/);
+  expect(await page.evaluate(async()=>fetch(`/api/v1/repositories/${location.pathname.split("/").pop()}?path=../PROJECT.md`).then(response=>response.status))).toBe(403);await page.getByRole("button",{name:/package.json/}).click();const editor=page.getByLabel(/Editing package.json/);await expect(editor).toBeVisible();await editor.press("End");await page.getByRole("button",{name:"Tab",exact:true}).click();await expect(page.getByRole("button",{name:/Save 1/})).toBeEnabled();
+  page.once("dialog",dialog=>dialog.accept());await page.getByRole("button",{name:"status",exact:true}).click();await expect(page.getByText(/status · exit 0/)).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
+  expect((await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa","wcag22aa"]).analyze()).violations).toEqual([]);
+});
+
 for(const width of [375,768,1024,1440])test(`Today visual baseline at ${width}px`,async({page})=>{
   await page.setViewportSize({width,height:900});await login(page);await page.goto("/");
   await expect(page).toHaveScreenshot(`today-${width}.png`,{animations:"disabled",caret:"hide",fullPage:true,maxDiffPixelRatio:0.001});
