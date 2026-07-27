@@ -91,6 +91,8 @@ Supported MVP targets:
 
 ## Deferred beyond MVP
 
+Detailed acceptance criteria and implementation status now live in `POST_MVP_ROADMAP.md`.
+
 - [ ] Full mobile repository IDE (the responsive single-file compiler/editor is complete; repository browsing, multi-file editing, diffs, terminal sessions, and source-control workflows are deferred)
 - [ ] Advanced automation builder
 - [ ] Knowledge-graph visualization
