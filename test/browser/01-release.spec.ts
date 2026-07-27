@@ -38,6 +38,18 @@ test("keyboard focus stays trapped and core layouts tolerate 200% text",async({p
   }
 });
 
+test("automation builder composes, previews, runs, and exposes step history",async({page})=>{
+  await login(page);await page.goto("/automations");await page.getByRole("button",{name:"New automation"}).click();
+  await page.getByLabel("Name").fill("Browser workflow");await page.getByRole("button",{name:"Add condition"}).click();
+  await page.getByLabel("Condition 1 value").fill("browser");await page.getByLabel("Title").fill("First step");
+  await page.getByRole("button",{name:"Add action"}).click();await page.getByLabel("Title").nth(1).fill("Second step");
+  await page.getByRole("button",{name:"Preview"}).click();await expect(page.getByText("Create notification: First step → Create notification: Second step")).toBeVisible();
+  await page.getByRole("button",{name:"Remove condition 1"}).click();
+  await page.getByRole("button",{name:"Create automation"}).click();await page.getByRole("button",{name:/Browser workflow/}).first().click();
+  await page.getByRole("button",{name:"Run now"}).click();await page.getByRole("button",{name:"Steps"}).click();await expect(page.getByText("notification").first()).toBeVisible();
+  await expect(page.getByText("completed").first()).toBeVisible();
+});
+
 for(const width of [375,768,1024,1440])test(`Today visual baseline at ${width}px`,async({page})=>{
   await page.setViewportSize({width,height:900});await login(page);await page.goto("/");
   await expect(page).toHaveScreenshot(`today-${width}.png`,{animations:"disabled",caret:"hide",fullPage:true,maxDiffPixelRatio:0.001});

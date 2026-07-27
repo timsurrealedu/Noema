@@ -155,12 +155,15 @@ test("Calendar sync exposes diagnostics and conflict counts",()=>{const page=rea
 test("Calendar reviews sync conflicts and chooses a Google destination",()=>{const page=read("app/calendar/page.tsx"),route=read("app/api/v1/calendar-sync/conflicts/[id]/route.ts");for(const label of ["Keep LifeOS","Keep Google","Keep both","Google calendar"])assert.match(page,new RegExp(label));assert.match(page,/googleCalendarId/);assert.match(route,/resolveCalendarConflict/);assert.match(read("server/calendar-sync.mjs"),/calendar_sync_writes/) });
 
 test("Automations use durable API state and runs",()=>{
-  const page=read("app/automations/page.tsx");
+  const page=read("app/automations/page.tsx"),builder=read("app/automations/AutomationBuilder.tsx");
   assert.match(page,/\/api\/v1\/automations/);
   assert.match(page,/\/preview/);
   assert.match(page,/\/runs/);
   assert.match(page,/metrics/);
   for(const action of ["Edit","Duplicate","Delete","Preview"])assert.match(page,new RegExp(action));
+  for(const control of ["Add condition","Add action","Move step","Remove step"])assert.match(builder,new RegExp(control));
+  assert.match(page,/step-history/);
+  assert.match(page,/Test run/);
   assert.match(read("app/api/v1/automations/[id]/route.ts"),/deleteAutomation/);
   assert.doesNotMatch(page,/Stewie Channel Pipeline/);
 });
