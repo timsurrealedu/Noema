@@ -5,9 +5,9 @@
     "semantic_hash": "736fcf2bed1b4000341f505c030d5616"
   },
   "app/page.tsx": {
-    "mtime": 1785172159.089024,
-    "ast_hash": "71598a57601e5cf103457e8ff8cdf40d",
-    "semantic_hash": "71598a57601e5cf103457e8ff8cdf40d"
+    "mtime": 1785173745.753875,
+    "ast_hash": "79d69de2925faba0de81b0dca3024372",
+    "semantic_hash": "79d69de2925faba0de81b0dca3024372"
   },
   "next-env.d.ts": {
     "mtime": 1784828845.45338,
@@ -20,9 +20,9 @@
     "semantic_hash": "9111ac6dabdd40ac4854382c2e1623d1"
   },
   "package.json": {
-    "mtime": 1785171529.427672,
-    "ast_hash": "262b18754e2a7e5db0fd4c2b6bf98c7c",
-    "semantic_hash": "262b18754e2a7e5db0fd4c2b6bf98c7c"
+    "mtime": 1785172558.0098681,
+    "ast_hash": "ae280397317f245af80eb9c5bcde7a31",
+    "semantic_hash": "ae280397317f245af80eb9c5bcde7a31"
   },
   "tsconfig.json": {
     "mtime": 1784828798.4083743,
@@ -135,9 +135,9 @@
     "semantic_hash": "b7aada1af5db919a62edc6982849c94a"
   },
   "test/frontend.test.js": {
-    "mtime": 1785172021.6270313,
-    "ast_hash": "783408e775beddae498b1fb09696f737",
-    "semantic_hash": "783408e775beddae498b1fb09696f737"
+    "mtime": 1785173621.0635478,
+    "ast_hash": "237ac3b9e6015ed8358417522b8515e0",
+    "semantic_hash": "237ac3b9e6015ed8358417522b8515e0"
   },
   "app/api/v1/auth/login/route.ts": {
     "mtime": 1785085599.0668235,
@@ -735,9 +735,9 @@
     "semantic_hash": "f0fffe70eba3a03b537670675105066f"
   },
   "playwright.config.ts": {
-    "mtime": 1785171585.1697562,
-    "ast_hash": "1634bb23557b26e59de312398a657c06",
-    "semantic_hash": "1634bb23557b26e59de312398a657c06"
+    "mtime": 1785172700.9657807,
+    "ast_hash": "2f49569ce867f0cff0edac4b35d843f4",
+    "semantic_hash": "2f49569ce867f0cff0edac4b35d843f4"
   },
   "test/browser/auth.spec.ts": {
     "mtime": 1785171775.9489472,
@@ -748,5 +748,15 @@
     "mtime": 1785172067.7310324,
     "ast_hash": "3bf0737a0272bf3e67dafaab8911c9df",
     "semantic_hash": "3bf0737a0272bf3e67dafaab8911c9df"
+  },
+  "test/browser/01-release.spec.ts": {
+    "mtime": 1785173210.4003386,
+    "ast_hash": "309b3cdf1732fbe11a4f0191c7465102",
+    "semantic_hash": "309b3cdf1732fbe11a4f0191c7465102"
+  },
+  "test/browser/install.spec.ts": {
+    "mtime": 1785172701.1967807,
+    "ast_hash": "2abd77d4f8c7ffc43537823f87dd8bf2",
+    "semantic_hash": "2abd77d4f8c7ffc43537823f87dd8bf2"
   }
 }

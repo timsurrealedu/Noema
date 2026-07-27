@@ -69,6 +69,8 @@ test("remote actions disclose missing AI and persistence",()=>{
   const today=read("app/page.tsx");
   assert.match(today,/addAndInterpretCapture/);
   assert.match(today,/Interpretation ready/);
+  assert.match(today,/navigator\.mediaDevices\.getUserMedia/);
+  assert.match(today,/new MediaRecorder/);
   assert.doesNotMatch(today,/AI interpretation is not connected/);
   assert.doesNotMatch(today,/File captured\. Server interpretation/);
 });

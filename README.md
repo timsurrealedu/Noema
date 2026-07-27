@@ -9,7 +9,7 @@ Personal-first, self-hosted LifeOS for capture, tasks, scheduling, knowledge, st
 - Current Android Chrome and iOS Safari, down to a 375px viewport
 - Caddy or Tailscale Serve for deployment
 
-Codex is the primary AI provider. Gemini supplies capacity fallback and OCR/transcription; OpenAI is an additional capacity fallback. Google Calendar is the planned MVP calendar provider and is not implemented yet.
+Codex is the primary AI provider. Gemini supplies capacity fallback and OCR/transcription; OpenAI is an additional capacity fallback. Google Calendar provides encrypted, incremental two-way synchronization with explicit conflict review.
 
 ## Local development
 

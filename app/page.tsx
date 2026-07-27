@@ -10,6 +10,7 @@ import Link from "next/link";
 import {FormEvent, useEffect, useRef, useState} from "react";
 import {useAppState} from "./components/AppState";
 import {ModalDialog} from "./components/ModalDialog";
+import {showUnavailable} from "./components/ServiceNotice";
 
 const nav = [
   ["Today",House],["Capture",Plus],["Calendar",CalendarBlank],["Tasks",CheckSquare],
@@ -28,9 +29,11 @@ export default function Today() {
   const [theme,setTheme] = useState<"dark"|"light">("dark");
   const [capture,setCapture] = useState("");
   const [reviewId,setReviewId] = useState<string|null>(null);
+  const [recording,setRecording] = useState(false);
   const [palette,setPalette] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
+  const recorder = useRef<MediaRecorder|null>(null);
 
   useEffect(() => {
     const saved=localStorage.getItem("lifeos-theme") as "dark"|"light"|null;
@@ -46,6 +49,7 @@ export default function Today() {
     };
     addEventListener("keydown",onKey); return()=>removeEventListener("keydown",onKey);
   },[theme]);
+  useEffect(()=>()=>{if(recorder.current?.state==="recording")recorder.current.stop();recorder.current?.stream.getTracks().forEach(track=>track.stop())},[]);
 
   const todayEvents=events.filter(event=>event.day===4).toSorted((a,b)=>a.time.localeCompare(b.time));
   const todayTasks=tasks.filter(task=>task.due==="Today");
@@ -53,6 +57,10 @@ export default function Today() {
   const review=captures.find(item=>item.id===reviewId);
   function submit(e:FormEvent) {e.preventDefault();if(capture.trim())setReviewId(addAndInterpretCapture(capture.trim()))}
   function closeReview(status:"confirmed"|"dismissed") {if(reviewId){if(status==="confirmed")confirmCapture(reviewId);else updateCapture(reviewId,status)}setReviewId(null);if(status==="confirmed")setCapture("")}
+  async function toggleRecording(){
+    if(recorder.current?.state==="recording"){recorder.current.stop();return}
+    try{const stream=await navigator.mediaDevices.getUserMedia({audio:true}),chunks:Blob[]=[];const active=new MediaRecorder(stream);recorder.current=active;active.ondataavailable=event=>{if(event.data.size)chunks.push(event.data)};active.onstop=()=>{const type=active.mimeType||"audio/webm",extension=type.includes("ogg")?"ogg":"webm";addFileCapture(new File(chunks,`voice-${Date.now()}.${extension}`,{type}));stream.getTracks().forEach(track=>track.stop());recorder.current=null;setRecording(false)};active.start();setRecording(true)}catch(error){setRecording(false);showUnavailable(error instanceof Error?error.message:"Microphone access failed")}
+  }
 
   return <div className="app-shell">
     <a className="skip" href="#main">Skip to main content</a>
@@ -84,7 +92,7 @@ export default function Today() {
         <input ref={input} id="capture" value={capture} onChange={e=>setCapture(e.target.value)} placeholder="Capture a thought, task, event, file, or command…"/>
         <button type="button" className="capture-tool" aria-label="Attach a file" onClick={()=>fileInput.current?.click()}><Paperclip/></button>
         <input ref={fileInput} type="file" hidden aria-hidden="true" tabIndex={-1} onChange={e=>{const file=e.target.files?.[0];if(file)addFileCapture(file);e.target.value=""}}/>
-        <button type="button" className="capture-tool" aria-label="Record voice" data-unavailable="Voice transcription requires the AI backend. Use text capture for this browser-only prototype."><Microphone/></button>
+        <button type="button" className="capture-tool" aria-label={recording?"Stop recording":"Record voice"} aria-pressed={recording} onClick={()=>void toggleRecording()}><Microphone/></button>
         <button className="send" disabled={!capture.trim()} aria-label="Process capture"><PaperPlaneTilt/></button>
         <kbd>⌘ ⇧ C</kbd>
       </form>

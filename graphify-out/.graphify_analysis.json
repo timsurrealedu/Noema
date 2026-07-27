@@ -275,6 +275,52 @@
       "server_settings_stamp"
     ],
     "4": [
+      "axe_core_playwright",
+      "next",
+      "package",
+      "package_dependencies",
+      "package_dependencies_next",
+      "package_dependencies_phosphor_icons_react",
+      "package_dependencies_react",
+      "package_dependencies_react_dom",
+      "package_dependencies_tar_stream",
+      "package_dependencies_web_push",
+      "package_devdependencies",
+      "package_devdependencies_axe_core_playwright",
+      "package_devdependencies_playwright_test",
+      "package_devdependencies_types_node",
+      "package_devdependencies_types_react",
+      "package_devdependencies_types_react_dom",
+      "package_devdependencies_types_tar_stream",
+      "package_devdependencies_typescript",
+      "package_name",
+      "package_private",
+      "package_scripts",
+      "package_scripts_backup",
+      "package_scripts_build",
+      "package_scripts_dev",
+      "package_scripts_import_v1",
+      "package_scripts_lint",
+      "package_scripts_start",
+      "package_scripts_test",
+      "package_scripts_test_backend",
+      "package_scripts_test_browser",
+      "package_scripts_verify_backup",
+      "package_scripts_worker",
+      "package_version",
+      "phosphor_icons_react",
+      "playwright_test",
+      "react",
+      "react_dom",
+      "tar_stream",
+      "types_node",
+      "types_react",
+      "types_react_dom",
+      "types_tar_stream",
+      "typescript",
+      "web_push"
+    ],
+    "5": [
       "app_calendar_page",
       "app_calendar_page_blankevent",
       "app_calendar_page_calendarpage",
@@ -312,58 +358,10 @@
       "app_components_appstate_task",
       "app_components_appstate_taskdependency",
       "app_components_appstate_useappstate",
-      "app_page",
-      "app_page_activity",
-      "app_page_nav",
-      "app_page_today",
       "app_tasks_page",
       "app_tasks_page_blanktask",
       "app_tasks_page_remindervalue",
       "app_tasks_page_taskspage"
-    ],
-    "5": [
-      "next",
-      "package",
-      "package_dependencies",
-      "package_dependencies_next",
-      "package_dependencies_phosphor_icons_react",
-      "package_dependencies_react",
-      "package_dependencies_react_dom",
-      "package_dependencies_tar_stream",
-      "package_dependencies_web_push",
-      "package_devdependencies",
-      "package_devdependencies_playwright_test",
-      "package_devdependencies_types_node",
-      "package_devdependencies_types_react",
-      "package_devdependencies_types_react_dom",
-      "package_devdependencies_types_tar_stream",
-      "package_devdependencies_typescript",
-      "package_name",
-      "package_private",
-      "package_scripts",
-      "package_scripts_backup",
-      "package_scripts_build",
-      "package_scripts_dev",
-      "package_scripts_import_v1",
-      "package_scripts_lint",
-      "package_scripts_start",
-      "package_scripts_test",
-      "package_scripts_test_backend",
-      "package_scripts_test_browser",
-      "package_scripts_verify_backup",
-      "package_scripts_worker",
-      "package_version",
-      "phosphor_icons_react",
-      "playwright_test",
-      "react",
-      "react_dom",
-      "tar_stream",
-      "types_node",
-      "types_react",
-      "types_react_dom",
-      "types_tar_stream",
-      "typescript",
-      "web_push"
     ],
     "6": [
       "app_api_v1_auth_recovery_route",
@@ -800,73 +798,87 @@
       "app_components_tutorpanel_tutorpanel"
     ],
     "33": [
+      "app_page",
+      "app_page_activity",
+      "app_page_nav",
+      "app_page_today"
+    ],
+    "34": [
       "test_browser_auth_spec",
       "test_browser_auth_spec_loginwithtotp",
       "test_browser_auth_spec_passwordstep",
       "test_browser_auth_spec_totp"
     ],
-    "34": [
+    "35": [
       "app_api_v1_projects_route",
       "app_api_v1_projects_route_get",
       "app_api_v1_projects_route_post"
     ],
-    "35": [
+    "36": [
       "app_assets_id_annotate_page",
       "app_assets_id_annotate_page_annotatepdfpage",
       "app_assets_id_annotate_page_annotation"
     ],
-    "36": [
+    "37": [
       "app_coding_page",
       "app_coding_page_approval",
       "app_coding_page_codingpage"
     ],
-    "37": [
+    "38": [
       "server_codex",
       "server_codex_codexargs",
       "server_codex_runcodex"
     ],
-    "38": [
+    "39": [
+      "test_browser_01_release_spec",
+      "test_browser_01_release_spec_login",
+      "test_browser_01_release_spec_routes"
+    ],
+    "40": [
       "app_components_modaldialog",
       "app_components_modaldialog_modaldialog"
     ],
-    "39": [
+    "41": [
       "app_error",
       "app_error_errorpage"
     ],
-    "40": [
+    "42": [
       "app_loading",
       "app_loading_loading"
     ],
-    "41": [
+    "43": [
       "app_login_page",
       "app_login_page_loginpage"
     ],
-    "42": [
+    "44": [
       "app_not_found",
       "app_not_found_notfound"
     ],
-    "43": [
+    "45": [
       "next_config",
       "next_config_config"
     ],
-    "44": [
+    "46": [
       "next_env_d",
       "next_env_d_rationale_5"
     ],
-    "45": [
+    "47": [
       "playwright_config",
       "playwright_config_datadir"
     ],
-    "46": [
+    "48": [
       "public_sw",
       "public_sw_shell"
     ],
-    "47": [
+    "49": [
       "server_mjs_d",
       "server_mjs_d_mjs"
     ],
-    "48": [
+    "50": [
       "test_browser_00_capture_spec"
+    ],
+    "51": [
+      "test_browser_install_spec"
     ]
   },
   "cohesion": {
@@ -874,8 +886,8 @@
     "1": 0.05719298245614035,
     "2": 0.11533242876526459,
     "3": 0.08383838383838384,
-    "4": 0.06767676767676768,
-    "5": 0.047619047619047616,
+    "4": 0.045454545454545456,
+    "5": 0.07439024390243902,
     "6": 0.1532976827094474,
     "7": 0.16502463054187191,
     "8": 0.1476923076923077,
@@ -903,13 +915,13 @@
     "30": 0.4,
     "31": 0.5,
     "32": 0.5,
-    "33": 0.8333333333333334,
-    "34": 0.6666666666666666,
+    "33": 0.5,
+    "34": 0.8333333333333334,
     "35": 0.6666666666666666,
     "36": 0.6666666666666666,
-    "37": 1.0,
+    "37": 0.6666666666666666,
     "38": 1.0,
-    "39": 1.0,
+    "39": 0.6666666666666666,
     "40": 1.0,
     "41": 1.0,
     "42": 1.0,
@@ -918,7 +930,10 @@
     "45": 1.0,
     "46": 1.0,
     "47": 1.0,
-    "48": 1.0
+    "48": 1.0,
+    "49": 1.0,
+    "50": 1.0,
+    "51": 1.0
   },
   "gods": [
     {

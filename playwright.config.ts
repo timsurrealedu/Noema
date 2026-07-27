@@ -12,7 +12,10 @@ export default defineConfig({
   reporter:"line",
   expect:{timeout:20_000},
   use:{baseURL:"http://127.0.0.1:3107",trace:"retain-on-failure"},
-  projects:[{name:"firefox",use:{...devices["Desktop Firefox"]}}],
+  projects:[
+    {name:"firefox",testIgnore:"**/install.spec.ts",use:{...devices["Desktop Firefox"]}},
+    {name:"mobile-chromium",testMatch:"**/install.spec.ts",use:{...devices["Pixel 7"]}},
+  ],
   webServer:{
     command:"npm run dev -- --hostname 127.0.0.1 --port 3107",
     url:"http://127.0.0.1:3107/login",

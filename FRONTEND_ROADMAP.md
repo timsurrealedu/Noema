@@ -42,10 +42,10 @@ Supported MVP targets:
 
 ### Remaining verification
 
-- [ ] Full browser interaction suite for primary desktop and mobile flows
-- [ ] WCAG 2.2 AA screen-reader, focus-trap, zoom, and text-scaling audit
-- [ ] Pixel baselines at 375, 768, 1024, and 1440px
-- [ ] Installability verification on a supported mobile browser
+- [x] Full browser interaction suite for primary desktop and mobile flows
+- [x] WCAG 2.2 AA screen-reader, focus-trap, zoom, and text-scaling audit
+- [x] Pixel baselines at 375, 768, 1024, and 1440px
+- [x] Installability verification on a supported mobile browser
 
 ## Backend integration backlog
 

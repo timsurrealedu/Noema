@@ -1,7 +1,7 @@
 :root {
   color-scheme: dark;
   --bg:oklch(0.09 0.01 188);--sidebar:oklch(0.12 0.012 188);--surface:oklch(0.15 0.012 188);--raised:oklch(0.19 0.014 188);
-  --border:oklch(0.28 0.014 188);--ink:oklch(0.96 0.006 188);--muted:oklch(0.71 0.012 188);--faint:oklch(0.56 0.012 188);
+  --border:oklch(0.28 0.014 188);--ink:oklch(0.96 0.006 188);--muted:oklch(0.71 0.012 188);--faint:oklch(0.62 0.012 188);
   --primary:oklch(0.72 0.10 188);--primary-soft:oklch(0.22 0.045 188);--warning:oklch(0.78 0.15 78);--error:oklch(0.67 0.19 27);--success:oklch(0.72 0.14 152);
   --source-voice:oklch(0.67 0.20 290);--source-file:oklch(0.66 0.17 255);--source-link:oklch(0.78 0.15 78);--source-typed:oklch(0.72 0.14 152);
   --r-sm:8px;--r-md:12px;--r-lg:14px;--ease:cubic-bezier(.22,1,.36,1);

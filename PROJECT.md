@@ -22,6 +22,8 @@
 - Install: `npm install`
 - Run: `npm run dev` → `http://localhost:3000`
 - Production check: `npm run build`
+- Browser release gates: `npx playwright install firefox chromium`, then `npm run test:browser`. The suite uses isolated SQLite state and covers Firefox desktop/mobile flows, WCAG 2.2 AA automation, keyboard focus containment, 200% text scaling, four viewport baselines, authentication, capture cancellation/retry, and mobile Chromium installability.
+- MVP acceptance is complete: both roadmaps have no open MVP-scoped items; the remaining unchecked frontend items are explicitly deferred beyond MVP.
 - Layout scan: `node /home/timsurreal/.agents/skills/impeccable/scripts/detect.mjs --json --scope layout app app/globals.css`
 - Graph refresh: `graphify . --update --code-only --no-viz`
 - Backup: `npm run backup`; verify independently with `npm run verify:backup -- <file>`.
