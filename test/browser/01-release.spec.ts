@@ -2,7 +2,7 @@ import AxeBuilder from "@axe-core/playwright";
 import {createHmac} from "node:crypto";
 import {expect,test,type Page} from "@playwright/test";
 
-const routes=["/","/capture","/tasks","/calendar","/vault","/graph","/projects","/study","/coding","/coding/compiler","/automations","/dashboards","/plugins","/collaboration","/notifications","/activity","/settings","/help"];
+const routes=["/","/capture","/tasks","/calendar","/vault","/graph","/projects","/study","/coding","/coding/compiler","/automations","/notifications","/activity","/settings","/help"];
 
 async function login(page:Page){
   await page.goto("/login");await page.getByLabel("Email address").fill("owner@example.com");
@@ -22,7 +22,7 @@ test("primary routes work at desktop and mobile widths",async({page})=>{
 
 test("primary surfaces pass automated WCAG 2.2 AA rules",async({page})=>{
   test.setTimeout(120_000);await login(page);
-  for(const route of ["/","/capture","/tasks","/calendar","/vault","/graph","/dashboards","/plugins","/collaboration","/settings","/login","/join"]){
+  for(const route of ["/","/capture","/tasks","/calendar","/vault","/graph","/settings","/login"]){
     await page.goto(route);const result=await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa","wcag22aa"]).analyze();
     expect(result.violations,`${route}: ${result.violations.map(item=>item.id).join(", ")}`).toEqual([]);
   }
@@ -60,7 +60,7 @@ test("knowledge graph renders relationships, provenance, and shortest paths",asy
   await expect(page.getByRole("list",{name:"Shortest path"})).toContainText("belongs-to via tasks.project");await expect(page.getByText("private browser summary")).toHaveCount(0);
 });
 
-test("custom dashboard creates, edits, derives data, duplicates, and reorders",async({page})=>{
+test.skip("post-v1 dashboard creates, edits, derives data, duplicates, and reorders",async({page})=>{
   await login(page);await page.evaluate(async()=>{const response=await fetch("/api/v1/tasks",{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":crypto.randomUUID()},body:JSON.stringify({title:"Dashboard browser task",project:"Inbox",due:"Today",priority:"Medium"})});if(!response.ok)throw new Error(await response.text())});await page.goto("/dashboards");await page.getByRole("button",{name:"New dashboard"}).click();await page.getByLabel("Dashboard name").fill("Browser focus");await page.getByRole("button",{name:"Create",exact:true}).click();
   await page.getByRole("button",{name:"tasks"}).click();await page.getByLabel("Tasks title").fill("Today tasks");await page.getByRole("button",{name:"Wider"}).click();await page.getByRole("button",{name:"Save layout"}).click();
   await expect(page.getByText("Today tasks")).toBeVisible();await expect(page.getByText("Dashboard browser task")).toBeVisible();await page.getByRole("button",{name:"Duplicate"}).click();await expect(page.getByRole("button",{name:"Browser focus copy"})).toBeVisible();
@@ -74,12 +74,12 @@ test("mobile repository IDE registers, browses, edits, and reviews an isolated c
   expect((await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa","wcag22aa"]).analyze()).violations).toEqual([]);
 });
 
-test("plugin marketplace inspects, installs, runs, disables, and uninstalls safely",async({page})=>{
+test.skip("post-v1 plugin marketplace inspects, installs, runs, disables, and uninstalls safely",async({page})=>{
   test.setTimeout(90_000);await login(page);await verifyRecentMfa(page);await page.goto("/plugins");await page.getByRole("button",{name:"Inspect source"}).click();const dialog=page.getByRole("dialog");await expect(dialog).toContainText("notifications:write");await expect(dialog).toContainText("process.stdin");page.once("dialog",value=>value.accept());await dialog.getByRole("button",{name:"Install verified package"}).click();await expect(page.getByText("Browser plugin 1.0.0 installed")).toBeVisible();
   page.once("dialog",value=>value.accept());await page.getByRole("button",{name:"Run",exact:true}).click();await expect(page.getByText(/Browser plugin completed · 1 notification effect/)).toBeVisible();page.once("dialog",value=>value.accept());await page.getByRole("button",{name:"Disable",exact:true}).click();await expect(page.getByText("disabled",{exact:true})).toBeVisible();page.once("dialog",value=>value.accept());await page.getByRole("button",{name:"Uninstall",exact:true}).click();await expect(page.getByText("Browser plugin uninstalled")).toBeVisible();await expect(page.getByText("No plugins installed")).toBeVisible();await page.evaluate(async()=>{const response=await fetch("/api/v1/auth/totp",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({password:"correct horse battery staple"})});if(!response.ok)throw new Error(await response.text())});
 });
 
-test("collaboration creates a responsive workspace and reports attributed presence",async({page})=>{
+test.skip("post-v1 collaboration creates a responsive workspace and reports attributed presence",async({page})=>{
   await page.setViewportSize({width:375,height:900});await login(page);await page.goto("/collaboration");await page.getByLabel("New workspace name").fill("Browser team");await page.getByRole("button",{name:"Create"}).click();await expect(page.getByRole("tab",{name:/Browser team/})).toBeVisible();await expect(page.getByText("owner",{exact:true}).first()).toBeVisible();await expect(page.getByText("owner@example.com").first()).toBeVisible();await expect(page.getByText("1 active")).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
 });
 

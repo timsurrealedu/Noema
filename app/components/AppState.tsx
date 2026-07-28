@@ -4,7 +4,7 @@ import {createContext, ReactNode, useContext, useEffect, useState} from "react";
 import {showUnavailable} from "./ServiceNotice";
 import {flushQueue, queueOfflineCapture, queueRequest} from "../lib/offlineQueue";
 
-export type Task = {id:string; title:string; project:string; due:string; priority:"High"|"Medium"|"Low"; completed:boolean; recurrence?:string; reminderAt?:string|null; subtasks?:string[]; archived?:boolean; version?:number};
+export type Task = {id:string; title:string; project:string; due:string; priority:"High"|"Medium"|"Low"; completed:boolean; status?:"open"|"in_progress"|"blocked"|"completed"|"cancelled"; projectId?:string|null; courseId?:string|null; dueAt?:string|null; scheduledStartAt?:string|null; scheduledEndAt?:string|null; estimatedMinutes?:number|null; parentTaskId?:string|null; completedAt?:string|null; recurrence?:string; reminderAt?:string|null; subtasks?:string[]; archived?:boolean; version?:number};
 export type Event = {id:string; title:string; day:number; time:string; top:number; height:number; location?:string; reminderAt?:string|null; active?:boolean; startAt?:string; endAt?:string; timezone?:string; allDay?:boolean; recurrence?:{frequency?:string;rules?:string[]}|null; googleCalendarId?:string; version?:number};
 export type Note = {id:string; title:string; excerpt:string; content:string; tags:string[]; time:string; ai:boolean; draft?:boolean; source?:string; favorite?:boolean; trashed?:boolean; version?:number};
 export type CaptureSource = "typed"|"voice"|"file"|"link";
@@ -74,6 +74,7 @@ async function api(path:string,method="GET",value?:unknown,key?:string){
   if(!response.ok){const error=new Error((await response.json()).error?.message||"Backend request failed") as Error&{status?:number};error.status=response.status;throw error}
   return response.json();
 }
+const proposalCards=(actions:any[]=[]):CaptureObject[]=>actions.map(action=>{const type=action.type.split(".")[0] as CaptureObject["type"],args=action.arguments||{},detail=type==="event"?`${args.startAt} · ${args.timezone}`:type==="task"?args.dueAt||args.project||"No due date":String(args.content||"").slice(0,140);return {id:action.id,type,title:args.title,detail,confidence:action.confidence,sourceReferences:action.sourceReferences,arguments:args}});
 
 export function AppStateProvider({children}:{children:ReactNode}) {
   const [data,setData]=useState(seed);
@@ -98,7 +99,7 @@ export function AppStateProvider({children}:{children:ReactNode}) {
   const interpret=(capture:Capture)=>api(`/captures/${capture.id}/interpret`,"POST",{}).then(({jobId})=>{patchCapture(capture.id,{jobId});
     const source=new EventSource(`/api/v1/jobs/${jobId}/events`),close=(patch:Partial<Capture>)=>{source.close();patchCapture(capture.id,patch)};
     source.addEventListener("state",event=>{const info=JSON.parse((event as MessageEvent).data);
-      if(info.state==="completed")api(`/jobs/${jobId}`).then(job=>close({status:"review",objects:job.result?.objects||[],progress:undefined,jobId:undefined})).catch(()=>close({status:"failed",error:"The completed interpretation could not be loaded.",progress:undefined,jobId:undefined}));
+      if(info.state==="completed")api(`/jobs/${jobId}`).then(job=>close({status:"review",objects:proposalCards(job.result?.actions),progress:undefined,jobId:undefined})).catch(()=>close({status:"failed",error:"The completed interpretation could not be loaded.",progress:undefined,jobId:undefined}));
       else if(info.state==="failed"||info.state==="cancelled"||info.state==="expired")close({status:"failed",error:info.state==="cancelled"?"Interpretation cancelled.":"Processing failed on the server. Try again.",progress:undefined,jobId:undefined});
     });
   }).catch(error=>{showUnavailable(`${error.message} Server interpretation is unavailable.`);patchCapture(capture.id,{status:"failed",error:error.message,progress:undefined})});

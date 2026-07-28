@@ -4,12 +4,12 @@
 - cluster-only mode — file stats not available
 
 ## Summary
-- 1063 nodes · 2392 edges · 63 communities (54 shown, 9 thin omitted)
+- 1075 nodes · 2395 edges · 64 communities (55 shown, 9 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 19 edges (avg confidence: 0.61)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `0b0789df`
+- Built from commit: `7400ae7d`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -19,18 +19,18 @@
 - loadConfig
 - core.mjs
 - db.mjs
-- collaboration.mjs
 - scripts
+- collaboration.mjs
 - auth.mjs
 - repositories.mjs
+- dispatch.mjs
+- jobs.mjs
 - skills.mjs
 - compilerOptions
 - google-calendar.mjs
-- jobs.mjs
 - projects.mjs
 - offlineQueue.ts
 - dashboards.mjs
-- dispatch.mjs
 - calendar-sync.mjs
 - page.tsx
 - approvals.mjs
@@ -40,16 +40,15 @@
 - page.tsx
 - push.mjs
 - page.tsx
-- manifest.json
 - AppState.tsx
-- page.tsx
-- page.tsx
+- manifest.json
 - useAppState
 - page.tsx
 - page.tsx
 - page.tsx
 - page.tsx
-- layout.tsx
+- page.tsx
+- page.tsx
 - page.tsx
 - backend.test.js
 - frontend.test.js
@@ -57,6 +56,7 @@
 - page.tsx
 - page.tsx
 - MarkdownContent.tsx
+- page.tsx
 - page.tsx
 - 01-release.spec.ts
 - auth.spec.ts
@@ -90,16 +90,16 @@
   app/api/v1/auth/login/route.ts → server/auth.mjs
 - `POST()` --calls--> `loadConfig()`  [EXTRACTED]
   app/api/v1/auth/login/route.ts → server/config.mjs
-- `POST()` --calls--> `beginTotpEnrollment()`  [EXTRACTED]
+- `GET()` --calls--> `mfaStatus()`  [EXTRACTED]
   app/api/v1/auth/totp/route.ts → server/auth.mjs
 
 ## Import Cycles
 - None detected.
 
-## Communities (63 total, 9 thin omitted)
+## Communities (64 total, 9 thin omitted)
 
 ### Community 0 - "handle"
-Cohesion: 0.09
+Cohesion: 0.08
 Nodes (60): GET(), POST(), POST(), GET(), POST(), POST(), DELETE(), DELETE() (+52 more)
 
 ### Community 1 - "modules.mjs"
@@ -111,60 +111,60 @@ Cohesion: 0.06
 Nodes (62): GET(), safe(), POST(), GET(), DELETE(), PATCH(), POST(), GET() (+54 more)
 
 ### Community 3 - "core.mjs"
-Cohesion: 0.08
-Nodes (66): POST(), absolute(), actorInfo(), applyCaptureAction(), applyCaptureInterpretation(), applyInverse(), applyNoteOptimization(), audit() (+58 more)
+Cohesion: 0.10
+Nodes (61): absolute(), actorInfo(), applyCaptureAction(), applyCaptureInterpretation(), applyInverse(), applyNoteOptimization(), audit(), backlinksForNote() (+53 more)
 
 ### Community 4 - "db.mjs"
 Cohesion: 0.07
-Nodes (39): DELETE(), GET(), PATCH(), POST(), PATCH(), GET(), GET(), GET() (+31 more)
+Nodes (40): DELETE(), GET(), PATCH(), POST(), PATCH(), GET(), GET(), GET() (+32 more)
 
-### Community 5 - "collaboration.mjs"
+### Community 5 - "scripts"
+Cohesion: 0.04
+Nodes (47): @axe-core/playwright, next, dependencies, next, @phosphor-icons/react, react, react-dom, tar-stream (+39 more)
+
+### Community 6 - "collaboration.mjs"
 Cohesion: 0.11
 Nodes (35): POST(), POST(), GET(), POST(), GET(), DELETE(), POST(), PATCH() (+27 more)
 
-### Community 6 - "scripts"
-Cohesion: 0.04
-Nodes (46): @axe-core/playwright, next, dependencies, next, @phosphor-icons/react, react, react-dom, tar-stream (+38 more)
-
 ### Community 7 - "auth.mjs"
-Cohesion: 0.16
-Nodes (29): POST(), GET(), POST(), auditSecurity(), authenticate(), base32(), beginTotpEnrollment(), changePassword() (+21 more)
+Cohesion: 0.15
+Nodes (31): POST(), GET(), POST(), POST(), auditSecurity(), authenticate(), base32(), beginTotpEnrollment() (+23 more)
 
 ### Community 8 - "repositories.mjs"
 Cohesion: 0.17
 Nodes (24): POST(), GET(), POST(), GET(), PATCH(), GET(), POST(), allowed() (+16 more)
 
-### Community 9 - "skills.mjs"
+### Community 9 - "dispatch.mjs"
+Cohesion: 0.11
+Nodes (20): excerpt(), retrieveSkillContext(), score(), terms(), handlers, processClaimedJob(), UnsupportedJobKindError, captureProposalSchema (+12 more)
+
+### Community 10 - "jobs.mjs"
+Cohesion: 0.16
+Nodes (17): POST(), POST(), POST(), GET(), terminal, POST(), GET(), POST() (+9 more)
+
+### Community 11 - "skills.mjs"
 Cohesion: 0.14
 Nodes (22): POST(), GET(), POST(), geminiSchema(), isCapacityError(), runAI(), runFallback(), runGemini() (+14 more)
 
-### Community 10 - "compilerOptions"
+### Community 12 - "compilerOptions"
 Cohesion: 0.08
 Nodes (25): dom, dom.iterable, esnext, next-env.d.ts, .next/types/**/*.ts, node_modules, **/*.ts, **/*.tsx (+17 more)
 
-### Community 11 - "google-calendar.mjs"
+### Community 13 - "google-calendar.mjs"
 Cohesion: 0.19
 Nodes (20): GET(), PUT(), GET(), POST(), DELETE(), GET(), beginGoogleOAuth(), completeGoogleOAuth() (+12 more)
 
-### Community 12 - "jobs.mjs"
-Cohesion: 0.18
-Nodes (16): POST(), POST(), GET(), terminal, POST(), GET(), POST(), addJobEvent() (+8 more)
-
-### Community 13 - "projects.mjs"
+### Community 14 - "projects.mjs"
 Cohesion: 0.19
 Nodes (18): POST(), POST(), DELETE(), POST(), Link, ProjectsPage(), request(), Workspace (+10 more)
 
-### Community 14 - "offlineQueue.ts"
+### Community 15 - "offlineQueue.ts"
 Cohesion: 0.24
 Nodes (21): PWARegister(), announce(), database(), flushQueue(), listOfflineCaptures(), listPending(), listQueued(), migrateLegacy() (+13 more)
 
-### Community 15 - "dashboards.mjs"
+### Community 16 - "dashboards.mjs"
 Cohesion: 0.18
 Nodes (18): DELETE(), GET(), POST(), POST(), GET(), POST(), dashboardView(), deleteDashboard() (+10 more)
-
-### Community 16 - "dispatch.mjs"
-Cohesion: 0.17
-Nodes (15): failNoteOptimization(), finishNoteOptimization(), reason(), selectSkillContext(), terms(), dispatchJob(), handlers, aiEventHandler() (+7 more)
 
 ### Community 17 - "calendar-sync.mjs"
 Cohesion: 0.22
@@ -202,25 +202,25 @@ Nodes (8): PATCH(), GET(), claimDelivery(), deliverOne(), listDeliveries(), now(
 Cohesion: 0.21
 Nodes (10): CaptureInbox(), CaptureRow(), Filter, filters, matches(), sourceMeta, statusMeta, timeFor() (+2 more)
 
-### Community 26 - "manifest.json"
+### Community 26 - "AppState.tsx"
+Cohesion: 0.18
+Nodes (12): api(), AppData, AppState, AppStateProvider(), CaptureObject, Context, NoteLink, Project (+4 more)
+
+### Community 27 - "manifest.json"
 Cohesion: 0.15
 Nodes (12): notifications:write, tasks:read, apiVersion, description, entry, id, integrity, name (+4 more)
 
-### Community 27 - "AppState.tsx"
-Cohesion: 0.20
-Nodes (10): api(), AppData, AppState, AppStateProvider(), CaptureObject, Context, NoteLink, Project (+2 more)
+### Community 28 - "useAppState"
+Cohesion: 0.21
+Nodes (8): useAppState(), ServiceNotice(), showUnavailable(), metadata, viewport, activity, nav, Today()
 
-### Community 28 - "page.tsx"
+### Community 29 - "page.tsx"
 Cohesion: 0.29
 Nodes (8): blankEvent(), CalendarPage(), days, monday(), reminderValue(), SyncStatus, weekDays(), Event
 
-### Community 29 - "page.tsx"
+### Community 30 - "page.tsx"
 Cohesion: 0.27
 Nodes (8): Note, Message, Props, TutorPanel(), blankNote(), Optimization, renderMarkdown(), VaultPage()
-
-### Community 30 - "useAppState"
-Cohesion: 0.29
-Nodes (8): Task, useAppState(), activity, nav, Today(), blankTask(), reminderValue(), TasksPage()
 
 ### Community 31 - "page.tsx"
 Cohesion: 0.24
@@ -238,37 +238,37 @@ Nodes (8): Dashboard, DashboardsPage(), detail(), label(), overlaps(), request()
 Cohesion: 0.25
 Nodes (6): Conflict, Detail, Invitation, Member, Presence, Workspace
 
-### Community 35 - "layout.tsx"
-Cohesion: 0.33
-Nodes (4): ServiceNotice(), showUnavailable(), metadata, viewport
-
-### Community 36 - "page.tsx"
+### Community 35 - "page.tsx"
 Cohesion: 0.33
 Nodes (6): colors, Edge, Graph, GraphPage(), Node, request()
 
-### Community 37 - "backend.test.js"
+### Community 36 - "backend.test.js"
 Cohesion: 0.29
 Nodes (5): assert, {join}, {mkdtempSync,rmSync}, test, {tmpdir}
 
-### Community 38 - "frontend.test.js"
+### Community 37 - "frontend.test.js"
 Cohesion: 0.29
 Nodes (5): assert, fs, path, root, test
 
-### Community 39 - "page.tsx"
+### Community 38 - "page.tsx"
 Cohesion: 0.33
 Nodes (4): Approval, Language, Result, starters
 
-### Community 40 - "page.tsx"
+### Community 39 - "page.tsx"
 Cohesion: 0.33
 Nodes (4): Entry, Git, OpenFile, Repo
 
-### Community 41 - "page.tsx"
+### Community 40 - "page.tsx"
 Cohesion: 0.40
 Nodes (3): AuditEvent, icons, time
 
-### Community 43 - "page.tsx"
+### Community 42 - "page.tsx"
 Cohesion: 0.50
 Nodes (4): Delivery, href(), Notice, NotificationsPage()
+
+### Community 43 - "page.tsx"
+Cohesion: 0.70
+Nodes (4): blankTask(), dateValue(), reminderValue(), TasksPage()
 
 ### Community 44 - "01-release.spec.ts"
 Cohesion: 0.50
@@ -279,7 +279,7 @@ Cohesion: 0.83
 Nodes (3): loginWithTotp(), passwordStep(), totp()
 
 ## Knowledge Gaps
-- **198 isolated node(s):** `config`, `target`, `dom`, `dom.iterable`, `esnext` (+193 more)
+- **200 isolated node(s):** `config`, `target`, `dom`, `dom.iterable`, `esnext` (+195 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **9 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -293,16 +293,16 @@ Nodes (3): loginWithTotp(), passwordStep(), totp()
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `loadConfig()` connect `loadConfig` to `handle`, `repositories.mjs`, `google-calendar.mjs`, `skills.mjs`?**
-  _High betweenness centrality (0.088) - this node is a cross-community bridge._
-- **Why does `getDatabase()` connect `db.mjs` to `handle`, `collaboration.mjs`, `dashboards.mjs`, `dispatch.mjs`, `approvals.mjs`?**
-  _High betweenness centrality (0.068) - this node is a cross-community bridge._
-- **Why does `getJob()` connect `jobs.mjs` to `modules.mjs`, `core.mjs`?**
-  _High betweenness centrality (0.065) - this node is a cross-community bridge._
+- **Why does `loadConfig()` connect `loadConfig` to `handle`, `auth.mjs`, `repositories.mjs`, `skills.mjs`, `google-calendar.mjs`?**
+  _High betweenness centrality (0.098) - this node is a cross-community bridge._
+- **Why does `getJob()` connect `jobs.mjs` to `modules.mjs`?**
+  _High betweenness centrality (0.066) - this node is a cross-community bridge._
+- **Why does `getDatabase()` connect `db.mjs` to `dashboards.mjs`, `handle`, `approvals.mjs`, `collaboration.mjs`?**
+  _High betweenness centrality (0.063) - this node is a cross-community bridge._
 - **What connects `config`, `target`, `dom` to the rest of the system?**
-  _198 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _200 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `handle` be split into smaller, more focused modules?**
-  _Cohesion score 0.08556394417753374 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08485273492286115 - nodes in this community are weakly interconnected._
 - **Should `modules.mjs` be split into smaller, more focused modules?**
   _Cohesion score 0.05318352059925094 - nodes in this community are weakly interconnected._
 - **Should `loadConfig` be split into smaller, more focused modules?**

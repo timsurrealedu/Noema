@@ -173,7 +173,7 @@ test("Automations use durable API state and runs",()=>{
 test("knowledge graph exposes accessible visual, table, paths, and provenance",()=>{const page=read("app/graph/page.tsx"),shell=read("app/components/ModuleShell.tsx");assert.match(page,/\/api\/v1\/knowledge-graph/);assert.match(page,/role="img"/);assert.match(page,/Accessible relationship table/);assert.match(page,/Trace a path/);assert.match(page,/provenance/);assert.match(page,/Open source/);assert.match(shell,/\["Graph","\/graph"/)});
 test("tasks and events expose durable reminder controls",()=>{
   for(const file of ["app/tasks/page.tsx","app/calendar/page.tsx"])assert.match(read(file),/type="datetime-local"/);
-  assert.match(read("server/worker/scheduler.mjs"),/deliverDueReminders/);
+  assert.match(read("server/worker/maintenance/reminders.mjs"),/deliverDueReminders/);
 });
 
 test("Calendar edits normalized event time and recurrence",()=>{const page=read("app/calendar/page.tsx"),route=read("app/api/v1/events/[id]/route.ts");assert.match(page,/startAt:start\.toISOString/);assert.match(page,/resolvedOptions\(\)\.timeZone/);assert.match(page,/All day/);assert.match(page,/frequency/);assert.doesNotMatch(page,/July 2026/);assert.match(route,/deleteEvent/) });
