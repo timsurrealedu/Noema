@@ -82,15 +82,27 @@ export function updateCapture(id,status,version,db=getDatabase(),actor=null){
   if(!["processing","review","confirmed","failed","dismissed"].includes(status))throw new Error("Invalid capture status");const context=actorInfo(actor),before=findOwned(db,"captures",id,context.workspaceId);if(!before)throw Object.assign(new Error("Capture not found"),{status:404});requireVersion({version},before,{db,type:"capture",actor});db.prepare(`UPDATE captures SET status=?,updated_at=?,version=version+1 WHERE id=?${context.workspaceId?" AND workspace_id=?":""}`).run(status,stamp(),id,...(context.workspaceId?[context.workspaceId]:[]));audit(db,"status","capture",id,status,{op:"capture-status",status:before.status},actor);return {ok:true,version:before.version+1};
 }
 
+function cleanCaptureAction(action,ids){
+  if(!action||ids.has(action.id))throw new Error("Action ids must be unique");ids.add(action.id);const args=action.arguments||{},confidence=Number(action.confidence);if(!Number.isFinite(confidence)||confidence<0||confidence>1)throw new Error("confidence must be between 0 and 1");const common={id:required(action.id,"action id",100),type:action.type,confidence,sourceReferences:Array.isArray(action.sourceReferences)?action.sourceReferences.map(value=>required(value,"source reference",500)).slice(0,20):[]};
+  if(action.type==="task.create"){const dueAt=args.dueAt?absolute(args.dueAt,"dueAt").toISOString():null;return {...common,arguments:{title:required(args.title,"task title",500),dueAt,project:args.project?required(args.project,"project",200):null,linkedActionId:args.linkedActionId?required(args.linkedActionId,"linked action id",100):null}}}
+  if(action.type==="event.create"){const start=absolute(args.startAt,"startAt"),end=absolute(args.endAt,"endAt");if(end<=start)throw new Error("endAt must be after startAt");eventPosition(start,required(args.timezone,"timezone",100));const reminders=(Array.isArray(args.reminders)?args.reminders:[]).map(item=>({offsetMinutes:Number(item.offsetMinutes)}));if(reminders.some(item=>!Number.isInteger(item.offsetMinutes)||item.offsetMinutes<0||item.offsetMinutes>525600))throw new Error("Invalid reminder offset");return {...common,arguments:{title:required(args.title,"event title",500),startAt:start.toISOString(),endAt:end.toISOString(),timezone:args.timezone,location:args.location?required(args.location,"location",500):null,reminders}}}
+  if(action.type==="note.create")return {...common,arguments:{title:required(args.title,"note title",500),content:String(args.content||"").slice(0,100000),tags:Array.isArray(args.tags)?args.tags.map(tag=>required(tag,"tag",100)).slice(0,20):[]}};
+  throw new Error(`Unsupported capture action: ${action.type}`);
+}
+
 export function saveInterpretation(id,proposal,db=getDatabase()){
   if(proposal?.schemaVersion!==1||!Array.isArray(proposal.actions)||!Array.isArray(proposal.clarifications))throw new Error("Invalid capture proposal");
-  const ids=new Set(),actions=proposal.actions.slice(0,20).map(action=>{if(!action||ids.has(action.id))throw new Error("Action ids must be unique");ids.add(action.id);const args=action.arguments||{},confidence=Number(action.confidence);if(!Number.isFinite(confidence)||confidence<0||confidence>1)throw new Error("confidence must be between 0 and 1");const common={id:required(action.id,"action id",100),type:action.type,confidence,sourceReferences:Array.isArray(action.sourceReferences)?action.sourceReferences.map(value=>required(value,"source reference",500)).slice(0,20):[]};
-    if(action.type==="task.create"){const dueAt=args.dueAt?absolute(args.dueAt,"dueAt").toISOString():null;return {...common,arguments:{title:required(args.title,"task title",500),dueAt,project:args.project?required(args.project,"project",200):null,linkedActionId:args.linkedActionId?required(args.linkedActionId,"linked action id",100):null}}}
-    if(action.type==="event.create"){const start=absolute(args.startAt,"startAt"),end=absolute(args.endAt,"endAt");if(end<=start)throw new Error("endAt must be after startAt");eventPosition(start,required(args.timezone,"timezone",100));const reminders=(Array.isArray(args.reminders)?args.reminders:[]).map(item=>({offsetMinutes:Number(item.offsetMinutes)}));if(reminders.some(item=>!Number.isInteger(item.offsetMinutes)||item.offsetMinutes<0||item.offsetMinutes>525600))throw new Error("Invalid reminder offset");return {...common,arguments:{title:required(args.title,"event title",500),startAt:start.toISOString(),endAt:end.toISOString(),timezone:args.timezone,location:args.location?required(args.location,"location",500):null,reminders}}}
-    if(action.type==="note.create")return {...common,arguments:{title:required(args.title,"note title",500),content:String(args.content||"").slice(0,100000),tags:Array.isArray(args.tags)?args.tags.map(tag=>required(tag,"tag",100)).slice(0,20):[]}};
-    throw new Error(`Unsupported capture action: ${action.type}`)});
+  const ids=new Set(),actions=proposal.actions.slice(0,20).map(action=>cleanCaptureAction(action,ids));
   for(const action of actions)if(action.type==="task.create"&&action.arguments.linkedActionId&&!ids.has(action.arguments.linkedActionId))throw new Error("linkedActionId must reference another proposed action");
   const cleaned={schemaVersion:1,summary:required(proposal.summary,"proposal summary",1000),actions,clarifications:proposal.clarifications.map(value=>required(value,"clarification",1000)).slice(0,20)};const result=db.prepare("UPDATE captures SET status='review',objects_json=?,error=NULL,updated_at=?,version=version+1 WHERE id=?").run(JSON.stringify(cleaned),stamp(),id);if(!result.changes)throw new Error("Capture not found");return cleaned;
+}
+
+function applyCaptureAction(action,captureId,db,actor){
+  const id=randomUUID(),args=action.arguments||action,type=action.type.split(".")[0];let object;
+  if(type==="task")object=saveTask({id,title:args.title,project:args.project||"Inbox",due:args.dueAt||"No date",reminderAt:args.dueAt,priority:"Medium"},db,actor);
+  else if(type==="event"){const reminder=action.arguments?.reminders?.[0],reminderAt=reminder?new Date(new Date(args.startAt).getTime()-reminder.offsetMinutes*60000).toISOString():null;object=saveEvent(action.arguments?{id,title:args.title,startAt:args.startAt,endAt:args.endAt,timezone:args.timezone,location:args.location,reminderAt}:{id,title:args.title,day:new Date().getDay(),time:"09:00",top:0,height:58},db,actor)}
+  else object=saveNote({id,title:args.title,content:args.content||args.detail||args.title,tags:args.tags||[],ai:true,source:`Capture ${captureId}`},db,actor);
+  return {type,actionId:action.id,object};
 }
 
 export function applyCaptureInterpretation(id,db=getDatabase(),actor=null){
@@ -99,14 +111,7 @@ export function applyCaptureInterpretation(id,db=getDatabase(),actor=null){
   const proposal=JSON.parse(capture.objects_json),actions=Array.isArray(proposal)?proposal:proposal.actions;if(!actions?.length)throw Object.assign(new Error("No interpreted actions to apply"),{status:409,code:"NOTHING_TO_APPLY"});
   const created=[];db.exec("BEGIN IMMEDIATE");
   try{
-    for(const action of actions){
-      const objectId=randomUUID();let row;
-      const args=action.arguments||action,type=action.type.split(".")[0];
-      if(type==="task")row=saveTask({id:objectId,title:args.title,project:args.project||"Inbox",due:args.dueAt||"No date",reminderAt:args.dueAt,priority:"Medium"},db,actor);
-      else if(type==="event"){const reminder=action.arguments?.reminders?.[0],reminderAt=reminder?new Date(new Date(args.startAt).getTime()-reminder.offsetMinutes*60000).toISOString():null;row=saveEvent(action.arguments?{id:objectId,title:args.title,startAt:args.startAt,endAt:args.endAt,timezone:args.timezone,location:args.location,reminderAt}:{id:objectId,title:args.title,day:new Date().getDay(),time:"09:00",top:0,height:58},db,actor)}
-      else row=saveNote({id:objectId,title:args.title,content:args.content||args.detail||args.title,tags:args.tags||[],ai:true,source:`Capture ${id}`},db,actor);
-      created.push({type,actionId:action.id,object:row});
-    }
+    for(const action of actions)created.push(applyCaptureAction(action,id,db,actor));
     db.prepare(`UPDATE captures SET status='confirmed',updated_at=?,version=version+1 WHERE id=?${context.workspaceId?" AND workspace_id=?":""}`).run(stamp(),id,...(context.workspaceId?[context.workspaceId]:[]));
     audit(db,"apply","capture",id,`Applied ${created.length} object(s) from capture`,{op:"delete-many",objects:created.map(({type,object})=>({type,id:object.id})),captureStatus:"review"},actor);
     db.exec("COMMIT");
