@@ -1,1 +1,1 @@
-export default function Loading(){return <main className="route-state" aria-busy="true" aria-label="Loading LifeOS"><span className="skeleton title"/><span className="skeleton copy"/><div>{Array.from({length:5},(_,index)=><span className="skeleton row" key={index}/>)}</div></main>}
+export default function Loading(){return <main className="route-state" aria-busy="true" aria-label="Loading Noema"><span className="skeleton title"/><span className="skeleton copy"/><div>{Array.from({length:5},(_,index)=><span className="skeleton row" key={index}/>)}</div></main>}

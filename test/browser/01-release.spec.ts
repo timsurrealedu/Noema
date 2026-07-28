@@ -55,7 +55,7 @@ test("automation builder composes, previews, runs, and exposes step history",asy
 
 test("knowledge graph renders relationships, provenance, and shortest paths",async({page})=>{
   await login(page);const created=await page.evaluate(async()=>{const post=async(path:string,body:object)=>{const response=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":crypto.randomUUID()},body:JSON.stringify(body)});if(!response.ok)throw new Error(await response.text());return response.json()};const project=await post("/api/v1/projects",{name:"Graph browser project",summary:"private browser summary"}),task=await post("/api/v1/tasks",{title:"Graph browser task",project:"Graph browser project",due:"Today",priority:"Medium"});return {project,task}});
-  await page.goto("/graph");await expect(page.getByRole("img",{name:"LifeOS knowledge graph"})).toBeVisible();await expect(page.getByText("tasks.project")).toBeVisible();
+  await page.goto("/graph");await expect(page.getByRole("img",{name:"Noema knowledge graph"})).toBeVisible();await expect(page.getByText("tasks.project")).toBeVisible();
   await page.getByLabel("From").selectOption(`task:${created.task.id}`);await page.getByLabel("To").selectOption(`project:${created.project.id}`);await page.getByRole("button",{name:"Trace path"}).click();
   await expect(page.getByRole("list",{name:"Shortest path"})).toContainText("belongs-to via tasks.project");await expect(page.getByText("private browser summary")).toHaveCount(0);
 });
@@ -68,7 +68,7 @@ test("custom dashboard creates, edits, derives data, duplicates, and reorders",a
 });
 
 test("mobile repository IDE registers, browses, edits, and reviews an isolated command",async({page})=>{
-  await page.setViewportSize({width:375,height:900});await login(page);await page.goto("/coding");await page.getByLabel("Name").fill("LifeOS browser");await page.getByLabel("Allowed local path").fill(process.cwd());await page.getByRole("button",{name:"Register"}).click();await page.getByRole("link",{name:/LifeOS browser/}).click();await expect(page).toHaveURL(/\/coding\/repositories\/[^/]+$/);
+  await page.setViewportSize({width:375,height:900});await login(page);await page.goto("/coding");await page.getByLabel("Name").fill("Noema browser");await page.getByLabel("Allowed local path").fill(process.cwd());await page.getByRole("button",{name:"Register"}).click();await page.getByRole("link",{name:/Noema browser/}).click();await expect(page).toHaveURL(/\/coding\/repositories\/[^/]+$/);
   expect(await page.evaluate(async()=>fetch(`/api/v1/repositories/${location.pathname.split("/").pop()}?path=../PROJECT.md`).then(response=>response.status))).toBe(403);await page.getByRole("button",{name:/package.json/}).click();const editor=page.getByLabel(/Editing package.json/);await expect(editor).toBeVisible();await editor.press("End");await page.getByRole("button",{name:"Tab",exact:true}).click();await expect(page.getByRole("button",{name:/Save 1/})).toBeEnabled();
   page.once("dialog",dialog=>dialog.accept());await page.getByRole("button",{name:"status",exact:true}).click();await expect(page.getByText(/status · exit 0/)).toBeVisible();expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
   expect((await new AxeBuilder({page}).withTags(["wcag2a","wcag2aa","wcag21aa","wcag22aa"]).analyze()).violations).toEqual([]);

@@ -3,7 +3,7 @@ import {expect,test} from "@playwright/test";
 test("mobile Chromium verifies the installable PWA contract",async({page})=>{
   await page.goto("/login");
   const manifest=await page.evaluate(()=>fetch("/manifest.webmanifest").then(response=>response.json()));
-  expect(manifest).toMatchObject({name:"LifeOS",start_url:"/",display:"standalone"});
+  expect(manifest).toMatchObject({name:"Noema",start_url:"/",display:"standalone"});
   expect(manifest.icons.some((icon:{sizes:string})=>icon.sizes==="192x192")).toBe(true);
   expect(manifest.icons.some((icon:{sizes:string})=>icon.sizes==="512x512")).toBe(true);
   const scope=await page.evaluate(()=>navigator.serviceWorker.ready.then(registration=>registration.scope));

@@ -1,6 +1,6 @@
 ---
 name: refresh-home
-description: Draft a concise Home note from real LifeOS domains.
+description: Draft a concise Home note from real Noema domains.
 ---
 
 # Refresh Home

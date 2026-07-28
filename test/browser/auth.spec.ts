@@ -39,15 +39,15 @@ test("enrollment, MFA login, recovery login, and session revocation",async({brow
   expect(codes).toHaveLength(10);
 
   await page.waitForTimeout(30_500-Date.now()%30_000);
-  const totpContext=await browser.newContext({userAgent:"LifeOS TOTP browser test"}),totpPage=await loginWithTotp(totpContext,secret);
-  const recoveryContext=await browser.newContext({userAgent:"LifeOS recovery browser test"}),recoveryPage=await recoveryContext.newPage();
+  const totpContext=await browser.newContext({userAgent:"Noema TOTP browser test"}),totpPage=await loginWithTotp(totpContext,secret);
+  const recoveryContext=await browser.newContext({userAgent:"Noema recovery browser test"}),recoveryPage=await recoveryContext.newPage();
   await passwordStep(recoveryPage);await recoveryPage.getByRole("button",{name:"Use a recovery code"}).click();
   await recoveryPage.getByLabel("Recovery code").fill(codes[0]);
   await recoveryPage.getByRole("button",{name:"Verify code"}).click();
   await expect(recoveryPage).toHaveURL("/");
 
   await page.reload();await page.getByRole("button",{name:"Security"}).click();
-  const revoke=page.locator(".session-setting",{hasText:"LifeOS TOTP browser test"}).getByRole("button",{name:"Revoke"});await revoke.click();
+  const revoke=page.locator(".session-setting",{hasText:"Noema TOTP browser test"}).getByRole("button",{name:"Revoke"});await revoke.click();
   await expect(revoke).toHaveCount(0);
   const status=await totpPage.evaluate(async()=>fetch("/api/v1/auth/sessions").then(response=>response.status));
   expect(status).toBe(401);

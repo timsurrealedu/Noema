@@ -1,4 +1,4 @@
-# LifeOS Design System
+# Noema Design System
 
 ## Direction
 

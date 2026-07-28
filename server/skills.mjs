@@ -11,7 +11,7 @@ const definitions={
   research:{mode:"proposal",description:"Assess an idea and draft a structured research note.",instructions:"Assess demand, competition, feasibility, differentiation, and next steps. Return a sourced note proposal."},
   "weekly-review":{mode:"proposal",description:"Summarize the last week and propose next-week focuses.",instructions:"Summarize recent notes, open tasks, captures, and three realistic focuses."},
   "refresh-home":{mode:"proposal",description:"Propose a concise, link-rich Home note.",instructions:"Use only domains and notes present in the supplied context. Propose Home.md content."},
-  assistant:{mode:"read",description:"Answer questions using LifeOS context.",instructions:"Act as a read-only personal assistant. Cite relevant note titles."},
+  assistant:{mode:"read",description:"Answer questions using Noema context.",instructions:"Act as a read-only personal assistant. Cite relevant note titles."},
   "note-tutor":{mode:"read",description:"Teach from one open note and related notes.",instructions:"Explain step by step. Use Markdown and LaTeX. Cite related notes only when useful."},
   "code-tutor":{mode:"read",description:"Explain and improve the open code buffer.",instructions:"Explain bugs and logic. Return an exact replacement only when a concrete edit helps."},
   "note-augment":{mode:"proposal",description:"Draft an additive study section for an open note.",instructions:"Draft a self-contained Markdown section with a heading, key ideas, LaTeX, and an example. Never remove existing content."},
@@ -22,7 +22,7 @@ const definitions={
 export const listSkills=()=>Object.entries(definitions).map(([id,value])=>({id,...value}));
 export function getSkill(id){const skill=definitions[id];if(!skill)throw Object.assign(new Error("Unknown skill"),{status:404});return {id,...skill}}
 export const workloadForSkill=id=>({assistant:"simple","weekly-review":"schedule","refresh-home":"simple",autosort:"simple",research:"research","code-tutor":"code"}[id]||"note");
-export function buildSkillPrompt(id,input,context=""){const skill=getSkill(id);return `You are running the managed LifeOS skill \"${id}\".\n${skill.instructions}\n${common}\n\nLifeOS context:\n${context||"No additional context."}\n\nUser input:\n${JSON.stringify(input)}`}
+export function buildSkillPrompt(id,input,context=""){const skill=getSkill(id);return `You are running the managed Noema skill \"${id}\".\n${skill.instructions}\n${common}\n\nNoema context:\n${context||"No additional context."}\n\nUser input:\n${JSON.stringify(input)}`}
 
 const tutorSchema={type:"object",additionalProperties:false,required:["answer","citations","replacement"],properties:{answer:{type:"string",minLength:1,maxLength:12000},citations:{type:"array",maxItems:8,items:{type:"string",maxLength:500}},replacement:{type:"string",maxLength:50000}}};
 const tutorMessages=(sessionId,db)=>db.prepare("SELECT id,role,content AS text,citations_json,replacement,provider,inserted_note_id AS insertedNoteId,inserted_note_version AS insertedNoteVersion,created_at AS createdAt FROM tutor_messages WHERE session_id=? ORDER BY created_at").all(sessionId).map(message=>({...message,citations:JSON.parse(message.citations_json)}));

@@ -8,7 +8,7 @@ export type Task = {id:string; title:string; project:string; due:string; priorit
 export type Event = {id:string; title:string; day:number; time:string; top:number; height:number; location?:string; reminderAt?:string|null; active?:boolean; startAt?:string; endAt?:string; timezone?:string; allDay?:boolean; recurrence?:{frequency?:string;rules?:string[]}|null; googleCalendarId?:string; version?:number};
 export type Note = {id:string; title:string; excerpt:string; content:string; tags:string[]; time:string; ai:boolean; draft?:boolean; source?:string; favorite?:boolean; trashed?:boolean; version?:number};
 export type CaptureSource = "typed"|"voice"|"file"|"link";
-export type CaptureObject = {type:"task"|"event"|"note"; title:string; detail:string};
+export type CaptureObject = {id?:string; type:"task"|"event"|"note"; title:string; detail:string; confidence?:number; sourceReferences?:string[]; arguments?:Record<string,unknown>};
 export type Capture = {
   id:string; text:string; createdAt:string; status:"processing"|"review"|"confirmed"|"failed"|"dismissed";
   source:CaptureSource; sourceLabel:string; progress?:number; error?:string; jobId?:string; objects:CaptureObject[]; assets?:{id:string;name:string;mime:string;size:number}[]; version?:number;
@@ -66,7 +66,7 @@ const seed: AppData = {
   noteLinks:[],
 };
 
-const storageKey="lifeos-state-v2";
+const storageKey="noema-state-v2",legacyStorageKey="lifeos-state-v2";
 const Context=createContext<AppState|null>(null);
 
 async function api(path:string,method="GET",value?:unknown,key?:string){
@@ -80,7 +80,7 @@ export function AppStateProvider({children}:{children:ReactNode}) {
   const [loaded,setLoaded]=useState(false);
 
   useEffect(()=>{
-    try {const saved=localStorage.getItem(storageKey);if(saved)setData({...seed,...JSON.parse(saved)})} catch {}
+    try {const saved=localStorage.getItem(storageKey)||localStorage.getItem(legacyStorageKey);if(saved){setData({...seed,...JSON.parse(saved)});localStorage.setItem(storageKey,saved);localStorage.removeItem(legacyStorageKey)}} catch {}
     api("/state").then(remote=>setData(current=>({...current,...remote,projects:remote.projects||[],taskDependencies:remote.taskDependencies||[],noteLinks:remote.noteLinks||[]}))).catch(()=>{});
     setLoaded(true);
   },[]);

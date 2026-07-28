@@ -1,4 +1,4 @@
-# LifeOS Post-MVP Roadmap
+# Noema Post-MVP Roadmap
 
 `Done` requires persisted behavior, authenticated APIs, trust-boundary validation, failure handling, responsive and keyboard-accessible UI, automated backend/browser coverage, and updated operations documentation.
 
@@ -23,7 +23,7 @@
 
 ## 3 — Knowledge-graph visualization
 
-- [x] Persist typed nodes and relationships from LifeOS objects
+- [x] Persist typed nodes and relationships from Noema objects
 - [x] Provide authenticated filtered neighborhood and path APIs
 - [x] Render an accessible, responsive graph with list/table equivalents
 - [x] Open source objects and expose relationship provenance

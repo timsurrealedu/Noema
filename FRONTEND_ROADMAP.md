@@ -1,4 +1,4 @@
-# LifeOS Frontend Roadmap
+# Noema Frontend Roadmap
 
 Frontend status is separate from backend integration. `Done` means the interaction is implemented in the browser. `Integrated` means it persists through the authenticated API and has failure handling. Sample-state controls are prototypes, not complete features. Runtime failures must show the shared connection notice; controls backed by an existing API must not show a blanket “Not connected yet” notice.
 

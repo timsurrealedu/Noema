@@ -1,4 +1,4 @@
-# LifeOS v2 Backend Design
+# Noema Backend Design
 
 Status: proposed architecture for the first backend implementation.
 
@@ -14,7 +14,7 @@ Status: proposed architecture for the first backend implementation.
 Use one repository and three runtime processes:
 
 1. **Next.js web** — UI, authenticated route handlers, validation, and SSE endpoints.
-2. **LifeOS worker** — claims durable jobs, invokes Codex or deterministic processors, and records events/results.
+2. **Noema worker** — claims durable jobs, invokes Codex or deterministic processors, and records events/results.
 3. **Backup timer** — SQLite online backup plus encrypted file archive rotation.
 
 Core storage:
@@ -138,7 +138,7 @@ Mutations accept an idempotency key and expected object version. Errors use one 
 - Require re-authentication for destructive, credential, production, or financial actions.
 - Validate `Origin` on mutations, enforce request/body/file limits, and rate-limit login and job creation.
 - Bind the application to loopback behind Caddy or Tailscale Serve. Keep the Oracle firewall closed except SSH/Tailscale.
-- Run web and worker as an unprivileged `lifeos` service account. Separate writable data, job, and backup directories.
+- Run web and worker as an unprivileged `noema` service account. Separate writable data, job, and backup directories.
 - Redact secrets and private note bodies from logs and analytics.
 
 ## Reversibility and audit
@@ -150,12 +150,12 @@ Assets are immutable. User deletion first moves records to trash; physical purgi
 ## Deployment on the Oracle box
 
 - Node.js LTS, Codex CLI, SQLite, Caddy or Tailscale Serve, and systemd.
-- `lifeos-web.service` and `lifeos-worker.service` use separate environment files and restart policies.
-- Store runtime data outside the Git checkout, e.g. `/var/lib/lifeos`, owned by the service account.
+- `noema-web.service` and `noema-worker.service` use separate environment files and restart policies.
+- Store runtime data outside the Git checkout, e.g. `/var/lib/noema`, owned by the service account.
 - Nightly encrypted backups: SQLite online backup, object manifest verification, archive, retention rotation, and periodic restore test.
 - Health endpoints check process, database, disk space, worker heartbeat, and Codex availability without exposing secrets.
 
-## Migration from lifeOS v1
+## Migration from Noema v1
 
 Reuse concepts, not its unrestricted execution boundary:
 

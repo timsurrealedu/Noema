@@ -5,7 +5,7 @@ import {PWARegister} from "./components/PWARegister";
 import {ServiceNotice} from "./components/ServiceNotice";
 
 export const metadata: Metadata = {
-  title: "LifeOS — Today",
+  title: "Noema — Today",
   description: "Capture, understand, act.",
   manifest: "/manifest.webmanifest",
 };

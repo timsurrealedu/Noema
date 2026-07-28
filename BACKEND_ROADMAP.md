@@ -1,4 +1,4 @@
-# LifeOS v2 Backend Roadmap
+# Noema Backend Roadmap
 
 ## Phase 1 — Foundation
 
