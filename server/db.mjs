@@ -163,6 +163,7 @@ export function openDatabase(path){
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(32,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(33,?)").run(new Date().toISOString());
   migrate(db);
+  db.exec("CREATE INDEX IF NOT EXISTS tasks_workspace_created ON tasks(workspace_id,created_at DESC); CREATE INDEX IF NOT EXISTS notes_workspace_updated ON notes(workspace_id,updated_at DESC); CREATE INDEX IF NOT EXISTS captures_workspace_created ON captures(workspace_id,created_at DESC); CREATE INDEX IF NOT EXISTS events_workspace_start ON events(workspace_id,deleted_at,start_at); CREATE INDEX IF NOT EXISTS tasks_calendar ON tasks(workspace_id,archived,due_at,scheduled_start_at); CREATE INDEX IF NOT EXISTS vault_task_links_task ON vault_task_links(task_id); CREATE INDEX IF NOT EXISTS vault_entries_note ON vault_entries(note_id); CREATE INDEX IF NOT EXISTS note_blocks_note ON note_blocks(note_id);");
   return db;
 }
 

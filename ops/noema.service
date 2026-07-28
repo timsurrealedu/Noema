@@ -8,8 +8,10 @@ User=noema
 Group=noema
 WorkingDirectory=/opt/noema
 EnvironmentFile=/etc/noema.env
+Environment="NODE_OPTIONS=--max-old-space-size=512"
 ExecStart=/usr/bin/npm start
 Restart=on-failure
+MemoryMax=512M
 RestartSec=5
 NoNewPrivileges=true
 PrivateTmp=true
