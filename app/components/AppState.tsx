@@ -8,7 +8,7 @@ export type Task = {id:string; title:string; project:string; due:string; priorit
 export type Event = {id:string; title:string; day:number; time:string; top:number; height:number; location?:string; reminderAt?:string|null; active?:boolean; startAt?:string; endAt?:string; timezone?:string; allDay?:boolean; recurrence?:{frequency?:string;rules?:string[]}|null; googleCalendarId?:string; version?:number};
 export type Note = {id:string; title:string; excerpt:string; content:string; tags:string[]; time:string; ai:boolean; draft?:boolean; source?:string; favorite?:boolean; trashed?:boolean; version?:number};
 export type CaptureSource = "typed"|"voice"|"file"|"link";
-export type CaptureObject = {type:"task"|"event"|"note"; title:string; detail:string};
+export type CaptureObject = {id?:string; type:"task"|"event"|"note"; title:string; detail:string; confidence?:number; sourceReferences?:string[]; arguments?:Record<string,unknown>};
 export type Capture = {
   id:string; text:string; createdAt:string; status:"processing"|"review"|"confirmed"|"failed"|"dismissed";
   source:CaptureSource; sourceLabel:string; progress?:number; error?:string; jobId?:string; objects:CaptureObject[]; assets?:{id:string;name:string;mime:string;size:number}[]; version?:number;

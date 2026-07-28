@@ -164,15 +164,27 @@ test("interpretation apply creates objects transactionally and its undo reverses
   try{
     core.createCapture({id:"c1",text:"Meet Dian tomorrow 1pm",source:"typed"},db);
     assert.throws(()=>core.applyCaptureInterpretation("c1",db),error=>error.status===409&&error.code==="NOTHING_TO_APPLY");
-    core.saveInterpretation("c1",[{type:"task",title:"Review proposal",detail:"Due tomorrow"},{type:"event",title:"Meeting with Dian",detail:"1pm"},{type:"note",title:"Meeting notes",detail:"Context"}],db);
+    core.saveInterpretation("c1",{schemaVersion:1,summary:"Create the meeting, reminder, and preparation material",clarifications:[],actions:[
+      {id:"event-1",type:"event.create",confidence:.96,sourceReferences:["Meet Dian tomorrow 1pm"],arguments:{title:"Meeting with Dian",startAt:"2026-07-29T13:00:00+07:00",endAt:"2026-07-29T14:00:00+07:00",timezone:"Asia/Jakarta",location:null,reminders:[{offsetMinutes:60}]}},
+      {id:"task-1",type:"task.create",confidence:.92,sourceReferences:["Review proposal"],arguments:{title:"Review proposal",dueAt:"2026-07-29T12:00:00+07:00",project:"Inbox",linkedActionId:"event-1"}},
+      {id:"note-1",type:"note.create",confidence:.85,sourceReferences:["Meeting notes"],arguments:{title:"Meeting notes",content:"Context",tags:["meeting"]}},
+    ]},db);
     const applied=core.applyCaptureInterpretation("c1",db,"owner");
     assert.equal(applied.status,"confirmed");assert.equal(applied.created.length,3);
-    const state=core.listState(db);assert.equal(state.tasks.length,1);assert.equal(state.events.length,1);assert.equal(state.notes.length,1);assert.equal(state.captures[0].status,"confirmed");
+    const state=core.listState(db);assert.equal(state.tasks.length,1);assert.equal(state.tasks[0].due,"2026-07-29T05:00:00.000Z");assert.equal(state.events.length,1);assert.equal(state.events[0].startAt,"2026-07-29T06:00:00.000Z");assert.equal(state.events[0].reminderAt,"2026-07-29T05:00:00.000Z");assert.equal(state.notes.length,1);assert.equal(state.captures[0].status,"confirmed");
     assert.equal(core.applyCaptureInterpretation("c1",db).created.length,0);
     const applyAudit=core.listAuditEvents(10,db).find(event=>event.action==="apply"&&event.reversible);
     core.undoAuditEvent(applyAudit.id,db,"owner");
     const after=core.listState(db);assert.equal(after.tasks.length,0);assert.equal(after.events.length,0);assert.equal(after.notes.length,0);assert.equal(after.captures[0].status,"review");
     assert.equal(core.applyCaptureInterpretation("c1",db).created.length,3);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("capture proposals reject ambiguous or unsafe structured actions",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
+  try{core.createCapture({id:"c1",text:"Meet sometime",source:"typed"},db);const base={schemaVersion:1,summary:"Meeting",clarifications:[]};
+    assert.throws(()=>core.saveInterpretation("c1",{...base,actions:[{id:"e1",type:"event.create",confidence:.8,sourceReferences:[],arguments:{title:"Meeting",startAt:"not-a-date",endAt:"2026-07-29T14:00:00+07:00",timezone:"Asia/Jakarta",location:null,reminders:[]}}]},db),/startAt/);
+    assert.throws(()=>core.saveInterpretation("c1",{...base,actions:[{id:"t1",type:"task.create",confidence:2,sourceReferences:[],arguments:{title:"Task",dueAt:null,project:null,linkedActionId:null}}]},db),/confidence/);
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
