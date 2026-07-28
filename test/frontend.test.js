@@ -41,6 +41,10 @@ test("shared shell exposes keyboard search and accessible navigation",()=>{
   assert.match(shell,/Skip to main content/);
 });
 
+test("mobile navigation exposes Coding and Automations",()=>{for(const file of ["app/components/ModuleShell.tsx","app/page.tsx"]){const page=read(file);assert.match(page,/\["Coding","\/coding",Code\]/);assert.match(page,/\["Automations","\/automations",Lightning\]/)}});
+
+test("Vault note IDs work without crypto.randomUUID",()=>{const vault=read("app/vault/page.tsx"),ids=read("app/lib/id.ts");assert.match(vault,/createId\(\)/);assert.match(ids,/typeof crypto\.randomUUID===\"function\"/);assert.match(ids,/crypto\.getRandomValues/)});
+
 test("global search exposes optional attributed semantic ranking",()=>{const shell=read("app/components/ModuleShell.tsx"),route=read("app/api/v1/search/route.ts"),search=read("server/search.mjs");assert.match(shell,/Semantic ranking/);assert.match(shell,/configured OpenAI embedding model/);assert.match(shell,/ranking\.source/);assert.match(route,/semantic:params\.get\("semantic"\)===\"true\"/);assert.match(search,/SQLite FTS\/LIKE/);assert.match(search,/selected\.add/);assert.match(search,/fallback:/) });
 
 test("command palettes use a focus-trapping native modal",()=>{
@@ -101,6 +105,9 @@ test("contextual assistant renders persisted reviewable recommendations",()=>{
 test("Vault renders accessible charts and Mermaid with source fallback",()=>{
   const content=read("app/components/MarkdownContent.tsx"),vault=read("app/vault/page.tsx");assert.match(content,/```\(mermaid\|chart\)/);assert.match(content,/role="img"/);assert.match(content,/<table>/);assert.match(content,/scope="row"/);assert.match(content,/Diagram could not be rendered/);assert.match(content,/View Mermaid source/);assert.match(vault,/MarkdownContent/);
 });
+test("note editors insert GFM tables and render LaTeX",()=>{const toolbar=read("app/components/MarkdownToolbar.tsx"),content=read("app/components/MarkdownContent.tsx"),mixed=read("app/components/MixedNoteEditor.tsx"),vault=read("app/vault/page.tsx");assert.match(toolbar,/Insert table/);assert.match(toolbar,/Insert display equation/);assert.match(content,/remarkGfm/);assert.match(content,/remarkMath/);assert.match(content,/rehypeKatex/);assert.match(mixed,/MarkdownToolbar/);assert.match(mixed,/MarkdownContent/);assert.match(vault,/MarkdownToolbar/)});
+test("notes default to preview while tutor and vault panes remain adjustable",()=>{const tutor=read("app/components/TutorPanel.tsx"),mixed=read("app/components/MixedNoteEditor.tsx"),vault=read("app/vault/page.tsx"),organizer=read("app/components/VaultOrganizer.tsx");assert.match(tutor,/MarkdownContent text=\{message\.text\}/);assert.match(tutor,/resizeWidth/);for(const mode of ["minimized","sheet","full"])assert.match(tutor,new RegExp(`"${mode}"`));assert.match(mixed,/setPreview\]=useState\(true\)/);assert.match(vault,/\("read"\)/);assert.match(organizer,/noema-vault-drawer/);assert.match(organizer,/aria-expanded=\{drawer\}/)});
+test("Obsidian sync is stable and read-only",()=>{const sync=read("scripts/sync-obsidian.mjs");assert.match(sync,/createHash/);assert.match(sync,/Obsidian ·/);assert.match(sync,/readFileSync/);assert.doesNotMatch(sync,/writeFile|unlink|rename|rmSync/)});
 test("vault tasks expose live counts, source links, Jakarta scheduling, and discriminated calendar items",()=>{const tasks=read("app/tasks/page.tsx"),calendar=read("app/calendar/page.tsx"),state=read("app/components/AppState.tsx");assert.doesNotMatch(tasks,/Four tasks are ready/);assert.match(tasks,/counts=Object\.fromEntries/);assert.match(tasks,/Asia\/Jakarta/);assert.match(tasks,/vaultSource\.relativePath/);assert.match(tasks,/Open source note/);assert.match(state,/kind:"event"/);assert.match(state,/kind:"task"/);assert.match(calendar,/calendarItems\.filter\(item=>item\.kind==="task"\)/)});
 test("mixed handwriting editor preserves offline strokes and pen-first input",()=>{const editor=read("app/components/InkEditor.tsx"),mixed=read("app/components/MixedNoteEditor.tsx"),ink=read("app/lib/ink.ts"),queue=read("app/lib/offlineQueue.ts"),worker=read("server/worker/handlers/handwriting-ocr.mjs");assert.match(editor,/getCoalescedEvents/);assert.match(editor,/pointerType==="pen"/);assert.match(editor,/saveInkDraft/);for(const tool of ["pen","highlighter","eraser","lasso"])assert.match(editor,new RegExp(`"${tool}"`));assert.match(mixed,/Move block up/);assert.match(mixed,/Duplicate block/);assert.match(queue,/ink-drafts/);assert.match(ink,/pressure:event\.pressure>0/);assert.match(worker,/strokesToPng/);assert.match(worker,/mimeType:"image\/png"/);assert.doesNotMatch(worker,/mimeType:"image\/svg\+xml"/)});
 test("Vault uses an Obsidian-style tree with breadcrumbs and visible ink entry points",()=>{const page=read("app/vault/page.tsx"),organizer=read("app/components/VaultOrganizer.tsx");assert.match(page,/VaultOrganizer/);assert.match(organizer,/vault-sources\/\$\{id\}\/tree/);assert.match(organizer,/Vault folders/);assert.match(organizer,/Breadcrumb/);assert.match(organizer,/Draw in/);assert.match(organizer,/entries\/move/);assert.match(organizer,/entries\/trash/);assert.match(organizer,/New note/)});
@@ -121,6 +128,7 @@ test("offline mutations queue durably and replay idempotently",()=>{
   assert.match(pwa,/addEventListener\("online"/);
   assert.match(worker,/noema-mutations/);
 });
+test("expired sessions redirect without looping on auth pages",()=>{const state=read("app/components/AppState.tsx");assert.match(state,/error\.status===401/);assert.match(state,/\['\/login','\/join'\]\.includes\(location\.pathname\)/)});
 
 test("offline file captures preserve blobs until asset and capture persistence complete",()=>{
   const queue=read("app/lib/offlineQueue.ts"),state=read("app/components/AppState.tsx");assert.match(queue,/captureStore="capture-blobs"/);assert.match(queue,/blob:Blob/);assert.match(queue,/new File\(\[item\.blob\]/);assert.match(queue,/assetIds:\[data\.assets\[0\]\.id\]/);assert.match(queue,/delete\(item\.id\)/);assert.match(state,/queueOfflineCapture\(capture,file\)/);
@@ -139,6 +147,7 @@ test("login supports an optional authenticator challenge",()=>{
   assert.match(login,/autoComplete="one-time-code"/);
   assert.match(login,/pattern="\[0-9\]\{6\}"/);
 });
+test("login only marks cookies Secure on HTTPS",()=>{const route=read("app/api/v1/auth/login/route.ts");assert.match(route,/new URL\(request\.url\)\.protocol===\"https:\"/);assert.doesNotMatch(route,/NODE_ENV===\"production\"/)});
 
 test("login and Settings expose recovery and MFA revocation controls",()=>{
   const login=read("app/login/page.tsx"),settings=read("app/settings/page.tsx");assert.match(login,/recoveryCode/);assert.match(login,/Use a recovery code/);assert.match(settings,/\/api\/v1\/auth\/recovery/);assert.match(settings,/method:"DELETE"/);assert.match(settings,/invalidates every recovery code/);

@@ -16,13 +16,7 @@ const nav = [
   ["Today",House],["Capture",Plus],["Calendar",CalendarBlank],["Tasks",CheckSquare],
   ["Vault",Folder],["Projects",Tray],["Study",BookOpen],["Coding",Code],["Automations",Lightning]
 ] as const;
-
-const activity = [
-  ["Study plan for OS exam.pdf uploaded to Vault","08:31",FileText],
-  ["Database normalization notes task completed","Yesterday",Check],
-  ["Pushed 3 commits to noema-sync","Yesterday",Code],
-  ["Study group session scheduled for Jul 26","Yesterday",CalendarBlank],
-] as const;
+const jakartaDate=(value:string|Date)=>{const parts=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(value instanceof Date?value:new Date(value)).map(part=>[part.type,part.value]));return `${parts.year}-${parts.month}-${parts.day}`};
 
 export default function Today() {
   const {addAndInterpretCapture,addFileCapture,captures,confirmCapture,events,tasks,toggleTask,updateCapture}=useAppState();
@@ -51,8 +45,10 @@ export default function Today() {
   },[theme]);
   useEffect(()=>()=>{if(recorder.current?.state==="recording")recorder.current.stop();recorder.current?.stream.getTracks().forEach(track=>track.stop())},[]);
 
-  const todayEvents=events.filter(event=>event.day===4).toSorted((a,b)=>a.time.localeCompare(b.time));
-  const todayTasks=tasks.filter(task=>task.due==="Today");
+  const now=new Date(),todayLabel=new Intl.DateTimeFormat(undefined,{weekday:"long",month:"long",day:"numeric"}).format(now);
+  const greeting=now.getHours()<12?"Good morning":now.getHours()<18?"Good afternoon":"Good evening";
+  const todayEvents=events.filter(event=>event.day===(now.getDay()+6)%7).toSorted((a,b)=>a.time.localeCompare(b.time));
+  const todayTasks=tasks.filter(task=>!task.archived&&task.dueAt&&jakartaDate(task.dueAt)===jakartaDate(now));
   const pendingCaptures=captures.filter(item=>item.status==="review").length;
   const review=captures.find(item=>item.id===reviewId);
   function submit(e:FormEvent) {e.preventDefault();if(capture.trim())setReviewId(addAndInterpretCapture(capture.trim()))}
@@ -71,7 +67,7 @@ export default function Today() {
     </aside>
 
     <header className="topbar">
-      <div className="date"><CalendarBlank/>Friday, July 24</div>
+      <div className="date"><CalendarBlank/>{todayLabel}</div>
       <div className="top-actions">
         <button className="search" onClick={()=>setPalette(true)}><MagnifyingGlass/><span>Search</span><kbd>⌘ K</kbd></button>
         <button className="icon-button" aria-label={`Use ${theme==="dark"?"light":"dark"} theme`} onClick={()=>setTheme(theme==="dark"?"light":"dark")}>{theme==="dark"?<Sun/>:<Moon/>}</button>
@@ -81,9 +77,9 @@ export default function Today() {
 
     <main id="main">
       <section className="hero" aria-labelledby="today-title">
-        <p className="mobile-date">Friday, July 24</p>
-        <h1 id="today-title">Good morning, Tim</h1>
-        <p>Two meetings, three tasks due, and <Link className="text-link" href="/capture">{pendingCaptures || "no"} capture{pendingCaptures===1?"":"s"} need review</Link>.</p>
+        <p className="mobile-date">{todayLabel}</p>
+        <h1 id="today-title">{greeting}</h1>
+        <p>{todayEvents.length} meeting{todayEvents.length===1?"":"s"}, {todayTasks.length} task{todayTasks.length===1?"":"s"} due, and <Link className="text-link" href="/capture">{pendingCaptures || "no"} capture{pendingCaptures===1?"":"s"} need review</Link>.</p>
       </section>
 
       <form className="capture" id="quick-capture" onSubmit={submit}>
@@ -111,21 +107,17 @@ export default function Today() {
         </div>
       </section>
 
-      <section className="activity" aria-labelledby="activity-title">
-        <div className="section-head"><h2 id="activity-title">Recent activity</h2><Link href="/activity">View all <CaretRight/></Link></div>
-        <div>{activity.map(([label,time,Icon])=><Link className="activity-row" href="/activity" key={label}><Icon/><span>{label}</span><time>{time}</time></Link>)}</div>
-      </section>
+      <section className="activity" aria-labelledby="activity-title"><div className="section-head"><h2 id="activity-title">Recent activity</h2><Link href="/activity">View all <CaretRight/></Link></div><p><Link className="text-link" href="/activity">Open activity</Link> to review persisted workspace changes.</p></section>
     </main>
 
     <aside className="attention" aria-labelledby="attention-title">
       <h2 id="attention-title">Needs your attention</h2>
-      <Link className="attention-item" href="/capture"><span className="status-icon warning"><FileText/></span><span><strong>Lecture notes on TCP/IP</strong><small>Captured 2h ago</small><em>Needs review</em></span><CaretRight/></Link>
-      <Link className="attention-item" href="/automations"><span className="status-icon error"><Warning/></span><span><strong>Sync with Drive</strong><small>Automation failed</small><em>View details</em></span><CaretRight/></Link>
-      <div className="rail-activity"><div className="section-head"><h2>Recent activity</h2><Link href="/activity">View all</Link></div>{activity.slice(0,3).map(([label,time,Icon])=><Link className="activity-row" href="/activity" key={label}><Icon/><span>{label}</span><time>{time}</time></Link>)}</div>
+      {captures.filter(item=>item.status==="review").slice(0,3).map(item=><Link className="attention-item" href={`/capture?open=${item.id}`} key={item.id}><span className="status-icon warning"><FileText/></span><span><strong>{item.text}</strong><small>{item.sourceLabel}</small><em>Needs review</em></span><CaretRight/></Link>)}
+      {!pendingCaptures&&<p>Nothing needs review.</p>}
     </aside>
 
     <nav className="mobile-nav" aria-label="Mobile navigation">
-      {([["Today","/",House],["Capture","/capture",Plus],["Tasks","/tasks",ListChecks],["Vault","/vault",Folder],["More","/settings",Command]] as const).map(([label,href,Icon],i)=><Link className={`${i===0?"active":""} ${i===1?"capture-nav":""}`} href={href} key={label}><Icon/><span>{label}</span></Link>)}
+      {([["Today","/",House],["Capture","/capture",Plus],["Tasks","/tasks",ListChecks],["Vault","/vault",Folder],["Coding","/coding",Code],["Automations","/automations",Lightning],["More","/settings",Command]] as const).map(([label,href,Icon],i)=><Link className={`${i===0?"active":""} ${i===1?"capture-nav":""}`} href={href} key={label}><Icon/><span>{label}</span></Link>)}
     </nav>
 
     {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus aria-label="Search commands" placeholder="Search Noema or run a command…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><p>Quick actions</p>{([["New capture","#capture",Plus,"⌘ ⇧ C"],["Add task","/tasks",CheckSquare,"⌘ ⇧ T"],["Open calendar","/calendar",CalendarBlank,"G C"],["Search vault","/vault",Folder,"G V"]] as const).map(([label,href,Icon,key])=><Link href={href} onClick={()=>setPalette(false)} key={label}><Icon/><span>{label}</span><kbd>{key}</kbd></Link>)}</ModalDialog>}

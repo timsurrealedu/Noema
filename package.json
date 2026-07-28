@@ -17,13 +17,19 @@
     "test:browser:all": "playwright test",
     "backup": "node scripts/backup.mjs",
     "verify:backup": "node scripts/verify-backup.mjs",
-    "import:v1": "node scripts/import-v1.mjs"
+    "import:v1": "node scripts/import-v1.mjs",
+    "sync:obsidian": "node scripts/sync-obsidian.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
+    "katex": "^0.18.1",
     "next": "^15.4.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
+    "react-markdown": "^10.1.0",
+    "rehype-katex": "^7.0.1",
+    "remark-gfm": "^4.0.1",
+    "remark-math": "^6.0.0",
     "tar-stream": "^3.2.0",
     "web-push": "^3.6.7"
   },

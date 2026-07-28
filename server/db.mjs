@@ -105,6 +105,7 @@ export function openDatabase(path){
   db.exec(schema);
   ensureColumn(db,"jobs","attempts","INTEGER NOT NULL DEFAULT 0");
   ensureColumn(db,"jobs","max_attempts","INTEGER NOT NULL DEFAULT 3");
+  ensureColumn(db,"user_settings","ai_json","TEXT NOT NULL DEFAULT '{}'");
   ensureColumn(db,"sessions","mfa_verified_at","TEXT");
   ensureColumn(db,"users","totp_secret_enc","TEXT");
   ensureColumn(db,"users","totp_pending_enc","TEXT");

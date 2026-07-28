@@ -1,52 +1,27 @@
 import {runCodex} from "./codex.mjs";
 
 const capacity=/usage limit|rate.?limit|limit reached|session limit|quota|resource_exhausted|insufficient credits|out of (tokens|credit)|\b429\b/i;
+const transient=/timeout|timed out|network|fetch failed|ECONN|EAI_AGAIN|\b5\d\d\b/i;
 const schemaKeys=new Set(["type","format","title","description","enum","items","prefixItems","minItems","maxItems","minimum","maximum","anyOf","oneOf","properties","additionalProperties","required"]);
+const presets={deepseek:["deepseekApiKey","deepseekBaseUrl"],glm:["glmApiKey","glmBaseUrl"],kimi:["kimiApiKey","kimiBaseUrl"],qwen:["qwenApiKey","qwenBaseUrl"]};
 
 export const isCapacityError=error=>capacity.test(String(error?.message||error));
-export function geminiSchema(value){
-  if(Array.isArray(value))return value.map(geminiSchema);if(!value||typeof value!=="object")return value;
-  return Object.fromEntries(Object.entries(value).filter(([key])=>schemaKeys.has(key)).map(([key,item])=>[key,key==="properties"?Object.fromEntries(Object.entries(item).map(([name,property])=>[name,geminiSchema(property)])):geminiSchema(item)]));
+export const isTransientAIError=error=>isCapacityError(error)||transient.test(String(error?.message||error))||error?.name==="AbortError"||error?.name==="TimeoutError";
+export function geminiSchema(value){if(Array.isArray(value))return value.map(geminiSchema);if(!value||typeof value!=="object")return value;return Object.fromEntries(Object.entries(value).filter(([key])=>schemaKeys.has(key)).map(([key,item])=>[key,key==="properties"?Object.fromEntries(Object.entries(item).map(([name,property])=>[name,geminiSchema(property)])):geminiSchema(item)]))}
+const parseJSON=text=>{if(!text)throw new Error("AI returned no structured result");try{return JSON.parse(text.replace(/^```json\s*|\s*```$/g,""))}catch{throw new Error("AI returned invalid structured output")}};
+const timeoutSignal=config=>AbortSignal.timeout(config.aiTimeoutMs||15000);
+
+export async function runGemini({prompt,schema,config,maxOutputTokens,fetcher=fetch,model=config.geminiModel}){
+  if(!config.geminiApiKey)throw new Error("Gemini is not configured");const started=Date.now(),response=await fetcher(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:"POST",signal:timeoutSignal(config),headers:{"Content-Type":"application/json","x-goog-api-key":config.geminiApiKey},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{responseMimeType:"application/json",responseSchema:geminiSchema(schema),maxOutputTokens}})});if(!response.ok)throw new Error(`Gemini failed (HTTP ${response.status}): ${(await response.text()).slice(0,300)}`);const body=await response.json(),text=body.candidates?.[0]?.content?.parts?.map(part=>part.text||"").join("").trim();return {code:0,result:parseJSON(text),provider:"gemini",model,durationMs:Date.now()-started,usage:{inputTokens:body.usageMetadata?.promptTokenCount,outputTokens:body.usageMetadata?.candidatesTokenCount}};
 }
 
-export async function runGemini({prompt,schema,config,fetcher=fetch}){
-  if(!config.geminiApiKey)throw new Error("Gemini fallback is not configured");
-  const url=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.geminiModel)}:generateContent`,response=await fetcher(url,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":config.geminiApiKey},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt}]}],generationConfig:{responseMimeType:"application/json",responseSchema:geminiSchema(schema)}})});
-  if(!response.ok){const detail=(await response.text()).slice(0,300);throw new Error(`Gemini failed (HTTP ${response.status})${detail?`: ${detail}`:""}`)}
-  const body=await response.json(),text=body.candidates?.[0]?.content?.parts?.map(part=>part.text||"").join("").trim();if(!text)throw new Error("Gemini returned no structured result");
-  try{return {code:0,result:JSON.parse(text.replace(/^```json\s*|\s*```$/g,"")),provider:"gemini"}}catch{throw new Error("Gemini returned invalid structured output")}
-}
+export async function runGeminiMultimodal({prompt,base64,mimeType,schema,config,fetcher=fetch}){if(!config.geminiApiKey)throw new Error("Gemini is not configured");const response=await fetcher(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.geminiModel)}:generateContent`,{method:"POST",signal:timeoutSignal(config),headers:{"Content-Type":"application/json","x-goog-api-key":config.geminiApiKey},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt},{inlineData:{mimeType,data:base64}}]}],generationConfig:{responseMimeType:"application/json",responseSchema:geminiSchema(schema)}})});if(!response.ok)throw new Error(`Gemini failed (HTTP ${response.status})`);const body=await response.json();return {code:0,result:parseJSON(body.candidates?.[0]?.content?.parts?.map(part=>part.text||"").join("").trim()),provider:"gemini",model:config.geminiModel}}
 
-export async function runGeminiMultimodal({prompt,base64,mimeType,schema,config,fetcher=fetch}){
-  if(!config.geminiApiKey)throw new Error("Gemini fallback is not configured");
-  const url=`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(config.geminiModel)}:generateContent`,response=await fetcher(url,{method:"POST",headers:{"Content-Type":"application/json","x-goog-api-key":config.geminiApiKey},body:JSON.stringify({contents:[{role:"user",parts:[{text:prompt},{inlineData:{mimeType,data:base64}}]}],generationConfig:{responseMimeType:"application/json",responseSchema:geminiSchema(schema)}})});
-  if(!response.ok){const detail=(await response.text()).slice(0,300);throw new Error(`Gemini failed (HTTP ${response.status})${detail?`: ${detail}`:""}`)}
-  const body=await response.json(),text=body.candidates?.[0]?.content?.parts?.map(part=>part.text||"").join("").trim();if(!text)throw new Error("Gemini returned no structured result");
-  try{return {code:0,result:JSON.parse(text.replace(/^```json\s*|\s*```$/g,"")),provider:"gemini"}}catch{throw new Error("Gemini returned invalid structured output")}
-}
+export function selectOpenAIModel(workload,config){if(["simple","task","schedule"].includes(workload))return {model:config.openaiFastModel,reasoningEffort:null};return {model:config.openaiReasoningModel,reasoningEffort:["math","handwritten-math","research"].includes(workload)?"medium":"low"}}
+export async function runOpenAI({prompt,schema,workload="note",config,maxOutputTokens,fetcher=fetch,model:explicitModel}){if(!config.openaiApiKey)throw new Error("OpenAI is not configured");const selected=selectOpenAIModel(workload,config),model=explicitModel||selected.model,reasoningEffort=explicitModel?null:selected.reasoningEffort,body={model,input:prompt,store:false,max_output_tokens:maxOutputTokens,text:{format:{type:"json_schema",name:"noema_result",strict:true,schema}}};if(reasoningEffort)body.reasoning={effort:reasoningEffort};const started=Date.now(),response=await fetcher("https://api.openai.com/v1/responses",{method:"POST",signal:timeoutSignal(config),headers:{"Content-Type":"application/json",Authorization:`Bearer ${config.openaiApiKey}`},body:JSON.stringify(body)});if(!response.ok)throw new Error(`OpenAI failed (HTTP ${response.status}): ${(await response.text()).slice(0,300)}`);const result=await response.json(),text=result.output_text||result.output?.flatMap(item=>item.content||[]).map(item=>item.text||"").join("").trim();return {code:0,result:parseJSON(text),provider:"openai",model,reasoningEffort,durationMs:Date.now()-started,usage:{inputTokens:result.usage?.input_tokens,outputTokens:result.usage?.output_tokens}}}
 
-export function selectOpenAIModel(workload,config){
-  if(["simple","task","schedule"].includes(workload))return {model:config.openaiFastModel,reasoningEffort:null};
-  return {model:config.openaiReasoningModel,reasoningEffort:["math","handwritten-math","research"].includes(workload)?"medium":"low"};
-}
+export async function runCompatible({provider,model,prompt,schema,config,maxOutputTokens,fetcher=fetch}){const preset=presets[provider];if(!preset)throw new Error(`Unknown AI provider: ${provider}`);const [keyName,baseName]=preset,apiKey=config[keyName];if(!apiKey)throw new Error(`${provider} is not configured`);const started=Date.now(),response=await fetcher(`${config[baseName].replace(/\/$/,"")}/chat/completions`,{method:"POST",signal:timeoutSignal(config),headers:{"Content-Type":"application/json",Authorization:`Bearer ${apiKey}`},body:JSON.stringify({model,messages:[{role:"user",content:prompt}],max_tokens:maxOutputTokens,response_format:{type:"json_object"}})});if(!response.ok)throw new Error(`${provider} failed (HTTP ${response.status}): ${(await response.text()).slice(0,300)}`);const body=await response.json();return {code:0,result:parseJSON(body.choices?.[0]?.message?.content?.trim()),provider,model,durationMs:Date.now()-started,usage:{inputTokens:body.usage?.prompt_tokens,outputTokens:body.usage?.completion_tokens}}}
 
-export async function runOpenAI({prompt,schema,workload="note",config,fetcher=fetch}){
-  if(!config.openaiApiKey)throw new Error("OpenAI fallback is not configured");
-  const {model,reasoningEffort}=selectOpenAIModel(workload,config),body={model,input:prompt,store:false,text:{format:{type:"json_schema",name:"noema_result",strict:true,schema}}};
-  if(reasoningEffort)body.reasoning={effort:reasoningEffort};
-  const response=await fetcher("https://api.openai.com/v1/responses",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${config.openaiApiKey}`},body:JSON.stringify(body)});
-  if(!response.ok){const detail=(await response.text()).slice(0,300);throw new Error(`OpenAI failed (HTTP ${response.status})${detail?`: ${detail}`:""}`)}
-  const result=await response.json(),text=result.output_text||result.output?.flatMap(item=>item.content||[]).map(item=>item.text||"").join("").trim();if(!text)throw new Error("OpenAI returned no structured result");
-  try{return {code:0,result:JSON.parse(text),provider:"openai",model,reasoningEffort}}catch{throw new Error("OpenAI returned invalid structured output")}
-}
+export function configuredChain(profile,config){const raw=config[{fast:"aiFastChain",balanced:"aiBalancedChain",quality:"aiQualityChain"}[profile]||"aiFastChain"];if(raw)return raw.split(",").map(value=>value.trim()).filter(Boolean).map(value=>{const split=value.indexOf(":");if(split<1||split===value.length-1)throw new Error(`Invalid AI chain candidate: ${value}`);return {provider:value.slice(0,split),model:value.slice(split+1)}});const chain=[];if(config.geminiApiKey)chain.push({provider:"gemini",model:config.geminiModel});if(config.openaiApiKey)chain.push({provider:"openai",model:config.openaiFastModel});if(config.codexEnabled)chain.push({provider:"codex",model:"configured"});return chain}
 
-async function runFallback(args,originalError){
-  if(args.config.geminiApiKey)try{args.onEvent?.({type:"provider.fallback",provider:"gemini"});return await runGemini(args)}catch(error){if(!args.config.openaiApiKey||!isCapacityError(error))throw error}
-  if(args.config.openaiApiKey){args.onEvent?.({type:"provider.fallback",provider:"openai"});return runOpenAI(args)}
-  throw originalError;
-}
-
-export async function runAI(args){
-  if(!args.config.codexEnabled)return runFallback(args,new Error("No AI provider is configured"));
-  try{return {...await runCodex(args),provider:"codex"}}catch(error){if(!isCapacityError(error))throw error;return runFallback(args,error)}
-}
+export async function runAI(args){const profile=args.profile||"fast",chain=configuredChain(profile,args.config);if(!chain.length)throw new Error("No AI provider is configured");let lastError;for(let index=0;index<chain.length;index++){const candidate=chain[index],started=Date.now();try{args.onEvent?.({type:index?"provider.fallback":"provider.start",...candidate});let output;if(candidate.provider==="gemini")output=await runGemini({...args,model:candidate.model});else if(candidate.provider==="openai")output=await runOpenAI({...args,model:candidate.model});else if(candidate.provider==="codex")output={...await runCodex(args),provider:"codex",model:candidate.model};else output=await runCompatible({...args,...candidate});if(args.validate)try{output.result=args.validate(output.result)}catch(error){error.aiValidation=true;throw error}args.onEvent?.({type:"provider.completed",...candidate,durationMs:output.durationMs||Date.now()-started,usage:output.usage});return {...output,profile,fallbackReason:index?String(lastError?.message||lastError).slice(0,300):null}}catch(error){lastError=error;args.onEvent?.({type:"provider.failed",...candidate,durationMs:Date.now()-started,reason:String(error?.message||error).slice(0,300)});const unavailable=/not configured/.test(String(error?.message||error));if(error?.terminalValidation||(!unavailable&&!error?.aiValidation&&!isTransientAIError(error)&&!String(error?.message||error).match(/invalid structured|no structured/)))throw error}}throw lastError}

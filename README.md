@@ -11,7 +11,7 @@ Existing installations may migrate environment variables from `LIFEOS_*` to `NOE
 - Current Android Chrome and iOS Safari, down to a 375px viewport
 - Caddy or Tailscale Serve for deployment
 
-Codex is the primary AI provider. Gemini supplies capacity fallback and OCR/transcription; OpenAI is an additional capacity fallback. Google Calendar provides encrypted, incremental two-way synchronization with explicit conflict review.
+Capture uses direct model APIs for low latency; Codex remains available for agentic work. Google Calendar provides encrypted, incremental two-way synchronization with explicit conflict review.
 
 ## Feature status
 
@@ -37,7 +37,7 @@ Set a strong `NOEMA_OWNER_PASSWORD` in `.env.local`. Backend features are disabl
 
 Optional two-factor login: set `NOEMA_TOTP_SECRET` to the same 160-bit-or-longer base32 secret configured in your authenticator app. Enabling it also requires MFA-authenticated sessions for compiler runs, AI approvals, and session revocation.
 
-Optional fallbacks: set `GEMINI_API_KEY` from Google AI Studio and/or `OPENAI_API_KEY`. The order is Codex → Gemini → OpenAI on explicit capacity/quota exhaustion. OpenAI routes simple tasks and schedules to `chat-latest`, notes and code to `gpt-5.6` with low reasoning, and math/research to `gpt-5.6` with medium reasoning. Override these with `NOEMA_GEMINI_MODEL`, `NOEMA_OPENAI_FAST_MODEL`, and `NOEMA_OPENAI_REASONING_MODEL`.
+Set `GEMINI_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `GLM_API_KEY`, `KIMI_API_KEY`, or `QWEN_API_KEY` server-side. Configure comma-separated `provider:model` candidates with `NOEMA_AI_FAST_CHAIN`, `NOEMA_AI_BALANCED_CHAIN`, and `NOEMA_AI_QUALITY_CHAIN`. Without chains, Capture tries Gemini → OpenAI fast → Codex, skipping unavailable providers. Fast is the default user profile. Attempts are timeout-bounded and recorded in content-free `ai_runs` metrics; prompts, capture text, extracted content, object IDs, and credentials are never stored there.
 
 ## Verification
 

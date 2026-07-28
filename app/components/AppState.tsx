@@ -55,7 +55,7 @@ export function AppStateProvider({children}:{children:ReactNode}) {
 
   useEffect(()=>{
     try {for(const key of staleStorageKeys)localStorage.removeItem(key);const saved=localStorage.getItem(storageKey);if(saved)setData({...seed,...JSON.parse(saved)})} catch {}
-    api("/state").then(remote=>setData(current=>({...current,...remote,projects:remote.projects||[],taskDependencies:remote.taskDependencies||[],noteLinks:remote.noteLinks||[]}))).catch(()=>{});
+    api("/state").then(remote=>setData(current=>({...current,...remote,projects:remote.projects||[],taskDependencies:remote.taskDependencies||[],noteLinks:remote.noteLinks||[]}))).catch(error=>{if(error.status===401&&!['/login','/join'].includes(location.pathname))location.assign("/login")});
     setLoaded(true);
   },[]);
   useEffect(()=>{if(loaded)localStorage.setItem(storageKey,JSON.stringify(data))},[data,loaded]);

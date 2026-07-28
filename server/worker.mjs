@@ -12,6 +12,6 @@ export async function runOne(config=ensureDataDirs(loadConfig()),db=getDatabase(
   await processClaimedJob({job,config,db});return true;
 }
 
-export async function startWorker(){const config=ensureDataDirs(loadConfig());for(;;){if(!await runOne(config))await new Promise(resolvePromise=>setTimeout(resolvePromise,1000))}}
+export async function startWorker(){const config=ensureDataDirs(loadConfig());for(;;){if(!await runOne(config))await new Promise(resolvePromise=>setTimeout(resolvePromise,config.workerPollMs))}}
 
 if(import.meta.url===`file://${process.argv[1]}`)startWorker().catch(error=>{console.error(error);process.exitCode=1});
