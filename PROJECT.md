@@ -18,6 +18,7 @@
 - `BACKEND_ROADMAP.md` and `FRONTEND_ROADMAP.md` own mutable implementation status and next work; keep transient progress out of this memory file.
 - `POST_MVP_ROADMAP.md` defines the release-grade acceptance contract for the seven deferred product areas and their final operational gates.
 - Pre-v1 work deepens capture, notes, tutor, calendar/task relationships, mobile coding, canvas, and PDF annotation. Plugin marketplace, collaboration, generic dashboards, semantic embeddings, and the generic automation builder are frozen in `POST_V1.md`; existing implementations receive security and integrity fixes only.
+- Worker jobs dispatch through focused handlers. Skill AI context uses workspace-scoped FTS/filtered retrieval capped at 12 attributed excerpts; arbitrary vault batches are prohibited. Draft optimization persists validated `replace_range` operations and materializes a review copy deterministically. Immutable SQL migrations begin at `server/db/migrations/034_canonical_tasks.sql`; canonical task scheduling fields coexist with legacy display fields during migration.
 - Dark is the default; light mode uses the same semantic roles. Teal is limited to primary actions, selection, and active processing; amber/red remain semantic.
 - Graphify is maintained in `graphify-out/`; current extraction is code-only because semantic document extraction needs an external LLM backend.
 
@@ -26,7 +27,7 @@
 - Install: `npm install`
 - Run: `npm run dev` → `http://localhost:3000`
 - Production check: `npm run build`
-- Browser release gates: `npx playwright install firefox chromium`, then `npm run test:browser`. The suite uses isolated SQLite state and covers Firefox desktop/mobile flows, WCAG 2.2 AA automation, keyboard focus containment, 200% text scaling, four viewport baselines, authentication, capture review/apply/undo, and mobile Chromium installability. The capture journey runs the real API, worker, queue, and database with only the external model replaced by `test/fixtures/fake-codex.mjs`.
+- `npm test` runs unit and Playwright browser release gates. The suite uses isolated SQLite state and covers Firefox desktop/mobile flows, WCAG 2.2 AA automation, keyboard focus containment, 200% text scaling, four viewport baselines, authentication, capture review/apply/undo, and mobile Chromium installability. The capture journey runs the real API, worker, queue, and database with only the external model replaced by `test/fixtures/fake-codex.mjs`.
 - MVP acceptance is complete: both roadmaps have no open MVP-scoped items; the remaining unchecked frontend items are explicitly deferred beyond MVP.
 - Layout scan: `node /home/timsurreal/.agents/skills/impeccable/scripts/detect.mjs --json --scope layout app app/globals.css`
 - Graph refresh: `graphify . --update --code-only --no-viz`

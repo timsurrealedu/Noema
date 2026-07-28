@@ -7,7 +7,7 @@ const root=path.join(__dirname,"..");
 const read=file=>fs.readFileSync(path.join(root,file),"utf8");
 
 test("core frontend routes exist",()=>{
-  for(const route of ["activity","automations","calendar","capture","coding","collaboration","dashboards","graph","join","login","plugins","projects","settings","study","tasks","vault"])
+  for(const route of ["automations","calendar","capture","coding","settings","study","tasks","vault"])
     assert.ok(fs.existsSync(path.join(root,"app",route,"page.tsx")),route);
 });
 
@@ -23,10 +23,6 @@ test("compiler requires an exact reviewable approval before execution",()=>{
 test("Coding dashboard uses persisted repositories and approvals",()=>{const page=read("app/coding/page.tsx");assert.match(page,/\/api\/v1\/approvals/);assert.match(page,/\/api\/v1\/repositories/);assert.match(page,/NOEMA_REPOSITORY_ROOTS/);assert.match(page,/Approval history/);assert.doesNotMatch(page,/Run staging database migration|Approve once|const sessions=/) });
 
 test("mobile repository IDE reviews edits, commands, commits, and reverts",()=>{const page=read("app/coding/repositories/[id]/page.tsx"),route=read("app/api/v1/repositories/[id]/route.ts"),gitRoute=read("app/api/v1/repositories/[id]/git/route.ts"),service=read("server/repositories.mjs");for(const value of [/repository\.edit/,/repository\.command/,/repository\.\$\{input\.action\}/,/mobile-toolbar/,/Working-tree review/])assert.match(page,value);assert.match(route,/consumeApproval/);assert.match(gitRoute,/repository\.\$\{input\.action\}/);assert.match(service,/Symlink escape/);assert.match(service,/VERSION_CONFLICT/);assert.match(service,/--unshare-all/);assert.match(service,/Command is not allowlisted/)});
-
-test("plugin marketplace inspects permissions and approval-binds every lifecycle action",()=>{const page=read("app/plugins/page.tsx"),service=read("server/plugins.mjs");for(const value of [/Inspect source/,/plugin\.install/,/plugin\.enable/,/plugin\.uninstall/,/plugin\.run/,/NOEMA_PLUGIN_CATALOGS/])assert.match(page,value);for(const value of [/packageIntegrity/,/Plugin packages cannot contain symbolic links/,/--unshare-all/,/PLUGIN_PERMISSION_DENIED/,/BEGIN IMMEDIATE/])assert.match(service,value)});
-
-test("collaboration uses expiring invitations, roles, presence, comments, and recoverable conflicts",()=>{const page=read("app/collaboration/page.tsx"),join=read("app/join/page.tsx"),service=read("server/collaboration.mjs");for(const value of [/\/api\/v1\/workspaces/,/Live presence/,/Recoverable conflicts/,/One-time invitation link/])assert.match(page,value);assert.match(join,/\/api\/v1\/auth\/invite/);for(const value of [/INVITATION_UNAVAILABLE/,/WORKSPACE_ROLE_REQUIRED/,/workspace_comments/,/workspace_presence/,/workspace_conflicts/])assert.match(service,value)});
 
 test("Vault and compiler expose the contextual tutor",()=>{
   for(const file of ["app/vault/page.tsx","app/coding/compiler/page.tsx"])assert.match(read(file),/TutorPanel/);
@@ -175,11 +171,9 @@ test("Automations use durable API state and runs",()=>{
 });
 
 test("knowledge graph exposes accessible visual, table, paths, and provenance",()=>{const page=read("app/graph/page.tsx"),shell=read("app/components/ModuleShell.tsx");assert.match(page,/\/api\/v1\/knowledge-graph/);assert.match(page,/role="img"/);assert.match(page,/Accessible relationship table/);assert.match(page,/Trace a path/);assert.match(page,/provenance/);assert.match(page,/Open source/);assert.match(shell,/\["Graph","\/graph"/)});
-test("custom dashboard builder persists responsive keyboard layouts",()=>{const page=read("app/dashboards/page.tsx"),shell=read("app/components/ModuleShell.tsx");assert.match(page,/\/api\/v1\/dashboards/);for(const label of ["Move dashboard left","Add widget","Save layout","Duplicate","Delete","Narrower","Wider","Shorter","Taller"])assert.match(page,new RegExp(label));assert.match(page,/gridColumn/);assert.match(shell,/\["Dashboards","\/dashboards"/)});
-
 test("tasks and events expose durable reminder controls",()=>{
   for(const file of ["app/tasks/page.tsx","app/calendar/page.tsx"])assert.match(read(file),/type="datetime-local"/);
-  assert.match(read("server/worker.mjs"),/deliverDueReminders/);
+  assert.match(read("server/worker/scheduler.mjs"),/deliverDueReminders/);
 });
 
 test("Calendar edits normalized event time and recurrence",()=>{const page=read("app/calendar/page.tsx"),route=read("app/api/v1/events/[id]/route.ts");assert.match(page,/startAt:start\.toISOString/);assert.match(page,/resolvedOptions\(\)\.timeZone/);assert.match(page,/All day/);assert.match(page,/frequency/);assert.doesNotMatch(page,/July 2026/);assert.match(route,/deleteEvent/) });

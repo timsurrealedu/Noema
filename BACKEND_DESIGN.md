@@ -132,7 +132,7 @@ Mutations accept an idempotency key and expected object version. Errors use one 
 
 ## Authentication and security
 
-- Single-owner account for MVP; Argon2id password hash and optional passkey later.
+- Single-owner account for MVP; Node.js `scrypt` password hash and optional passkey later.
 - `HttpOnly`, `Secure`, `SameSite=Lax` opaque session cookie; store only a session-token hash.
 - Rotate sessions after login and sensitive account changes; allow per-device revocation.
 - Require re-authentication for destructive, credential, production, or financial actions.

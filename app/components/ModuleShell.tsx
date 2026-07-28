@@ -5,7 +5,7 @@ import {useRouter} from "next/navigation";
 import {ReactNode, useEffect, useState} from "react";
 import {
   Bell, BookOpen, CalendarBlank, CheckSquare, Code, Command, FileText, Folder, Gear,
-  House, Lightning, ListChecks, MagnifyingGlass, Moon, Plus, ShareNetwork, Sparkle, SquaresFour, Sun, Tray, X
+  House, Lightning, ListChecks, MagnifyingGlass, Moon, Plus, ShareNetwork, Sparkle, Sun, Tray, X
 } from "@phosphor-icons/react";
 import {ModalDialog} from "./ModalDialog";
 
@@ -16,7 +16,7 @@ type Recommendation={id:string;proposal:{title:string;priority:string};sources:{
 const nav = [
   ["Today","/",House],["Capture","/capture",Plus],["Calendar","/calendar",CalendarBlank],
   ["Tasks","/tasks",CheckSquare],["Vault","/vault",Folder],["Graph","/graph",ShareNetwork],["Projects","/projects",Tray],
-  ["Study","/study",BookOpen],["Coding","/coding",Code],["Automations","/automations",Lightning],["Dashboards","/dashboards",SquaresFour],["Plugins","/plugins",Sparkle],["Collaboration","/collaboration",ShareNetwork]
+  ["Study","/study",BookOpen],["Coding","/coding",Code],["Automations","/automations",Lightning]
 ] as const;
 
 export function ModuleShell({active,title,action,assistantContext,children}:{active:string;title:string;action?:ReactNode;assistantContext?:{type:string;id:string};children:ReactNode}) {

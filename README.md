@@ -13,6 +13,18 @@ Existing installations may migrate environment variables from `LIFEOS_*` to `NOE
 
 Codex is the primary AI provider. Gemini supplies capacity fallback and OCR/transcription; OpenAI is an additional capacity fallback. Google Calendar provides encrypted, incremental two-way synchronization with explicit conflict review.
 
+## Feature status
+
+| Feature | Status |
+|---|---|
+| Notes, tasks, calendar | Beta |
+| Capture interpretation | Experimental |
+| Google Calendar sync | Experimental |
+| C/Python/JavaScript runner | Experimental; Linux only |
+| Canvas, Tutor | Prototype |
+| Plugins, collaboration, dashboards | Post-v1; frozen |
+| Trading integration | Planned |
+
 ## Local development
 
 ```bash

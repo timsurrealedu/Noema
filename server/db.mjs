@@ -1,5 +1,6 @@
 import {DatabaseSync} from "node:sqlite";
 import {ensureDataDirs,loadConfig} from "./config.mjs";
+import {migrate} from "./db/migrate.mjs";
 
 let singleton;
 
@@ -160,6 +161,7 @@ export function openDatabase(path){
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(31,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(32,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(33,?)").run(new Date().toISOString());
+  migrate(db);
   return db;
 }
 

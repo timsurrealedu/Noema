@@ -1,0 +1,11 @@
+ALTER TABLE tasks ADD COLUMN project_id TEXT REFERENCES projects(id) ON DELETE SET NULL;
+ALTER TABLE tasks ADD COLUMN course_id TEXT REFERENCES courses(id) ON DELETE SET NULL;
+ALTER TABLE tasks ADD COLUMN status TEXT NOT NULL DEFAULT 'open';
+ALTER TABLE tasks ADD COLUMN due_at TEXT;
+ALTER TABLE tasks ADD COLUMN scheduled_start_at TEXT;
+ALTER TABLE tasks ADD COLUMN scheduled_end_at TEXT;
+ALTER TABLE tasks ADD COLUMN estimated_minutes INTEGER;
+ALTER TABLE tasks ADD COLUMN parent_task_id TEXT REFERENCES tasks(id) ON DELETE SET NULL;
+ALTER TABLE tasks ADD COLUMN completed_at TEXT;
+CREATE INDEX tasks_due_at ON tasks(due_at);
+CREATE INDEX tasks_project_id ON tasks(project_id);

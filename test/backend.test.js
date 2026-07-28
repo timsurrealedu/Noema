@@ -17,6 +17,21 @@ test("SQLite core objects persist and remain searchable",async()=>{
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
+test("immutable migrations add canonical task scheduling fields",async()=>{
+  const dir=temp(),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{const task=core.saveTask({title:"Review lecture",project:"Inbox",due:"Today",dueAt:"2026-07-29T12:00:00+07:00",scheduledStartAt:"2026-07-29T10:00:00+07:00",scheduledEndAt:"2026-07-29T11:00:00+07:00",estimatedMinutes:60},db);assert.equal(task.due_at,"2026-07-29T05:00:00.000Z");assert.equal(db.prepare("SELECT max(version) version FROM schema_migrations").get().version,35)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("skill context is bounded, relevant, and attributed",async()=>{
+  const dir=temp(),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),{selectSkillContext}=await import("../server/worker/context.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{core.saveNote({title:"TCP congestion control",content:"Congestion window and slow start"},db);core.saveNote({title:"Unrelated cooking",content:"Soup recipe"},db);const context=selectSkillContext("explain TCP congestion",db);assert.ok(context.length<=12);assert.equal(context[0].type,"note");assert.match(context[0].reason,/Matched:/);assert.doesNotMatch(JSON.stringify(context),/Soup recipe/)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("note optimization applies validated non-overlapping ranges",async()=>{
+  const dir=temp(),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{const note=core.saveNote({title:"Draft",content:"alpha beta",draft:true},db),proposal=core.requestNoteOptimization(note.id,"light",db),changes=[{operation:"replace_range",start:6,end:10,replacement:"gamma",reason:"Clearer"}];core.finishNoteOptimization(proposal.id,{summary:"Clarified",baseVersion:note.version,changes},"test",db);const ready=core.noteOptimizations(note.id,db)[0];assert.equal(ready.after_content,"alpha gamma");assert.deepEqual(JSON.parse(ready.changes_json),changes);const second=core.requestNoteOptimization(note.id,"light",db);assert.throws(()=>core.finishNoteOptimization(second.id,{summary:"Bad",changes:[{operation:"replace_range",start:0,end:7,replacement:"x",reason:"x"},{operation:"replace_range",start:5,end:9,replacement:"y",reason:"y"}]},"test",db),/overlapping/)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
 test("legacy events migrate to absolute time and deletion is soft",async()=>{
   const dir=temp(),path=join(dir,"test.sqlite");const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");let db=openDatabase(path);
   try{db.prepare("INSERT INTO events(id,title,day,time,top,height,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)").run("legacy","Legacy",2,"09:30",0,51,"2026-07-20T12:00:00.000Z","2026-07-20T12:00:00.000Z");db.close();db=openDatabase(path);const migrated=core.listState(db).events[0];assert.equal(migrated.startAt,"2026-07-22T09:30:00.000Z");assert.equal(migrated.endAt,"2026-07-22T10:30:00.000Z");assert.equal(migrated.timezone,"UTC");assert.equal(core.deleteEvent("legacy",migrated.version,db).ok,true);assert.equal(core.listState(db).events.length,0);assert.equal(db.prepare("SELECT deleted_at FROM events WHERE id='legacy'").get().deleted_at!==null,true)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
