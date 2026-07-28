@@ -4,8 +4,10 @@ import {createContext, ReactNode, useContext, useEffect, useState} from "react";
 import {showUnavailable} from "./ServiceNotice";
 import {flushQueue, queueOfflineCapture, queueRequest} from "../lib/offlineQueue";
 
-export type Task = {id:string; title:string; project:string; due:string; priority:"High"|"Medium"|"Low"; completed:boolean; status?:"open"|"in_progress"|"blocked"|"completed"|"cancelled"; projectId?:string|null; courseId?:string|null; dueAt?:string|null; scheduledStartAt?:string|null; scheduledEndAt?:string|null; estimatedMinutes?:number|null; parentTaskId?:string|null; completedAt?:string|null; recurrence?:string; reminderAt?:string|null; subtasks?:string[]; archived?:boolean; version?:number};
+export type VaultTaskSource={sourceId:string;sourceName:string;relativePath:string;blockId:string;lineNumber:number;noteId:string};
+export type Task = {id:string; title:string; project:string; due:string; priority:"High"|"Medium"|"Low"; completed:boolean; status?:"open"|"in_progress"|"blocked"|"completed"|"cancelled"; projectId?:string|null; courseId?:string|null; dueAt?:string|null; scheduledStartAt?:string|null; scheduledEndAt?:string|null; estimatedMinutes?:number|null; parentTaskId?:string|null; completedAt?:string|null; recurrence?:string; reminderAt?:string|null; subtasks?:string[]; archived?:boolean; vaultSource?:VaultTaskSource|null; version?:number};
 export type Event = {id:string; title:string; day:number; time:string; top:number; height:number; location?:string; reminderAt?:string|null; active?:boolean; startAt?:string; endAt?:string; timezone?:string; allDay?:boolean; recurrence?:{frequency?:string;rules?:string[]}|null; googleCalendarId?:string; version?:number};
+export type CalendarItem={kind:"event";event:Event}|{kind:"task";task:Task};
 export type NoteBlockSummary={id:string;position:number;kind:"markdown"|"ink";version:number;width?:number;height?:number;transcript?:string;ocrStatus?:string};
 export type Note = {id:string; title:string; excerpt:string; content:string; tags:string[]; time:string; ai:boolean; draft?:boolean; source?:string; sourceId?:string|null; relativePath?:string|null; syncState?:string; blocks?:NoteBlockSummary[]; favorite?:boolean; trashed?:boolean; version?:number};
 export type CaptureSource = "typed"|"voice"|"file"|"link";
@@ -18,7 +20,7 @@ export type Project = {id:string; name:string; status:"Active"|"Planned"|"Archiv
 export type TaskDependency = {taskId:string; dependsOnTaskId:string; createdAt:string};
 export type NoteLink = {sourceNoteId:string; targetNoteId:string; linkText:string; createdAt:string};
 
-type AppData = {tasks:Task[]; events:Event[]; notes:Note[]; captures:Capture[]; projects:Project[]; taskDependencies:TaskDependency[]; noteLinks:NoteLink[]};
+type AppData = {tasks:Task[]; events:Event[]; calendarItems:CalendarItem[]; notes:Note[]; captures:Capture[]; projects:Project[]; taskDependencies:TaskDependency[]; noteLinks:NoteLink[]};
 type AppState = AppData & {
   addCapture:(text:string)=>string;
   addAndInterpretCapture:(text:string)=>string;
@@ -35,7 +37,7 @@ type AppState = AppData & {
   archiveTask:(id:string)=>void;
 };
 
-const seed:AppData={tasks:[],events:[],notes:[],captures:[],projects:[],taskDependencies:[],noteLinks:[]};
+const seed:AppData={tasks:[],events:[],calendarItems:[],notes:[],captures:[],projects:[],taskDependencies:[],noteLinks:[]};
 
 const storageKey="noema-state-v3",staleStorageKeys=["noema-state-v2","lifeos-state-v2"];
 const Context=createContext<AppState|null>(null);
@@ -83,7 +85,8 @@ export function AppStateProvider({children}:{children:ReactNode}) {
     }
     return {...current,tasks,events,notes};
   });
-  const value:AppState={...data,
+  const calendarItems:CalendarItem[]=[...data.events.map(event=>({kind:"event" as const,event})),...data.tasks.filter(task=>!task.archived&&(task.dueAt||task.scheduledStartAt)).map(task=>({kind:"task" as const,task}))];
+  const value:AppState={...data,calendarItems,
     addCapture:text=>{const capture={id:crypto.randomUUID(),text,createdAt:new Date().toISOString(),status:"review" as const,source:"typed" as const,sourceLabel:"Typed capture",objects:[],version:1};setData(current=>({...current,captures:[capture,...current.captures]}));persist("/captures","POST",capture);return capture.id},
     addAndInterpretCapture:text=>{const capture={id:crypto.randomUUID(),text,createdAt:new Date().toISOString(),status:"processing" as const,source:"typed" as const,sourceLabel:"Typed capture",objects:[],progress:10,version:1};setData(current=>({...current,captures:[capture,...current.captures]}));api("/captures","POST",capture).then(()=>interpret(capture)).catch(error=>{showUnavailable(`${error.message} The capture remains saved in this browser.`);patchCapture(capture.id,{status:"failed",error:error.message,progress:undefined})});return capture.id},
     addFileCapture:file=>{const size=file.size>1024*1024?`${(file.size/1048576).toFixed(1)} MB`:`${Math.max(1,Math.round(file.size/1024))} KB`;const kind=file.type.startsWith("image/")?"Image":file.type.startsWith("audio/")?"Audio":file.type==="application/pdf"?"Document":"File";

@@ -1,5 +1,8 @@
 import AxeBuilder from "@axe-core/playwright";
 import {createHmac} from "node:crypto";
+import {mkdirSync,mkdtempSync,readFileSync,rmSync,writeFileSync} from "node:fs";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
 import {expect,test,type Page} from "@playwright/test";
 
 const routes=["/","/capture","/tasks","/calendar","/vault","/graph","/projects","/study","/coding","/coding/compiler","/automations","/notifications","/activity","/settings","/help"];
@@ -59,6 +62,8 @@ test("knowledge graph renders relationships, provenance, and shortest paths",asy
   await page.getByLabel("From").selectOption(`task:${created.task.id}`);await page.getByLabel("To").selectOption(`project:${created.project.id}`);await page.getByRole("button",{name:"Trace path"}).click();
   await expect(page.getByRole("list",{name:"Shortest path"})).toContainText("belongs-to via tasks.project");await expect(page.getByText("private browser summary")).toHaveCount(0);
 });
+
+test("vault task renders once in Calendar and opens its source-aware Task inspector",async({page})=>{const vault=mkdtempSync(join(tmpdir(),"noema-vault-browser-")),todo=join(vault,"TODO","2026"),file=join(todo,"July.md");mkdirSync(todo,{recursive:true});writeFileSync(file,"# July\n\n- [ ] Browser vault task 29 Jul 10:00 #remind15\n");try{await login(page);await page.evaluate(async rootPath=>{const post=async(path:string,body:object)=>{const response=await fetch(path,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});if(!response.ok)throw new Error(await response.text());return response.json()};const source=await post("/api/v1/vault-sources",{rootPath,name:"Browser vault",taskFolders:["TODO/"]});await post(`/api/v1/vault-sources/${source.id}/sync`,{})},vault);await page.goto("/calendar");const item=page.getByRole("button",{name:/Browser vault task/});await expect(item).toHaveCount(1);await item.click();await expect(page).toHaveURL(/\/tasks\?open=/);await expect(page.getByText("Browser vault · TODO/2026/July.md")).toBeVisible();await expect(page.getByRole("link",{name:"Open source note"})).toBeVisible();await page.getByLabel("Task name").fill("Edited browser vault task");await page.getByRole("button",{name:"Save task"}).click();await expect.poll(()=>readFileSync(file,"utf8")).toMatch(/- \[ \] Edited browser vault task 29 Jul 10:00 #remind15 \^noema-/);const sync=await page.evaluate(()=>fetch("/api/v1/calendar-sync").then(response=>response.json()));expect(sync.writes).toEqual([])}finally{rmSync(vault,{recursive:true,force:true})}});
 
 test.skip("post-v1 dashboard creates, edits, derives data, duplicates, and reorders",async({page})=>{
   await login(page);await page.evaluate(async()=>{const response=await fetch("/api/v1/tasks",{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":crypto.randomUUID()},body:JSON.stringify({title:"Dashboard browser task",project:"Inbox",due:"Today",priority:"Medium"})});if(!response.ok)throw new Error(await response.text())});await page.goto("/dashboards");await page.getByRole("button",{name:"New dashboard"}).click();await page.getByLabel("Dashboard name").fill("Browser focus");await page.getByRole("button",{name:"Create",exact:true}).click();
