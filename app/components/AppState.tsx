@@ -34,39 +34,9 @@ type AppState = AppData & {
   archiveTask:(id:string)=>void;
 };
 
-const seed: AppData = {
-  tasks:[
-    {id:"proposal",title:"Review partnership proposal",project:"RevoU Partnership",due:"Today",priority:"High",completed:false},
-    {id:"normalization",title:"Finish database normalization exercises",project:"Computer Science",due:"Today",priority:"Medium",completed:false},
-    {id:"dian-questions",title:"Prepare questions for Dian",project:"RevoU Partnership",due:"Tomorrow",priority:"Medium",completed:false},
-    {id:"tcp-cards",title:"Review TCP congestion control flashcards",project:"Computer Networks",due:"Friday",priority:"Low",completed:false},
-  ],
-  events:[
-    {id:"study-block",day:0,top:76,height:58,title:"Study block",time:"09:00"},
-    {id:"project-review",day:2,top:170,height:76,title:"Project review",time:"11:00"},
-    {id:"networks",day:4,top:122,height:58,title:"Computer Networks lecture",time:"10:00",location:"Engineering Hall"},
-    {id:"dian",day:4,top:264,height:76,title:"Meeting with Dian",time:"13:00",location:"Google Meet · Prep ready",active:true},
-  ],
-  notes:[
-    {id:"tcp",title:"TCP Congestion Control",excerpt:"How TCP adapts its sending rate using slow start, congestion avoidance, and fast recovery.",content:"# TCP Congestion Control\n\nTCP adapts its sending rate using **slow start**, congestion avoidance, and fast recovery.\n\n## Source notes\n\n- Congestion window controls in-flight data\n- Packet loss signals congestion\n- AIMD stabilizes shared links",tags:["networking","tcp"],time:"12 min ago",ai:true,source:"Computer Networks lecture · July 24"},
-    {id:"revou",title:"RevoU Partnership Notes",excerpt:"Meeting context, partnership scope, open questions, and proposal review notes.",content:"# RevoU Partnership Notes\n\n## Open questions\n\n- Confirm review timeline\n- Define success measures\n- Prepare stakeholder proposal",tags:["revou","partnership"],time:"Yesterday",ai:false,source:"Meeting capture · July 23"},
-    {id:"database",title:"Database Normalization",excerpt:"Functional dependencies, normal forms, lossless decomposition, and worked examples.",content:"# Database Normalization\n\nNormalization reduces redundancy while preserving dependencies and lossless joins.",tags:["database","course"],time:"Yesterday",ai:false,source:"Imported PDF · database-week-4.pdf"},
-    {id:"os-plan",title:"OS Exam Study Plan",excerpt:"Four-week review sequence covering processes, memory, file systems, and concurrency.",content:"# OS Exam Study Plan\n\n1. Processes and scheduling\n2. Memory management\n3. File systems\n4. Concurrency",tags:["operating-systems","study"],time:"Jul 22",ai:true,source:"Generated from course syllabus"},
-  ],
-  captures:[
-    {id:"dentist",text:"Book dentist appointment next Tuesday morning",createdAt:"2026-07-24T09:41:00+07:00",status:"review",source:"voice",sourceLabel:"Voice · 18 sec",objects:[{type:"task",title:"Book dentist appointment",detail:"Due Tuesday · Personal"},{type:"event",title:"Dentist appointment",detail:"Tuesday · 9:00–9:30 AM"}]},
-    {id:"aurora",text:"Project Aurora PRD v1.2.docx",createdAt:"2026-07-24T09:32:00+07:00",status:"confirmed",source:"file",sourceLabel:"Document · 2.4 MB",objects:[{type:"note",title:"Project Aurora requirements",detail:"12 sections · Source preserved"}]},
-    {id:"linear-link",text:"https://linear.app/team/aurora/issue/1234",createdAt:"2026-07-24T09:21:00+07:00",status:"confirmed",source:"link",sourceLabel:"Web link · linear.app",objects:[{type:"task",title:"Review Aurora issue 1234",detail:"Project Aurora · No due date"}]},
-    {id:"roadmap",text:"@Alex can you review the Q2 roadmap?",createdAt:"2026-07-24T08:58:00+07:00",status:"processing",source:"typed",sourceLabel:"Typed capture",progress:62,objects:[]},
-    {id:"invoice",text:"Fwd: Invoice INV-001873",createdAt:"2026-07-24T08:15:00+07:00",status:"failed",source:"file",sourceLabel:"Email attachment · PDF",error:"The attachment could not be read. Try processing it again.",objects:[]},
-    {id:"newsletter",text:"Ideas for the next newsletter",createdAt:"2026-07-23T19:16:00+07:00",status:"confirmed",source:"voice",sourceLabel:"Voice · 42 sec",objects:[{type:"note",title:"Newsletter ideas",detail:"6 ideas · Source preserved"}]},
-  ],
-  projects:[],
-  taskDependencies:[],
-  noteLinks:[],
-};
+const seed:AppData={tasks:[],events:[],notes:[],captures:[],projects:[],taskDependencies:[],noteLinks:[]};
 
-const storageKey="noema-state-v2",legacyStorageKey="lifeos-state-v2";
+const storageKey="noema-state-v3",staleStorageKeys=["noema-state-v2","lifeos-state-v2"];
 const Context=createContext<AppState|null>(null);
 
 async function api(path:string,method="GET",value?:unknown,key?:string){
@@ -81,7 +51,7 @@ export function AppStateProvider({children}:{children:ReactNode}) {
   const [loaded,setLoaded]=useState(false);
 
   useEffect(()=>{
-    try {const saved=localStorage.getItem(storageKey)||localStorage.getItem(legacyStorageKey);if(saved){setData({...seed,...JSON.parse(saved)});localStorage.setItem(storageKey,saved);localStorage.removeItem(legacyStorageKey)}} catch {}
+    try {for(const key of staleStorageKeys)localStorage.removeItem(key);const saved=localStorage.getItem(storageKey);if(saved)setData({...seed,...JSON.parse(saved)})} catch {}
     api("/state").then(remote=>setData(current=>({...current,...remote,projects:remote.projects||[],taskDependencies:remote.taskDependencies||[],noteLinks:remote.noteLinks||[]}))).catch(()=>{});
     setLoaded(true);
   },[]);

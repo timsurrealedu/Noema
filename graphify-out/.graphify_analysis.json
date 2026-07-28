@@ -13,10 +13,7 @@
       "app_api_v1_auth_login_route_post",
       "app_api_v1_auth_logout_route",
       "app_api_v1_auth_logout_route_post",
-      "app_api_v1_auth_sessions_id_route",
-      "app_api_v1_auth_sessions_id_route_delete",
       "app_api_v1_auth_totp_route_delete",
-      "app_api_v1_auth_totp_route_get",
       "app_api_v1_captures_file_route",
       "app_api_v1_captures_file_route_post",
       "app_api_v1_captures_id_apply_route",
@@ -29,6 +26,8 @@
       "app_api_v1_events_id_route_delete",
       "app_api_v1_events_route",
       "app_api_v1_events_route_post",
+      "app_api_v1_jobs_id_approve_route",
+      "app_api_v1_jobs_id_approve_route_post",
       "app_api_v1_notes_id_backlinks_route",
       "app_api_v1_notes_id_backlinks_route_get",
       "app_api_v1_notes_id_export_route",
@@ -57,8 +56,6 @@
       "app_api_v1_projects_route",
       "app_api_v1_projects_route_get",
       "app_api_v1_projects_route_post",
-      "app_api_v1_skills_route",
-      "app_api_v1_skills_route_get",
       "app_api_v1_state_route",
       "app_api_v1_state_route_get",
       "app_api_v1_tasks_id_dependencies_route",
@@ -70,10 +67,67 @@
       "app_api_v1_tasks_route_post",
       "app_api_v1_workspaces_id_select_route",
       "app_api_v1_workspaces_id_select_route_post",
-      "server_auth_revokesessionbyid",
+      "server_core",
+      "server_core_absolute",
+      "server_core_actorinfo",
+      "server_core_applycaptureaction",
+      "server_core_applycaptureinterpretation",
+      "server_core_applyinverse",
+      "server_core_applynoteoptimization",
+      "server_core_audit",
+      "server_core_backlinksfornote",
+      "server_core_captureactioncleaners",
+      "server_core_captureactiondetail",
+      "server_core_captureobjects",
+      "server_core_cleancaptureaction",
+      "server_core_cleaneventarguments",
+      "server_core_cleannotearguments",
+      "server_core_cleantaskarguments",
+      "server_core_createcapture",
+      "server_core_createfilecapture",
+      "server_core_deleteevent",
+      "server_core_deleteobject",
+      "server_core_deleteproject",
+      "server_core_dependenciesfortask",
+      "server_core_dependentsfortask",
+      "server_core_duelabel",
+      "server_core_eventposition",
+      "server_core_eventrow",
+      "server_core_exportmarkdown",
+      "server_core_filekind",
+      "server_core_findowned",
+      "server_core_formatsize",
+      "server_core_importmarkdown",
+      "server_core_insertrow",
+      "server_core_linksfornote",
       "server_core_listauditevents",
+      "server_core_liststate",
+      "server_core_notelinks",
+      "server_core_noteoptimizations",
+      "server_core_noteversions",
+      "server_core_objecttables",
+      "server_core_parse",
+      "server_core_queuecalendarwrite",
+      "server_core_reindexnote",
+      "server_core_reindexnotelinks",
       "server_core_rejectnoteoptimization",
+      "server_core_removetaskdependency",
+      "server_core_requestnoteoptimization",
+      "server_core_required",
+      "server_core_requireversion",
+      "server_core_restorenoteversion",
+      "server_core_saveevent",
+      "server_core_saveinterpretation",
+      "server_core_savenote",
+      "server_core_saveproject",
+      "server_core_savetask",
+      "server_core_savetaskdependency",
+      "server_core_searchall",
       "server_core_searchnotes",
+      "server_core_stamp",
+      "server_core_timestamp",
+      "server_core_undoauditevent",
+      "server_core_updatecapture",
       "server_http",
       "server_http_body",
       "server_http_cookie",
@@ -81,9 +135,7 @@
       "server_http_handle",
       "server_http_idempotent",
       "server_http_json",
-      "server_http_requiremfa",
       "server_http_requiresameorigin",
-      "server_http_requireuser",
       "server_http_requireworkspace",
       "server_objects",
       "server_objects_allowedmimes",
@@ -92,8 +144,7 @@
       "server_objects_attachassets",
       "server_objects_getasset",
       "server_objects_now",
-      "server_objects_storeasset",
-      "server_skills_listskills"
+      "server_objects_storeasset"
     ],
     "1": [
       "app_api_v1_automations_id_events_route",
@@ -268,71 +319,6 @@
       "server_plugins_uninstallplugin"
     ],
     "3": [
-      "server_core",
-      "server_core_absolute",
-      "server_core_actorinfo",
-      "server_core_applycaptureaction",
-      "server_core_applycaptureinterpretation",
-      "server_core_applyinverse",
-      "server_core_applynoteoptimization",
-      "server_core_audit",
-      "server_core_backlinksfornote",
-      "server_core_captureactioncleaners",
-      "server_core_captureactiondetail",
-      "server_core_captureobjects",
-      "server_core_cleancaptureaction",
-      "server_core_cleaneventarguments",
-      "server_core_cleannotearguments",
-      "server_core_cleantaskarguments",
-      "server_core_createcapture",
-      "server_core_createfilecapture",
-      "server_core_deleteevent",
-      "server_core_deleteobject",
-      "server_core_deleteproject",
-      "server_core_dependenciesfortask",
-      "server_core_dependentsfortask",
-      "server_core_duelabel",
-      "server_core_eventposition",
-      "server_core_eventrow",
-      "server_core_exportmarkdown",
-      "server_core_failnoteoptimization",
-      "server_core_filekind",
-      "server_core_findowned",
-      "server_core_finishnoteoptimization",
-      "server_core_formatsize",
-      "server_core_importmarkdown",
-      "server_core_insertrow",
-      "server_core_linksfornote",
-      "server_core_liststate",
-      "server_core_notelinks",
-      "server_core_noteoptimizations",
-      "server_core_noteversions",
-      "server_core_objecttables",
-      "server_core_parse",
-      "server_core_queuecalendarwrite",
-      "server_core_reindexnote",
-      "server_core_reindexnotelinks",
-      "server_core_removetaskdependency",
-      "server_core_requestnoteoptimization",
-      "server_core_required",
-      "server_core_requireversion",
-      "server_core_restorenoteversion",
-      "server_core_saveevent",
-      "server_core_saveinterpretation",
-      "server_core_savenote",
-      "server_core_saveproject",
-      "server_core_savetask",
-      "server_core_savetaskdependency",
-      "server_core_stamp",
-      "server_core_timestamp",
-      "server_core_undoauditevent",
-      "server_core_updatecapture",
-      "server_worker_handlers_optimize_note",
-      "server_worker_handlers_optimize_note_handleoptimizenote",
-      "server_worker_handlers_optimize_note_instructions",
-      "server_worker_handlers_optimize_note_schema"
-    ],
-    "4": [
       "app_api_v1_analytics_route",
       "app_api_v1_analytics_route_delete",
       "app_api_v1_analytics_route_get",
@@ -354,7 +340,6 @@
       "server_analytics_schemas",
       "server_analytics_setanalyticsenabled",
       "server_analytics_validate",
-      "server_core_searchall",
       "server_db",
       "server_db_closedatabase",
       "server_db_ensurecolumn",
@@ -386,7 +371,7 @@
       "server_settings_savesettings",
       "server_settings_stamp"
     ],
-    "5": [
+    "4": [
       "axe_core_playwright",
       "next",
       "package",
@@ -436,7 +421,7 @@
       "typescript",
       "web_push"
     ],
-    "6": [
+    "5": [
       "app_api_v1_auth_invite_route",
       "app_api_v1_auth_invite_route_post",
       "app_api_v1_workspaces_id_accept_route",
@@ -485,12 +470,15 @@
       "server_collaboration_workspaceaccess",
       "server_collaboration_workspacedetail"
     ],
-    "7": [
+    "6": [
       "app_api_v1_auth_recovery_route",
       "app_api_v1_auth_recovery_route_post",
+      "app_api_v1_auth_sessions_id_route",
+      "app_api_v1_auth_sessions_id_route_delete",
       "app_api_v1_auth_sessions_route",
       "app_api_v1_auth_sessions_route_get",
       "app_api_v1_auth_totp_route",
+      "app_api_v1_auth_totp_route_get",
       "app_api_v1_auth_totp_route_post",
       "app_api_v1_settings_password_route",
       "app_api_v1_settings_password_route_post",
@@ -518,10 +506,51 @@
       "server_auth_now",
       "server_auth_regeneraterecoverycodes",
       "server_auth_revokesession",
+      "server_auth_revokesessionbyid",
       "server_auth_scrypt",
       "server_auth_totp",
       "server_auth_verifypassword",
-      "server_auth_verifytotp"
+      "server_auth_verifytotp",
+      "server_http_requiremfa",
+      "server_http_requireuser"
+    ],
+    "7": [
+      "server_core_failnoteoptimization",
+      "server_core_finishnoteoptimization",
+      "server_worker",
+      "server_worker_context",
+      "server_worker_context_excerpt",
+      "server_worker_context_retrieveskillcontext",
+      "server_worker_context_score",
+      "server_worker_context_terms",
+      "server_worker_dispatch",
+      "server_worker_dispatch_handlers",
+      "server_worker_dispatch_processclaimedjob",
+      "server_worker_dispatch_unsupportedjobkinderror",
+      "server_worker_dispatch_unsupportedjobkinderror_constructor",
+      "server_worker_handlers_interpret_capture",
+      "server_worker_handlers_interpret_capture_captureproposalschema",
+      "server_worker_handlers_interpret_capture_common",
+      "server_worker_handlers_interpret_capture_handleinterpretcapture",
+      "server_worker_handlers_interpret_capture_nullablestring",
+      "server_worker_handlers_interpret_capture_validateproposal",
+      "server_worker_handlers_interpret_capture_validtimezones",
+      "server_worker_handlers_optimize_note",
+      "server_worker_handlers_optimize_note_handleoptimizenote",
+      "server_worker_handlers_optimize_note_instructions",
+      "server_worker_handlers_optimize_note_schema",
+      "server_worker_handlers_run_skill",
+      "server_worker_handlers_run_skill_handlerunskill",
+      "server_worker_maintenance_automations",
+      "server_worker_maintenance_automations_scheduleautomations",
+      "server_worker_maintenance_index",
+      "server_worker_maintenance_index_runscheduledwork",
+      "server_worker_maintenance_push",
+      "server_worker_maintenance_push_deliverpush",
+      "server_worker_maintenance_reminders",
+      "server_worker_maintenance_reminders_deliverreminders",
+      "server_worker_runone",
+      "server_worker_startworker"
     ],
     "8": [
       "app_api_v1_repositories_id_commands_route",
@@ -557,66 +586,8 @@
       "server_repositories_target"
     ],
     "9": [
-      "server_worker",
-      "server_worker_context",
-      "server_worker_context_excerpt",
-      "server_worker_context_retrieveskillcontext",
-      "server_worker_context_score",
-      "server_worker_context_terms",
-      "server_worker_dispatch",
-      "server_worker_dispatch_handlers",
-      "server_worker_dispatch_processclaimedjob",
-      "server_worker_dispatch_unsupportedjobkinderror",
-      "server_worker_dispatch_unsupportedjobkinderror_constructor",
-      "server_worker_handlers_interpret_capture",
-      "server_worker_handlers_interpret_capture_captureproposalschema",
-      "server_worker_handlers_interpret_capture_common",
-      "server_worker_handlers_interpret_capture_handleinterpretcapture",
-      "server_worker_handlers_interpret_capture_nullablestring",
-      "server_worker_handlers_interpret_capture_validateproposal",
-      "server_worker_handlers_interpret_capture_validtimezones",
-      "server_worker_handlers_run_skill",
-      "server_worker_handlers_run_skill_handlerunskill",
-      "server_worker_maintenance_automations",
-      "server_worker_maintenance_automations_scheduleautomations",
-      "server_worker_maintenance_index",
-      "server_worker_maintenance_index_runscheduledwork",
-      "server_worker_maintenance_push",
-      "server_worker_maintenance_push_deliverpush",
-      "server_worker_maintenance_reminders",
-      "server_worker_maintenance_reminders_deliverreminders",
-      "server_worker_runone",
-      "server_worker_startworker"
-    ],
-    "10": [
-      "app_api_v1_captures_id_interpret_route",
-      "app_api_v1_captures_id_interpret_route_post",
-      "app_api_v1_jobs_id_approve_route",
-      "app_api_v1_jobs_id_approve_route_post",
-      "app_api_v1_jobs_id_cancel_route",
-      "app_api_v1_jobs_id_cancel_route_post",
-      "app_api_v1_jobs_id_events_route",
-      "app_api_v1_jobs_id_events_route_get",
-      "app_api_v1_jobs_id_events_route_terminal",
-      "app_api_v1_jobs_id_retry_route",
-      "app_api_v1_jobs_id_retry_route_post",
-      "app_api_v1_jobs_id_route",
-      "app_api_v1_jobs_id_route_get",
-      "app_api_v1_skills_name_run_route",
-      "app_api_v1_skills_name_run_route_post",
-      "server_jobs",
-      "server_jobs_addjobevent",
-      "server_jobs_assertnotcancelled",
-      "server_jobs_canceljob",
-      "server_jobs_claimjob",
-      "server_jobs_enqueuejob",
-      "server_jobs_failjob",
-      "server_jobs_finishjob",
-      "server_jobs_getjob",
-      "server_jobs_now",
-      "server_jobs_retryjob"
-    ],
-    "11": [
+      "app_api_v1_skills_route",
+      "app_api_v1_skills_route_get",
       "app_api_v1_tutor_messages_id_insert_route",
       "app_api_v1_tutor_messages_id_insert_route_post",
       "app_api_v1_tutor_route",
@@ -637,6 +608,7 @@
       "server_skills_definitions",
       "server_skills_getskill",
       "server_skills_inserttutormessage",
+      "server_skills_listskills",
       "server_skills_loadtutorsession",
       "server_skills_runtutor",
       "server_skills_skillschema",
@@ -644,7 +616,7 @@
       "server_skills_tutorschema",
       "server_skills_workloadforskill"
     ],
-    "12": [
+    "10": [
       "ref_dom",
       "ref_dom_iterable",
       "ref_esnext",
@@ -672,7 +644,7 @@
       "tsconfig_exclude",
       "tsconfig_include"
     ],
-    "13": [
+    "11": [
       "app_api_v1_integrations_google_calendars_route",
       "app_api_v1_integrations_google_calendars_route_get",
       "app_api_v1_integrations_google_calendars_route_put",
@@ -699,7 +671,33 @@
       "server_google_calendar_selectgooglecalendars",
       "server_google_calendar_tokenfor"
     ],
-    "14": [
+    "12": [
+      "app_api_v1_captures_id_interpret_route",
+      "app_api_v1_captures_id_interpret_route_post",
+      "app_api_v1_jobs_id_cancel_route",
+      "app_api_v1_jobs_id_cancel_route_post",
+      "app_api_v1_jobs_id_events_route",
+      "app_api_v1_jobs_id_events_route_get",
+      "app_api_v1_jobs_id_events_route_terminal",
+      "app_api_v1_jobs_id_retry_route",
+      "app_api_v1_jobs_id_retry_route_post",
+      "app_api_v1_jobs_id_route",
+      "app_api_v1_jobs_id_route_get",
+      "app_api_v1_skills_name_run_route",
+      "app_api_v1_skills_name_run_route_post",
+      "server_jobs",
+      "server_jobs_addjobevent",
+      "server_jobs_assertnotcancelled",
+      "server_jobs_canceljob",
+      "server_jobs_claimjob",
+      "server_jobs_enqueuejob",
+      "server_jobs_failjob",
+      "server_jobs_finishjob",
+      "server_jobs_getjob",
+      "server_jobs_now",
+      "server_jobs_retryjob"
+    ],
+    "13": [
       "app_api_v1_projects_id_blockers_route",
       "app_api_v1_projects_id_blockers_route_post",
       "app_api_v1_projects_id_milestones_route",
@@ -724,7 +722,7 @@
       "server_projects_types",
       "server_projects_unlinkproject"
     ],
-    "15": [
+    "14": [
       "app_components_pwaregister",
       "app_components_pwaregister_pwaregister",
       "app_lib_offlinequeue",
@@ -749,7 +747,7 @@
       "app_lib_offlinequeue_retryqueued",
       "app_lib_offlinequeue_store"
     ],
-    "16": [
+    "15": [
       "app_api_v1_dashboards_id_route",
       "app_api_v1_dashboards_id_route_delete",
       "app_api_v1_dashboards_id_route_get",
@@ -773,7 +771,7 @@
       "server_dashboards_widgetdata",
       "server_dashboards_widgettypes"
     ],
-    "17": [
+    "16": [
       "app_api_v1_calendar_sync_conflicts_id_route",
       "app_api_v1_calendar_sync_conflicts_id_route_post",
       "app_api_v1_calendar_sync_route",
@@ -796,7 +794,7 @@
       "server_calendar_sync_resolvecalendarconflict",
       "server_calendar_sync_snapshot"
     ],
-    "18": [
+    "17": [
       "app_automations_automationbuilder",
       "app_automations_automationbuilder_automationbuilder",
       "app_automations_automationbuilder_condition",
@@ -818,7 +816,7 @@
       "app_automations_page_stepdraft",
       "app_automations_page_when"
     ],
-    "19": [
+    "18": [
       "app_api_v1_approvals_id_approve_route",
       "app_api_v1_approvals_id_approve_route_post",
       "app_api_v1_approvals_route",
@@ -837,7 +835,7 @@
       "server_approvals_now",
       "server_approvals_view"
     ],
-    "20": [
+    "19": [
       "app_api_v1_assets_id_annotations_annotationid_route",
       "app_api_v1_assets_id_annotations_annotationid_route_delete",
       "app_api_v1_assets_id_annotations_annotationid_route_patch",
@@ -856,7 +854,7 @@
       "server_annotations_saveannotation",
       "server_annotations_target"
     ],
-    "21": [
+    "20": [
       "app_canvas_page",
       "app_canvas_page_canvaspage",
       "app_coding_page",
@@ -873,7 +871,7 @@
       "app_help_page_helppage",
       "app_help_page_shortcuts"
     ],
-    "22": [
+    "21": [
       "app_api_v1_knowledge_graph_path_route",
       "app_api_v1_knowledge_graph_path_route_get",
       "app_api_v1_knowledge_graph_route",
@@ -888,6 +886,22 @@
       "server_knowledge_graph_syncknowledgegraph",
       "server_knowledge_graph_tablespecs",
       "server_knowledge_graph_viewnode"
+    ],
+    "22": [
+      "app_components_appstate",
+      "app_components_appstate_api",
+      "app_components_appstate_appdata",
+      "app_components_appstate_appstate",
+      "app_components_appstate_appstateprovider",
+      "app_components_appstate_captureobject",
+      "app_components_appstate_context",
+      "app_components_appstate_notelink",
+      "app_components_appstate_project",
+      "app_components_appstate_proposalcards",
+      "app_components_appstate_seed",
+      "app_components_appstate_stalestoragekeys",
+      "app_components_appstate_task",
+      "app_components_appstate_taskdependency"
     ],
     "23": [
       "app_settings_page",
@@ -936,21 +950,6 @@
       "app_components_appstate_capturesource"
     ],
     "26": [
-      "app_components_appstate",
-      "app_components_appstate_api",
-      "app_components_appstate_appdata",
-      "app_components_appstate_appstate",
-      "app_components_appstate_appstateprovider",
-      "app_components_appstate_captureobject",
-      "app_components_appstate_context",
-      "app_components_appstate_notelink",
-      "app_components_appstate_project",
-      "app_components_appstate_proposalcards",
-      "app_components_appstate_seed",
-      "app_components_appstate_task",
-      "app_components_appstate_taskdependency"
-    ],
-    "27": [
       "ref_notifications_write",
       "ref_tasks_read",
       "test_fixtures_plugin_catalog_browser_plugin_manifest",
@@ -965,7 +964,7 @@
       "test_fixtures_plugin_catalog_browser_plugin_manifest_permissions",
       "test_fixtures_plugin_catalog_browser_plugin_manifest_version"
     ],
-    "28": [
+    "27": [
       "app_components_appstate_useappstate",
       "app_components_servicenotice",
       "app_components_servicenotice_servicenotice",
@@ -979,7 +978,7 @@
       "app_page_nav",
       "app_page_today"
     ],
-    "29": [
+    "28": [
       "app_calendar_page",
       "app_calendar_page_blankevent",
       "app_calendar_page_calendarpage",
@@ -991,7 +990,7 @@
       "app_calendar_page_weekdays",
       "app_components_appstate_event"
     ],
-    "30": [
+    "29": [
       "app_components_appstate_note",
       "app_components_tutorpanel",
       "app_components_tutorpanel_message",
@@ -1003,7 +1002,7 @@
       "app_vault_page_rendermarkdown",
       "app_vault_page_vaultpage"
     ],
-    "31": [
+    "30": [
       "app_study_page",
       "app_study_page_assignment",
       "app_study_page_card",
@@ -1015,7 +1014,7 @@
       "app_study_page_studypage",
       "app_study_page_workspace"
     ],
-    "32": [
+    "31": [
       "app_components_modaldialog",
       "app_components_modaldialog_modaldialog",
       "app_plugins_page",
@@ -1026,7 +1025,7 @@
       "app_plugins_page_permissioncopy",
       "app_plugins_page_pluginspage"
     ],
-    "33": [
+    "32": [
       "app_dashboards_page",
       "app_dashboards_page_dashboard",
       "app_dashboards_page_dashboardspage",
@@ -1037,7 +1036,7 @@
       "app_dashboards_page_types",
       "app_dashboards_page_widget"
     ],
-    "34": [
+    "33": [
       "app_collaboration_page",
       "app_collaboration_page_collaborationpage",
       "app_collaboration_page_conflict",
@@ -1047,7 +1046,7 @@
       "app_collaboration_page_presence",
       "app_collaboration_page_workspace"
     ],
-    "35": [
+    "34": [
       "app_graph_page",
       "app_graph_page_colors",
       "app_graph_page_edge",
@@ -1056,7 +1055,7 @@
       "app_graph_page_node",
       "app_graph_page_request"
     ],
-    "36": [
+    "35": [
       "test_backend_test",
       "test_backend_test_assert",
       "test_backend_test_join",
@@ -1065,7 +1064,7 @@
       "test_backend_test_test",
       "test_backend_test_tmpdir"
     ],
-    "37": [
+    "36": [
       "test_frontend_test",
       "test_frontend_test_assert",
       "test_frontend_test_fs",
@@ -1074,7 +1073,7 @@
       "test_frontend_test_root",
       "test_frontend_test_test"
     ],
-    "38": [
+    "37": [
       "app_coding_compiler_page",
       "app_coding_compiler_page_approval",
       "app_coding_compiler_page_compilerpage",
@@ -1082,7 +1081,7 @@
       "app_coding_compiler_page_result",
       "app_coding_compiler_page_starters"
     ],
-    "39": [
+    "38": [
       "app_coding_repositories_id_page",
       "app_coding_repositories_id_page_entry",
       "app_coding_repositories_id_page_git",
@@ -1090,169 +1089,169 @@
       "app_coding_repositories_id_page_repo",
       "app_coding_repositories_id_page_repositorypage"
     ],
-    "40": [
+    "39": [
       "app_activity_page",
       "app_activity_page_activitypage",
       "app_activity_page_auditevent",
       "app_activity_page_icons",
       "app_activity_page_time"
     ],
-    "41": [
+    "40": [
       "app_components_markdowncontent",
       "app_components_markdowncontent_basic",
       "app_components_markdowncontent_chart",
       "app_components_markdowncontent_markdowncontent",
       "app_components_markdowncontent_mermaid"
     ],
-    "42": [
+    "41": [
       "app_notifications_page",
       "app_notifications_page_delivery",
       "app_notifications_page_href",
       "app_notifications_page_notice",
       "app_notifications_page_notificationspage"
     ],
-    "43": [
+    "42": [
       "app_tasks_page",
       "app_tasks_page_blanktask",
       "app_tasks_page_datevalue",
       "app_tasks_page_remindervalue",
       "app_tasks_page_taskspage"
     ],
-    "44": [
+    "43": [
       "test_browser_01_release_spec",
       "test_browser_01_release_spec_login",
       "test_browser_01_release_spec_routes",
       "test_browser_01_release_spec_totp",
       "test_browser_01_release_spec_verifyrecentmfa"
     ],
-    "45": [
+    "44": [
       "test_browser_auth_spec",
       "test_browser_auth_spec_loginwithtotp",
       "test_browser_auth_spec_passwordstep",
       "test_browser_auth_spec_totp"
     ],
-    "46": [
+    "45": [
       "app_assets_id_annotate_page",
       "app_assets_id_annotate_page_annotatepdfpage",
       "app_assets_id_annotate_page_annotation"
     ],
-    "47": [
+    "46": [
       "playwright_config",
       "playwright_config_datadir",
       "playwright_config_port"
     ],
-    "48": [
+    "47": [
       "server_codex",
       "server_codex_codexargs",
       "server_codex_runcodex"
     ],
-    "49": [
+    "48": [
       "app_error",
       "app_error_errorpage"
     ],
-    "50": [
+    "49": [
       "app_join_page",
       "app_join_page_joinpage"
     ],
-    "51": [
+    "50": [
       "app_loading",
       "app_loading_loading"
     ],
-    "52": [
+    "51": [
       "app_login_page",
       "app_login_page_loginpage"
     ],
-    "53": [
+    "52": [
       "app_not_found",
       "app_not_found_notfound"
     ],
-    "54": [
+    "53": [
       "next_config",
       "next_config_config"
     ],
-    "55": [
+    "54": [
       "next_env_d",
       "next_env_d_rationale_5"
     ],
-    "56": [
+    "55": [
       "public_sw",
       "public_sw_shell"
     ],
-    "57": [
+    "56": [
       "server_mjs_d",
       "server_mjs_d_mjs"
     ],
-    "58": [
+    "57": [
       "server_worker_job_events",
       "server_worker_job_events_aieventhandler"
     ],
-    "59": [
+    "58": [
       "test_experimental_frontend_test",
       "test_experimental_frontend_test_read"
     ],
-    "60": [
+    "59": [
       "test_fixtures_plugin_catalog_browser_plugin_index",
       "test_fixtures_plugin_catalog_browser_plugin_index_payload"
     ],
-    "61": [
+    "60": [
       "test_browser_00_capture_spec"
     ],
-    "62": [
+    "61": [
       "test_browser_install_spec"
     ],
-    "63": [
+    "62": [
       "test_fixtures_fake_codex"
     ]
   },
   "cohesion": {
-    "0": 0.08485273492286115,
+    "0": 0.057983682983682984,
     "1": 0.05318352059925094,
     "2": 0.060939060939060936,
-    "3": 0.0967741935483871,
-    "4": 0.07315233785822021,
-    "5": 0.041666666666666664,
-    "6": 0.11378353376503238,
-    "7": 0.14761904761904762,
+    "3": 0.07450980392156863,
+    "4": 0.041666666666666664,
+    "5": 0.11378353376503238,
+    "6": 0.1254355400696864,
+    "7": 0.09047619047619047,
     "8": 0.16559139784946236,
-    "9": 0.1103448275862069,
-    "10": 0.16307692307692306,
-    "11": 0.14153846153846153,
-    "12": 0.07692307692307693,
-    "13": 0.19333333333333333,
-    "14": 0.19367588932806323,
-    "15": 0.23715415019762845,
-    "16": 0.18181818181818182,
-    "17": 0.21904761904761905,
-    "18": 0.14210526315789473,
-    "19": 0.25,
-    "20": 0.2426470588235294,
-    "21": 0.1619047619047619,
-    "22": 0.26373626373626374,
+    "9": 0.12561576354679804,
+    "10": 0.07692307692307693,
+    "11": 0.19333333333333333,
+    "12": 0.17753623188405798,
+    "13": 0.19367588932806323,
+    "14": 0.23715415019762845,
+    "15": 0.18181818181818182,
+    "16": 0.21904761904761905,
+    "17": 0.14210526315789473,
+    "18": 0.25,
+    "19": 0.2426470588235294,
+    "20": 0.1619047619047619,
+    "21": 0.26373626373626374,
+    "22": 0.16483516483516483,
     "23": 0.15384615384615385,
     "24": 0.3076923076923077,
     "25": 0.20512820512820512,
-    "26": 0.1794871794871795,
-    "27": 0.15384615384615385,
-    "28": 0.21212121212121213,
-    "29": 0.28888888888888886,
-    "30": 0.26666666666666666,
-    "31": 0.24444444444444444,
-    "32": 0.25,
-    "33": 0.3333333333333333,
-    "34": 0.25,
-    "35": 0.3333333333333333,
+    "26": 0.15384615384615385,
+    "27": 0.21212121212121213,
+    "28": 0.28888888888888886,
+    "29": 0.26666666666666666,
+    "30": 0.24444444444444444,
+    "31": 0.25,
+    "32": 0.3333333333333333,
+    "33": 0.25,
+    "34": 0.3333333333333333,
+    "35": 0.2857142857142857,
     "36": 0.2857142857142857,
-    "37": 0.2857142857142857,
+    "37": 0.3333333333333333,
     "38": 0.3333333333333333,
-    "39": 0.3333333333333333,
-    "40": 0.4,
+    "39": 0.4,
+    "40": 0.5,
     "41": 0.5,
-    "42": 0.5,
-    "43": 0.7,
-    "44": 0.5,
-    "45": 0.8333333333333334,
+    "42": 0.7,
+    "43": 0.5,
+    "44": 0.8333333333333334,
+    "45": 0.6666666666666666,
     "46": 0.6666666666666666,
-    "47": 0.6666666666666666,
+    "47": 1.0,
     "48": 1.0,
     "49": 1.0,
     "50": 1.0,
@@ -1267,8 +1266,7 @@
     "59": 1.0,
     "60": 1.0,
     "61": 1.0,
-    "62": 1.0,
-    "63": 1.0
+    "62": 1.0
   },
   "gods": [
     {
@@ -1335,33 +1333,11 @@
       "why": "connects across different repos/directories; bridges separate communities"
     },
     {
-      "source": "POST()",
-      "target": "ensureOwner()",
+      "source": "GET()",
+      "target": "handle()",
       "source_files": [
-        "app/api/v1/auth/login/route.ts",
-        "server/auth.mjs"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "calls",
-      "why": "connects across different repos/directories; bridges separate communities"
-    },
-    {
-      "source": "POST()",
-      "target": "login()",
-      "source_files": [
-        "app/api/v1/auth/login/route.ts",
-        "server/auth.mjs"
-      ],
-      "confidence": "EXTRACTED",
-      "relation": "calls",
-      "why": "connects across different repos/directories; bridges separate communities"
-    },
-    {
-      "source": "POST()",
-      "target": "loadConfig()",
-      "source_files": [
-        "app/api/v1/auth/login/route.ts",
-        "server/config.mjs"
+        "app/api/v1/skills/route.ts",
+        "server/http.mjs"
       ],
       "confidence": "EXTRACTED",
       "relation": "calls",
@@ -1369,10 +1345,32 @@
     },
     {
       "source": "GET()",
-      "target": "mfaStatus()",
+      "target": "json()",
       "source_files": [
-        "app/api/v1/auth/totp/route.ts",
-        "server/auth.mjs"
+        "app/api/v1/skills/route.ts",
+        "server/http.mjs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "GET()",
+      "target": "requireUser()",
+      "source_files": [
+        "app/api/v1/skills/route.ts",
+        "server/http.mjs"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "connects across different repos/directories; bridges separate communities"
+    },
+    {
+      "source": "DELETE()",
+      "target": "handle()",
+      "source_files": [
+        "app/api/v1/auth/sessions/[id]/route.ts",
+        "server/http.mjs"
       ],
       "confidence": "EXTRACTED",
       "relation": "calls",
@@ -1382,28 +1380,28 @@
   "questions": [
     {
       "type": "bridge_node",
-      "question": "Why does `loadConfig()` connect `loadConfig` to `handle`, `auth.mjs`, `repositories.mjs`, `skills.mjs`, `google-calendar.mjs`?",
+      "question": "Why does `loadConfig()` connect `loadConfig` to `core.mjs`, `auth.mjs`, `repositories.mjs`, `skills.mjs`, `google-calendar.mjs`?",
       "why": "High betweenness centrality (0.098) - this node is a cross-community bridge."
     },
     {
       "type": "bridge_node",
-      "question": "Why does `getJob()` connect `jobs.mjs` to `modules.mjs`?",
+      "question": "Why does `getJob()` connect `jobs.mjs` to `core.mjs`, `modules.mjs`?",
       "why": "High betweenness centrality (0.066) - this node is a cross-community bridge."
     },
     {
       "type": "bridge_node",
-      "question": "Why does `getDatabase()` connect `db.mjs` to `dashboards.mjs`, `handle`, `approvals.mjs`, `collaboration.mjs`?",
-      "why": "High betweenness centrality (0.063) - this node is a cross-community bridge."
+      "question": "Why does `getDatabase()` connect `db.mjs` to `core.mjs`, `collaboration.mjs`, `auth.mjs`, `dashboards.mjs`, `approvals.mjs`?",
+      "why": "High betweenness centrality (0.064) - this node is a cross-community bridge."
     },
     {
       "type": "isolated_nodes",
       "question": "What connects `config`, `target`, `dom` to the rest of the system?",
-      "why": "200 weakly-connected nodes found - possible documentation gaps or missing edges."
+      "why": "201 weakly-connected nodes found - possible documentation gaps or missing edges."
     },
     {
       "type": "low_cohesion",
-      "question": "Should `handle` be split into smaller, more focused modules?",
-      "why": "Cohesion score 0.08485273492286115 - nodes in this community are weakly interconnected."
+      "question": "Should `core.mjs` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.057983682983682984 - nodes in this community are weakly interconnected."
     },
     {
       "type": "low_cohesion",

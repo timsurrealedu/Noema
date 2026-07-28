@@ -85,9 +85,9 @@
     "semantic_hash": "6b28d5f42ff901e2d5cf78fce2eb4772"
   },
   "app/components/AppState.tsx": {
-    "mtime": 1785230013.986052,
-    "ast_hash": "8e2bfbde8fc0696b1efcf711bb39d66d",
-    "semantic_hash": "8e2bfbde8fc0696b1efcf711bb39d66d"
+    "mtime": 1785232530.1352355,
+    "ast_hash": "f3ab5148df1cdfb9e576f2328f1b66b2",
+    "semantic_hash": "f3ab5148df1cdfb9e576f2328f1b66b2"
   },
   "app/components/PWARegister.tsx": {
     "mtime": 1785227723.2819772,
