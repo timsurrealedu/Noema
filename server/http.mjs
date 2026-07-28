@@ -17,7 +17,7 @@ export function requireSameOrigin(request){
   if(origin&&new URL(origin).host!==request.headers.get("host"))throw Object.assign(new Error("Cross-origin request rejected"),{status:403});
   if(!origin&&request.headers.get("sec-fetch-site")==="cross-site")throw Object.assign(new Error("Cross-site request rejected"),{status:403});
 }
-export function requireUser(request){requireSameOrigin(request);const user=authenticate(cookie(request,sessionCookie)||cookie(request,legacySessionCookie));if(!user)throw Object.assign(new Error("Authentication required"),{status:401});return user}
+export function requireUser(request){requireSameOrigin(request);const user=authenticate(cookie(request,sessionCookie)||cookie(request,legacySessionCookie));if(!user){throw Object.assign(new Error("Authentication required"),{status:401})}return user}
 export function requireMfa(request){const user=requireUser(request),db=getDatabase(),record=db.prepare("SELECT totp_secret_enc,totp_env_disabled FROM users WHERE id=?").get(user.id),enabled=!!record?.totp_secret_enc||(!record?.totp_env_disabled&&!!loadConfig().totpSecret),fresh=user.mfa_verified_at&&Date.now()-Date.parse(user.mfa_verified_at)<=10*60_000;if(enabled&&!fresh)throw Object.assign(new Error("Sign in again with your authenticator code to continue"),{status:403,code:"MFA_REQUIRED"});return user}
 export function requireWorkspace(request,minimum="viewer"){const user=requireUser(request),requested=request.headers.get("x-noema-workspace")||request.headers.get("x-lifeos-workspace")||decodeURIComponent(cookie(request,workspaceCookie)||cookie(request,legacyWorkspaceCookie)||"");return {...user,workspace:workspaceAccess(user.id,requested,minimum)}}
 export function idempotent(request,actor,input,work,db=getDatabase()){
