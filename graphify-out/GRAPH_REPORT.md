@@ -200,7 +200,7 @@ Nodes (8): PATCH(), GET(), claimDelivery(), deliverOne(), listDeliveries(), now(
 
 ### Community 26 - "manifest.json"
 Cohesion: 0.15
-Nodes (12): notifications:write, tasks:read, apiVersion, description, entry, id, integrity, lifeos (+4 more)
+Nodes (12): notifications:write, tasks:read, apiVersion, description, entry, id, integrity, noema (+4 more)
 
 ### Community 27 - "page.tsx"
 Cohesion: 0.29

@@ -1,7 +1,7 @@
 
-# LifeOS Frontend Product Requirements Document
+# Noema Frontend Product Requirements Document
 
-**Product name:** LifeOS
+**Product name:** Noema
 **Document type:** Frontend Product Requirements Document
 **Version:** 0.1
 **Status:** Initial design specification
@@ -13,11 +13,11 @@
 
 # 1. Product Overview
 
-LifeOS is a personal operating system that combines knowledge management, scheduling, task management, study tools, mobile coding, and automation monitoring into one unified interface.
+Noema is a personal operating system that combines knowledge management, scheduling, task management, study tools, mobile coding, and automation monitoring into one unified interface.
 
 The application is designed around a universal AI-powered input system. Instead of requiring the user to decide which application or page to open, the user can type, speak, upload, photograph, paste, draw, or attach almost anything.
 
-LifeOS interprets the input and turns it into structured objects such as:
+Noema interprets the input and turns it into structured objects such as:
 
 * Notes
 * Tasks
@@ -32,18 +32,18 @@ LifeOS interprets the input and turns it into structured objects such as:
 
 The frontend must feel like one coherent system without exposing the complexity of the services operating behind it.
 
-LifeOS should not look like several applications embedded into one dashboard. It should feel like a single workspace in which information naturally moves between different contexts.
+Noema should not look like several applications embedded into one dashboard. It should feel like a single workspace in which information naturally moves between different contexts.
 
 ---
 
 # 2. Product Vision
 
-LifeOS should become the primary interface through which the user manages their digital life.
+Noema should become the primary interface through which the user manages their digital life.
 
 The user should be able to:
 
 1. Capture any information immediately.
-2. Trust LifeOS to organize it appropriately.
+2. Trust Noema to organize it appropriately.
 3. Review and correct what the AI interpreted.
 4. Find any information quickly.
 5. Move naturally between time, knowledge, projects, and actions.
@@ -52,7 +52,7 @@ The user should be able to:
 
 The central product promise is:
 
-> Capture anything. LifeOS turns it into the right knowledge, action, or schedule.
+> Capture anything. Noema turns it into the right knowledge, action, or schedule.
 
 ---
 
@@ -188,7 +188,7 @@ Advanced options should be available through:
 
 ## 5.7 AI should reduce effort, not remove control
 
-LifeOS should automate organization while allowing the user to understand and correct the result.
+Noema should automate organization while allowing the user to understand and correct the result.
 
 ---
 
@@ -443,7 +443,7 @@ When the user opens and closes an object, the previous scroll position, filter s
 
 # 9. Universal Capture Experience
 
-The universal capture experience is the most important part of LifeOS.
+The universal capture experience is the most important part of Noema.
 
 ## 9.1 Capture entry points
 
@@ -498,7 +498,7 @@ However, optional manual mode controls may include:
 
 ## 9.4 AI interpretation preview
 
-After submission, LifeOS should display an interpretation card.
+After submission, Noema should display an interpretation card.
 
 Example:
 
@@ -592,7 +592,7 @@ It must answer:
 * What is happening today?
 * What should I do next?
 * What requires my attention?
-* What has LifeOS recently processed?
+* What has Noema recently processed?
 
 ## 10.1 Desktop layout
 
@@ -650,7 +650,7 @@ Recommended order:
 
 ## 10.3 Daily summary
 
-LifeOS may display a compact AI-generated summary such as:
+Noema may display a compact AI-generated summary such as:
 
 > You have two meetings, three tasks due, and one lecture capture waiting for review.
 
@@ -1017,7 +1017,7 @@ The user can:
 5. Import handwritten notes.
 6. Add personal comments.
 
-LifeOS should then display a processing result with:
+Noema should then display a processing result with:
 
 * Detected course
 * Detected lecture topic
@@ -1496,7 +1496,7 @@ The notification center should support:
 
 ## 21.4 Avoiding notification overload
 
-LifeOS should group repetitive notifications.
+Noema should group repetitive notifications.
 
 Example:
 
@@ -1508,7 +1508,7 @@ Instead of ten individual messages:
 
 # 22. Activity and Audit History
 
-The Activity page should show major actions across LifeOS.
+The Activity page should show major actions across Noema.
 
 Examples:
 
@@ -1584,7 +1584,7 @@ When AI plans to perform actions, the frontend should display them as structured
 Example:
 
 ```text
-LifeOS plans to:
+Noema plans to:
 
 1. Create an event tomorrow at 1:00 PM.
 2. Add a preparation task due at 12:00 PM.
@@ -1629,7 +1629,7 @@ This feedback should be associated with the original action.
 
 ## 24.1 Visual direction
 
-LifeOS should feel:
+Noema should feel:
 
 * Calm
 * Focused
@@ -2172,7 +2172,7 @@ The first usable frontend should include:
 
 ## Flow: Natural-language scheduling
 
-1. User opens LifeOS.
+1. User opens Noema.
 
 2. Today page is displayed.
 
@@ -2184,7 +2184,7 @@ The first usable frontend should include:
 
 5. The capture enters a processing state.
 
-6. LifeOS shows:
+6. Noema shows:
 
    * Event: Meeting with Dian
    * Date: Tomorrow
@@ -2215,7 +2215,7 @@ The first usable frontend should include:
 
 ## Flow: Lecture slide capture
 
-1. User opens LifeOS on mobile.
+1. User opens Noema on mobile.
 
 2. User selects the Capture button.
 
@@ -2227,7 +2227,7 @@ The first usable frontend should include:
 
 5. Upload progress is shown.
 
-6. LifeOS begins processing.
+6. Noema begins processing.
 
 7. User can leave the screen.
 
@@ -2235,7 +2235,7 @@ The first usable frontend should include:
 
 9. User opens the result.
 
-10. LifeOS shows:
+10. Noema shows:
 
 * Original photographs
 * Extracted text
@@ -2394,7 +2394,7 @@ Quantitative indicators may include:
 
 # 41. Final Frontend Direction
 
-LifeOS should not be designed as a dashboard containing many miniature applications.
+Noema should not be designed as a dashboard containing many miniature applications.
 
 It should be designed around three primary actions:
 
@@ -2415,7 +2415,7 @@ Input
 
 The universal capture system, Today page, task/calendar relationship, and knowledge vault form the core experience.
 
-Study, coding, and automation functionality should reuse the same underlying design patterns so they feel like parts of LifeOS rather than separate products.
+Study, coding, and automation functionality should reuse the same underlying design patterns so they feel like parts of Noema rather than separate products.
 
 The first frontend milestone should therefore prioritize:
 

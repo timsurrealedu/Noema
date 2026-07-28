@@ -50,7 +50,7 @@ export default function CaptureInbox(){
   return <ModuleShell active="Capture" title="Capture inbox" action={<a className="primary top-primary" href="/#capture"><Plus/>Quick capture</a>}>
     <div className={`capture-inbox ${detailOpen?"detail-open":""}`}>
       <section className="capture-list-pane" aria-label="Capture inbox">
-        <div className="capture-intro"><div><h2>Review what LifeOS understood</h2><p>Every interpretation stays visible and reversible.</p></div></div>
+        <div className="capture-intro"><div><h2>Review what Noema understood</h2><p>Every interpretation stays visible and reversible.</p></div></div>
         <div className="capture-filters" role="tablist" aria-label="Capture status">
           {filters.map(item=>{const count=item==="All"?captures.filter(c=>c.status!=="dismissed").length:captures.filter(c=>matches(c,item)).length;return <button key={item} role="tab" aria-selected={filter===item} className={filter===item?"active":""} onClick={()=>{setFilter(item);setSelectedId(null)}}>{item}<span>{count}</span></button>})}
         </div>

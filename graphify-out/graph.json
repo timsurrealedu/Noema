@@ -6351,15 +6351,15 @@
       "id": "test_fixtures_plugin_catalog_browser_plugin_manifest_integrity"
     },
     {
-      "label": "lifeos",
+      "label": "noema",
       "file_type": "code",
       "source_file": "test/fixtures/plugin-catalog/browser-plugin/manifest.json",
       "source_location": "L1",
       "_origin": "ast",
       "community": 26,
-      "norm_label": "lifeos",
+      "norm_label": "noema",
       "community_name": "manifest.json",
-      "id": "test_fixtures_plugin_catalog_browser_plugin_manifest_lifeos"
+      "id": "test_fixtures_plugin_catalog_browser_plugin_manifest_noema"
     },
     {
       "label": "minimumVersion",
@@ -6370,7 +6370,7 @@
       "community": 26,
       "norm_label": "minimumversion",
       "community_name": "manifest.json",
-      "id": "test_fixtures_plugin_catalog_browser_plugin_manifest_lifeos_minimumversion"
+      "id": "test_fixtures_plugin_catalog_browser_plugin_manifest_noema_minimumversion"
     },
     {
       "label": "route.ts",
@@ -23331,7 +23331,7 @@
       "_origin": "ast",
       "confidence_score": 1.0,
       "source": "test_fixtures_plugin_catalog_browser_plugin_manifest",
-      "target": "test_fixtures_plugin_catalog_browser_plugin_manifest_lifeos"
+      "target": "test_fixtures_plugin_catalog_browser_plugin_manifest_noema"
     },
     {
       "relation": "contains",
@@ -23398,8 +23398,8 @@
       "weight": 1.0,
       "_origin": "ast",
       "confidence_score": 1.0,
-      "source": "test_fixtures_plugin_catalog_browser_plugin_manifest_lifeos",
-      "target": "test_fixtures_plugin_catalog_browser_plugin_manifest_lifeos_minimumversion"
+      "source": "test_fixtures_plugin_catalog_browser_plugin_manifest_noema",
+      "target": "test_fixtures_plugin_catalog_browser_plugin_manifest_noema_minimumversion"
     },
     {
       "relation": "contains",

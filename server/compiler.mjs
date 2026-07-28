@@ -64,7 +64,7 @@ function buildCommand(argv,{cwd,isolated,useCgroups,memoryLimitBytes,cpuQuotaPer
     if(caps.systemdRun){
       command=["systemd-run","--scope","--user","--collect","--quiet","-p",`MemoryMax=${memoryLimitBytes||268435456}`,"-p",`CPUQuota=${cpuQuotaPercent||50}%`,"--",...command];
     }else if(caps.cgexec){
-      command=["cgexec","-g",`memory,cpu:lifeos/compiler`,...command];
+      command=["cgexec","-g",`memory,cpu:noema/compiler`,...command];
     }else{
       throw new Error("Cgroups requested but neither systemd-run nor cgexec is available");
     }

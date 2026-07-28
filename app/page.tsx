@@ -20,7 +20,7 @@ const nav = [
 const activity = [
   ["Study plan for OS exam.pdf uploaded to Vault","08:31",FileText],
   ["Database normalization notes task completed","Yesterday",Check],
-  ["Pushed 3 commits to lifeos-sync","Yesterday",Code],
+  ["Pushed 3 commits to noema-sync","Yesterday",Code],
   ["Study group session scheduled for Jul 26","Yesterday",CalendarBlank],
 ] as const;
 
@@ -36,12 +36,12 @@ export default function Today() {
   const recorder = useRef<MediaRecorder|null>(null);
 
   useEffect(() => {
-    const saved=localStorage.getItem("lifeos-theme") as "dark"|"light"|null;
+    const saved=localStorage.getItem("noema-theme") as "dark"|"light"|null;
     if(saved)setTheme(saved);
   },[]);
   useEffect(() => {
     document.documentElement.dataset.theme=theme;
-    localStorage.setItem("lifeos-theme",theme);
+    localStorage.setItem("noema-theme",theme);
     const onKey=(e:KeyboardEvent)=>{
       if ((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k") {e.preventDefault();setPalette(true)}
       if ((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.key.toLowerCase()==="c") {e.preventDefault();input.current?.focus()}
@@ -65,7 +65,7 @@ export default function Today() {
   return <div className="app-shell">
     <a className="skip" href="#main">Skip to main content</a>
     <aside className="sidebar" aria-label="Primary navigation">
-      <Link className="brand" href="/"><span className="brand-mark"/>LifeOS</Link>
+      <Link className="brand" href="/"><span className="brand-mark"/>Noema</Link>
       <nav>{nav.map(([label,Icon])=><Link className={label==="Today"?"active":""} href={({Capture:"/capture",Calendar:"/calendar",Tasks:"/tasks",Vault:"/vault",Projects:"/projects",Study:"/study",Coding:"/coding",Automations:"/automations"} as Record<string,string>)[label]||"#"} key={label}><Icon/><span>{label}</span>{label==="Capture"&&<kbd>⇧C</kbd>}</Link>)}</nav>
       <Link className="settings" href="/settings"><Gear/><span>Settings</span></Link>
     </aside>
@@ -128,6 +128,6 @@ export default function Today() {
       {([["Today","/",House],["Capture","/capture",Plus],["Tasks","/tasks",ListChecks],["Vault","/vault",Folder],["More","/settings",Command]] as const).map(([label,href,Icon],i)=><Link className={`${i===0?"active":""} ${i===1?"capture-nav":""}`} href={href} key={label}><Icon/><span>{label}</span></Link>)}
     </nav>
 
-    {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus aria-label="Search commands" placeholder="Search LifeOS or run a command…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><p>Quick actions</p>{([["New capture","#capture",Plus,"⌘ ⇧ C"],["Add task","/tasks",CheckSquare,"⌘ ⇧ T"],["Open calendar","/calendar",CalendarBlank,"G C"],["Search vault","/vault",Folder,"G V"]] as const).map(([label,href,Icon,key])=><Link href={href} onClick={()=>setPalette(false)} key={label}><Icon/><span>{label}</span><kbd>{key}</kbd></Link>)}</ModalDialog>}
+    {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus aria-label="Search commands" placeholder="Search Noema or run a command…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><p>Quick actions</p>{([["New capture","#capture",Plus,"⌘ ⇧ C"],["Add task","/tasks",CheckSquare,"⌘ ⇧ T"],["Open calendar","/calendar",CalendarBlank,"G C"],["Search vault","/vault",Folder,"G V"]] as const).map(([label,href,Icon,key])=><Link href={href} onClick={()=>setPalette(false)} key={label}><Icon/><span>{label}</span><kbd>{key}</kbd></Link>)}</ModalDialog>}
   </div>;
 }

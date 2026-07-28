@@ -14,11 +14,11 @@ Personal-first for a self-hosting power user managing study, knowledge, schedule
 
 ## Product Purpose
 
-LifeOS turns unstructured input into connected knowledge, action, or schedule while preserving sources, reviewability, and user control.
+Noema turns unstructured input into connected knowledge, action, or schedule while preserving sources, reviewability, and user control.
 
 ## Positioning
 
-Capture anything; LifeOS places it in the right context without making the user choose a module first.
+Capture anything; Noema places it in the right context without making the user choose a module first.
 
 ## Brand Personality
 

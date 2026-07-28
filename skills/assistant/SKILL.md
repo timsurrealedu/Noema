@@ -1,6 +1,6 @@
 ---
 name: assistant
-description: Answer planning questions from LifeOS context without making changes.
+description: Answer planning questions from Noema context without making changes.
 ---
 
 # Assistant

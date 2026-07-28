@@ -1,13 +1,13 @@
 [Unit]
-Description=LifeOS worker
-After=lifeos.service
+Description=Noema worker
+After=noema.service
 
 [Service]
 Type=simple
-User=lifeos
-Group=lifeos
-WorkingDirectory=/opt/lifeos
-EnvironmentFile=/etc/lifeos.env
+User=noema
+Group=noema
+WorkingDirectory=/opt/noema
+EnvironmentFile=/etc/noema.env
 ExecStart=/usr/bin/npm run worker
 Restart=on-failure
 RestartSec=5
@@ -15,7 +15,7 @@ NoNewPrivileges=true
 PrivateTmp=true
 ProtectSystem=strict
 ProtectHome=true
-ReadWritePaths=/var/lib/lifeos
+ReadWritePaths=/var/lib/noema
 
 [Install]
 WantedBy=multi-user.target

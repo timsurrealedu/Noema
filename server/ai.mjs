@@ -32,7 +32,7 @@ export function selectOpenAIModel(workload,config){
 
 export async function runOpenAI({prompt,schema,workload="note",config,fetcher=fetch}){
   if(!config.openaiApiKey)throw new Error("OpenAI fallback is not configured");
-  const {model,reasoningEffort}=selectOpenAIModel(workload,config),body={model,input:prompt,store:false,text:{format:{type:"json_schema",name:"lifeos_result",strict:true,schema}}};
+  const {model,reasoningEffort}=selectOpenAIModel(workload,config),body={model,input:prompt,store:false,text:{format:{type:"json_schema",name:"noema_result",strict:true,schema}}};
   if(reasoningEffort)body.reasoning={effort:reasoningEffort};
   const response=await fetcher("https://api.openai.com/v1/responses",{method:"POST",headers:{"Content-Type":"application/json",Authorization:`Bearer ${config.openaiApiKey}`},body:JSON.stringify(body)});
   if(!response.ok){const detail=(await response.text()).slice(0,300);throw new Error(`OpenAI failed (HTTP ${response.status})${detail?`: ${detail}`:""}`)}

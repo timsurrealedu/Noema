@@ -941,8 +941,8 @@
       "test_fixtures_plugin_catalog_browser_plugin_manifest_entry",
       "test_fixtures_plugin_catalog_browser_plugin_manifest_id",
       "test_fixtures_plugin_catalog_browser_plugin_manifest_integrity",
-      "test_fixtures_plugin_catalog_browser_plugin_manifest_lifeos",
-      "test_fixtures_plugin_catalog_browser_plugin_manifest_lifeos_minimumversion",
+      "test_fixtures_plugin_catalog_browser_plugin_manifest_noema",
+      "test_fixtures_plugin_catalog_browser_plugin_manifest_noema_minimumversion",
       "test_fixtures_plugin_catalog_browser_plugin_manifest_name",
       "test_fixtures_plugin_catalog_browser_plugin_manifest_permissions",
       "test_fixtures_plugin_catalog_browser_plugin_manifest_version"

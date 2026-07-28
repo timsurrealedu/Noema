@@ -20,17 +20,17 @@ test("compiler requires an exact reviewable approval before execution",()=>{
   const page=read("app/coding/compiler/page.tsx"),route=read("app/api/v1/compiler/run/route.ts");assert.match(page,/\/api\/v1\/approvals/);assert.match(page,/Affected files/);assert.match(page,/Approval required/);assert.match(route,/consumeApproval/);
 });
 
-test("Coding dashboard uses persisted repositories and approvals",()=>{const page=read("app/coding/page.tsx");assert.match(page,/\/api\/v1\/approvals/);assert.match(page,/\/api\/v1\/repositories/);assert.match(page,/LIFEOS_REPOSITORY_ROOTS/);assert.match(page,/Approval history/);assert.doesNotMatch(page,/Run staging database migration|Approve once|const sessions=/) });
+test("Coding dashboard uses persisted repositories and approvals",()=>{const page=read("app/coding/page.tsx");assert.match(page,/\/api\/v1\/approvals/);assert.match(page,/\/api\/v1\/repositories/);assert.match(page,/NOEMA_REPOSITORY_ROOTS/);assert.match(page,/Approval history/);assert.doesNotMatch(page,/Run staging database migration|Approve once|const sessions=/) });
 
 test("mobile repository IDE reviews edits, commands, commits, and reverts",()=>{const page=read("app/coding/repositories/[id]/page.tsx"),route=read("app/api/v1/repositories/[id]/route.ts"),gitRoute=read("app/api/v1/repositories/[id]/git/route.ts"),service=read("server/repositories.mjs");for(const value of [/repository\.edit/,/repository\.command/,/repository\.\$\{input\.action\}/,/mobile-toolbar/,/Working-tree review/])assert.match(page,value);assert.match(route,/consumeApproval/);assert.match(gitRoute,/repository\.\$\{input\.action\}/);assert.match(service,/Symlink escape/);assert.match(service,/VERSION_CONFLICT/);assert.match(service,/--unshare-all/);assert.match(service,/Command is not allowlisted/)});
 
-test("plugin marketplace inspects permissions and approval-binds every lifecycle action",()=>{const page=read("app/plugins/page.tsx"),service=read("server/plugins.mjs");for(const value of [/Inspect source/,/plugin\.install/,/plugin\.enable/,/plugin\.uninstall/,/plugin\.run/,/LIFEOS_PLUGIN_CATALOGS/])assert.match(page,value);for(const value of [/packageIntegrity/,/Plugin packages cannot contain symbolic links/,/--unshare-all/,/PLUGIN_PERMISSION_DENIED/,/BEGIN IMMEDIATE/])assert.match(service,value)});
+test("plugin marketplace inspects permissions and approval-binds every lifecycle action",()=>{const page=read("app/plugins/page.tsx"),service=read("server/plugins.mjs");for(const value of [/Inspect source/,/plugin\.install/,/plugin\.enable/,/plugin\.uninstall/,/plugin\.run/,/NOEMA_PLUGIN_CATALOGS/])assert.match(page,value);for(const value of [/packageIntegrity/,/Plugin packages cannot contain symbolic links/,/--unshare-all/,/PLUGIN_PERMISSION_DENIED/,/BEGIN IMMEDIATE/])assert.match(service,value)});
 
 test("collaboration uses expiring invitations, roles, presence, comments, and recoverable conflicts",()=>{const page=read("app/collaboration/page.tsx"),join=read("app/join/page.tsx"),service=read("server/collaboration.mjs");for(const value of [/\/api\/v1\/workspaces/,/Live presence/,/Recoverable conflicts/,/One-time invitation link/])assert.match(page,value);assert.match(join,/\/api\/v1\/auth\/invite/);for(const value of [/INVITATION_UNAVAILABLE/,/WORKSPACE_ROLE_REQUIRED/,/workspace_comments/,/workspace_presence/,/workspace_conflicts/])assert.match(service,value)});
 
 test("Vault and compiler expose the contextual tutor",()=>{
   for(const file of ["app/vault/page.tsx","app/coding/compiler/page.tsx"])assert.match(read(file),/TutorPanel/);
-  const panel=read("app/components/TutorPanel.tsx");assert.match(panel,/lifeos-tutor-mobile-mode/);assert.match(panel,/Apply to editor/);assert.match(panel,/Add to note/);
+  const panel=read("app/components/TutorPanel.tsx");assert.match(panel,/noema-tutor-mobile-mode/);assert.match(panel,/Apply to editor/);assert.match(panel,/Add to note/);
 });
 
 test("shared shell exposes keyboard search and accessible navigation",()=>{
@@ -41,7 +41,7 @@ test("shared shell exposes keyboard search and accessible navigation",()=>{
   assert.match(shell,/\?open=\$\{item\.id\}/);
   assert.match(shell,/\/api\/v1\/notifications/);
   assert.match(shell,/\/read`,\{method:"POST"/);
-  assert.match(read("app/components/ModalDialog.tsx"),/aria-label="Search LifeOS"/);
+  assert.match(read("app/components/ModalDialog.tsx"),/aria-label="Search Noema"/);
   assert.match(shell,/Skip to main content/);
 });
 
@@ -114,13 +114,13 @@ test("notification center filters, groups, marks read, and navigates to related 
 
 test("offline mutations queue durably and replay idempotently",()=>{
   const queue=read("app/lib/offlineQueue.ts"),pwa=read("app/components/PWARegister.tsx"),worker=read("public/sw.js");
-  assert.match(queue,/databaseName="lifeos-offline-v1"/);
+  assert.match(queue,/databaseName="noema-offline-v1"/);
   assert.match(queue,/idempotencyKey/);
   assert.match(queue,/dependencies\.some/);
-  assert.match(queue,/locks\.request\("lifeos-offline-replay"/);
+  assert.match(queue,/locks\.request\("noema-offline-replay"/);
   assert.match(queue,/status:response\.status===409\?"conflict"/);
   assert.match(pwa,/addEventListener\("online"/);
-  assert.match(worker,/lifeos-mutations/);
+  assert.match(worker,/noema-mutations/);
 });
 
 test("offline file captures preserve blobs until asset and capture persistence complete",()=>{
@@ -158,7 +158,7 @@ test("Settings connects Google and selects discovered calendars",()=>{const page
 
 test("Calendar sync exposes diagnostics and conflict counts",()=>{const page=read("app/settings/page.tsx"),route=read("app/api/v1/calendar-sync/route.ts");assert.match(page,/Sync now/);assert.match(page,/conflicts\.length/);assert.match(page,/lastSyncedAt/);assert.match(route,/pullGoogleCalendar/);assert.match(route,/calendarSyncStatus/) });
 
-test("Calendar reviews sync conflicts and chooses a Google destination",()=>{const page=read("app/calendar/page.tsx"),route=read("app/api/v1/calendar-sync/conflicts/[id]/route.ts");for(const label of ["Keep LifeOS","Keep Google","Keep both","Google calendar"])assert.match(page,new RegExp(label));assert.match(page,/googleCalendarId/);assert.match(route,/resolveCalendarConflict/);assert.match(read("server/calendar-sync.mjs"),/calendar_sync_writes/) });
+test("Calendar reviews sync conflicts and chooses a Google destination",()=>{const page=read("app/calendar/page.tsx"),route=read("app/api/v1/calendar-sync/conflicts/[id]/route.ts");for(const label of ["Keep Noema","Keep Google","Keep both","Google calendar"])assert.match(page,new RegExp(label));assert.match(page,/googleCalendarId/);assert.match(route,/resolveCalendarConflict/);assert.match(read("server/calendar-sync.mjs"),/calendar_sync_writes/) });
 
 test("Automations use durable API state and runs",()=>{
   const page=read("app/automations/page.tsx"),builder=read("app/automations/AutomationBuilder.tsx");

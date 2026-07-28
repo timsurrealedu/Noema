@@ -66,7 +66,7 @@ const seed: AppData = {
   noteLinks:[],
 };
 
-const storageKey="lifeos-state-v2";
+const storageKey="noema-state-v2",legacyStorageKey="lifeos-state-v2";
 const Context=createContext<AppState|null>(null);
 
 async function api(path:string,method="GET",value?:unknown,key?:string){
@@ -80,7 +80,7 @@ export function AppStateProvider({children}:{children:ReactNode}) {
   const [loaded,setLoaded]=useState(false);
 
   useEffect(()=>{
-    try {const saved=localStorage.getItem(storageKey);if(saved)setData({...seed,...JSON.parse(saved)})} catch {}
+    try {const saved=localStorage.getItem(storageKey)||localStorage.getItem(legacyStorageKey);if(saved){setData({...seed,...JSON.parse(saved)});localStorage.setItem(storageKey,saved);localStorage.removeItem(legacyStorageKey)}} catch {}
     api("/state").then(remote=>setData(current=>({...current,...remote,projects:remote.projects||[],taskDependencies:remote.taskDependencies||[],noteLinks:remote.noteLinks||[]}))).catch(()=>{});
     setLoaded(true);
   },[]);

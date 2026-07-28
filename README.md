@@ -1,6 +1,8 @@
-# LifeOS v2
+# Noema
 
-Personal-first, self-hosted LifeOS for capture, tasks, scheduling, knowledge, study, coding, and automations. The frontend is a responsive Next.js PWA; the local backend uses SQLite, authenticated APIs, durable jobs, isolated Codex execution, and a Bubblewrap compiler.
+Personal-first, self-hosted Noema for capture, tasks, scheduling, knowledge, study, coding, and automations. The frontend is a responsive Next.js PWA; the local backend uses SQLite, authenticated APIs, durable jobs, isolated Codex execution, and a Bubblewrap compiler.
+
+Existing installations may migrate environment variables from `LIFEOS_*` to `NOEMA_*` gradually. Noema prefers the new names but still reads the old names, existing `lifeos.sqlite`, cookies, browser offline queues, backups, and plugin manifests during the transition.
 
 ## Supported targets
 
@@ -19,11 +21,11 @@ npm install
 npm run dev
 ```
 
-Set a strong `LIFEOS_OWNER_PASSWORD` in `.env.local`. Backend features are disabled unless their environment flags are enabled.
+Set a strong `NOEMA_OWNER_PASSWORD` in `.env.local`. Backend features are disabled unless their environment flags are enabled.
 
-Optional two-factor login: set `LIFEOS_TOTP_SECRET` to the same 160-bit-or-longer base32 secret configured in your authenticator app. Enabling it also requires MFA-authenticated sessions for compiler runs, AI approvals, and session revocation.
+Optional two-factor login: set `NOEMA_TOTP_SECRET` to the same 160-bit-or-longer base32 secret configured in your authenticator app. Enabling it also requires MFA-authenticated sessions for compiler runs, AI approvals, and session revocation.
 
-Optional fallbacks: set `GEMINI_API_KEY` from Google AI Studio and/or `OPENAI_API_KEY`. The order is Codex → Gemini → OpenAI on explicit capacity/quota exhaustion. OpenAI routes simple tasks and schedules to `chat-latest`, notes and code to `gpt-5.6` with low reasoning, and math/research to `gpt-5.6` with medium reasoning. Override these with `LIFEOS_GEMINI_MODEL`, `LIFEOS_OPENAI_FAST_MODEL`, and `LIFEOS_OPENAI_REASONING_MODEL`.
+Optional fallbacks: set `GEMINI_API_KEY` from Google AI Studio and/or `OPENAI_API_KEY`. The order is Codex → Gemini → OpenAI on explicit capacity/quota exhaustion. OpenAI routes simple tasks and schedules to `chat-latest`, notes and code to `gpt-5.6` with low reasoning, and math/research to `gpt-5.6` with medium reasoning. Override these with `NOEMA_GEMINI_MODEL`, `NOEMA_OPENAI_FAST_MODEL`, and `NOEMA_OPENAI_REASONING_MODEL`.
 
 ## Verification
 
