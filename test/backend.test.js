@@ -1,6 +1,6 @@
 const test=require("node:test");
 const assert=require("node:assert/strict");
-const {mkdtempSync,rmSync}=require("node:fs");
+const {mkdirSync,mkdtempSync,readFileSync,rmSync,symlinkSync,writeFileSync}=require("node:fs");
 const {tmpdir}=require("node:os");
 const {join}=require("node:path");
 
@@ -19,7 +19,7 @@ test("SQLite core objects persist and remain searchable",async()=>{
 
 test("immutable migrations add canonical task scheduling fields",async()=>{
   const dir=temp(),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));
-  try{const task=core.saveTask({title:"Review lecture",dueAt:"2026-07-29T12:00:00+07:00",scheduledStartAt:"2026-07-29T10:00:00+07:00",scheduledEndAt:"2026-07-29T11:00:00+07:00",estimatedMinutes:60},db);assert.equal(task.due_at,"2026-07-29T05:00:00.000Z");assert.equal(task.status,"open");assert.equal(db.prepare("SELECT max(version) version FROM schema_migrations").get().version,35)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+  try{const task=core.saveTask({title:"Review lecture",dueAt:"2026-07-29T12:00:00+07:00",scheduledStartAt:"2026-07-29T10:00:00+07:00",scheduledEndAt:"2026-07-29T11:00:00+07:00",estimatedMinutes:60},db);assert.equal(task.due_at,"2026-07-29T05:00:00.000Z");assert.equal(task.status,"open");assert.equal(db.prepare("SELECT max(version) version FROM schema_migrations").get().version,36)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
 test("skill context is bounded, relevant, and attributed",async()=>{
@@ -117,6 +117,16 @@ test("unsafe cross-origin requests and repeated login attempts are rejected",asy
 test("durable jobs claim once and record events",async()=>{
   const dir=temp();const {openDatabase}=await import("../server/db.mjs");const jobs=await import("../server/jobs.mjs");const db=openDatabase(join(dir,"test.sqlite"));
   try{const id=jobs.enqueueJob("interpret",{captureId:"c1"},db);assert.equal(jobs.claimJob(["interpret"],60,db).id,id);assert.equal(jobs.claimJob(["interpret"],60,db),null);jobs.finishJob(id,{ok:true},db);const job=jobs.getJob(id,db);assert.equal(job.state,"completed");assert.deepEqual(job.result,{ok:true});assert.deepEqual(job.events.map(e=>e.type),["queued","claimed","completed"])}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("Obsidian vault sync preserves hierarchy, backfills mappings, and detects concurrent edits",async()=>{
+  const dir=temp(),vaultDir=join(dir,"vault");mkdirSync(join(vaultDir,"TODO","2026"),{recursive:true});writeFileSync(join(vaultDir,"Notes.md"),"# Notes\n\nOriginal\n");writeFileSync(join(vaultDir,"TODO","2026","July.md"),"# July\n\n- [ ] Submit report 29 Jul 09:30 #remind30 [[Work]]\n");
+  const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),core=await import("../server/core.mjs"),vault=await import("../server/vault.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),workspace=collaboration.ensureDefaultWorkspace(user.id,db),actor={id:user.id,workspaceId:workspace.id};core.saveNote({title:"Notes",content:"# Notes\n\nOriginal\n",source:"Obsidian · Notes.md"},db,actor);const source=vault.connectVault({rootPath:vaultDir},workspace.id,db),first=vault.scanVault(source.id,actor,db);assert.equal(first.created,2);assert.equal(core.listState(db,workspace.id).notes.length,2);assert.equal(vault.vaultTree(source.id,workspace.id,db).folders[0].path,"TODO");let task=core.listState(db,workspace.id).tasks[0];assert.equal(task.title,"Submit report [[Work]]");assert.equal(task.scheduledStartAt,"2026-07-29T02:30:00.000Z");assert.equal(task.reminderAt,"2026-07-29T02:00:00.000Z");assert.match(readFileSync(join(vaultDir,"TODO","2026","July.md"),"utf8"),/\^noema-/);vault.scanVault(source.id,actor,db);assert.equal(core.listState(db,workspace.id).tasks.length,1);task=core.listState(db,workspace.id).tasks[0];core.saveTask({...task,completed:true,version:task.version},db,actor);assert.match(readFileSync(join(vaultDir,"TODO","2026","July.md"),"utf8"),/- \[x\] Submit report/);const entry=db.prepare("SELECT * FROM vault_entries WHERE relative_path='Notes.md'").get(),note=db.prepare("SELECT * FROM notes WHERE id=?").get(entry.note_id);core.saveNote({id:note.id,title:note.title,content:"Noema edit",version:note.version,source:note.source},db,actor);writeFileSync(join(vaultDir,"Notes.md"),"Vault edit");assert.equal(vault.scanVault(source.id,actor,db).conflicts,1);assert.equal(readFileSync(join(vaultDir,"Notes.md"),"utf8"),"Vault edit");assert.equal(vault.listConflicts(source.id,workspace.id,db).length,1)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("vault paths and ink payloads reject traversal, symlinks, and unsafe strokes",async()=>{
+  const dir=temp(),outside=join(dir,"outside.md"),root=join(dir,"vault");mkdirSync(root);writeFileSync(outside,"secret");symlinkSync(outside,join(root,"linked.md"));const vault=await import("../server/vault.mjs");try{assert.throws(()=>vault.safeRelativePath("../outside.md"),/Invalid vault path/);assert.throws(()=>vault.vaultPath(root,"linked.md",{mustExist:true}),/symlinks/);assert.throws(()=>vault.validateStrokes({width:100,height:100,strokes:[{tool:"pen",points:[{x:101,y:1,pressure:.5,time:1}]}]}),/bounds/);const input={width:100,height:50,strokes:[{tool:"pen",color:"#112233",width:2,points:[{x:1,y:2,pressure:.5,time:1},{x:3,y:4,pressure:.6,time:2}]}]};assert.match(vault.strokesToSvg(input),/<path d="M1\.00 2\.00 L3\.00 4\.00"/)}finally{rmSync(dir,{recursive:true,force:true})}
 });
 
 test("compiler runs supported code with limits and rejects unsafe languages",async()=>{

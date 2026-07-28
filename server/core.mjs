@@ -5,6 +5,7 @@ import {assetsForCapture,attachAssets,getAsset,storeAsset} from "./objects.mjs";
 import {loadConfig} from "./config.mjs";
 import {enqueueJob} from "./jobs.mjs";
 import {recordConflict} from "./collaboration.mjs";
+import {prepareVaultTaskWriteback} from "./vault-task-writeback.mjs";
 
 const stamp=()=>new Date().toISOString();
 const formatSize=bytes=>bytes>1024*1024?`${(bytes/1048576).toFixed(1)} MB`:`${Math.max(1,Math.round(bytes/1024))} KB`;
@@ -27,12 +28,13 @@ const objectTables={task:"tasks",event:"events",note:"notes",capture:"captures",
 const insertRow=(db,table,row)=>{const columns=Object.keys(row);db.prepare(`INSERT INTO ${table}(${columns.join(",")}) VALUES(${columns.map(()=>"?").join(",")})`).run(...columns.map(column=>row[column]))};
 const deleteObject=(db,type,id)=>{db.prepare(`DELETE FROM ${objectTables[type]} WHERE id=?`).run(id);if(type==="note")db.prepare("DELETE FROM notes_fts WHERE id=?").run(id)};
 const reindexNote=(db,row)=>{db.prepare("DELETE FROM notes_fts WHERE id=?").run(row.id);db.prepare("INSERT INTO notes_fts(id,title,content,tags) VALUES(?,?,?,?)").run(row.id,row.title,row.content,parse(row.tags_json).join(" "))};
+const noteProjection=(row,db)=>{const source=db.prepare("SELECT e.source_id,e.relative_path,e.sync_state FROM vault_entries e WHERE e.note_id=? AND e.deleted_at IS NULL LIMIT 1").get(row.id),blocks=db.prepare("SELECT b.id,b.position,b.kind,b.version,i.width,i.height,i.transcript,i.ocr_status AS ocrStatus FROM note_blocks b LEFT JOIN note_ink_blocks i ON i.block_id=b.id WHERE b.note_id=? ORDER BY b.position").all(row.id);return {...row,sourceId:source?.source_id||null,relativePath:source?.relative_path||null,syncState:source?.sync_state||(row.source?.startsWith("Obsidian · ")?"unmapped":"local"),blocks}};
 
 export function listState(db=getDatabase(),workspaceId=null){const filter=workspaceId?" WHERE workspace_id=?":"",args=workspaceId?[workspaceId]:[];
   return {
     tasks:db.prepare(`SELECT * FROM tasks${filter} ORDER BY created_at DESC`).all(...args).map(row=>({...row,completed:!!row.completed,archived:!!row.archived,reminderAt:row.reminder_at,dueAt:row.due_at,scheduledStartAt:row.scheduled_start_at,scheduledEndAt:row.scheduled_end_at,estimatedMinutes:row.estimated_minutes,projectId:row.project_id,courseId:row.course_id,parentTaskId:row.parent_task_id,completedAt:row.completed_at,subtasks:parse(row.subtasks_json)})),
     events:db.prepare(`SELECT * FROM events WHERE deleted_at IS NULL${workspaceId?" AND workspace_id=?":""} ORDER BY start_at`).all(...args).map(eventRow),
-    notes:db.prepare(`SELECT * FROM notes${filter} ORDER BY updated_at DESC`).all(...args).map(row=>({...row,ai:!!row.ai,draft:!!row.draft,favorite:!!row.favorite,trashed:!!row.trashed,tags:parse(row.tags_json),time:row.updated_at})),
+    notes:db.prepare(`SELECT * FROM notes${filter} ORDER BY updated_at DESC`).all(...args).map(row=>noteProjection({...row,ai:!!row.ai,draft:!!row.draft,favorite:!!row.favorite,trashed:!!row.trashed,tags:parse(row.tags_json),time:row.updated_at},db)),
     captures:db.prepare(`SELECT * FROM captures${filter} ORDER BY created_at DESC`).all(...args).map(row=>({id:row.id,text:row.text,source:row.source,status:row.status,sourceLabel:row.source_label,objects:captureObjects(row.objects_json),error:row.error,assets:assetsForCapture(row.id,db,workspaceId).map(asset=>({id:asset.id,name:asset.name,mime:asset.mime,size:asset.size})),createdAt:row.created_at,version:row.version})),
     projects:db.prepare(`SELECT * FROM projects${filter} ORDER BY name`).all(...args),
     taskDependencies:db.prepare(`SELECT d.task_id AS taskId,d.depends_on_task_id AS dependsOnTaskId,d.created_at AS createdAt FROM task_dependencies d JOIN tasks t ON t.id=d.task_id${workspaceId?" WHERE t.workspace_id=?":""}`).all(...args),
@@ -43,6 +45,7 @@ export function listState(db=getDatabase(),workspaceId=null){const filter=worksp
 export function saveTask(input,db=getDatabase(),actor=null){
   const context=actorInfo(actor),id=input.id||randomUUID(),title=required(input.title,"title",500),priority=["High","Medium","Low"].includes(input.priority)?input.priority:"Medium",time=stamp(),before=findOwned(db,"tasks",id,context.workspaceId);
   requireVersion(input,before,{db,type:"task",actor});
+  const writeBack=before&&!actor?.skipVaultWriteback?prepareVaultTaskWriteback(id,input,db):null;
   const reminderAt=timestamp(input.reminderAt),dueAt=timestamp(input.dueAt),scheduledStart=timestamp(input.scheduledStartAt),scheduledEnd=timestamp(input.scheduledEndAt),completed=input.status==="completed"||!!input.completed,status=input.status||(completed?"completed":"open"),completedAt=completed?(timestamp(input.completedAt)||before?.completed_at||time):null,estimate=input.estimatedMinutes==null?null:Number(input.estimatedMinutes);
   if(!["open","in_progress","blocked","completed","cancelled"].includes(status))throw new Error("Unknown task status");
   if(scheduledStart&&scheduledEnd&&scheduledEnd<=scheduledStart)throw new Error("scheduledEndAt must follow scheduledStartAt");
@@ -50,7 +53,7 @@ export function saveTask(input,db=getDatabase(),actor=null){
   for(const [field,table,value] of [["projectId","projects",input.projectId],["courseId","courses",input.courseId],["parentTaskId","tasks",input.parentTaskId]])if(value&&!findOwned(db,table,value,context.workspaceId))throw new Error(`${field} does not reference an accessible object`);
   const project=input.projectId?findOwned(db,"projects",input.projectId,context.workspaceId).name:required(input.project||before?.project||"Inbox","project",200),due=dueAt?dueLabel(dueAt):input.due||before?.due||"No date";
   db.prepare(`INSERT INTO tasks(id,title,project,due,priority,completed,recurrence,subtasks_json,archived,reminder_at,created_at,updated_at,workspace_id,project_id,course_id,status,due_at,scheduled_start_at,scheduled_end_at,estimated_minutes,parent_task_id,completed_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,project=excluded.project,due=excluded.due,priority=excluded.priority,completed=excluded.completed,recurrence=excluded.recurrence,subtasks_json=excluded.subtasks_json,archived=excluded.archived,reminder_sent_at=CASE WHEN tasks.reminder_at IS excluded.reminder_at THEN tasks.reminder_sent_at ELSE NULL END,reminder_at=excluded.reminder_at,updated_at=excluded.updated_at,project_id=excluded.project_id,course_id=excluded.course_id,status=excluded.status,due_at=excluded.due_at,scheduled_start_at=excluded.scheduled_start_at,scheduled_end_at=excluded.scheduled_end_at,estimated_minutes=excluded.estimated_minutes,parent_task_id=excluded.parent_task_id,completed_at=excluded.completed_at,version=tasks.version+1`).run(id,title,project,due,priority,completed?1:0,input.recurrence||null,JSON.stringify(input.subtasks||[]),input.archived?1:0,reminderAt,before?.created_at||time,time,context.workspaceId,input.projectId||null,input.courseId||null,status,dueAt,scheduledStart,scheduledEnd,estimate,input.parentTaskId||null,completedAt);
-  audit(db,before?"update":"create","task",id,title,before?{op:"restore",row:before}:{op:"delete"},actor);return findOwned(db,"tasks",id,context.workspaceId);
+  audit(db,before?"update":"create","task",id,title,before?{op:"restore",row:before}:{op:"delete"},actor);writeBack?.();return findOwned(db,"tasks",id,context.workspaceId);
 }
 
 export function saveEvent(input,db=getDatabase(),actor=null,options={}){
@@ -152,7 +155,7 @@ export function undoAuditEvent(auditId,db=getDatabase(),actor=null){
 }
 
 export function searchNotes(query,db=getDatabase(),workspaceId=null){
-  const q=required(query,"query",500).replace(/["']/g," ");return db.prepare(`SELECT n.* FROM notes_fts f JOIN notes n ON n.id=f.id WHERE notes_fts MATCH ? AND n.trashed=0${workspaceId?" AND n.workspace_id=?":""} ORDER BY rank LIMIT 50`).all(q,...(workspaceId?[workspaceId]:[]));
+  const q=required(query,"query",500).replace(/["']/g," ");return db.prepare(`SELECT n.* FROM notes_fts f JOIN notes n ON n.id=f.id WHERE notes_fts MATCH ? AND n.trashed=0${workspaceId?" AND n.workspace_id=?":""} ORDER BY rank LIMIT 50`).all(q,...(workspaceId?[workspaceId]:[])).map(row=>noteProjection(row,db));
 }
 
 export function noteVersions(noteId,db=getDatabase(),workspaceId=null){if(!findOwned(db,"notes",noteId,workspaceId))throw Object.assign(new Error("Note not found"),{status:404});return db.prepare("SELECT version,title,content,tags_json,created_at AS createdAt FROM note_versions WHERE note_id=? ORDER BY version DESC").all(noteId).map(row=>({...row,tags:parse(row.tags_json)}))}

@@ -6,7 +6,8 @@ import {flushQueue, queueOfflineCapture, queueRequest} from "../lib/offlineQueue
 
 export type Task = {id:string; title:string; project:string; due:string; priority:"High"|"Medium"|"Low"; completed:boolean; status?:"open"|"in_progress"|"blocked"|"completed"|"cancelled"; projectId?:string|null; courseId?:string|null; dueAt?:string|null; scheduledStartAt?:string|null; scheduledEndAt?:string|null; estimatedMinutes?:number|null; parentTaskId?:string|null; completedAt?:string|null; recurrence?:string; reminderAt?:string|null; subtasks?:string[]; archived?:boolean; version?:number};
 export type Event = {id:string; title:string; day:number; time:string; top:number; height:number; location?:string; reminderAt?:string|null; active?:boolean; startAt?:string; endAt?:string; timezone?:string; allDay?:boolean; recurrence?:{frequency?:string;rules?:string[]}|null; googleCalendarId?:string; version?:number};
-export type Note = {id:string; title:string; excerpt:string; content:string; tags:string[]; time:string; ai:boolean; draft?:boolean; source?:string; favorite?:boolean; trashed?:boolean; version?:number};
+export type NoteBlockSummary={id:string;position:number;kind:"markdown"|"ink";version:number;width?:number;height?:number;transcript?:string;ocrStatus?:string};
+export type Note = {id:string; title:string; excerpt:string; content:string; tags:string[]; time:string; ai:boolean; draft?:boolean; source?:string; sourceId?:string|null; relativePath?:string|null; syncState?:string; blocks?:NoteBlockSummary[]; favorite?:boolean; trashed?:boolean; version?:number};
 export type CaptureSource = "typed"|"voice"|"file"|"link";
 export type CaptureObject = {id?:string; type:"task"|"event"|"note"; title:string; detail:string; confidence?:number; sourceReferences?:string[]; arguments?:Record<string,unknown>};
 export type Capture = {
