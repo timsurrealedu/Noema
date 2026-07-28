@@ -199,3 +199,6 @@ test("Tutor resumes sessions and inserts messages through the API",()=>{
 });
 
 test("Settings exposes opt-in local analytics and deletion",()=>{const page=read("app/settings/page.tsx"),route=read("app/api/v1/analytics/route.ts"),shell=read("app/components/ModuleShell.tsx");assert.match(page,/Local usage analytics/);assert.match(page,/Delete analytics/);assert.match(page,/Off by default/);assert.match(page,/never note or capture content/);assert.match(route,/setAnalyticsEnabled/);assert.match(route,/deleteAnalytics/);assert.match(shell,/event:"navigation"/) });
+test("Vault notes support focused fullscreen reading",()=>{const page=read("app/vault/page.tsx"),css=read("app/globals.css");assert.match(page,/Open note fullscreen/);assert.match(css,/note-workspace\.fullscreen/);assert.match(css,/mobile-nav\{display:none\}/)});
+test("Settings manages encrypted AI agents in app",()=>{const settings=read("app/settings/page.tsx"),agents=read("app/components/AIAgentSettings.tsx");assert.match(settings,/AIAgentSettings/);assert.match(agents,/Stored encrypted/);assert.doesNotMatch(agents,/value=\{.*apiKey/)});
+test("mobile compiler exposes formatting and cursor controls",()=>{const page=read("app\/coding\/compiler\/page.tsx");assert.match(page,/Indent selection/);assert.match(page,/caret-joystick/);assert.match(page,/Move cursor up/)});
