@@ -43,7 +43,9 @@ export async function verifyPassword(password,encoded){
 export async function ensureOwner({email,password},db=getDatabase()){
   const normalized=email.trim().toLowerCase();if(!normalized||!password)return null;
   const found=db.prepare("SELECT id,email FROM users WHERE email=?").get(normalized);if(found)return found;
-  const id=randomUUID(),stamp=now();db.prepare("INSERT INTO users(id,email,password_hash,created_at,updated_at) VALUES(?,?,?,?,?)").run(id,normalized,await hashPassword(password),stamp,stamp);return {id,email:normalized};
+  const id=randomUUID(),stamp=now(),hash=await hashPassword(password);
+  try{db.prepare("INSERT INTO users(id,email,password_hash,created_at,updated_at) VALUES(?,?,?,?,?)").run(id,normalized,hash,stamp,stamp);return {id,email:normalized}}
+  catch(error){const concurrent=db.prepare("SELECT id,email FROM users WHERE email=?").get(normalized);if(concurrent)return concurrent;throw error}
 }
 
 export async function login({email,password,device="",totpCode="",recoveryCode="",totpSecret="",encryptionKey=""},db=getDatabase(),hours=720){

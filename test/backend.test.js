@@ -63,6 +63,11 @@ test("password login stores only hashes and sessions revoke",async()=>{
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
+test("concurrent owner initialization is idempotent",async()=>{
+  const dir=temp();const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{const owners=await Promise.all([auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db)]);assert.equal(owners[0].id,owners[1].id);assert.equal(db.prepare("SELECT COUNT(*) count FROM users WHERE email=?").get("owner@example.com").count,1)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
 test("TOTP login follows RFC 6238 and rejects replay",async()=>{
   const dir=temp(),secret="GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ";const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),db=openDatabase(join(dir,"test.sqlite"));
   try{const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db);assert.equal(auth.totp(secret,1),"287082");assert.equal(auth.verifyTotp(secret,"287082",user.id,db,1),true);assert.equal(auth.verifyTotp(secret,"287082",user.id,db,1),false);const code=auth.totp(secret),challenge=await auth.login({email:user.email,password:"correct horse battery staple",totpSecret:secret},db,1);assert.equal(challenge.mfaRequired,true);const session=await auth.login({email:user.email,password:"correct horse battery staple",totpSecret:secret,totpCode:code},db,1);assert.ok(session.token);assert.ok(auth.authenticate(session.token,db).mfa_verified_at)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
