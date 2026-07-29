@@ -1,4 +1,5 @@
-import {connectVault,importLifeosInkSidecars,lifeosMigrationInventory,prepareVaultActivation,scanVault} from "../../../../../server/vault.mjs";
+import {connectVault,importLifeosInkSidecars,lifeosMigrationInventory,scanVault} from "../../../../../server/vault.mjs";
+import {prepareVaultActivation} from "../../../../../server/vault-gate.mjs";
 import {body,handle,json,requireWorkspace} from "../../../../../server/http.mjs";
 
 export async function POST(request:Request){try{const user=requireWorkspace(request,"editor"),input=await body(request),inventory=lifeosMigrationInventory(input);if(input.confirmImport==null)return json({inventory,readOnly:true});if(input.confirmImport!=="IMPORT_LIFEOS_SOURCE")return json({error:{code:"CONFIRMATION_REQUIRED",message:"Type IMPORT_LIFEOS_SOURCE to connect this source.",retryable:false}},400);prepareVaultActivation(input.vaultPath);const actor={id:user.id,workspaceId:user.workspace.id},source=connectVault({rootPath:input.vaultPath,name:input.name||"LifeOS vault"},user.workspace.id),scan=scanVault(source.id,actor);return json({inventory,source,scan,ink:importLifeosInkSidecars(source.id,actor)},201)}catch(error){return handle(error)}}
