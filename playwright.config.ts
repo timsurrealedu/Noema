@@ -31,6 +31,7 @@ export default defineConfig({
       NOEMA_PLUGIN_CATALOGS:join(process.cwd(),"test/fixtures/plugin-catalog"),
       NOEMA_CODEX_ENABLED:"true",
       NOEMA_CODEX_PATH:join(process.cwd(),"test/fixtures/fake-codex.mjs"),
+      NOEMA_AI_FAST_CHAIN:"codex:configured",
     },
   },
 });

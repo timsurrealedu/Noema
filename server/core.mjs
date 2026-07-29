@@ -6,6 +6,7 @@ import {loadConfig} from "./config.mjs";
 import {enqueueJob} from "./jobs.mjs";
 import {recordConflict} from "./collaboration.mjs";
 import {prepareVaultTaskWriteback} from "./vault-task-writeback.mjs";
+import {createVaultNote,trashVaultEntry} from "./vault.mjs";
 
 const stamp=()=>new Date().toISOString();
 const formatSize=bytes=>bytes>1024*1024?`${(bytes/1048576).toFixed(1)} MB`:`${Math.max(1,Math.round(bytes/1024))} KB`;
@@ -112,8 +113,9 @@ export function updateCapture(id,status,version,db=getDatabase(),actor=null){
 
 const cleanTaskArguments=args=>({title:required(args.title,"task title",500),dueAt:args.dueAt?absolute(args.dueAt,"dueAt").toISOString():null,project:args.project?required(args.project,"project",200):null,linkedActionId:args.linkedActionId?required(args.linkedActionId,"linked action id",100):null});
 const cleanNoteArguments=args=>({title:required(args.title,"note title",500),content:String(args.content||"").slice(0,100000),tags:Array.isArray(args.tags)?args.tags.map(tag=>required(tag,"tag",100)).slice(0,20):[]});
+const cleanVaultNoteArguments=args=>({sourceId:required(args.sourceId,"vault source",100),relativePath:required(args.relativePath,"vault note path",1000),title:required(args.title,"vault note title",500),content:String(args.content||"").slice(0,100000),tags:Array.isArray(args.tags)?args.tags.map(tag=>required(tag,"tag",100)).slice(0,20):[]});
 function cleanEventArguments(args){const start=absolute(args.startAt,"startAt"),end=absolute(args.endAt,"endAt");if(end<=start){throw new Error("endAt must be after startAt")}eventPosition(start,required(args.timezone,"timezone",100));const reminders=(Array.isArray(args.reminders)?args.reminders:[]).map(item=>({offsetMinutes:Number(item.offsetMinutes)}));if(reminders.some(item=>!Number.isInteger(item.offsetMinutes)||item.offsetMinutes<0||item.offsetMinutes>525600)){throw new Error("Invalid reminder offset")}return {title:required(args.title,"event title",500),startAt:start.toISOString(),endAt:end.toISOString(),timezone:args.timezone,location:args.location?required(args.location,"location",500):null,reminders}}
-const captureActionCleaners={"task.create":cleanTaskArguments,"event.create":cleanEventArguments,"note.create":cleanNoteArguments};
+const captureActionCleaners={"task.create":cleanTaskArguments,"event.create":cleanEventArguments,"note.create":cleanNoteArguments,"vault.note.create":cleanVaultNoteArguments};
 function cleanCaptureAction(action,ids){
   if(!action||ids.has(action.id)){throw new Error("Action ids must be unique")}const clean=captureActionCleaners[action.type];if(!clean){throw new Error(`Unsupported capture action: ${action.type}`)}ids.add(action.id);const confidence=Number(action.confidence);if(!Number.isFinite(confidence)||confidence<0||confidence>1){throw new Error("confidence must be between 0 and 1")}return {id:required(action.id,"action id",100),type:action.type,confidence,sourceReferences:Array.isArray(action.sourceReferences)?action.sourceReferences.map(value=>required(value,"source reference",500)).slice(0,20):[],arguments:clean(action.arguments||{})};
 }
@@ -126,10 +128,13 @@ export function saveInterpretation(id,proposal,db=getDatabase()){
 }
 
 function applyCaptureAction(action,captureId,db,actor){
-  const id=randomUUID(),args=action.arguments||action,type=action.type.split(".")[0];let object;
+  const id=randomUUID(),args=action.arguments||action;let type=action.type.split(".")[0],object;
   if(type==="task")object=saveTask({id,title:args.title,project:args.project||"Inbox",due:args.dueAt||"No date",reminderAt:args.dueAt,priority:"Medium"},db,actor);
   else if(type==="event"){const reminder=action.arguments?.reminders?.[0],reminderAt=reminder?new Date(new Date(args.startAt).getTime()-reminder.offsetMinutes*60000).toISOString():null;object=saveEvent(action.arguments?{id,title:args.title,startAt:args.startAt,endAt:args.endAt,timezone:args.timezone,location:args.location,reminderAt}:{id,title:args.title,day:new Date().getDay(),time:"09:00",top:0,height:58},db,actor)}
-  else object=saveNote({id,title:args.title,content:args.content||args.detail||args.title,tags:args.tags||[],ai:true,source:`Capture ${captureId}`},db,actor);
+  else if(action.type==="vault.note.create"){
+    const vault=createVaultNote(args.sourceId,{relativePath:args.relativePath,content:args.content||`# ${args.title}\n\n`},actor,db),note=findOwned(db,"notes",vault.noteId,actorInfo(actor).workspaceId);
+    object={...note,sourceId:args.sourceId,relativePath:vault.relativePath};type="vault-note";
+  }else object=saveNote({id,title:args.title,content:args.content||args.detail||args.title,tags:args.tags||[],ai:true,source:`Capture ${captureId}`},db,actor);
   return {type,actionId:action.id,object};
 }
 
@@ -141,7 +146,7 @@ export function applyCaptureInterpretation(id,db=getDatabase(),actor=null){
   try{
     for(const action of actions)created.push(applyCaptureAction(action,id,db,actor));
     db.prepare(`UPDATE captures SET status='confirmed',updated_at=?,version=version+1 WHERE id=?${context.workspaceId?" AND workspace_id=?":""}`).run(stamp(),id,...(context.workspaceId?[context.workspaceId]:[]));
-    audit(db,"apply","capture",id,`Applied ${created.length} object(s) from capture`,{op:"delete-many",objects:created.map(({type,object})=>({type,id:object.id})),captureStatus:"review"},actor);
+    audit(db,"apply","capture",id,`Applied ${created.length} object(s) from capture`,{op:"delete-many",objects:created.filter(({type})=>type!=="vault-note").map(({type,object})=>({type,id:object.id})),vaultNotes:created.filter(({type})=>type==="vault-note").map(({object})=>({sourceId:object.sourceId,relativePath:object.relativePath})),captureStatus:"review"},actor);
     db.exec("COMMIT");
   }catch(error){db.exec("ROLLBACK");throw error}
   return {captureId:id,status:"confirmed",created};
@@ -157,7 +162,7 @@ function applyInverse(db,event,inverse){
   if(inverse.op==="delete"){if(!table)throw new Error("Unsupported object type");deleteObject(db,event.object_type,event.object_id);return}
   if(inverse.op==="restore"){const row=inverse.row;if(!table||!row)throw new Error("Unsupported restore inverse");db.prepare(`DELETE FROM ${table} WHERE id=?`).run(row.id);insertRow(db,table,row);if(event.object_type==="note"){reindexNote(db,row);reindexNoteLinks(row.id,row.content,db)}return}
   if(inverse.op==="capture-status"){db.prepare("UPDATE captures SET status=?,updated_at=?,version=version+1 WHERE id=?").run(inverse.status,stamp(),event.object_id);return}
-  if(inverse.op==="delete-many"){for(const object of inverse.objects||[])if(objectTables[object.type]&&object.type!=="capture")deleteObject(db,object.type,object.id);if(inverse.captureStatus)db.prepare("UPDATE captures SET status=?,updated_at=?,version=version+1 WHERE id=?").run(inverse.captureStatus,stamp(),event.object_id);return}
+  if(inverse.op==="delete-many"){for(const object of inverse.objects||[])if(objectTables[object.type]&&object.type!=="capture")deleteObject(db,object.type,object.id);for(const vaultNote of inverse.vaultNotes||[])trashVaultEntry(vaultNote.sourceId,vaultNote.relativePath,{workspaceId:event.workspace_id},db,true);if(inverse.captureStatus)db.prepare("UPDATE captures SET status=?,updated_at=?,version=version+1 WHERE id=?").run(inverse.captureStatus,stamp(),event.object_id);return}
   if(inverse.op==="delete-dependency"){db.prepare("DELETE FROM task_dependencies WHERE task_id=? AND depends_on_task_id=?").run(inverse.taskId,inverse.dependsOnTaskId);return}
   if(inverse.op==="create-dependency"){db.prepare("INSERT OR IGNORE INTO task_dependencies(task_id,depends_on_task_id,created_at) VALUES(?,?,?)").run(inverse.taskId,inverse.dependsOnTaskId,inverse.createdAt||stamp());return}
   throw new Error("Unsupported inverse operation");

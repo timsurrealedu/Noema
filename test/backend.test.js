@@ -19,7 +19,7 @@ test("SQLite core objects persist and remain searchable",async()=>{
 
 test("immutable migrations add canonical task scheduling fields",async()=>{
   const dir=temp(),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));
-  try{const task=core.saveTask({title:"Review lecture",dueAt:"2026-07-29T12:00:00+07:00",scheduledStartAt:"2026-07-29T10:00:00+07:00",scheduledEndAt:"2026-07-29T11:00:00+07:00",estimatedMinutes:60},db);assert.equal(task.due_at,"2026-07-29T05:00:00.000Z");assert.equal(task.status,"open");assert.equal(db.prepare("SELECT max(version) version FROM schema_migrations").get().version,39)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+  try{const task=core.saveTask({title:"Review lecture",dueAt:"2026-07-29T12:00:00+07:00",scheduledStartAt:"2026-07-29T10:00:00+07:00",scheduledEndAt:"2026-07-29T11:00:00+07:00",estimatedMinutes:60},db);assert.equal(task.due_at,"2026-07-29T05:00:00.000Z");assert.equal(task.status,"open");assert.equal(db.prepare("SELECT max(version) version FROM schema_migrations").get().version,40)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
 test("AI agents encrypt API keys and expose only safe metadata",async()=>{
@@ -285,6 +285,17 @@ test("deterministic extraction reads text assets and skips unsupported types",as
     const image=await storeAsset({stream:require("node:stream").Readable.from([Buffer.from([137,80,78,71])]),name:"scan.png",mime:"image/png"},config,db);
     assert.equal(await extractText(image,config),null);
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("capture AI input preserves primary capture text and bounds multimodal assets",async()=>{
+  const {buildCaptureInput}=await import("../server/worker/handlers/interpret-capture.mjs"),{maxMultimodalBytes}=await import("../server/extract.mjs");
+  const input=buildCaptureInput({id:"c1",source:"typed",text:"primary capture context".repeat(6)},["Source asset:a: attachment".repeat(20),"Source asset:b: attachment".repeat(20)],300);
+  assert.match(input.text,/Capture:\nprimary capture context/);assert.ok(input.text.indexOf("primary capture context")<input.text.indexOf("Source asset:a"));assert.equal(input.truncated,true);assert.equal(maxMultimodalBytes<50*1024*1024,true);
+});
+
+test("Codex capture schema avoids unsupported unions",async()=>{
+  const {codexCaptureProposalSchema}=await import("../server/worker/handlers/interpret-capture.mjs");
+  assert.equal(JSON.stringify(codexCaptureProposalSchema).includes("oneOf"),false);assert.ok(codexCaptureProposalSchema.required.includes("actionsJson"));
 });
 
 test("deterministic extraction reads DOCX word/document.xml",async()=>{

@@ -10,7 +10,7 @@
     "lint": "next lint",
     "test": "npm run test:unit && npm run test:browser",
     "test:unit": "npm run test:backend && npm run test:frontend",
-    "test:backend": "node --test test/backend.test.js",
+    "test:backend": "node --test test/backend.test.js test/capture-vault.test.js",
     "test:frontend": "node --test test/frontend.test.js",
     "test:experimental": "node --test test/experimental.frontend.test.js",
     "test:browser": "playwright test test/browser/00-capture.spec.ts",

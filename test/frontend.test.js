@@ -11,6 +11,8 @@ test("core frontend routes exist",()=>{
     assert.ok(fs.existsSync(path.join(root,"app",route,"page.tsx")),route);
 });
 
+test("capture review identifies vault-note proposals",()=>{const state=read("app/components/AppState.tsx"),page=read("app/capture/page.tsx");assert.match(state,/vault\.note\.create/);assert.match(page,/Vault note/)});
+
 test("coding compiler workspace exists",()=>{
   assert.ok(fs.existsSync(path.join(root,"app","coding","compiler","page.tsx")));
   assert.match(read("app/coding/compiler/page.tsx"),/\/api\/v1\/compiler\/run/);
