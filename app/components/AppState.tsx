@@ -72,7 +72,7 @@ export function AppStateProvider({children}:{children:ReactNode}) {
   const interpret=(capture:Capture)=>api(`/captures/${capture.id}/interpret`,"POST",{}).then(({jobId})=>{patchCapture(capture.id,{jobId});
     const source=new EventSource(`/api/v1/jobs/${jobId}/events`),close=(patch:Partial<Capture>)=>{source.close();patchCapture(capture.id,patch)};
     source.addEventListener("state",event=>{const info=JSON.parse((event as MessageEvent).data);
-      if(info.state==="completed")api(`/jobs/${jobId}`).then(job=>close({status:"review",objects:proposalCards(job.result?.actions),progress:undefined,jobId:undefined})).catch(()=>close({status:"failed",error:"The completed interpretation could not be loaded.",progress:undefined,jobId:undefined}));
+      if(info.state==="completed")api(`/jobs/${jobId}`).then(job=>close({status:"review",objects:proposalCards(job.result?.actions),version:job.result?.captureVersion,progress:undefined,jobId:undefined})).catch(()=>close({status:"failed",error:"The completed interpretation could not be loaded.",progress:undefined,jobId:undefined}));
       else if(info.state==="failed"||info.state==="cancelled"||info.state==="expired")close({status:"failed",error:info.state==="cancelled"?"Interpretation cancelled.":"Processing failed on the server. Try again.",progress:undefined,jobId:undefined});
     });
   }).catch(error=>{showUnavailable(`${error.message} Server interpretation is unavailable.`);patchCapture(capture.id,{status:"failed",error:error.message,progress:undefined})});

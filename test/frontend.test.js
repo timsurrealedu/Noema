@@ -12,6 +12,8 @@ test("core frontend routes exist",()=>{
 });
 
 test("capture review identifies vault-note proposals",()=>{const state=read("app/components/AppState.tsx"),page=read("app/capture/page.tsx");assert.match(state,/vault\.note\.create/);assert.match(page,/Vault note/)});
+test("capture review refreshes its version after AI processing",()=>assert.match(read("app/components/AppState.tsx"),/version:job\.result\?\.captureVersion/));
+test("capture job results expose their safe capture version",()=>assert.match(read("app/api/v1/jobs/[id]/route.ts"),/captureVersion:job\.result\.captureVersion/));
 
 test("coding compiler workspace exists",()=>{
   assert.ok(fs.existsSync(path.join(root,"app","coding","compiler","page.tsx")));
@@ -204,3 +206,4 @@ test("Settings exposes opt-in local analytics and deletion",()=>{const page=read
 test("Vault notes support focused fullscreen reading",()=>{const page=read("app/vault/page.tsx"),css=read("app/globals.css");assert.match(page,/Open note fullscreen/);assert.match(css,/note-workspace\.fullscreen/);assert.match(css,/mobile-nav\{display:none\}/)});
 test("Settings manages encrypted AI agents in app",()=>{const settings=read("app/settings/page.tsx"),agents=read("app/components/AIAgentSettings.tsx");assert.match(settings,/AIAgentSettings/);assert.match(agents,/Stored encrypted/);assert.doesNotMatch(agents,/value=\{.*apiKey/)});
 test("mobile compiler exposes formatting and cursor controls",()=>{const page=read("app\/coding\/compiler\/page.tsx");assert.match(page,/Indent selection/);assert.match(page,/caret-joystick/);assert.match(page,/Move cursor up/)});
+test("Canvas persists versioned workspace objects with pointer, keyboard, and accessible list controls",()=>{const page=read("app/canvas/page.tsx"),engine=read("app/components/InfiniteCanvas.tsx"),routes=[read("app/api/v1/canvases/route.ts"),read("app/api/v1/canvases/[id]/route.ts")].join("\n");assert.match(page,/dynamic\(/);assert.match(engine,/onWheel/);assert.match(engine,/onPointerDown/);assert.match(engine,/ArrowLeft/);assert.match(engine,/longPress/);assert.match(engine,/Undo/);assert.match(engine,/Redo/);assert.match(engine,/Accessible object list/);assert.match(engine,/version/);assert.match(routes,/requireWorkspace/);assert.match(routes,/saveCanvas/)});

@@ -26,7 +26,7 @@ test("vault proposals must cite their connected vault target",async()=>{
 
 test("Gemini receives a supported capture proposal schema",async()=>{
   const {geminiSchema}=await import("../server/ai.mjs"),{captureProposalSchema}=await import("../server/worker/handlers/interpret-capture.mjs"),schema=geminiSchema(captureProposalSchema),text=JSON.stringify(schema);
-  assert.equal(text.includes("additionalProperties"),false);assert.equal(text.includes("oneOf"),false);assert.equal(text.includes("anyOf"),false);assert.equal(schema.properties.schemaVersion.type,"integer");assert.deepEqual(schema.properties.actions.items.properties.type.enum,["task.create","event.create","note.create","vault.note.create"]);
+  assert.equal(text.includes("additionalProperties"),false);assert.equal(text.includes("oneOf"),false);assert.equal(text.includes("anyOf"),false);assert.equal(schema.properties.schemaVersion.type,"integer");assert.equal(schema.properties.schemaVersion.enum,undefined);assert.deepEqual(schema.properties.actions.items.properties.type.enum,["task.create","event.create","note.create","vault.note.create"]);
 });
 
 test("AI capture processing proposes a connected vault note",async()=>{
@@ -37,6 +37,6 @@ test("AI capture processing proposes a connected vault note",async()=>{
     const id=jobs.enqueueJob("interpret-capture",{captureId:"c1"},db,workspace.id),job=jobs.claimJob(["interpret-capture"],60,db);
     await handleInterpretCapture({job,config:{dataDir:dir,dbPath:join(dir,"test.sqlite"),objectsDir:join(dir,"objects"),backupsDir:join(dir,"backups"),pluginsDir:join(dir,"plugins"),codexEnabled:true,codexPath:resolve("test/fixtures/fake-codex.mjs"),jobsDir,timezone:"Asia/Jakarta"},db});
     const capture=db.prepare("SELECT status,error,objects_json FROM captures WHERE id='c1'").get();assert.equal(capture.status,"review",capture.error);const proposal=JSON.parse(capture.objects_json);assert.equal(proposal.actions[0].type,"vault.note.create");
-    core.applyCaptureInterpretation("c1",db,actor);assert.equal(existsSync(join(vaultDir,"Ideas/Project Idea.md")),true);assert.equal(jobs.getJob(id,db).state,"completed");
+    core.applyCaptureInterpretation("c1",db,actor);assert.equal(existsSync(join(vaultDir,"Ideas/Project Idea.md")),true);const completed=jobs.getJob(id,db);assert.equal(completed.state,"completed");assert.equal(completed.result.captureVersion,2);
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
