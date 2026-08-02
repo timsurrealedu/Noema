@@ -19,7 +19,7 @@ test("SQLite core objects persist and remain searchable",async()=>{
 
 test("immutable migrations add canonical task scheduling fields",async()=>{
   const dir=temp(),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));
-  try{const task=core.saveTask({title:"Review lecture",dueAt:"2026-07-29T12:00:00+07:00",scheduledStartAt:"2026-07-29T10:00:00+07:00",scheduledEndAt:"2026-07-29T11:00:00+07:00",estimatedMinutes:60},db);assert.equal(task.due_at,"2026-07-29T05:00:00.000Z");assert.equal(task.status,"open");assert.equal(db.prepare("SELECT max(version) version FROM schema_migrations").get().version,41)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+  try{const task=core.saveTask({title:"Review lecture",dueAt:"2026-07-29T12:00:00+07:00",scheduledStartAt:"2026-07-29T10:00:00+07:00",scheduledEndAt:"2026-07-29T11:00:00+07:00",estimatedMinutes:60},db);assert.equal(task.due_at,"2026-07-29T05:00:00.000Z");assert.equal(task.status,"open");assert.equal(db.prepare("SELECT max(version) version FROM schema_migrations").get().version,42);assert.ok(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='handwriting_intakes'").get())}finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
 test("workspace canvases validate, version, and retain canonical object links",async()=>{
