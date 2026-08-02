@@ -1,12 +1,14 @@
 "use client";
 
+import {createId} from "../lib/id";
+
 import {FormEvent, useEffect, useState} from "react";
 import {Archive, CalendarBlank, Check, Circle, Flag, Plus, X} from "@phosphor-icons/react";
 import {ModuleShell} from "../components/ModuleShell";
 import {Task, useAppState} from "../components/AppState";
 import Link from "next/link";
 
-const blankTask=():Task=>({id:crypto.randomUUID(),title:"",project:"Inbox",due:"",dueAt:new Date().toISOString(),priority:"Medium",completed:false,status:"open"});
+const blankTask=():Task=>({id:createId(),title:"",project:"Inbox",due:"",dueAt:new Date().toISOString(),priority:"Medium",completed:false,status:"open"});
 const jakartaParts=(value:string)=>Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(value)).map(part=>[part.type,part.value]));
 const dateValue=(value?:string|null)=>{if(!value)return "";const part=jakartaParts(value);return `${part.year}-${part.month}-${part.day}`};
 const dateTimeValue=(value?:string|null)=>{if(!value)return "";const part=jakartaParts(value);return `${part.year}-${part.month}-${part.day}T${part.hour}:${part.minute}`};

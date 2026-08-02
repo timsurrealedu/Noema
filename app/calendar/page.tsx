@@ -1,5 +1,7 @@
 "use client";
 
+import {createId} from "../lib/id";
+
 import {FormEvent, useEffect, useState} from "react";
 import {CaretLeft, CaretRight, Check, Clock, Plus, VideoCamera, X} from "@phosphor-icons/react";
 import {ModuleShell} from "../components/ModuleShell";
@@ -8,7 +10,7 @@ import {Event, useAppState} from "../components/AppState";
 const monday=()=>{const date=new Date(),day=(date.getDay()+6)%7;date.setDate(date.getDate()-day);date.setHours(0,0,0,0);return date};
 const weekDays=()=>Array.from({length:7},(_,day)=>{const date=monday();date.setDate(date.getDate()+day);return date});
 const days=weekDays().map(date=>date.toLocaleDateString(undefined,{weekday:"short",day:"numeric"}));
-const blankEvent=():Event=>{const day=(new Date().getDay()+6)%7;return {id:crypto.randomUUID(),title:"",day,time:"09:00",top:76,height:58,location:"",timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,allDay:false,recurrence:null}};
+const blankEvent=():Event=>{const day=(new Date().getDay()+6)%7;return {id:createId(),title:"",day,time:"09:00",top:76,height:58,location:"",timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,allDay:false,recurrence:null}};
 const positionFor=(time:string)=>76+(Number(time.slice(0,2))-9)*51+Number(time.slice(3))*0.85;
 const reminderValue=(value?:string|null)=>value?new Date(new Date(value).getTime()-new Date(value).getTimezoneOffset()*60000).toISOString().slice(0,16):"";
 type SyncStatus={calendars:{id:string;name:string}[];writes:{id:string;state:string}[];conflicts:{id:string;localSnapshot:{title:string};googleSnapshot:{summary?:string}}[]};

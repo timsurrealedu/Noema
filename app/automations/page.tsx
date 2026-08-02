@@ -1,5 +1,7 @@
 "use client";
 
+import {createId} from "../lib/id";
+
 import {FormEvent,useEffect,useState} from "react";
 import {ArrowClockwise,ArrowLeft,ArrowRight,Circle,Clock,Copy,Lightning,Pause,PencilSimple,Play,Plus,Trash,Warning} from "@phosphor-icons/react";
 import {ModuleShell} from "../components/ModuleShell";
@@ -27,10 +29,10 @@ export default function AutomationsPage(){
   useEffect(()=>{if(!selected)return;const source=new EventSource(`/api/v1/automations/${selected.id}/events`);source.addEventListener("snapshot",event=>{const data=JSON.parse((event as MessageEvent).data);setRuns(data.runs);setMetrics(data.metrics)});return()=>source.close()},[selected?.id]);
   function openEditor(value:Draft){setDraft(value);setPreview(null);setError("");setEditing(true)}
   async function inspect(){setBusy(true);setError("");try{setPreview(await request("/api/v1/automations/preview",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload(draft))}))}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
-  async function save(event:FormEvent){event.preventDefault();setBusy(true);setError("");try{await request("/api/v1/automations",{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":crypto.randomUUID()},body:JSON.stringify(payload(draft))});setEditing(false);setDraft(empty);setPreview(null);await load()}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
+  async function save(event:FormEvent){event.preventDefault();setBusy(true);setError("");try{await request("/api/v1/automations",{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":createId()},body:JSON.stringify(payload(draft))});setEditing(false);setDraft(empty);setPreview(null);await load()}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
   async function duplicate(item:Automation){const copy=editDraft(item);delete copy.id;delete copy.version;copy.name=`${copy.name} copy`;copy.enabled=false;openEditor(copy)}
   async function remove(item:Automation){if(!confirm(`Delete “${item.name}” and its run history?`))return;setBusy(true);setError("");try{await request(`/api/v1/automations/${item.id}?version=${item.version}`,{method:"DELETE"});setSelected(null);await load()}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
-  async function toggle(item:Automation){setBusy(true);setError("");try{await request("/api/v1/automations",{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":crypto.randomUUID()},body:JSON.stringify({...payload(editDraft(item)),enabled:!item.enabled})});await load()}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
+  async function toggle(item:Automation){setBusy(true);setError("");try{await request("/api/v1/automations",{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":createId()},body:JSON.stringify({...payload(editDraft(item)),enabled:!item.enabled})});await load()}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
   async function run(item:Automation,test=false){setBusy(true);setError("");try{await request(`/api/v1/automations/${item.id}/${test?"test":"runs"}`,{method:"POST"});await Promise.all([load(),loadRuns(item.id)])}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
   async function runAction(runId:string,action:"cancel"|"retry"){setBusy(true);setError("");try{await request(`/api/v1/automations/${selected!.id}/runs/${runId}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({action})});await loadRuns(selected!.id)}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
 

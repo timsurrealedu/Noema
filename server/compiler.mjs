@@ -11,6 +11,7 @@ const languages={
   go:{file:"main.go",compile:["go","build","-o","program","main.go"],run:["./program"]},
   rust:{file:"main.rs",compile:["rustc","main.rs","-o","program"],run:["./program"]},
   java:{file:"Main.java",compile:["javac","Main.java"],run:["java","Main"]},
+  bash:{file:"main.sh",compile:null,run:["bash","main.sh"]},
 };
 
 function hasCommand(name){try{return spawnSync("which",[name],{shell:false}).status===0}catch{return false}}
@@ -72,10 +73,10 @@ function buildCommand(argv,{cwd,isolated,useCgroups,memoryLimitBytes,cpuQuotaPer
   return command;
 }
 
-function execute(argv,{cwd,timeoutMs,maxOutputBytes,isolated,useCgroups,memoryLimitBytes,cpuQuotaPercent}){
+function execute(argv,{cwd,stdin,timeoutMs,maxOutputBytes,isolated,useCgroups,memoryLimitBytes,cpuQuotaPercent}){
   const command=buildCommand(argv,{cwd,isolated,useCgroups,memoryLimitBytes,cpuQuotaPercent});
   return new Promise((resolvePromise,reject)=>{
-    const child=spawn(command[0],command.slice(1),{cwd,env:{PATH:process.env.PATH||"/usr/bin:/bin",HOME:isolated?"/tmp":(process.env.HOME||"/tmp"),LANG:"C.UTF-8"},stdio:["ignore","pipe","pipe"]});let output="",truncated=false,settled=false;
+    const child=spawn(command[0],command.slice(1),{cwd,env:{PATH:process.env.PATH||"/usr/bin:/bin",HOME:isolated?"/tmp":(process.env.HOME||"/tmp"),LANG:"C.UTF-8"},stdio:["pipe","pipe","pipe"]});let output="",truncated=false,settled=false;child.stdin.end(stdin||"");
     const collect=chunk=>{if(output.length<maxOutputBytes)output+=chunk.toString().slice(0,maxOutputBytes-output.length);else truncated=true};child.stdout.on("data",collect);child.stderr.on("data",collect);
     const timer=setTimeout(()=>{child.kill("SIGKILL");},timeoutMs);
     child.on("error",error=>{clearTimeout(timer);if(!settled){settled=true;reject(error)}});child.on("close",code=>{clearTimeout(timer);if(!settled){settled=true;resolvePromise({code,output,truncated})}});
@@ -84,7 +85,7 @@ function execute(argv,{cwd,timeoutMs,maxOutputBytes,isolated,useCgroups,memoryLi
 
 export function availableLanguages(){return Object.keys(languages)}
 
-export async function runCode({language,code},{
+export async function runCode({language,code,stdin=""},{
   enabled=false,timeoutMs=10000,maxOutputBytes=262144,isolate=true,useCgroups=false,
   memoryLimitBytes=268435456,cpuQuotaPercent=50,repoDir,jobsDir=tmpdir()
 }={}){
@@ -92,6 +93,7 @@ export async function runCode({language,code},{
   const spec=languages[language];if(!spec)throw new Error("Unsupported language");
   if(typeof code!=="string"||!code.trim())throw new Error("Code is required");
   if(Buffer.byteLength(code)>262144)throw new Error("Code exceeds 256 KiB");
+  if(typeof stdin!=="string"||Buffer.byteLength(stdin)>262144)throw new Error("stdin exceeds 256 KiB");
 
   const session=prepareWorktree(repoDir||jobsDir);
   const started=Date.now();
@@ -101,7 +103,7 @@ export async function runCode({language,code},{
       const compiled=await execute(spec.compile,{cwd:session.dir,timeoutMs,maxOutputBytes,isolated:isolate,useCgroups,memoryLimitBytes,cpuQuotaPercent});
       if(compiled.code!==0)return {...compiled,stage:"compile",durationMs:Date.now()-started};
     }
-    const ran=await execute(spec.run,{cwd:session.dir,timeoutMs,maxOutputBytes,isolated:isolate,useCgroups,memoryLimitBytes,cpuQuotaPercent});
+    const ran=await execute(spec.run,{cwd:session.dir,stdin,timeoutMs,maxOutputBytes,isolated:isolate,useCgroups,memoryLimitBytes,cpuQuotaPercent});
     return {...ran,stage:"run",durationMs:Date.now()-started};
   }finally{
     cleanupWorktree(session);

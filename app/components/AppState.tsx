@@ -1,5 +1,7 @@
 "use client";
 
+import {createId} from "../lib/id";
+
 import {createContext, ReactNode, useContext, useEffect, useState} from "react";
 import {showUnavailable} from "./ServiceNotice";
 import {flushQueue, queueOfflineCapture, queueRequest} from "../lib/offlineQueue";
@@ -43,7 +45,7 @@ const storageKey="noema-state-v3",staleStorageKeys=["noema-state-v2","lifeos-sta
 const Context=createContext<AppState|null>(null);
 
 async function api(path:string,method="GET",value?:unknown,key?:string){
-  const response=await fetch(`/api/v1${path}`,{method,headers:value?{"Content-Type":"application/json","Idempotency-Key":key||crypto.randomUUID()}:undefined,body:value?JSON.stringify(value):undefined});
+  const response=await fetch(`/api/v1${path}`,{method,headers:value?{"Content-Type":"application/json","Idempotency-Key":key||createId()}:undefined,body:value?JSON.stringify(value):undefined});
   if(!response.ok){const error=new Error((await response.json()).error?.message||"Backend request failed") as Error&{status?:number};error.status=response.status;throw error}
   return response.json();
 }
@@ -67,7 +69,7 @@ export function AppStateProvider({children}:{children:ReactNode}) {
     return()=>{window.removeEventListener("online",online);clearInterval(timer)};
   },[]);
 
-  const persist=(path:string,method:string,value:unknown)=>{const idempotencyKey=crypto.randomUUID();void api(path,method,value,idempotencyKey).catch(error=>{if(!error.status||error.status>=500)void queueRequest({path,method,body:value,idempotencyKey,dependencies:[]});showUnavailable(`${error.message} Your change remains saved in this browser and will retry when the server is reachable.`)});};
+  const persist=(path:string,method:string,value:unknown)=>{const idempotencyKey=createId();void api(path,method,value,idempotencyKey).catch(error=>{if(!error.status||error.status>=500)void queueRequest({path,method,body:value,idempotencyKey,dependencies:[]});showUnavailable(`${error.message} Your change remains saved in this browser and will retry when the server is reachable.`)});};
   const patchCapture=(id:string,patch:Partial<Capture>)=>setData(current=>({...current,captures:current.captures.map(item=>item.id===id?{...item,...patch}:item)}));
   const interpret=(capture:Capture)=>api(`/captures/${capture.id}/interpret`,"POST",{}).then(({jobId})=>{patchCapture(capture.id,{jobId});
     const source=new EventSource(`/api/v1/jobs/${jobId}/events`),close=(patch:Partial<Capture>)=>{source.close();patchCapture(capture.id,patch)};
@@ -87,10 +89,10 @@ export function AppStateProvider({children}:{children:ReactNode}) {
   });
   const calendarItems:CalendarItem[]=[...data.events.map(event=>({kind:"event" as const,event})),...data.tasks.filter(task=>!task.archived&&(task.dueAt||task.scheduledStartAt)).map(task=>({kind:"task" as const,task}))];
   const value:AppState={...data,calendarItems,
-    addCapture:text=>{const capture={id:crypto.randomUUID(),text,createdAt:new Date().toISOString(),status:"review" as const,source:"typed" as const,sourceLabel:"Typed capture",objects:[],version:1};setData(current=>({...current,captures:[capture,...current.captures]}));persist("/captures","POST",capture);return capture.id},
-    addAndInterpretCapture:text=>{const capture={id:crypto.randomUUID(),text,createdAt:new Date().toISOString(),status:"processing" as const,source:"typed" as const,sourceLabel:"Typed capture",objects:[],progress:10,version:1};setData(current=>({...current,captures:[capture,...current.captures]}));api("/captures","POST",capture).then(()=>interpret(capture)).catch(error=>{showUnavailable(`${error.message} The capture remains saved in this browser.`);patchCapture(capture.id,{status:"failed",error:error.message,progress:undefined})});return capture.id},
+    addCapture:text=>{const capture={id:createId(),text,createdAt:new Date().toISOString(),status:"review" as const,source:"typed" as const,sourceLabel:"Typed capture",objects:[],version:1};setData(current=>({...current,captures:[capture,...current.captures]}));persist("/captures","POST",capture);return capture.id},
+    addAndInterpretCapture:text=>{const capture={id:createId(),text,createdAt:new Date().toISOString(),status:"processing" as const,source:"typed" as const,sourceLabel:"Typed capture",objects:[],progress:10,version:1};setData(current=>({...current,captures:[capture,...current.captures]}));api("/captures","POST",capture).then(()=>interpret(capture)).catch(error=>{showUnavailable(`${error.message} The capture remains saved in this browser.`);patchCapture(capture.id,{status:"failed",error:error.message,progress:undefined})});return capture.id},
     addFileCapture:file=>{const size=file.size>1024*1024?`${(file.size/1048576).toFixed(1)} MB`:`${Math.max(1,Math.round(file.size/1024))} KB`;const kind=file.type.startsWith("image/")?"Image":file.type.startsWith("audio/")?"Audio":file.type==="application/pdf"?"Document":"File";
-      const capture={id:crypto.randomUUID(),text:file.name,createdAt:new Date().toISOString(),status:"review" as const,source:"file" as const,sourceLabel:`${kind} · ${size}`,objects:[],version:1};
+      const capture={id:createId(),text:file.name,createdAt:new Date().toISOString(),status:"review" as const,source:"file" as const,sourceLabel:`${kind} · ${size}`,objects:[],version:1};
       setData(current=>({...current,captures:[capture,...current.captures]}));
       const form=new FormData();form.append("file",file);
       fetch("/api/v1/assets",{method:"POST",body:form}).then(async response=>{if(!response.ok)throw new Error((await response.json()).error?.message||"Upload failed");return response.json()})
@@ -103,7 +105,7 @@ export function AppStateProvider({children}:{children:ReactNode}) {
       patchCapture(id,{status:"confirmed"});
       api(`/captures/${id}/apply`,"POST",{}).then(result=>applyObjects(result.created||[])).catch(error=>{
         showUnavailable(`${error.message} Interpreted objects were created in this browser only.`);
-        applyObjects(capture.objects.map(object=>({type:object.type,object:object.type==="task"?{id:crypto.randomUUID(),title:object.title,project:"Inbox",due:"No date",priority:"Medium",completed:false,version:1}:object.type==="event"?{id:crypto.randomUUID(),title:object.title,day:new Date().getDay(),time:"09:00",top:0,height:58,location:undefined,active:false,version:1}:{id:crypto.randomUUID(),title:object.title,excerpt:object.detail.slice(0,140),content:object.detail||object.title,tags_json:"[]",updated_at:new Date().toISOString(),ai:true,version:1}})));
+        applyObjects(capture.objects.map(object=>({type:object.type,object:object.type==="task"?{id:createId(),title:object.title,project:"Inbox",due:"No date",priority:"Medium",completed:false,version:1}:object.type==="event"?{id:createId(),title:object.title,day:new Date().getDay(),time:"09:00",top:0,height:58,location:undefined,active:false,version:1}:{id:createId(),title:object.title,excerpt:object.detail.slice(0,140),content:object.detail||object.title,tags_json:"[]",updated_at:new Date().toISOString(),ai:true,version:1}})));
       });
     },
     cancelInterpretation:id=>{const capture=data.captures.find(item=>item.id===id);if(!capture?.jobId)return;void api(`/jobs/${capture.jobId}/cancel`,"POST",{}).catch(error=>showUnavailable(error.message))},

@@ -1,4 +1,6 @@
 "use client";
+
+import {createId} from "../lib/id";
 import {useEffect,useRef,useState} from "react";
 import {ArrowCounterClockwise,ArrowClockwise,FloppyDisk,Plus} from "@phosphor-icons/react";
 import {useAppState} from "./AppState";
@@ -17,9 +19,9 @@ export default function InfiniteCanvas(){
   useEffect(()=>{fetch("/api/v1/canvases").then(async response=>{if(!response.ok)throw new Error("Canvas load failed");return response.json()}).then(({canvases})=>{setCanvas(canvases[0]||blank);setStatus(canvases.length?"Saved":"New canvas")}).catch(error=>setStatus(error.message))},[]);
   function commit(next:Canvas){setHistory(values=>[...values.slice(-49),canvas]);setFuture([]);setCanvas(next);schedule(next)}
   function schedule(next:Canvas){if(timer.current)clearTimeout(timer.current);setStatus("Unsaved changes");timer.current=setTimeout(()=>void save(next),500)}
-  async function save(next=canvas){const response=await fetch(next.id?`/api/v1/canvases/${next.id}`:"/api/v1/canvases",{method:next.id?"PATCH":"POST",headers:{"Content-Type":"application/json","Idempotency-Key":crypto.randomUUID()},body:JSON.stringify(next)});const data=await response.json();if(response.status===409){setStatus("Changed elsewhere — reload before saving");return}if(!response.ok){setStatus(data.error?.message||"Save failed");return}setCanvas(current=>current.version===next.version||!current.id?data:current);setStatus("Saved")}
-  function add(type:Kind="text"){commit({...canvas,objects:[...canvas.objects,{id:crypto.randomUUID(),type,x:(-canvas.viewport.x+120)/canvas.viewport.zoom,y:(-canvas.viewport.y+100)/canvas.viewport.zoom,width:220,height:120,title:`New ${type}`}]})}
-  function addLinked(refId:string){const link=links.find(item=>item.id===refId);if(!link)return;commit({...canvas,objects:[...canvas.objects,{id:crypto.randomUUID(),type:link.type,refId:link.id,title:link.title,x:(-canvas.viewport.x+120)/canvas.viewport.zoom,y:(-canvas.viewport.y+100)/canvas.viewport.zoom,width:220,height:120}]})}
+  async function save(next=canvas){const response=await fetch(next.id?`/api/v1/canvases/${next.id}`:"/api/v1/canvases",{method:next.id?"PATCH":"POST",headers:{"Content-Type":"application/json","Idempotency-Key":createId()},body:JSON.stringify(next)});const data=await response.json();if(response.status===409){setStatus("Changed elsewhere — reload before saving");return}if(!response.ok){setStatus(data.error?.message||"Save failed");return}setCanvas(current=>current.version===next.version||!current.id?data:current);setStatus("Saved")}
+  function add(type:Kind="text"){commit({...canvas,objects:[...canvas.objects,{id:createId(),type,x:(-canvas.viewport.x+120)/canvas.viewport.zoom,y:(-canvas.viewport.y+100)/canvas.viewport.zoom,width:220,height:120,title:`New ${type}`}]})}
+  function addLinked(refId:string){const link=links.find(item=>item.id===refId);if(!link)return;commit({...canvas,objects:[...canvas.objects,{id:createId(),type:link.type,refId:link.id,title:link.title,x:(-canvas.viewport.x+120)/canvas.viewport.zoom,y:(-canvas.viewport.y+100)/canvas.viewport.zoom,width:220,height:120}]})}
   function undo(){const previous=history.at(-1);if(!previous)return;setFuture(values=>[canvas,...values]);setHistory(values=>values.slice(0,-1));setCanvas(previous);schedule(previous)}
   function redo(){const next=future[0];if(!next)return;setHistory(values=>[...values,canvas]);setFuture(values=>values.slice(1));setCanvas(next);schedule(next)}
   function moveSelected(dx:number,dy:number){if(!selected)return;commit({...canvas,objects:canvas.objects.map(item=>item.id===selected?{...item,x:item.x+dx/canvas.viewport.zoom,y:item.y+dy/canvas.viewport.zoom}:item)})}

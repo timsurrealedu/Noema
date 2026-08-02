@@ -174,7 +174,7 @@ test("vault task syntax infers Jakarta dates and preserves unsupported tokens",a
 test("vault task parser ignores empty checkboxes",async()=>{const {parseVaultTask}=await import("../server/vault.mjs");assert.equal(parseVaultTask("- [ ] ","TODO/Inbox.md"),null);assert.equal(parseVaultTask("- [x] ^empty","TODO/Inbox.md"),null)});
 
 test("compiler runs supported code with limits and rejects unsafe languages",async()=>{
-  const dir=temp();const {runCode}=await import("../server/compiler.mjs");try{const result=await runCode({language:"javascript",code:"console.log(6 * 7)"},{enabled:true,isolate:false,jobsDir:dir,timeoutMs:3000,maxOutputBytes:1024});assert.equal(result.code,0);assert.equal(result.output.trim(),"42");await assert.rejects(()=>runCode({language:"shell",code:"id"},{enabled:true,isolate:false,jobsDir:dir}),/Unsupported language/)}finally{rmSync(dir,{recursive:true,force:true})}
+  const dir=temp();const {runCode}=await import("../server/compiler.mjs");try{const result=await runCode({language:"javascript",code:"console.log(6 * 7)"},{enabled:true,isolate:false,jobsDir:dir,timeoutMs:3000,maxOutputBytes:1024});assert.equal(result.code,0);assert.equal(result.output.trim(),"42");const bash=await runCode({language:"bash",code:"read value; printf '%s' \"$value\"",stdin:"hello\n"},{enabled:true,isolate:false,jobsDir:dir,timeoutMs:3000,maxOutputBytes:1024});assert.equal(bash.output,"hello");await assert.rejects(()=>runCode({language:"shell",code:"id"},{enabled:true,isolate:false,jobsDir:dir}),/Unsupported language/)}finally{rmSync(dir,{recursive:true,force:true})}
 });
 
 test("compiler uses a git worktree when repoDir is a repository",async()=>{

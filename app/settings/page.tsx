@@ -1,5 +1,7 @@
 "use client";
 
+import {createId} from "../lib/id";
+
 import {FormEvent,useEffect,useState} from "react";
 import {Check,Database,DownloadSimple,FolderOpen,Key,Lock,Monitor,ShieldCheck,SlidersHorizontal,User} from "@phosphor-icons/react";
 import {ModuleShell} from "../components/ModuleShell";
@@ -23,7 +25,7 @@ export default function SettingsPage(){
   const load=()=>Promise.all([request("/api/v1/settings"),request("/api/v1/auth/sessions"),request("/api/v1/auth/totp"),request("/api/v1/integrations/google"),request("/api/v1/calendar-sync"),request("/api/v1/analytics"),request("/api/v1/vault-sources")]).then(([value,active,status,connection,syncStatus,analyticsStatus,vaultStatus])=>{setSettings(value);setSessions(active.sessions);setMfa(status);setGoogle(connection);setSync(syncStatus);setAnalytics(analyticsStatus);setVaults(vaultStatus.sources)}).catch(reason=>setError(reason.message));
   useEffect(()=>{void load()},[]);
   const patch=(group:keyof Settings,key:string,value:unknown)=>setSettings(current=>current?{...current,[group]:{...(current[group] as object),[key]:value}}:current);
-  async function save(){if(!settings)return;setError("");try{const saved=await request("/api/v1/settings",{method:"PATCH",headers:{"Content-Type":"application/json","Idempotency-Key":crypto.randomUUID()},body:JSON.stringify(settings)});setSettings({...settings,...saved});setMessage("Saved")}catch(reason){setError((reason as Error).message)}}
+  async function save(){if(!settings)return;setError("");try{const saved=await request("/api/v1/settings",{method:"PATCH",headers:{"Content-Type":"application/json","Idempotency-Key":createId()},body:JSON.stringify(settings)});setSettings({...settings,...saved});setMessage("Saved")}catch(reason){setError((reason as Error).message)}}
   async function changePassword(event:FormEvent<HTMLFormElement>){event.preventDefault();const form=new FormData(event.currentTarget);try{await request("/api/v1/settings/password",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({currentPassword:form.get("currentPassword"),newPassword:form.get("newPassword")})});event.currentTarget.reset();setMessage("Password changed; other sessions were revoked.");void load()}catch(reason){setError((reason as Error).message)}}
   async function startMfa(){try{setEnrollment(await request("/api/v1/auth/totp",{method:"POST",headers:{"Content-Type":"application/json"},body:"{}"}))}catch(reason){setError((reason as Error).message)}}
   async function confirmMfa(event:FormEvent<HTMLFormElement>){event.preventDefault();const code=new FormData(event.currentTarget).get("code");try{const result=await request("/api/v1/auth/totp",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code})});setRecovery(result.recoveryCodes);setEnrollment(null);void load()}catch(reason){setError((reason as Error).message)}}

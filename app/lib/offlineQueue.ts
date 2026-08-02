@@ -1,5 +1,7 @@
 "use client";
 
+import {createId} from "./id";
+
 export type QueueStatus="pending"|"replaying"|"failed"|"conflict";
 export type QueuedRequest={id:string;path:string;method:string;body:unknown;idempotencyKey:string;dependencies:string[];retryCount:number;status:QueueStatus;createdAt:string;error?:string};
 export type OfflineCapture={id:string;kind:"capture";capture:Record<string,unknown>;blob:Blob;fileName:string;mime:string;idempotencyKey:string;retryCount:number;status:QueueStatus;createdAt:string;error?:string};
@@ -19,8 +21,8 @@ async function registerSync(){try{const registration=await navigator.serviceWork
 export async function listQueued(){return requestResult<QueuedRequest[]>((await store(mutationStore,"readonly")).index("createdAt").getAll())}
 export async function listOfflineCaptures(){return requestResult<OfflineCapture[]>((await store(captureStore,"readonly")).index("createdAt").getAll())}
 export async function listPending(){return [...await listQueued(),...await listOfflineCaptures()].sort((a,b)=>a.createdAt.localeCompare(b.createdAt))}
-export async function queueRequest(input:Omit<QueuedRequest,"id"|"retryCount"|"status"|"createdAt">){const item:QueuedRequest={...input,id:crypto.randomUUID(),retryCount:0,status:"pending",createdAt:new Date().toISOString()};await requestResult((await store(mutationStore,"readwrite")).add(item));announce();await registerSync();return item.id}
-export async function queueOfflineCapture(capture:Record<string,unknown>,file:File){const item:OfflineCapture={id:String(capture.id),kind:"capture",capture,blob:file,fileName:file.name,mime:file.type||"application/octet-stream",idempotencyKey:crypto.randomUUID(),retryCount:0,status:"pending",createdAt:new Date().toISOString()};await requestResult((await store(captureStore,"readwrite")).put(item));announce();await registerSync();return item.id}
+export async function queueRequest(input:Omit<QueuedRequest,"id"|"retryCount"|"status"|"createdAt">){const item:QueuedRequest={...input,id:createId(),retryCount:0,status:"pending",createdAt:new Date().toISOString()};await requestResult((await store(mutationStore,"readwrite")).add(item));announce();await registerSync();return item.id}
+export async function queueOfflineCapture(capture:Record<string,unknown>,file:File){const item:OfflineCapture={id:String(capture.id),kind:"capture",capture,blob:file,fileName:file.name,mime:file.type||"application/octet-stream",idempotencyKey:createId(),retryCount:0,status:"pending",createdAt:new Date().toISOString()};await requestResult((await store(captureStore,"readwrite")).put(item));announce();await registerSync();return item.id}
 export async function saveInkDraft(draft:Omit<InkDraft,"updatedAt">){await requestResult((await store(inkStore,"readwrite")).put({...draft,updatedAt:new Date().toISOString()}))}
 export async function loadInkDraft(id:string){return requestResult<InkDraft|undefined>((await store(inkStore,"readonly")).get(id))}
 export async function deleteInkDraft(id:string){await requestResult((await store(inkStore,"readwrite")).delete(id))}

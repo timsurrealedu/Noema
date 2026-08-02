@@ -5,6 +5,7 @@ const path=require("node:path");
 
 const root=path.join(__dirname,"..");
 const read=file=>fs.readFileSync(path.join(root,file),"utf8");
+const files=dir=>fs.readdirSync(path.join(root,dir),{withFileTypes:true}).flatMap(entry=>entry.isDirectory()?files(path.join(dir,entry.name)):[path.join(dir,entry.name)]);
 
 test("core frontend routes exist",()=>{
   for(const route of ["automations","calendar","capture","coding","settings","study","tasks","vault"])
@@ -23,8 +24,8 @@ test("coding compiler workspace exists",()=>{
   assert.match(read("app/coding/compiler/page.tsx"),/\/api\/v1\/compiler\/run/);
 });
 
-test("compiler requires an exact reviewable approval before execution",()=>{
-  const page=read("app/coding/compiler/page.tsx"),route=read("app/api/v1/compiler/run/route.ts");assert.match(page,/\/api\/v1\/approvals/);assert.match(page,/Affected files/);assert.match(page,/Approval required/);assert.match(route,/consumeApproval/);
+test("compiler executes in one tap without weakening repository approvals",()=>{
+  const page=read("app/coding/compiler/page.tsx"),route=read("app/api/v1/compiler/run/route.ts");assert.doesNotMatch(page,/\/api\/v1\/approvals/);assert.doesNotMatch(route,/consumeApproval|requireMfa/);assert.match(route,/requireWorkspace\(request,"editor"\)/);
 });
 
 test("Coding dashboard uses persisted repositories and approvals",()=>{const page=read("app/coding/page.tsx");assert.match(page,/\/api\/v1\/approvals/);assert.match(page,/\/api\/v1\/repositories/);assert.match(page,/NOEMA_REPOSITORY_ROOTS/);assert.match(page,/Approval history/);assert.doesNotMatch(page,/Run staging database migration|Approve once|const sessions=/) });
@@ -56,6 +57,7 @@ test("composite search and capture fields use one visible focus boundary",()=>{c
 test("task view selector is functional and selected view is not repeated on mobile",()=>{const tasks=read("app/tasks/page.tsx"),css=read("app/globals.css");assert.match(tasks,/<select[^>]*aria-label="Task view"/);assert.match(tasks,/onChange=\{event=>setFilter\(event\.target\.value\)\}/);assert.match(css,/\.task-list \.list-title h3\{display:none\}/)});
 
 test("Vault note IDs work without crypto.randomUUID",()=>{const vault=read("app/vault/page.tsx"),ids=read("app/lib/id.ts");assert.match(vault,/createId\(\)/);assert.match(ids,/typeof crypto\.randomUUID===\"function\"/);assert.match(ids,/crypto\.getRandomValues/)});
+test("browser code uses the HTTP-safe createId fallback",()=>{for(const file of files("app").filter(file=>/\.(?:ts|tsx)$/.test(file))){if(file!=="app/lib/id.ts")assert.doesNotMatch(read(file),/crypto\.randomUUID\(\)/,file)}});
 test("Vault opens tree notes even before their summaries hydrate",()=>{const organizer=read("app/components/VaultOrganizer.tsx"),vault=read("app/vault/page.tsx");assert.match(organizer,/notes\.find\(note=>note\.id===id\)\|\|/);assert.match(vault,/Could not open note/);assert.doesNotMatch(vault,/catch\{\}/)});
 
 test("global search exposes optional attributed semantic ranking",()=>{const shell=read("app/components/ModuleShell.tsx"),route=read("app/api/v1/search/route.ts"),search=read("server/search.mjs");assert.match(shell,/Semantic ranking/);assert.match(shell,/configured OpenAI embedding model/);assert.match(shell,/ranking\.source/);assert.match(route,/semantic:params\.get\("semantic"\)===\"true\"/);assert.match(search,/SQLite FTS\/LIKE/);assert.match(search,/selected\.add/);assert.match(search,/fallback:/) });
