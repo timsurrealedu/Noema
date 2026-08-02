@@ -1,18 +1,20 @@
 "use client";
 
 import {ChangeEvent, useEffect, useRef, useState} from "react";
+import dynamic from "next/dynamic";
 import {ArrowLeft, ArrowsIn, ArrowsOut, BookOpen, Clock, DownloadSimple, FileText, Folder, MagnifyingGlass, Plus, Sparkle, Star, Tag, Trash, UploadSimple, X} from "@phosphor-icons/react";
 import {ModuleShell} from "../components/ModuleShell";
 import {Note, useAppState} from "../components/AppState";
-import {TutorPanel} from "../components/TutorPanel";
-import {MarkdownContent} from "../components/MarkdownContent";
 import {createId} from "../lib/id";
-import {MixedNoteEditor} from "../components/MixedNoteEditor";
 import {VaultOrganizer} from "../components/VaultOrganizer";
 import {MarkdownToolbar} from "../components/MarkdownToolbar";
 import {markdownKey} from "../lib/markdownEdit";
 import {WikilinkCompletion} from "../components/WikilinkCompletion";
 import {NoteAttachmentButton} from "../components/NoteAttachmentButton";
+
+const TutorPanel=dynamic(()=>import("../components/TutorPanel").then(module=>module.TutorPanel));
+const MarkdownContent=dynamic(()=>import("../components/MarkdownContent").then(module=>module.MarkdownContent));
+const MixedNoteEditor=dynamic(()=>import("../components/MixedNoteEditor").then(module=>module.MixedNoteEditor));
 
 const blankNote=():Note=>({id:createId(),title:"Untitled note",excerpt:"",content:"# Untitled note\n\n",tags:[],time:"Now",ai:false,source:"Created in Noema"});
 type Optimization={id:string;mode:string;state:string;before_content:string;after_content:string|null;summary:string|null;provider:string|null;error:string|null};

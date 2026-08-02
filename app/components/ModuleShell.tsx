@@ -35,7 +35,6 @@ export function ModuleShell({active,title,action,assistantContext,children}:{act
   const [searchError,setSearchError]=useState("");
   const [semanticSearch,setSemanticSearch]=useState(false),[rankingSource,setRankingSource]=useState("");
   useEffect(()=>{const saved=localStorage.getItem("noema-theme") as "dark"|"light"|null;if(saved)setTheme(saved)},[]);
-  useEffect(()=>{const prefetch=()=>["/","/capture","/tasks","/calendar","/vault"].forEach(path=>router.prefetch(path)),idle=window.requestIdleCallback(prefetch);return()=>window.cancelIdleCallback(idle)},[router]);
   useEffect(()=>{const area=active.toLowerCase(),allowed=new Set(["today","capture","tasks","calendar","vault","graph","study","projects","coding","automations","dashboards","plugins","collaboration","settings"]);if(allowed.has(area))void fetch("/api/v1/analytics",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({event:"navigation",properties:{area}})}).catch(()=>{})},[active]);
   useEffect(()=>{document.documentElement.dataset.theme=theme;localStorage.setItem("noema-theme",theme)},[theme]);
   useEffect(()=>{const key=(event:KeyboardEvent)=>{if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==="k"){event.preventDefault();setPalette(true)}if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==="j"){event.preventDefault();setAssistant(true)}if(event.key==="Escape"){setPalette(false);setNotifications(false);setAssistant(false)}};addEventListener("keydown",key);return()=>removeEventListener("keydown",key)},[]);

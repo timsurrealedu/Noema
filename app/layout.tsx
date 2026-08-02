@@ -3,6 +3,7 @@ import "./globals.css";
 import {AppStateProvider} from "./components/AppState";
 import {PWARegister} from "./components/PWARegister";
 import {ServiceNotice} from "./components/ServiceNotice";
+import {NavigationWarmup} from "./components/NavigationWarmup";
 
 export const metadata: Metadata = {
   title: "Noema — Today",
@@ -13,5 +14,5 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {themeColor:"#0b0d0e", colorScheme:"dark light"};
 
 export default function RootLayout({children}:{children:React.ReactNode}) {
-  return <html lang="en"><body><AppStateProvider>{children}<PWARegister/><ServiceNotice/></AppStateProvider></body></html>;
+  return <html lang="en"><body><AppStateProvider>{children}<NavigationWarmup/><PWARegister/><ServiceNotice/></AppStateProvider></body></html>;
 }
