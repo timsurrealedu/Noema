@@ -10,6 +10,7 @@ import Link from "next/link";
 import {FormEvent, useEffect, useRef, useState} from "react";
 import {useAppState} from "./components/AppState";
 import {ModalDialog} from "./components/ModalDialog";
+import {HandwritingCapture} from "./components/HandwritingCapture";
 import {showUnavailable} from "./components/ServiceNotice";
 
 const nav = [
@@ -25,6 +26,7 @@ export default function Today() {
   const [reviewId,setReviewId] = useState<string|null>(null);
   const [recording,setRecording] = useState(false);
   const [palette,setPalette] = useState(false);
+  const [handwriting,setHandwriting] = useState(false);
   const input = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const recorder = useRef<MediaRecorder|null>(null);
@@ -88,7 +90,7 @@ export default function Today() {
         <input ref={input} id="capture" name="quick-capture" type="text" inputMode="text" autoComplete="off" autoCapitalize="sentences" spellCheck value={capture} onChange={e=>setCapture(e.target.value)} placeholder="Capture a thought, task, event, file, or command…"/>
         <button type="button" className="capture-tool" aria-label="Attach a file" onClick={()=>fileInput.current?.click()}><Paperclip/></button>
         <input ref={fileInput} type="file" hidden aria-hidden="true" tabIndex={-1} onChange={e=>{const file=e.target.files?.[0];if(file)addFileCapture(file);e.target.value=""}}/>
-        <Link className="capture-tool" aria-label="Write a handwritten note" href="/vault?new=ink"><PenNib/></Link>
+        <button type="button" className="capture-tool" aria-label="Write a handwritten note" onClick={()=>setHandwriting(true)}><PenNib/></button>
         <button type="button" className="capture-tool" aria-label={recording?"Stop recording":"Record voice"} aria-pressed={recording} onClick={()=>void toggleRecording()}><Microphone/></button>
         <button className="send" disabled={!capture.trim()} aria-label="Process capture"><PaperPlaneTilt/></button>
         <kbd>⌘ ⇧ C</kbd>
@@ -122,5 +124,6 @@ export default function Today() {
     </nav>
 
     {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus aria-label="Search commands" placeholder="Search Noema or run a command…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><p>Quick actions</p>{([["New capture","#capture",Plus,"⌘ ⇧ C"],["Add task","/tasks",CheckSquare,"⌘ ⇧ T"],["Open calendar","/calendar",CalendarBlank,"G C"],["Search vault","/vault",Folder,"G V"]] as const).map(([label,href,Icon,key])=><Link href={href} onClick={()=>setPalette(false)} key={label}><Icon/><span>{label}</span><kbd>{key}</kbd></Link>)}</ModalDialog>}
+    {handwriting&&<HandwritingCapture onClose={()=>setHandwriting(false)}/>}
   </div>;
 }
