@@ -16,7 +16,7 @@ export type CaptureSource = "typed"|"voice"|"file"|"link"|"handwriting";
 export type CaptureObject = {id?:string; type:"task"|"event"|"note"|"vault"; title:string; detail:string; confidence?:number; sourceReferences?:string[]; arguments?:Record<string,unknown>};
 export type Capture = {
   id:string; text:string; createdAt:string; status:"queued"|"processing"|"review"|"confirmed"|"failed"|"dismissed";
-  source:CaptureSource; sourceLabel:string; progress?:number; error?:string; jobId?:string; objects:CaptureObject[]; assets?:{id:string;name:string;mime:string;size:number}[]; version?:number;
+  source:CaptureSource; sourceLabel:string; progress?:number; error?:string; jobId?:string; objects:CaptureObject[]; assets?:{id:string;name:string;mime:string;size:number}[]; handwriting?:{noteId:string;inkBlockId:string;state:string;title:string;path:string;folder:string;action:"summary"|"expansion"|null;confidence:number|null;provider:string|null}|null; version?:number;
 };
 export type Project = {id:string; name:string; status:"Active"|"Planned"|"Archived"; summary:string; version?:number};
 export type TaskDependency = {taskId:string; dependsOnTaskId:string; createdAt:string};

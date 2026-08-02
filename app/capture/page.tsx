@@ -8,12 +8,12 @@ import {
 import {Capture, CaptureSource, useAppState} from "../components/AppState";
 import {ModuleShell} from "../components/ModuleShell";
 
-const filters=["All","Needs review","Processing","Failed"] as const;
+const filters=["All","Needs review","Processing","Done","Failed"] as const;
 type Filter=(typeof filters)[number];
 
 const statusMeta={
   queued:{label:"Queued",Icon:CircleNotch}, processing:{label:"Processing",Icon:CircleNotch}, review:{label:"Needs review",Icon:Sparkle},
-  confirmed:{label:"Confirmed",Icon:CheckCircle}, failed:{label:"Failed",Icon:WarningCircle},
+  confirmed:{label:"Done",Icon:CheckCircle}, failed:{label:"Failed",Icon:WarningCircle},
   dismissed:{label:"Dismissed",Icon:X},
 } as const;
 const sourceMeta:Record<CaptureSource,{label:string;Icon:typeof Keyboard}>={
@@ -22,7 +22,7 @@ const sourceMeta:Record<CaptureSource,{label:string;Icon:typeof Keyboard}>={
 };
 
 function timeFor(value:string){return new Intl.DateTimeFormat("en-US",{hour:"numeric",minute:"2-digit",timeZone:"Asia/Jakarta"}).format(new Date(value))}
-function matches(capture:Capture,filter:Filter){return filter==="All"||capture.status===({"Needs review":"review","Processing":"processing","Failed":"failed"} as const)[filter as Exclude<Filter,"All">]}
+function matches(capture:Capture,filter:Filter){if(filter==="All")return true;if(filter==="Processing")return capture.status==="queued"||capture.status==="processing";return capture.status===({"Needs review":"review","Done":"confirmed","Failed":"failed"} as const)[filter]}
 
 export default function CaptureInbox(){
   const {addCapture,cancelInterpretation,captures,confirmCapture,requestInterpretation,updateCapture}=useAppState();
@@ -64,9 +64,10 @@ export default function CaptureInbox(){
         {selected?<>
           <header className="inspector-head"><button className="icon-button mobile-detail-back" aria-label="Back to capture list" onClick={()=>setDetailOpen(false)}><ArrowLeft/></button><div><span>Original capture</span><time>{timeFor(selected.createdAt)}</time></div><span className={`capture-source ${selected.source}`}><SourceIcon source={selected.source}/>{sourceMeta[selected.source].label}</span></header>
           <div className="original-capture"><p>{selected.text}</p><span>{selected.sourceLabel}</span></div>
-          {selected.status==="processing"&&<section className="processing-panel" aria-live="polite"><CircleNotch className="spin"/><div><strong>Interpreting this capture</strong><span>Reading the source and identifying useful objects.</span><i><b style={{width:`${selected.progress??28}%`}}/></i></div><em>{selected.progress??28}%</em>{selected.jobId&&<button className="secondary" onClick={()=>cancelInterpretation(selected.id)}>Cancel</button>}</section>}
+          {(selected.status==="queued"||selected.status==="processing")&&<section className="processing-panel" aria-live="polite"><CircleNotch className="spin"/><div><strong>{selected.status==="queued"?"Queued for processing":"Interpreting this capture"}</strong><span>{selected.status==="queued"?"The original ink is safely stored and waiting for Process Inbox.":"Reading the source and identifying useful objects."}</span><i><b style={{width:`${selected.progress??(selected.status==="queued"?8:28)}%`}}/></i></div><em>{selected.progress??(selected.status==="queued"?8:28)}%</em>{selected.jobId&&<button className="secondary" onClick={()=>cancelInterpretation(selected.id)}>Cancel</button>}</section>}
           {selected.status==="failed"&&<section className="failure-panel" role="alert"><WarningCircle/><div><strong>Processing failed</strong><p>{selected.error}</p></div><button className="secondary" onClick={()=>retry(selected)}><ArrowClockwise/>Try again</button></section>}
-          {(selected.status==="review"||selected.status==="confirmed")&&<>
+          {selected.status==="confirmed"&&selected.handwriting&&<section className="handwriting-result"><div className="interpretation-head"><div><Sparkle/><span><strong>{selected.handwriting.title}</strong><small>Handwriting processing complete.</small></span></div><span className="capture-status status-confirmed"><CheckCircle/>Done</span></div><dl><div><dt>Folder</dt><dd>{selected.handwriting.folder}</dd></div><div><dt>AI action</dt><dd>{selected.handwriting.action||"None"}</dd></div><div><dt>Confidence</dt><dd>{selected.handwriting.confidence===null?"Not applicable":`${Math.round(selected.handwriting.confidence*100)}%`}</dd></div><div><dt>Source ink</dt><dd>Editable · {selected.handwriting.inkBlockId}</dd></div></dl><a className="primary" href={`/vault?open=${selected.handwriting.noteId}`}>Open note<ArrowSquareOut/></a></section>}
+          {(selected.status==="review"||selected.status==="confirmed"&&!selected.handwriting)&&<>
             <section className="interpretation-head"><div><Sparkle/><span><strong>Interpretation</strong><small>{selected.status==="review"?"Check the detected objects before confirming.":"This interpretation has been confirmed."}</small></span></div><span className={`capture-status status-${selected.status}`}><StatusIcon capture={selected}/>{statusMeta[selected.status].label}</span></section>
             <section className="detected-objects" aria-labelledby="detected-title"><h3 id="detected-title">Detected objects <span>{selected.objects.length}</span></h3>{selected.objects.map((object,index)=><article key={`${object.type}-${index}`}><span className={`object-icon ${object.type}`}>{object.type==="task"?<CheckSquare/>:object.type==="event"?<CalendarBlank/>:<Note/>}</span><div><small>{object.type==="vault"?"Vault note":object.type}</small><strong>{object.title}</strong><p>{object.detail}</p></div><CheckCircle aria-label="Ready to confirm"/></article>)}</section>
             <section className="source-relationship"><h3>Source relationship</h3><div><SourceIcon source={selected.source}/><span><strong>Original source preserved</strong><small>{selected.sourceLabel}</small></span><Check/></div>{selected.assets?.map(asset=><div key={asset.id}><File/><span><strong>{asset.name}</strong><small>{asset.mime} · {asset.size>1048576?`${(asset.size/1048576).toFixed(1)} MB`:`${Math.max(1,Math.round(asset.size/1024))} KB`}</small></span><a className="row-action" href={`/api/v1/assets/${asset.id}`} target="_blank" rel="noreferrer" aria-label={`Open original ${asset.name}`}><ArrowSquareOut/></a></div>)}</section>
