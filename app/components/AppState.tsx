@@ -12,10 +12,10 @@ export type Event = {id:string; title:string; day:number; time:string; top:numbe
 export type CalendarItem={kind:"event";event:Event}|{kind:"task";task:Task};
 export type NoteBlockSummary={id:string;position:number;kind:"markdown"|"ink";version:number;width?:number;height?:number;transcript?:string;ocrStatus?:string};
 export type Note = {id:string; title:string; excerpt:string; content:string; tags:string[]; time:string; ai:boolean; draft?:boolean; source?:string; sourceId?:string|null; relativePath?:string|null; syncState?:string; blocks?:NoteBlockSummary[]; favorite?:boolean; trashed?:boolean; version?:number};
-export type CaptureSource = "typed"|"voice"|"file"|"link";
+export type CaptureSource = "typed"|"voice"|"file"|"link"|"handwriting";
 export type CaptureObject = {id?:string; type:"task"|"event"|"note"|"vault"; title:string; detail:string; confidence?:number; sourceReferences?:string[]; arguments?:Record<string,unknown>};
 export type Capture = {
-  id:string; text:string; createdAt:string; status:"processing"|"review"|"confirmed"|"failed"|"dismissed";
+  id:string; text:string; createdAt:string; status:"queued"|"processing"|"review"|"confirmed"|"failed"|"dismissed";
   source:CaptureSource; sourceLabel:string; progress?:number; error?:string; jobId?:string; objects:CaptureObject[]; assets?:{id:string;name:string;mime:string;size:number}[]; version?:number;
 };
 export type Project = {id:string; name:string; status:"Active"|"Planned"|"Archived"; summary:string; version?:number};

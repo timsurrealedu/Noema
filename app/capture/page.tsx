@@ -3,7 +3,7 @@
 import {useEffect, useMemo, useState} from "react";
 import {
   ArrowClockwise, ArrowLeft, ArrowSquareOut, CalendarBlank, Check, CheckCircle, CheckSquare,
-  CircleNotch, File, Globe, Keyboard, Microphone, Note, Plus, Sparkle, WarningCircle, X
+  CircleNotch, File, Globe, Keyboard, Microphone, Note, PenNib, Plus, Sparkle, WarningCircle, X
 } from "@phosphor-icons/react";
 import {Capture, CaptureSource, useAppState} from "../components/AppState";
 import {ModuleShell} from "../components/ModuleShell";
@@ -12,13 +12,13 @@ const filters=["All","Needs review","Processing","Failed"] as const;
 type Filter=(typeof filters)[number];
 
 const statusMeta={
-  processing:{label:"Processing",Icon:CircleNotch}, review:{label:"Needs review",Icon:Sparkle},
+  queued:{label:"Queued",Icon:CircleNotch}, processing:{label:"Processing",Icon:CircleNotch}, review:{label:"Needs review",Icon:Sparkle},
   confirmed:{label:"Confirmed",Icon:CheckCircle}, failed:{label:"Failed",Icon:WarningCircle},
   dismissed:{label:"Dismissed",Icon:X},
 } as const;
 const sourceMeta:Record<CaptureSource,{label:string;Icon:typeof Keyboard}>={
   typed:{label:"Typed",Icon:Keyboard}, voice:{label:"Voice",Icon:Microphone},
-  file:{label:"File",Icon:File}, link:{label:"Web link",Icon:Globe},
+  file:{label:"File",Icon:File}, link:{label:"Web link",Icon:Globe}, handwriting:{label:"Handwriting",Icon:PenNib},
 };
 
 function timeFor(value:string){return new Intl.DateTimeFormat("en-US",{hour:"numeric",minute:"2-digit",timeZone:"Asia/Jakarta"}).format(new Date(value))}

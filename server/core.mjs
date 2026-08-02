@@ -98,7 +98,7 @@ export function saveNote(input,db=getDatabase(),actor=null){
 }
 
 export function createCapture(input,db=getDatabase(),actor=null){
-  const context=actorInfo(actor),id=input.id||randomUUID(),text=required(input.text,"text",50000),source=["typed","voice","file","link"].includes(input.source)?input.source:"typed",time=stamp();
+  const context=actorInfo(actor),id=input.id||randomUUID(),text=required(input.text,"text",50000),source=["typed","voice","file","link","handwriting"].includes(input.source)?input.source:"typed",time=stamp();
   if(findOwned(db,"captures",id,context.workspaceId))throw Object.assign(new Error("Capture already exists"),{status:409});for(const assetId of (Array.isArray(input.assetIds)?input.assetIds:[]).slice(0,10))if(!getAsset(String(assetId),db,context.workspaceId))throw Object.assign(new Error(`Asset not found: ${assetId}`),{status:404});db.prepare("INSERT INTO captures(id,text,source,status,source_label,objects_json,created_at,updated_at,workspace_id) VALUES(?,?,?,?,?,?,?,?,?)").run(id,text,source,"review",input.sourceLabel||"Typed capture","[]",time,time,context.workspaceId);attachAssets(id,input.assetIds,db,context.workspaceId);audit(db,"create","capture",id,text.slice(0,120),{op:"delete"},actor);const capture={id,text,source,status:"review",sourceLabel:input.sourceLabel||"Typed capture",objects:[],assets:assetsForCapture(id,db,context.workspaceId).map(asset=>({id:asset.id,name:asset.name,mime:asset.mime,size:asset.size})),createdAt:time,version:1};runCaptureAutomations(capture,db,context.workspaceId);return capture;
 }
 
@@ -108,7 +108,7 @@ export async function createFileCapture(file,db=getDatabase(),actor=null){
 }
 
 export function updateCapture(id,status,version,db=getDatabase(),actor=null){
-  if(!["processing","review","confirmed","failed","dismissed"].includes(status))throw new Error("Invalid capture status");const context=actorInfo(actor),before=findOwned(db,"captures",id,context.workspaceId);if(!before)throw Object.assign(new Error("Capture not found"),{status:404});requireVersion({version},before,{db,type:"capture",actor});db.prepare(`UPDATE captures SET status=?,updated_at=?,version=version+1 WHERE id=?${context.workspaceId?" AND workspace_id=?":""}`).run(status,stamp(),id,...(context.workspaceId?[context.workspaceId]:[]));audit(db,"status","capture",id,status,{op:"capture-status",status:before.status},actor);return {ok:true,version:before.version+1};
+  if(!["queued","processing","review","confirmed","failed","dismissed"].includes(status))throw new Error("Invalid capture status");const context=actorInfo(actor),before=findOwned(db,"captures",id,context.workspaceId);if(!before)throw Object.assign(new Error("Capture not found"),{status:404});requireVersion({version},before,{db,type:"capture",actor});db.prepare(`UPDATE captures SET status=?,updated_at=?,version=version+1 WHERE id=?${context.workspaceId?" AND workspace_id=?":""}`).run(status,stamp(),id,...(context.workspaceId?[context.workspaceId]:[]));audit(db,"status","capture",id,status,{op:"capture-status",status:before.status},actor);return {ok:true,version:before.version+1};
 }
 
 const cleanTaskArguments=args=>({title:required(args.title,"task title",500),dueAt:args.dueAt?absolute(args.dueAt,"dueAt").toISOString():null,project:args.project?required(args.project,"project",200):null,linkedActionId:args.linkedActionId?required(args.linkedActionId,"linked action id",100):null});
