@@ -182,6 +182,7 @@ test("Settings loads and saves persisted account controls",()=>{
 });
 
 test("Settings connects Google and selects discovered calendars",()=>{const page=read("app/settings/page.tsx"),callback=read("app/api/v1/integrations/google/callback/route.ts");assert.match(page,/\/api\/v1\/integrations\/google\/connect/);assert.match(page,/Refresh calendars/);assert.match(page,/calendarIds/);assert.match(page,/Disconnect/);assert.match(callback,/completeGoogleOAuth/) });
+test("Settings explains when Google Calendar OAuth lacks server credentials",()=>{const settings=read("app/settings/page.tsx"),route=read("app/api/v1/integrations/google/route.ts");assert.match(route,/configured/);assert.match(settings,/Google OAuth credentials are not configured/);assert.match(settings,/google\.configured/)});
 
 test("Calendar sync exposes diagnostics and conflict counts",()=>{const page=read("app/settings/page.tsx"),route=read("app/api/v1/calendar-sync/route.ts");assert.match(page,/Sync now/);assert.match(page,/conflicts\.length/);assert.match(page,/lastSyncedAt/);assert.match(route,/pullGoogleCalendar/);assert.match(route,/calendarSyncStatus/) });
 

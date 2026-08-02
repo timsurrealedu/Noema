@@ -10,7 +10,7 @@ type Settings={email:string;profile:{name:string};preferences:{startPage:string;
 type Session={id:string;device:string;createdAt:string;expiresAt:string;current:boolean};
 type Mfa={enabled:boolean;enrollmentPending:boolean;recoveryCodes:number};
 type GoogleCalendar={id:string;name:string;timezone:string|null;accessRole:string;selected:boolean};
-type GoogleConnection={connected:boolean;email?:string;health?:string;lastError?:string|null;calendars:GoogleCalendar[]};
+type GoogleConnection={connected:boolean;configured?:boolean;email?:string;health?:string;lastError?:string|null;calendars:GoogleCalendar[]};
 type CalendarSync={calendars:{id:string;name:string;lastSyncedAt:string|null;lastError:string|null}[];conflicts:{id:string}[]};
 type Analytics={enabled:boolean;eventCount:number};
 type VaultSource={id:string;name:string;root_path:string;state:string;taskFolders:string[];last_sync_at:string|null;lastResult:{created:number;updated:number;written:number;conflicts:number;tasks:number}|null};
@@ -30,7 +30,7 @@ export default function SettingsPage(){
   async function regenerateRecovery(){try{const result=await request("/api/v1/auth/recovery",{method:"POST"});setRecovery(result.recoveryCodes);void load()}catch(reason){setError((reason as Error).message)}}
   async function disableMfa(event:FormEvent<HTMLFormElement>){event.preventDefault();const password=new FormData(event.currentTarget).get("password");try{await request("/api/v1/auth/totp",{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({password})});setRecovery([]);setMessage("Two-factor authentication disabled; recovery codes invalidated.");event.currentTarget.reset();void load()}catch(reason){setError((reason as Error).message)}}
   async function revoke(id:string){try{await request(`/api/v1/auth/sessions/${id}`,{method:"DELETE"});setSessions(current=>current.filter(item=>item.id!==id))}catch(reason){setError((reason as Error).message)}}
-  async function connectGoogle(){try{const result=await request("/api/v1/integrations/google/connect",{method:"POST"});location.assign(result.authorizationUrl)}catch(reason){setError((reason as Error).message)}}
+  async function connectGoogle(){if(!google.configured){setError("Google OAuth credentials are not configured on this Noema server.");return}try{const result=await request("/api/v1/integrations/google/connect",{method:"POST"});location.assign(result.authorizationUrl)}catch(reason){setError((reason as Error).message)}}
   async function discoverCalendars(){try{const result=await request("/api/v1/integrations/google/calendars");setGoogle(current=>({...current,calendars:result.calendars}))}catch(reason){setError((reason as Error).message)}}
   async function selectCalendar(id:string,selected:boolean){const ids=google.calendars.filter(item=>item.selected&&item.id!==id).map(item=>item.id);if(selected)ids.push(id);try{const result=await request("/api/v1/integrations/google/calendars",{method:"PUT",headers:{"Content-Type":"application/json"},body:JSON.stringify({calendarIds:ids})});setGoogle(current=>({...current,calendars:result.calendars}))}catch(reason){setError((reason as Error).message)}}
   async function disconnectGoogle(){try{await request("/api/v1/integrations/google",{method:"DELETE"});setGoogle({connected:false,calendars:[]})}catch(reason){setError((reason as Error).message)}}
