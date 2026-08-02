@@ -7,7 +7,7 @@ import {runScheduledWork} from "./worker/maintenance/index.mjs";
 
 export async function runOne(config=ensureDataDirs(loadConfig()),db=getDatabase(config)){
   const pushed=await runScheduledWork(config,db);
-  const job=claimJob(["interpret-capture","skill-run","note-optimize","handwriting-ocr"],120,db);if(!job)return pushed;
+  const job=claimJob(["interpret-capture","skill-run","note-optimize","handwriting-ocr","handwriting-intake"],120,db);if(!job)return pushed;
   try{assertNotCancelled(job.id,db)}catch(error){failJob(job.id,error,db);if(job.input.automationRunId)failAutomationSkillStep(job.input.automationRunId,job.input.automationRunStepId,"cancelled",null,db);return true}
   await processClaimedJob({job,config,db});return true;
 }
