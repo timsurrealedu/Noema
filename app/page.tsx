@@ -3,7 +3,7 @@
 import {
   Bell, BookOpen, CalendarBlank, CaretRight, Check, CheckSquare, Clock,
   Code, Command, FileText, Folder, Gear, House, Lightning, ListChecks,
-  MagnifyingGlass, Microphone, Moon, Paperclip, PaperPlaneTilt, Plus, Sparkle,
+  MagnifyingGlass, Microphone, Moon, Paperclip, PaperPlaneTilt, PenNib, Plus, Sparkle,
   Sun, Tray, UploadSimple, Warning, X
 } from "@phosphor-icons/react";
 import Link from "next/link";
@@ -88,6 +88,7 @@ export default function Today() {
         <input ref={input} id="capture" name="quick-capture" type="text" inputMode="text" autoComplete="off" autoCapitalize="sentences" spellCheck value={capture} onChange={e=>setCapture(e.target.value)} placeholder="Capture a thought, task, event, file, or command…"/>
         <button type="button" className="capture-tool" aria-label="Attach a file" onClick={()=>fileInput.current?.click()}><Paperclip/></button>
         <input ref={fileInput} type="file" hidden aria-hidden="true" tabIndex={-1} onChange={e=>{const file=e.target.files?.[0];if(file)addFileCapture(file);e.target.value=""}}/>
+        <Link className="capture-tool" aria-label="Write a handwritten note" href="/vault?new=ink"><PenNib/></Link>
         <button type="button" className="capture-tool" aria-label={recording?"Stop recording":"Record voice"} aria-pressed={recording} onClick={()=>void toggleRecording()}><Microphone/></button>
         <button className="send" disabled={!capture.trim()} aria-label="Process capture"><PaperPlaneTilt/></button>
         <kbd>⌘ ⇧ C</kbd>

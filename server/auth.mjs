@@ -59,6 +59,11 @@ export async function login({email,password,device="",totpCode="",recoveryCode="
   return {token,expiresAt:expires,user:{id:user.id,email:user.email}};
 }
 
+export function createFederatedSession(email,device="",db=getDatabase(),hours=720){
+  const user=db.prepare("SELECT id,email FROM users WHERE email=?").get(String(email).trim().toLowerCase());if(!user)throw Object.assign(new Error("Google account is not authorized"),{status:403});
+  const token=randomBytes(32).toString("base64url"),stamp=now(),expires=new Date(Date.now()+hours*3600000).toISOString();db.prepare("INSERT INTO sessions(id,user_id,token_hash,expires_at,device,created_at,mfa_verified_at) VALUES(?,?,?,?,?,?,NULL)").run(randomUUID(),user.id,hashToken(token),expires,String(device).slice(0,200),stamp);auditSecurity(db,user.id,"google-sign-in","Signed in with Google");return {token,expiresAt:expires,user};
+}
+
 export function authenticate(token,db=getDatabase()){
   if(!token)return null;return db.prepare("SELECT u.id,u.email,s.id session_id,s.expires_at,s.mfa_verified_at FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=? AND s.revoked_at IS NULL AND s.expires_at>?").get(hashToken(token),now())||null;
 }

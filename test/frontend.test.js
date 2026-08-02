@@ -12,6 +12,8 @@ test("core frontend routes exist",()=>{
 });
 
 test("capture review identifies vault-note proposals",()=>{const state=read("app/components/AppState.tsx"),page=read("app/capture/page.tsx");assert.match(state,/vault\.note\.create/);assert.match(page,/Vault note/)});
+test("Today opens a new handwritten Vault note",()=>{const today=read("app/page.tsx"),vault=read("app/components/VaultOrganizer.tsx"),editor=read("app/components/MixedNoteEditor.tsx");assert.match(today,/aria-label="Write a handwritten note"/);assert.match(today,/\/vault\?new=ink/);assert.match(vault,/get\("new"\)==="ink"/);assert.match(editor,/initialInk/)});
+test("Vault New note action is icon-only",()=>{const vault=read("app/components/VaultOrganizer.tsx");assert.match(vault,/aria-label="New note"/);assert.doesNotMatch(vault,/<FilePlus\/>New note/)});
 test("local worker loads the same environment as Next development",()=>assert.match(JSON.parse(read("package.json")).scripts.worker,/--env-file-if-exists=\.env\.local/));
 test("capture review refreshes its version after AI processing",()=>assert.match(read("app/components/AppState.tsx"),/version:job\.result\?\.captureVersion/));
 test("capture job results expose their safe capture version",()=>assert.match(read("app/api/v1/jobs/[id]/route.ts"),/captureVersion:job\.result\.captureVersion/));
@@ -173,6 +175,7 @@ test("login supports an optional authenticator challenge",()=>{
 });
 test("login only marks cookies Secure on HTTPS",()=>{const route=read("app/api/v1/auth/login/route.ts");assert.match(route,/new URL\(request\.url\)\.protocol===\"https:\"/);assert.doesNotMatch(route,/NODE_ENV===\"production\"/)});
 test("login offers explicit persistent or device-session cookies",()=>{const login=read("app/login/page.tsx"),route=read("app/api/v1/auth/login/route.ts");assert.match(login,/Keep me signed in on this device/);assert.match(login,/autoComplete="username"/);assert.doesNotMatch(login,/tim@example\.com/);assert.match(route,/input\.remember\s*!==\s*false/);assert.match(route,/remember\s*\?\s*`; Max-Age=/)});
+test("login offers owner-only Google sign-in",()=>{const page=read("app/login/page.tsx"),start=read("app/api/v1/auth/google/route.ts"),callback=read("app/api/v1/auth/google/callback/route.ts");assert.match(page,/Continue with Google/);assert.match(start,/beginGoogleSignIn/);assert.match(callback,/completeGoogleSignIn/);assert.match(callback,/NOEMA_OWNER_EMAIL/)});
 
 test("login and Settings expose recovery and MFA revocation controls",()=>{
   const login=read("app/login/page.tsx"),settings=read("app/settings/page.tsx");assert.match(login,/recoveryCode/);assert.match(login,/Use a recovery code/);assert.match(settings,/\/api\/v1\/auth\/recovery/);assert.match(settings,/method:"DELETE"/);assert.match(settings,/invalidates every recovery code/);

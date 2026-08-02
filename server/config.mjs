@@ -20,7 +20,7 @@ export function loadConfig(env=process.env){
     compilerIsolate:setting(env,"COMPILER_ISOLATE")!=="false",compilerUseCgroups:setting(env,"COMPILER_CGROUPS")==="true",compilerMemoryLimitBytes:Number(setting(env,"COMPILER_MEMORY_LIMIT_BYTES")||268435456),compilerCpuQuotaPercent:Number(setting(env,"COMPILER_CPU_QUOTA_PERCENT")||50),
     backupKey:setting(env,"BACKUP_KEY")||"",backupRetention:Number(setting(env,"BACKUP_RETENTION")||14),minFreeBytes:Number(setting(env,"MIN_FREE_BYTES")||1073741824),
     vapidPublicKey:setting(env,"VAPID_PUBLIC_KEY")||"",vapidPrivateKey:setting(env,"VAPID_PRIVATE_KEY")||"",vapidSubject:setting(env,"VAPID_SUBJECT")||"mailto:admin@localhost",
-    googleClientId:setting(env,"GOOGLE_CLIENT_ID")||"",googleClientSecret:setting(env,"GOOGLE_CLIENT_SECRET")||"",googleRedirectUri:setting(env,"GOOGLE_REDIRECT_URI")||"",
+    googleClientId:setting(env,"GOOGLE_CLIENT_ID")||"",googleClientSecret:setting(env,"GOOGLE_CLIENT_SECRET")||"",googleRedirectUri:setting(env,"GOOGLE_REDIRECT_URI")||"",googleLoginRedirectUri:setting(env,"GOOGLE_LOGIN_REDIRECT_URI")||"",
   };
   if(!Number.isFinite(config.sessionHours)||config.sessionHours<=0)throw new Error("NOEMA_SESSION_HOURS must be positive");
   if(config.totpSecret&&(config.totpSecret.length<32||!/^[A-Z2-7]+$/.test(config.totpSecret)))throw new Error("NOEMA_TOTP_SECRET must be at least 32 base32 characters");
