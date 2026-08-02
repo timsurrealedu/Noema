@@ -48,6 +48,8 @@ test("shared shell exposes keyboard search and accessible navigation",()=>{
 });
 
 test("mobile navigation exposes Coding and Automations",()=>{for(const file of ["app/components/ModuleShell.tsx","app/page.tsx"]){const page=read(file);assert.match(page,/\["Coding","\/coding",Code\]/);assert.match(page,/\["Automations","\/automations",Lightning\]/)}});
+test("tablet capture and navigation controls avoid credential UI and expose capture tools",()=>{const today=read("app/page.tsx"),shell=read("app/components/ModuleShell.tsx"),css=read("app/globals.css");assert.match(today,/name="quick-capture"/);assert.match(today,/autoComplete="off"/);assert.match(today,/\["Settings","\/settings",Gear\]/);assert.match(shell,/\["Settings","\/settings",Gear\]/);assert.match(css,/\.mobile-nav \.capture-nav svg\{[^}]*background:transparent/);assert.match(css,/\.capture-tool\{display:grid/)});
+test("task view selector is functional and selected view is not repeated on mobile",()=>{const tasks=read("app/tasks/page.tsx"),css=read("app/globals.css");assert.match(tasks,/<select[^>]*aria-label="Task view"/);assert.match(tasks,/onChange=\{event=>setFilter\(event\.target\.value\)\}/);assert.match(css,/\.task-list \.list-title h3\{display:none\}/)});
 
 test("Vault note IDs work without crypto.randomUUID",()=>{const vault=read("app/vault/page.tsx"),ids=read("app/lib/id.ts");assert.match(vault,/createId\(\)/);assert.match(ids,/typeof crypto\.randomUUID===\"function\"/);assert.match(ids,/crypto\.getRandomValues/)});
 
