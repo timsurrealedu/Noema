@@ -6,7 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "worker": "node server/worker.mjs",
+    "worker": "node --env-file-if-exists=.env.local server/worker.mjs",
     "lint": "next lint",
     "test": "npm run test:unit && npm run test:browser",
     "test:unit": "npm run test:backend && npm run test:frontend",

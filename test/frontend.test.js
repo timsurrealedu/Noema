@@ -12,6 +12,7 @@ test("core frontend routes exist",()=>{
 });
 
 test("capture review identifies vault-note proposals",()=>{const state=read("app/components/AppState.tsx"),page=read("app/capture/page.tsx");assert.match(state,/vault\.note\.create/);assert.match(page,/Vault note/)});
+test("local worker loads the same environment as Next development",()=>assert.match(JSON.parse(read("package.json")).scripts.worker,/--env-file-if-exists=\.env\.local/));
 test("capture review refreshes its version after AI processing",()=>assert.match(read("app/components/AppState.tsx"),/version:job\.result\?\.captureVersion/));
 test("capture job results expose their safe capture version",()=>assert.match(read("app/api/v1/jobs/[id]/route.ts"),/captureVersion:job\.result\.captureVersion/));
 
