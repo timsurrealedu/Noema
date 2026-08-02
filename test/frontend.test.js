@@ -166,6 +166,7 @@ test("login supports an optional authenticator challenge",()=>{
   assert.match(login,/pattern="\[0-9\]\{6\}"/);
 });
 test("login only marks cookies Secure on HTTPS",()=>{const route=read("app/api/v1/auth/login/route.ts");assert.match(route,/new URL\(request\.url\)\.protocol===\"https:\"/);assert.doesNotMatch(route,/NODE_ENV===\"production\"/)});
+test("login offers explicit persistent or device-session cookies",()=>{const login=read("app/login/page.tsx"),route=read("app/api/v1/auth/login/route.ts");assert.match(login,/Keep me signed in on this device/);assert.match(login,/autoComplete="username"/);assert.doesNotMatch(login,/tim@example\.com/);assert.match(route,/input\.remember\s*!==\s*false/);assert.match(route,/remember\s*\?\s*`; Max-Age=/)});
 
 test("login and Settings expose recovery and MFA revocation controls",()=>{
   const login=read("app/login/page.tsx"),settings=read("app/settings/page.tsx");assert.match(login,/recoveryCode/);assert.match(login,/Use a recovery code/);assert.match(settings,/\/api\/v1\/auth\/recovery/);assert.match(settings,/method:"DELETE"/);assert.match(settings,/invalidates every recovery code/);
