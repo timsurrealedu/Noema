@@ -27,6 +27,7 @@ test("coding compiler workspace exists",()=>{
 test("compiler executes in one tap without weakening repository approvals",()=>{
   const page=read("app/coding/compiler/page.tsx"),route=read("app/api/v1/compiler/run/route.ts");assert.doesNotMatch(page,/\/api\/v1\/approvals/);assert.doesNotMatch(route,/consumeApproval|requireMfa/);assert.match(route,/requireWorkspace\(request,"editor"\)/);
 });
+test("compiler Saved mode lists, opens, creates, and explicitly saves files",()=>{const page=read("app/coding/compiler/page.tsx");for(const value of ["Scratch","Saved","/api/v1/compiler/files","Save file","New file"])assert.match(page,new RegExp(value));for(const route of ["app/api/v1/compiler/languages/route.ts","app/api/v1/compiler/files/route.ts","app/api/v1/compiler/files/content/route.ts"])assert.ok(fs.existsSync(path.join(root,route))) });
 
 test("Coding dashboard uses persisted repositories and approvals",()=>{const page=read("app/coding/page.tsx");assert.match(page,/\/api\/v1\/approvals/);assert.match(page,/\/api\/v1\/repositories/);assert.match(page,/NOEMA_REPOSITORY_ROOTS/);assert.match(page,/Approval history/);assert.doesNotMatch(page,/Run staging database migration|Approve once|const sessions=/) });
 

@@ -177,6 +177,11 @@ test("compiler runs supported code with limits and rejects unsafe languages",asy
   const dir=temp();const {runCode}=await import("../server/compiler.mjs");try{const result=await runCode({language:"javascript",code:"console.log(6 * 7)"},{enabled:true,isolate:false,jobsDir:dir,timeoutMs:3000,maxOutputBytes:1024});assert.equal(result.code,0);assert.equal(result.output.trim(),"42");const bash=await runCode({language:"bash",code:"read value; printf '%s' \"$value\"",stdin:"hello\n"},{enabled:true,isolate:false,jobsDir:dir,timeoutMs:3000,maxOutputBytes:1024});assert.equal(bash.output,"hello");await assert.rejects(()=>runCode({language:"shell",code:"id"},{enabled:true,isolate:false,jobsDir:dir}),/Unsupported language/)}finally{rmSync(dir,{recursive:true,force:true})}
 });
 
+test("saved code files reject traversal, symlinks, extensions, and oversized writes",async()=>{
+  const dir=temp(),outside=temp(),{listCodeFiles,readCodeFile,saveCodeFile}=await import("../server/codefiles.mjs");
+  try{mkdirSync(join(dir,"src"));writeFileSync(join(dir,"src","main.py"),"print(1)\n");writeFileSync(join(dir,"secret.exe"),"x");symlinkSync(join(outside,"escape.py"),join(dir,"linked.py"));assert.deepEqual(listCodeFiles(dir).files.map(file=>file.path),["src/main.py"]);assert.equal(readCodeFile(dir,"src/main.py").language,"python");assert.throws(()=>readCodeFile(dir,"../secret.py"),/outside/);assert.throws(()=>readCodeFile(dir,"linked.py"),/symlink/);assert.throws(()=>saveCodeFile(dir,"bad.exe","x"),/extension/);assert.throws(()=>saveCodeFile(dir,"huge.py","x".repeat(1024*1024+1)),/1 MiB/);saveCodeFile(dir,"new/tool.js","console.log(1)\n");assert.equal(readFileSync(join(dir,"new/tool.js"),"utf8"),"console.log(1)\n")}finally{rmSync(dir,{recursive:true,force:true});rmSync(outside,{recursive:true,force:true})}
+});
+
 test("compiler uses a git worktree when repoDir is a repository",async()=>{
   const repo=temp();const {runCode,prepareWorktree,cleanupWorktree,compilerCapabilities}=await import("../server/compiler.mjs");const {spawnSync}=await import("node:child_process");
   try{
