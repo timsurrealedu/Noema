@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-08-02T13:19:58.013065+00:00",
+  "generated_at": "2026-08-02T13:56:22.146294+00:00",
   "nodes": {
     "app_automations_page_automationspage": {
       "code_fingerprint": "2531d2aa3f25b1f0e4d654f7c5e5791fd238b81c8f3b228f22af8daa99ad9744",
@@ -17,7 +17,7 @@
           "q": "Compare the current product with overallPRD.md: differences, missing capabilities, and recommended next steps"
         }
       ],
-      "score": 1.706275754,
+      "score": 1.70527945,
       "source_file": "app/automations/page.tsx",
       "status": "preferred",
       "uses": 2
@@ -33,7 +33,7 @@
           "q": "What remains before LifeOS is a working v1?"
         }
       ],
-      "score": 0.85330834,
+      "score": 0.852810088,
       "source_file": "app/canvas/page.tsx",
       "status": "tentative",
       "uses": 1
@@ -54,7 +54,7 @@
           "q": "Compare the current product with overallPRD.md: differences, missing capabilities, and recommended next steps"
         }
       ],
-      "score": 1.706275754,
+      "score": 1.70527945,
       "source_file": "app/coding/page.tsx",
       "status": "preferred",
       "uses": 2
@@ -75,7 +75,7 @@
           "q": "Compare the current product with overallPRD.md: differences, missing capabilities, and recommended next steps"
         }
       ],
-      "score": 1.739037737,
+      "score": 1.738022303,
       "source_file": "app/components/ModuleShell.tsx",
       "status": "preferred",
       "uses": 2
@@ -91,7 +91,7 @@
           "q": "Why is ModuleShell() a high-betweenness cross-community bridge?"
         }
       ],
-      "score": 0.886070323,
+      "score": 0.885552941,
       "source_file": "app/components/ModuleShell.tsx",
       "status": "tentative",
       "uses": 1
@@ -107,7 +107,7 @@
           "q": "whats our progress currently"
         }
       ],
-      "score": 0.873007536,
+      "score": 0.872497782,
       "source_file": "app/components/ModuleShell.tsx",
       "status": "tentative",
       "uses": 1
@@ -123,7 +123,7 @@
           "q": "What remains before LifeOS is a working v1?"
         }
       ],
-      "score": 0.85330834,
+      "score": 0.852810088,
       "source_file": "app/components/TutorPanel.tsx",
       "status": "tentative",
       "uses": 1
@@ -144,13 +144,29 @@
           "q": "Compare the current product with overallPRD.md: differences, missing capabilities, and recommended next steps"
         }
       ],
-      "score": 1.706275754,
+      "score": 1.70527945,
       "source_file": "app/study/page.tsx",
       "status": "preferred",
       "uses": 2
     },
+    "app_vault_page_tutorpanel": {
+      "code_fingerprint": "f7c6a717017206ac2a839896a646416785a7cafde58b03215aa387a3cafd9a0e",
+      "label": "TutorPanel",
+      "last": "2026-08-02T13:21:40.996063+00:00",
+      "provenance": [
+        {
+          "date": "2026-08-02T13:21:40.996063+00:00",
+          "outcome": "useful",
+          "q": "which of these inputs of mine is done and which isnt done?"
+        }
+      ],
+      "score": 0.999443618,
+      "source_file": "app/vault/page.tsx",
+      "status": "tentative",
+      "uses": 1
+    },
     "server_auth": {
-      "code_fingerprint": "208c50daa0ec0e16b21f25e919cd951dc36edae3bbd7226f6d10360bc8cb4c57",
+      "code_fingerprint": "17c94fd005e3f164c23f27cf7655525565794ee6eee0040545556621bce92174",
       "label": "auth.mjs",
       "last": "2026-07-26T16:33:10.440565+00:00",
       "provenance": [
@@ -160,7 +176,7 @@
           "q": "What remains before LifeOS is a working v1?"
         }
       ],
-      "score": 0.85330834,
+      "score": 0.852810088,
       "source_file": "server/auth.mjs",
       "status": "tentative",
       "uses": 1
@@ -176,7 +192,7 @@
           "q": "whats our progress currently"
         }
       ],
-      "score": 0.873007536,
+      "score": 0.872497782,
       "source_file": "server/calendar-sync.mjs",
       "status": "tentative",
       "uses": 1
@@ -192,7 +208,7 @@
           "q": "whats our progress currently"
         }
       ],
-      "score": 0.873007536,
+      "score": 0.872497782,
       "source_file": "server/calendar-sync.mjs",
       "status": "tentative",
       "uses": 1
@@ -208,7 +224,7 @@
           "q": "Compare the current product with overallPRD.md: differences, missing capabilities, and recommended next steps"
         }
       ],
-      "score": 0.852967414,
+      "score": 0.852469362,
       "source_file": "server/core.mjs",
       "status": "tentative",
       "uses": 1
@@ -224,7 +240,7 @@
           "q": "What remains before LifeOS is a working v1?"
         }
       ],
-      "score": 0.85330834,
+      "score": 0.852810088,
       "source_file": "server/jobs.mjs",
       "status": "tentative",
       "uses": 1
@@ -240,13 +256,13 @@
           "q": "by using graphify when necessary, can you explain how this works? the vault, vault's contents, notes, management, the study, tasks, calendar, coding and how AI works in each of those elements?"
         }
       ],
-      "score": 0.91308552,
+      "score": 0.912552364,
       "source_file": "server/vault.mjs",
       "status": "tentative",
       "uses": 1
     },
     "test_backend_test": {
-      "code_fingerprint": "861cd87665249efe24e751ca05b929df9b9f48c9ad210ec953265d4bd7bd4164",
+      "code_fingerprint": "bf65a30c3a812a9b7bdf6720e0a9ff405a2ecc7c47c98492912fae56ab3ec7d1",
       "label": "backend.test.js",
       "last": "2026-07-27T16:15:37.119872+00:00",
       "provenance": [
@@ -256,13 +272,13 @@
           "q": "whats our progress currently"
         }
       ],
-      "score": 0.873007536,
+      "score": 0.872497782,
       "source_file": "test/backend.test.js",
       "status": "tentative",
       "uses": 1
     },
     "test_frontend_test": {
-      "code_fingerprint": "abe35640ecf4281c4e1598ef7c8ada880c49af3ca38d9913860969566e7d9190",
+      "code_fingerprint": "b543f08931f267a71ddce547bf5ecd8aa6a23bd446f07c574199ca62c72d1d75",
       "label": "frontend.test.js",
       "last": "2026-07-27T16:15:37.119872+00:00",
       "provenance": [
@@ -272,7 +288,7 @@
           "q": "whats our progress currently"
         }
       ],
-      "score": 0.873007536,
+      "score": 0.872497782,
       "source_file": "test/frontend.test.js",
       "status": "tentative",
       "uses": 1
