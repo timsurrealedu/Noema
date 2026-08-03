@@ -62,11 +62,28 @@ export function listState(db=getDatabase(),workspaceId=null){const filter=worksp
   };
 }
 
+function computeAutoReminder(input, before) {
+  if (input.reminderAt !== undefined) return timestamp(input.reminderAt);
+  const targetIso = input.scheduledStartAt || input.dueAt || before?.scheduled_start_at || before?.due_at;
+  if (!targetIso) return null;
+  const targetMs = new Date(targetIso).getTime();
+  if (Number.isNaN(targetMs)) return null;
+  const nowMs = Date.now();
+  const intervals = [60, 30, 5, 0];
+  for (const minutes of intervals) {
+    const reminderMs = targetMs - minutes * 60000;
+    if (reminderMs >= nowMs - 60000) {
+      return new Date(reminderMs).toISOString();
+    }
+  }
+  return null;
+}
+
 export function saveTask(input,db=getDatabase(),actor=null){
   const context=actorInfo(actor),id=input.id||randomUUID(),title=required(input.title,"title",500),priority=["High","Medium","Low"].includes(input.priority)?input.priority:"Medium",time=stamp(),before=findOwned(db,"tasks",id,context.workspaceId);
   requireVersion(input,before,{db,type:"task",actor});
   const writeBack=before&&!actor?.skipVaultWriteback?prepareVaultTaskWriteback(id,input,db):null;
-  const reminderAt=timestamp(input.reminderAt),dueAt=timestamp(input.dueAt),scheduledStart=timestamp(input.scheduledStartAt),scheduledEnd=timestamp(input.scheduledEndAt),completed=input.status==="completed"||!!input.completed,status=input.status||(completed?"completed":"open"),completedAt=completed?(timestamp(input.completedAt)||before?.completed_at||time):null,estimate=input.estimatedMinutes==null?null:Number(input.estimatedMinutes);
+  const reminderAt=computeAutoReminder(input,before),dueAt=timestamp(input.dueAt),scheduledStart=timestamp(input.scheduledStartAt),scheduledEnd=timestamp(input.scheduledEndAt),completed=input.status==="completed"||!!input.completed,status=input.status||(completed?"completed":"open"),completedAt=completed?(timestamp(input.completedAt)||before?.completed_at||time):null,estimate=input.estimatedMinutes==null?null:Number(input.estimatedMinutes);
   if(!["open","in_progress","blocked","completed","cancelled"].includes(status))throw new Error("Unknown task status");
   if(scheduledStart&&scheduledEnd&&scheduledEnd<=scheduledStart)throw new Error("scheduledEndAt must follow scheduledStartAt");
   if(estimate!=null&&(!Number.isInteger(estimate)||estimate<1||estimate>10080))throw new Error("estimatedMinutes must be an integer between 1 and 10080");
