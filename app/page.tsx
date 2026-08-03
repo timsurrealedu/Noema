@@ -135,7 +135,7 @@ export default function Home() {
   return <div className="app-shell">
     <a className="skip" href="#main">Skip to main content</a>
     <aside className="sidebar" aria-label="Primary navigation">
-      <Link className="brand" href="/"><NoemaLogo />Noema</Link>
+      <Link className="brand" href="/"><NoemaLogo /><span>Noema</span></Link>
       <nav>{nav.map(([label,Icon])=><Link className={label==="Home"?"active":""} href={({Home:"/",Capture:"/capture",Calendar:"/calendar",Vault:"/vault",Coding:"/coding"} as Record<string,string>)[label]||"#"} key={label}><Icon/><span>{label}</span>{label==="Capture"&&<kbd>⇧C</kbd>}</Link>)}</nav>
       <Link className="settings" href="/settings"><Gear/><span>Settings</span></Link>
     </aside>
