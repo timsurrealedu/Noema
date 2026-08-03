@@ -298,21 +298,37 @@ export default function CompilerPage() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hlRef = useRef<HTMLPreElement>(null);
 
-  const keywords = /^(?:async|await|break|case|class|const|continue|def|else|enum|export|false|fn|for|from|func|function|go|if|import|in|interface|let|new|null|package|pub|return|static|struct|switch|true|type|var|void|while)$/;
+  const KEYWORDS = new Set([
+    "async", "await", "break", "case", "catch", "class", "const", "continue", "debugger", "default", "delete", "do", "else", "enum", "export", "extends", "false", "finally", "for", "function", "if", "import", "in", "instanceof", "interface", "let", "new", "null", "of", "package", "private", "protected", "public", "return", "static", "super", "switch", "this", "throw", "true", "try", "typeof", "var", "void", "while", "with", "yield",
+    "and", "as", "assert", "def", "del", "elif", "except", "from", "global", "is", "lambda", "nonlocal", "not", "or", "pass", "raise",
+    "auto", "bool", "char", "double", "float", "fn", "func", "int", "long", "mut", "pub", "ref", "short", "signed", "struct", "type", "unsigned", "use", "using"
+  ]);
+
+  const BUILTINS = new Set([
+    "console", "log", "print", "printf", "Println", "println", "std", "cout", "System", "out", "main", "String", "args", "fmt", "package", "stdio"
+  ]);
 
   function renderTokens(sourceCode: string) {
-    const tokens = sourceCode.split(/(\/\/[^\n]*|#[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b[A-Za-z_$][\w$]*\b|\b\d+(?:\.\d+)?\b)/g);
-    return tokens.map((token, index) => {
-      let cls: string | undefined = undefined;
-      if (keywords.test(token)) cls = "syntax-keyword";
-      else if (/^['"]/.test(token)) cls = "syntax-string";
-      else if (/^\d/.test(token)) cls = "syntax-number";
-      else if (/^(?:\/\/|#)/.test(token)) cls = "syntax-comment";
-      return (
-        <span key={index} className={cls}>
-          {token}
-        </span>
-      );
+    if (!sourceCode) return null;
+    const parts = sourceCode.split(/(\/\/[^\n]*|#[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`[^\`]*`|\b[A-Za-z_$][\w$]*\b|\b\d+(?:\.\d+)?\b)/g);
+    return parts.map((part, index) => {
+      if (!part) return null;
+      if (part.startsWith("//") || part.startsWith("#")) {
+        return <span key={index} className="syntax-comment">{part}</span>;
+      }
+      if (part.startsWith('"') || part.startsWith("'") || part.startsWith("`")) {
+        return <span key={index} className="syntax-string">{part}</span>;
+      }
+      if (/^\d+(?:\.\d+)?$/.test(part)) {
+        return <span key={index} className="syntax-number">{part}</span>;
+      }
+      if (KEYWORDS.has(part)) {
+        return <span key={index} className="syntax-keyword">{part}</span>;
+      }
+      if (BUILTINS.has(part)) {
+        return <span key={index} className="syntax-builtin">{part}</span>;
+      }
+      return <span key={index}>{part}</span>;
     });
   }
 
