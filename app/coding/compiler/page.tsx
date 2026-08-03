@@ -294,6 +294,11 @@ export default function CompilerPage() {
   const [history, setHistory] = useState<string[]>([]);
   const [redoStack, setRedoStack] = useState<string[]>([]);
   const [caretPos, setCaretPos] = useState({ line: 1, col: 1 });
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hlRef = useRef<HTMLPreElement>(null);
@@ -782,7 +787,7 @@ export default function CompilerPage() {
             className="icon-btn"
             aria-label="Undo edit"
             title="Undo"
-            disabled={!history.length}
+            disabled={mounted ? history.length === 0 : true}
             onClick={handleUndo}
           >
             <ArrowCounterClockwise size={16} />
@@ -792,7 +797,7 @@ export default function CompilerPage() {
             className="icon-btn"
             aria-label="Redo edit"
             title="Redo"
-            disabled={!redoStack.length}
+            disabled={mounted ? redoStack.length === 0 : true}
             onClick={handleRedo}
           >
             <ArrowClockwise size={16} />
