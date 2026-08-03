@@ -39,11 +39,22 @@ function TreeFolder({node,current,onSelect,dragTarget,dragItem,onDragStart,onDra
 
 function findFolder(root:Tree,path:string):Tree{if(!path)return root;for(const folder of root.folders){if(folder.path===path)return folder;if(path.startsWith(`${folder.path}/`))return findFolder(folder,path)}return root}
 
-export function VaultOrganizer({notes,onOpen}:{notes:Note[];onOpen:(note:Note)=>void}){
-  const [sources,setSources]=useState<VaultSource[]>([]),[sourceId,setSourceId]=useState(""),[tree,setTree]=useState<Tree|null>(null),[folder,setFolder]=useState(""),[query,setQuery]=useState(""),[drawer,setDrawer]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(""),[showGraph,setShowGraph]=useState(false),startedInk=useRef(false);
+export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{notes:Note[];onOpen:(note:Note)=>void;initialFolder?:string;onFolderChange?:(folder:string)=>void}){
+  const [sources,setSources]=useState<VaultSource[]>([]),[sourceId,setSourceId]=useState(""),[tree,setTree]=useState<Tree|null>(null),[folder,setFolderState]=useState<string>(()=>initialFolder||(typeof window!=="undefined"?new URLSearchParams(location.search).get("folder")||"": "")),[query,setQuery]=useState(""),[drawer,setDrawer]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(""),[showGraph,setShowGraph]=useState(false),startedInk=useRef(false);
   const [dragItem,setDragItem]=useState<DragPayload|null>(null);
   const [dragTarget,setDragTarget]=useState<string|null>(null);
   const noteMap=useMemo(()=>({get:(id:string)=>notes.find(note=>note.id===id)||({id,title:"Note",excerpt:"",tags:[],time:"",ai:false} as unknown as Note)}),[notes]);
+
+  const setFolder=(path:string)=>{
+    setFolderState(path);
+    if(onFolderChange)onFolderChange(path);
+  };
+
+  useEffect(()=>{
+    if(initialFolder!==undefined&&initialFolder!==folder){
+      setFolderState(initialFolder);
+    }
+  },[initialFolder]);
 
   async function load(preferred=sourceId){try{const data=await request(`/api/v1/vault-sources?tree=true${preferred?`&sourceId=${encodeURIComponent(preferred)}`:""}`);setSources(data.sources);setSourceId(data.selectedSourceId);setTree(data.tree);if(new URLSearchParams(location.search).get("new")==="ink"&&data.selectedSourceId&&!startedInk.current){startedInk.current=true;void create(`Handwritten note ${new Date().toISOString().slice(0,16).replace(/[T:]/g,"-")}`,data.selectedSourceId,true)}}catch(reason){setError((reason as Error).message)}}
   useEffect(()=>{setDrawer(matchMedia("(max-width: 900px)").matches?false:localStorage.getItem("noema-vault-drawer")!=="closed");void load()},[]);
