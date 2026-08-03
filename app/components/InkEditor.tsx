@@ -103,6 +103,8 @@ export function InkEditor({
 
   const bounds = selectionBounds(strokes, selected);
 
+  const initialFitted = useRef(false);
+
   useEffect(() => {
     loadInkDraft(id)
       .then(draft => {
@@ -110,10 +112,21 @@ export function InkEditor({
         if (replay.length) {
           setStrokes(replay);
           onChange?.(replay);
+          if (!initialFitted.current && canvasSize.width > 0 && canvasSize.height > 0) {
+            initialFitted.current = true;
+            setView(fitInkView(replay, canvasSize.width, canvasSize.height));
+          }
         }
       })
       .catch(() => {});
-  }, [id, onChange]);
+  }, [id, onChange, canvasSize.width, canvasSize.height]);
+
+  useEffect(() => {
+    if (initial.length > 0 && !initialFitted.current && canvasSize.width > 0 && canvasSize.height > 0) {
+      initialFitted.current = true;
+      setView(fitInkView(initial, canvasSize.width, canvasSize.height));
+    }
+  }, [initial, canvasSize.width, canvasSize.height]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -315,9 +328,24 @@ export function InkEditor({
       isErasing.current = false;
     }
     if (active.current) {
+      const drawn = active.current;
       active.current = null;
-      persist(strokes);
+      const nextStrokes = strokes;
+      persist(nextStrokes);
       setRedo([]);
+
+      const minX = view.x + 20 / view.zoom;
+      const maxX = view.x + canvasSize.width / view.zoom - 20 / view.zoom;
+      const minY = view.y + 20 / view.zoom;
+      const maxY = view.y + canvasSize.height / view.zoom - 20 / view.zoom;
+
+      const extendsBoundary = drawn.points.some(
+        p => p.x <= minX || p.x >= maxX || p.y <= minY || p.y >= maxY
+      );
+
+      if (extendsBoundary && nextStrokes.length > 0) {
+        setView(fitInkView(nextStrokes, canvasSize.width, canvasSize.height));
+      }
     }
     if (drag.current) {
       persist(drag.current.next);
