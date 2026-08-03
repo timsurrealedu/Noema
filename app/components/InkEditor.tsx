@@ -234,23 +234,28 @@ export function InkEditor({
         const [a, b] = [...touches.current.values()];
         const distance = Math.hypot(a.x - b.x, a.y - b.y);
         const center = {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2};
-        setView(val => ({
-          x: val.x - (center.x - pinchCenter.current.x) / val.zoom,
-          y: val.y - (center.y - pinchCenter.current.y) / val.zoom,
-          zoom: Math.max(0.25, Math.min(4, (val.zoom * distance) / pinchDistance.current))
-        }));
+        const centerDx = center.x - pinchCenter.current.x;
+        const centerDy = center.y - pinchCenter.current.y;
+        const distRatio = distance / Math.max(1, pinchDistance.current);
         pinchDistance.current = distance;
         pinchCenter.current = center;
+        setView(val => ({
+          x: val.x - centerDx / val.zoom,
+          y: val.y - centerDy / val.zoom,
+          zoom: Math.max(0.25, Math.min(4, val.zoom * distRatio))
+        }));
         return;
       }
     }
     if (pan.current) {
+      const dx = event.clientX - pan.current.x;
+      const dy = event.clientY - pan.current.y;
+      pan.current = {x: event.clientX, y: event.clientY};
       setView(val => ({
         ...val,
-        x: val.x - (event.clientX - pan.current!.x) / val.zoom,
-        y: val.y - (event.clientY - pan.current!.y) / val.zoom
+        x: val.x - dx / val.zoom,
+        y: val.y - dy / val.zoom
       }));
-      pan.current = {x: event.clientX, y: event.clientY};
       return;
     }
     if (tool === "eraser" && isErasing.current) {
