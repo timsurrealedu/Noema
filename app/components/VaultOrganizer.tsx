@@ -126,7 +126,10 @@ export function VaultOrganizer({notes,onOpen}:{notes:Note[];onOpen:(note:Note)=>
         <button className="icon-button" aria-label={drawer?"Collapse folder sidebar":"Expand folder sidebar"} aria-expanded={drawer} suppressHydrationWarning title={drawer?"Collapse folders":"Expand folders"} onClick={()=>setDrawer(value=>{const next=!value;localStorage.setItem("noema-vault-drawer",next?"open":"closed");return next})}><SidebarSimple/></button>
         <select aria-label="Vault source" value={sourceId} onChange={event=>{setFolder("");setSourceId(event.target.value);void load(event.target.value)}}>{sources.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>
         <label className="vault-organizer-search"><MagnifyingGlass/><span className="sr-only">Search vault</span><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search vault"/></label>
-        <span className={`vault-connection ${source?.state}`}>{source?.state||"No vault connected"}</span>
+        <span className={`vault-connection-badge ${source?.state || ""}`}>
+          <span className="vault-connection-dot" aria-hidden="true" />
+          {source?.state || "No vault connected"}
+        </span>
         <button className={`secondary ${showGraph?"active":""}`} onClick={()=>setShowGraph(!showGraph)}><ShareNetwork/>Graph</button>
         <button className="secondary" disabled={Boolean(busy||!sourceId)} suppressHydrationWarning onClick={sync}><ArrowClockwise/>{busy?"Syncing…":"Sync"}</button>
         <button className="secondary icon-button" aria-label="New folder" title="New folder" disabled={Boolean(!sourceId||folder.startsWith("@"))} suppressHydrationWarning onClick={()=>void createFolder()}><FolderPlus/></button>
