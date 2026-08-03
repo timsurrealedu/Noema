@@ -540,8 +540,9 @@ export default function CalendarPage() {
                   />
                 </label>
               </div>
-              <label>
-                <input type="checkbox" checked={!!draft.allDay} onChange={e => setDraft({...draft, allDay: e.target.checked})} /> All day
+              <label className="check-field">
+                <input type="checkbox" checked={!!draft.allDay} onChange={e => setDraft({...draft, allDay: e.target.checked})} />
+                <span>All day</span>
               </label>
               <label>
                 Repeat
