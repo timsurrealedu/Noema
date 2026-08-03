@@ -6,7 +6,7 @@ import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowCounterClockwise, ArrowClockwise,
   CaretDown, CaretRight, CheckCircle, Eye, EyeSlash, FileCode, FloppyDisk, Folder, FolderOpen, FolderSimple,
-  MagnifyingGlass, Play, Plus, Sparkle, Terminal, TextIndent, TextOutdent, WarningCircle
+  MagnifyingGlass, Play, Plus, Sparkle, Terminal, TextIndent, TextOutdent, WarningCircle, X
 } from "@phosphor-icons/react";
 import { ModuleShell } from "../../components/ModuleShell";
 import { TutorPanel } from "../../components/TutorPanel";
