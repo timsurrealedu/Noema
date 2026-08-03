@@ -136,7 +136,7 @@ export default function Home() {
     <a className="skip" href="#main">Skip to main content</a>
     <aside className="sidebar" aria-label="Primary navigation">
       <Link className="brand" href="/"><NoemaLogo /><span>Noema</span></Link>
-      <nav>{nav.map(([label,Icon])=><Link className={label==="Home"?"active":""} href={({Home:"/",Capture:"/capture",Calendar:"/calendar",Vault:"/vault",Coding:"/coding"} as Record<string,string>)[label]||"#"} key={label}><Icon/><span>{label}</span>{label==="Capture"&&<kbd>⇧C</kbd>}</Link>)}</nav>
+      <nav>{nav.map(([label,Icon])=><Link className={label==="Home"?"active":""} href={({Home:"/",Capture:"/capture",Calendar:"/calendar",Vault:"/vault",Coding:"/coding"} as Record<string,string>)[label]||"#"} key={label}><Icon/><span>{label}</span></Link>)}</nav>
       <Link className="settings" href="/settings"><Gear/><span>Settings</span></Link>
     </aside>
 
@@ -166,7 +166,6 @@ export default function Home() {
         <button type="button" className="capture-tool" aria-label="Write a handwritten note" onClick={()=>setHandwriting(true)}><PenNib/></button>
         <button type="button" className="capture-tool" aria-label={recording?"Stop recording":"Record voice"} aria-pressed={recording} onClick={()=>void toggleRecording()}><Microphone/></button>
         <button className="send" disabled={!capture.trim()} aria-label="Process capture"><PaperPlaneTilt/></button>
-        <kbd>⌘ ⇧ C</kbd>
       </form>
 
       {review&&<section className="review" aria-live="polite">
@@ -317,7 +316,7 @@ export default function Home() {
       {([["Home","/",House],["Capture","/capture",Plus],["Calendar","/calendar",CalendarBlank],["Vault","/vault",Folder],["Coding","/coding",Code]] as const).map(([label,href,Icon],i)=><Link className={`${i===0?"active":""} ${i===1?"capture-nav":""}`} href={href} key={label}><Icon/><span>{label}</span></Link>)}
     </nav>
 
-    {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus aria-label="Search commands" placeholder="Search Noema or run a command…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><p>Quick actions</p>{([["New capture","#capture",Plus,"⌘ ⇧ C"],["Add task","/?open=new",CheckSquare,"⌘ ⇧ T"],["Open calendar","/calendar",CalendarBlank,"G C"],["Search vault","/vault",Folder,"G V"]] as const).map(([label,href,Icon,key])=><Link href={href} onClick={()=>{setPalette(false);if(href==="/?open=new")setDraft(blankTask())}} key={label}><Icon/><span>{label}</span><kbd>{key}</kbd></Link>)}</ModalDialog>}
+    {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus aria-label="Search commands" placeholder="Search Noema or run a command…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><p>Quick actions</p>{([["New capture","#capture",Plus,""],["Add task","/?open=new",CheckSquare,"⌘ ⇧ T"],["Open calendar","/calendar",CalendarBlank,"G C"],["Search vault","/vault",Folder,"G V"]] as const).map(([label,href,Icon,key])=><Link href={href} onClick={()=>{setPalette(false);if(href==="/?open=new")setDraft(blankTask())}} key={label}><Icon/><span>{label}</span>{key&&<kbd>{key}</kbd>}</Link>)}</ModalDialog>}
     {handwriting&&<HandwritingCapture onClose={()=>setHandwriting(false)}/>}
     <ContextualAssistant
       isOpen={assistant}
