@@ -912,8 +912,8 @@ export default function CompilerPage() {
         )}
 
         {/* Code Editor Stack with Line Numbers Gutter matching lifeOS .code-editor */}
-        <div className="code-editor">
-          <div className="code-gutter" ref={gutterRef}>
+        <div className="code-editor" onClick={() => textareaRef.current?.focus()}>
+          <div className="code-gutter" ref={gutterRef} onClick={() => textareaRef.current?.focus()}>
             <div className="code-gutter-inner">
               {code.split("\n").map((_, i) => (
                 <div key={i}>{i + 1}</div>
