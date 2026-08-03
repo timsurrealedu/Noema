@@ -120,7 +120,7 @@ test("Projects derives tabs from persisted relationships",()=>{
 });
 
 test("contextual assistant renders persisted reviewable recommendations",()=>{
-  const shell=read("app/components/ModuleShell.tsx");assert.doesNotMatch(shell,/proposal review is the best next action/);assert.match(shell,/\/api\/v1\/recommendations/);assert.match(shell,/Create task/);assert.match(shell,/persisted drafts/);
+  const shell=read("app/components/ModuleShell.tsx")+read("app/components/ContextualAssistant.tsx");assert.doesNotMatch(shell,/proposal review is the best next action/);assert.match(shell,/\/api\/v1\/recommendations/);assert.match(shell,/Create task/);assert.match(shell,/persisted drafts/);
 });
 
 test("Vault renders accessible charts and Mermaid with source fallback",()=>{

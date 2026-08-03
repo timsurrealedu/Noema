@@ -8,11 +8,12 @@ import {
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import {FormEvent, useEffect, useRef, useState} from "react";
-import {Task, useAppState} from "./components/AppState";
-import {ModalDialog} from "./components/ModalDialog";
-import {HandwritingCapture} from "./components/HandwritingCapture";
-import {showUnavailable} from "./components/ServiceNotice";
-import {createId} from "./lib/id";
+import { Task, useAppState } from "./components/AppState";
+import { ModalDialog } from "./components/ModalDialog";
+import { HandwritingCapture } from "./components/HandwritingCapture";
+import { ContextualAssistant } from "./components/ContextualAssistant";
+import { showUnavailable } from "./components/ServiceNotice";
+import { createId } from "./lib/id";
 
 const nav = [
   ["Home",House],["Capture",Plus],["Calendar",CalendarBlank],
@@ -34,6 +35,7 @@ export default function Home() {
   const [reviewId,setReviewId] = useState<string|null>(null);
   const [recording,setRecording] = useState(false);
   const [palette,setPalette] = useState(false);
+  const [assistant,setAssistant] = useState(false);
   const [handwriting,setHandwriting] = useState(false);
   const [filter,setFilter] = useState<string>("All");
   const [draft,setDraft] = useState<Task|null>(null);
@@ -51,9 +53,10 @@ export default function Home() {
     localStorage.setItem("noema-theme",theme);
     const onKey=(e:KeyboardEvent)=>{
       if ((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k") {e.preventDefault();setPalette(true)}
+      if ((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="j") {e.preventDefault();setAssistant(true)}
       if ((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.key.toLowerCase()==="c") {e.preventDefault();input.current?.focus()}
       if ((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.key.toLowerCase()==="t") {e.preventDefault();setDraft(blankTask())}
-      if (e.key==="Escape") setPalette(false);
+      if (e.key==="Escape") { setPalette(false); setAssistant(false); }
     };
     addEventListener("keydown",onKey); return()=>removeEventListener("keydown",onKey);
   },[theme]);
@@ -136,6 +139,7 @@ export default function Home() {
       <div className="date"><CalendarBlank/>{todayLabel}</div>
       <div className="top-actions">
         <button className="search" onClick={()=>setPalette(true)}><MagnifyingGlass/><span>Search</span><kbd>⌘ K</kbd></button>
+        <button className="icon-button" aria-label="Open contextual assistant" onClick={()=>setAssistant(true)}><Sparkle/></button>
         <button className="icon-button" aria-label={`Use ${theme==="dark"?"light":"dark"} theme`} onClick={()=>setTheme(theme==="dark"?"light":"dark")}>{theme==="dark"?<Sun/>:<Moon/>}</button>
         <button className="icon-button unread" aria-label="Notifications" data-unavailable="Live notifications require the backend connection. Sample activity remains available from Activity."><Bell/></button>
       </div>
@@ -335,5 +339,11 @@ export default function Home() {
 
     {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus aria-label="Search commands" placeholder="Search Noema or run a command…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><p>Quick actions</p>{([["New capture","#capture",Plus,"⌘ ⇧ C"],["Add task","/?open=new",CheckSquare,"⌘ ⇧ T"],["Open calendar","/calendar",CalendarBlank,"G C"],["Search vault","/vault",Folder,"G V"]] as const).map(([label,href,Icon,key])=><Link href={href} onClick={()=>{setPalette(false);if(href==="/?open=new")setDraft(blankTask())}} key={label}><Icon/><span>{label}</span><kbd>{key}</kbd></Link>)}</ModalDialog>}
     {handwriting&&<HandwritingCapture onClose={()=>setHandwriting(false)}/>}
+    <ContextualAssistant
+      isOpen={assistant}
+      onClose={() => setAssistant(false)}
+      active="Home"
+      title="Home"
+    />
   </div>;
 }
