@@ -27,6 +27,156 @@ type Language = keyof typeof starters;
 type Result = { code: number; output: string; truncated: boolean; stage: string; durationMs: number };
 type SavedFile = { path: string; name: string; language: Language | null };
 
+const CODE_KEYS = [
+  { t: "(", v: "(", close: ")" },
+  { t: "{", v: "{", close: "}" },
+  { t: "[", v: "[", close: "]" },
+  { t: '"', v: '"', close: '"' },
+  { t: ";", v: ";" },
+  { t: ":", v: ":" },
+  { t: "=", v: "=" },
+  { t: ".", v: "." },
+  { t: ",", v: "," },
+  { t: "'", v: "'", close: "'" },
+  { t: "`", v: "`", close: "`" },
+  { t: "<", v: "<" },
+  { t: ">", v: ">" },
+  { t: "+", v: "+" },
+  { t: "-", v: "-" },
+  { t: "*", v: "*" },
+  { t: "/", v: "/" },
+  { t: "%", v: "%" },
+  { t: "&", v: "&" },
+  { t: "|", v: "|" },
+  { t: "!", v: "!" },
+  { t: "#", v: "#" },
+  { t: "_", v: "_" },
+  { t: "\\", v: "\\" },
+  { t: "$", v: "$" },
+  { t: "@", v: "@" },
+  { t: "Tab", v: "    ", wide: true }
+] as const;
+
+function SymbolButton({
+  k,
+  onInsert,
+  onInsertPair
+}: {
+  k: (typeof CODE_KEYS)[number];
+  onInsert: (text: string) => void;
+  onInsertPair: (open: string, close: string) => void;
+}) {
+  const sx = useRef(0);
+  const sy = useRef(0);
+  const moved = useRef(false);
+  const held = useRef(false);
+  const timer = useRef<NodeJS.Timeout | null>(null);
+
+  const clear = () => {
+    if (timer.current) {
+      clearTimeout(timer.current);
+      timer.current = null;
+    }
+  };
+
+  return (
+    <button
+      type="button"
+      className={`sym${"wide" in k && k.wide ? " sym-wide" : ""}${"close" in k && k.close ? " sym-pair" : ""}`}
+      data-close={"close" in k ? (k as { close?: string }).close : undefined}
+      onPointerDown={(ev) => {
+        ev.preventDefault();
+        sx.current = ev.clientX;
+        sy.current = ev.clientY;
+        moved.current = false;
+        held.current = false;
+        if ("close" in k && (k as { close?: string }).close) {
+          timer.current = setTimeout(() => {
+            held.current = true;
+            onInsert((k as { close: string }).close);
+          }, 340);
+        }
+      }}
+      onPointerMove={(ev) => {
+        if (!moved.current && Math.hypot(ev.clientX - sx.current, ev.clientY - sy.current) > 8) {
+          moved.current = true;
+          clear();
+        }
+      }}
+      onPointerUp={(ev) => {
+        clear();
+        if (moved.current || held.current) return;
+        ev.preventDefault();
+        if ("close" in k && (k as { close?: string }).close) {
+          onInsertPair(k.v, (k as { close: string }).close);
+        } else {
+          onInsert(k.v);
+        }
+      }}
+      onPointerCancel={clear}
+    >
+      {k.t}
+    </button>
+  );
+}
+
+function JoystickButton({ onMoveCaret }: { onMoveCaret: (dir: "up" | "down" | "left" | "right") => void }) {
+  const padRef = useRef<HTMLButtonElement>(null);
+  const repRef = useRef<NodeJS.Timeout | null>(null);
+  const dirRef = useRef<"up" | "down" | "left" | "right" | null>(null);
+
+  const dirAt = (clientX: number, clientY: number) => {
+    if (!padRef.current) return null;
+    const r = padRef.current.getBoundingClientRect();
+    const dx = clientX - (r.left + r.width / 2);
+    const dy = clientY - (r.top + r.height / 2);
+    if (Math.hypot(dx, dy) < 6) return null;
+    return Math.abs(dx) > Math.abs(dy) ? (dx < 0 ? "left" : "right") : (dy < 0 ? "up" : "down");
+  };
+
+  const stop = () => {
+    if (repRef.current) {
+      clearInterval(repRef.current);
+      repRef.current = null;
+    }
+    dirRef.current = null;
+  };
+
+  return (
+    <button
+      ref={padRef}
+      className="sym code-joy"
+      type="button"
+      aria-label="Move caret (press a direction, hold to repeat)"
+      onPointerDown={(ev) => {
+        ev.preventDefault();
+        if (padRef.current && "setPointerCapture" in padRef.current) {
+          try { padRef.current.setPointerCapture(ev.pointerId); } catch {}
+        }
+        const dir = dirAt(ev.clientX, ev.clientY);
+        dirRef.current = dir;
+        if (dir) onMoveCaret(dir);
+        if (repRef.current) clearInterval(repRef.current);
+        repRef.current = setInterval(() => {
+          if (dirRef.current) onMoveCaret(dirRef.current);
+        }, 110);
+      }}
+      onPointerMove={(ev) => {
+        if (repRef.current) {
+          dirRef.current = dirAt(ev.clientX, ev.clientY) || dirRef.current;
+        }
+      }}
+      onPointerUp={stop}
+      onPointerCancel={stop}
+    >
+      <span className="joy-u">▲</span>
+      <span className="joy-l">◀</span>
+      <span className="joy-r">▶</span>
+      <span className="joy-d">▼</span>
+    </button>
+  );
+}
+
 type FileNode = {
   name: string;
   path: string;
@@ -537,28 +687,30 @@ export default function CompilerPage() {
           />
           {highlight && <LazySyntaxPreview code={code} language={language} />}
 
-          <div className="mobile-editor-controls">
-            <div className="mobile-toolbar" aria-label="Mobile editor keys">
-              {mobileKeys.map((key) => (
-                <button type="button" key={key} onClick={() => insert(key)}>
-                  {key}
-                </button>
+          <div className="code-symbols-wrap">
+            <div className="code-symbols">
+              {CODE_KEYS.map((k) => (
+                <SymbolButton
+                  key={k.t}
+                  k={k}
+                  onInsert={(text) => insert(text)}
+                  onInsertPair={(open, close) => {
+                    const el = textareaRef.current;
+                    if (!el) return;
+                    const start = el.selectionStart;
+                    const end = el.selectionEnd;
+                    const selected = el.value.slice(start, end);
+                    el.setRangeText(`${open}${selected}${close}`, start, end, "end");
+                    if (!selected) el.setSelectionRange(start + open.length, start + open.length);
+                    updateCode(el.value);
+                    el.focus();
+                    updateCaretPos();
+                  }}
+                />
               ))}
             </div>
-            <div className="caret-joystick" aria-label="Move text cursor">
-              <button type="button" aria-label="Move cursor up" onClick={() => moveCaret("up")}>
-                <ArrowUp />
-              </button>
-              <button type="button" aria-label="Move cursor left" onClick={() => moveCaret("left")}>
-                <ArrowLeft />
-              </button>
-              <i />
-              <button type="button" aria-label="Move cursor right" onClick={() => moveCaret("right")}>
-                <ArrowRight />
-              </button>
-              <button type="button" aria-label="Move cursor down" onClick={() => moveCaret("down")}>
-                <ArrowDown />
-              </button>
+            <div className="code-arrows">
+              <JoystickButton onMoveCaret={moveCaret} />
             </div>
           </div>
         </label>

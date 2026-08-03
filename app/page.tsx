@@ -1,32 +1,43 @@
 "use client";
 
 import {
-  Bell, BookOpen, CalendarBlank, CaretRight, Check, CheckSquare, Clock,
-  Code, Command, FileText, Folder, Gear, House, Lightning, ListChecks,
+  Archive, Bell, BookOpen, CalendarBlank, CaretRight, Check, CheckSquare, Clock,
+  Code, Command, FileText, Flag, Folder, Gear, House, Lightning, ListChecks,
   MagnifyingGlass, Microphone, Moon, Paperclip, PaperPlaneTilt, PenNib, Plus, Sparkle,
-  Sun, Tray, UploadSimple, Warning, X
+  Sun, Tray, UploadSimple, Warning, X, Circle
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import {FormEvent, useEffect, useRef, useState} from "react";
-import {useAppState} from "./components/AppState";
+import {Task, useAppState} from "./components/AppState";
 import {ModalDialog} from "./components/ModalDialog";
 import {HandwritingCapture} from "./components/HandwritingCapture";
 import {showUnavailable} from "./components/ServiceNotice";
+import {createId} from "./lib/id";
 
 const nav = [
-  ["Today",House],["Capture",Plus],["Calendar",CalendarBlank],["Tasks",CheckSquare],
-  ["Vault",Folder],["Projects",Tray],["Study",BookOpen],["Coding",Code],["Automations",Lightning]
+  ["Home",House],["Capture",Plus],["Calendar",CalendarBlank],
+  ["Vault",Folder]
 ] as const;
-const jakartaDate=(value:string|Date)=>{const parts=Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit",day:"2-digit"}).formatToParts(value instanceof Date?value:new Date(value)).map(part=>[part.type,part.value]));return `${parts.year}-${parts.month}-${parts.day}`};
 
-export default function Today() {
-  const {addAndInterpretCapture,addFileCapture,captures,confirmCapture,events,tasks,toggleTask,updateCapture}=useAppState();
+const blankTask=():Task=>({id:createId(),title:"",project:"Inbox",due:"",dueAt:new Date().toISOString(),priority:"Medium",completed:false,status:"open"});
+const jakartaParts=(value:string)=>Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(value)).map(part=>[part.type,part.value]));
+const dateValue=(value?:string|null)=>{if(!value)return "";const part=jakartaParts(value);return `${part.year}-${part.month}-${part.day}`};
+const dateTimeValue=(value?:string|null)=>{if(!value)return "";const part=jakartaParts(value);return `${part.year}-${part.month}-${part.day}T${part.hour}:${part.minute}`};
+const jakartaIso=(value:string)=>new Date(`${value}:00+07:00`).toISOString();
+
+const LABELS = ["All", "Inbox", "Today", "Upcoming", "Overdue", "Completed"] as const;
+
+export default function Home() {
+  const {addAndInterpretCapture,addFileCapture,captures,confirmCapture,events,tasks,projects,toggleTask,saveTask,archiveTask,updateCapture}=useAppState();
   const [theme,setTheme] = useState<"dark"|"light">("dark");
   const [capture,setCapture] = useState("");
   const [reviewId,setReviewId] = useState<string|null>(null);
   const [recording,setRecording] = useState(false);
   const [palette,setPalette] = useState(false);
   const [handwriting,setHandwriting] = useState(false);
+  const [filter,setFilter] = useState<string>("All");
+  const [draft,setDraft] = useState<Task|null>(null);
+
   const input = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const recorder = useRef<MediaRecorder|null>(null);
@@ -41,30 +52,83 @@ export default function Today() {
     const onKey=(e:KeyboardEvent)=>{
       if ((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k") {e.preventDefault();setPalette(true)}
       if ((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.key.toLowerCase()==="c") {e.preventDefault();input.current?.focus()}
+      if ((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.key.toLowerCase()==="t") {e.preventDefault();setDraft(blankTask())}
       if (e.key==="Escape") setPalette(false);
     };
     addEventListener("keydown",onKey); return()=>removeEventListener("keydown",onKey);
   },[theme]);
   useEffect(()=>()=>{if(recorder.current?.state==="recording")recorder.current.stop();recorder.current?.stream.getTracks().forEach(track=>track.stop())},[]);
 
+  useEffect(() => {
+    const id=new URLSearchParams(location.search).get("open");
+    if(id==="new") { setDraft(blankTask()); }
+    else if(id) { const task=tasks.find(item=>item.id===id); if(task){setFilter("All");setDraft({...task})} }
+  },[tasks]);
+
   const now=new Date(),todayLabel=new Intl.DateTimeFormat(undefined,{weekday:"long",month:"long",day:"numeric"}).format(now);
   const greeting=now.getHours()<12?"Good morning":now.getHours()<18?"Good afternoon":"Good evening";
   const todayEvents=events.filter(event=>event.day===(now.getDay()+6)%7).toSorted((a,b)=>a.time.localeCompare(b.time));
-  const todayTasks=tasks.filter(task=>!task.archived&&task.dueAt&&jakartaDate(task.dueAt)===jakartaDate(now));
+  const todayTasks=tasks.filter(task=>!task.archived&&task.dueAt&&dateValue(task.dueAt)===dateValue(now.toISOString()));
   const pendingCaptures=captures.filter(item=>item.status==="review").length;
   const review=captures.find(item=>item.id===reviewId);
-  function submit(e:FormEvent) {e.preventDefault();if(capture.trim())setReviewId(addAndInterpretCapture(capture.trim()))}
+
+  function submitCapture(e:FormEvent) {e.preventDefault();if(capture.trim())setReviewId(addAndInterpretCapture(capture.trim()))}
   function closeReview(status:"confirmed"|"dismissed") {if(reviewId){if(status==="confirmed")confirmCapture(reviewId);else updateCapture(reviewId,status)}setReviewId(null);if(status==="confirmed")setCapture("")}
   async function toggleRecording(){
     if(recorder.current?.state==="recording"){recorder.current.stop();return}
     try{const stream=await navigator.mediaDevices.getUserMedia({audio:true}),chunks:Blob[]=[];const active=new MediaRecorder(stream);recorder.current=active;active.ondataavailable=event=>{if(event.data.size)chunks.push(event.data)};active.onstop=()=>{const type=active.mimeType||"audio/webm",extension=type.includes("ogg")?"ogg":"webm";addFileCapture(new File(chunks,`voice-${Date.now()}.${extension}`,{type}));stream.getTracks().forEach(track=>track.stop());recorder.current=null;setRecording(false)};active.start();setRecording(true)}catch(error){setRecording(false);showUnavailable(error instanceof Error?error.message:"Microphone access failed")}
   }
 
+  function submitTask(event:FormEvent){
+    event.preventDefault();
+    if(!draft?.title.trim())return;
+    saveTask({...draft,title:draft.title.trim()});
+    setDraft(null);
+  }
+
+  const todayStr = dateValue(new Date().toISOString());
+
+  const matches = (task: Task, label: string) => {
+    if (task.archived) return false;
+    if (label === "Completed") return task.completed;
+    if (task.completed) return false;
+
+    if (label === "All") return true;
+    if (label === "Overdue") return !!task.dueAt && dateValue(task.dueAt) < todayStr;
+    if (label === "Today") return dateValue(task.dueAt) === todayStr;
+    if (label === "Upcoming") return !!task.dueAt && dateValue(task.dueAt) > todayStr;
+    if (label === "Inbox") return !task.dueAt;
+    return false;
+  };
+
+  const counts=Object.fromEntries(LABELS.map(label => [label, tasks.filter(task => matches(task, label)).length]));
+  const visibleTasks = tasks.filter(task => matches(task, filter));
+  const readyTasks = tasks.filter(task => !task.completed && !task.archived).length;
+
+  const renderTask = (task: Task) => (
+    <article className={`${task.completed ? "completed " : ""}${draft?.id === task.id ? "selected" : ""}`} key={task.id}>
+      <button className="task-check" aria-label={`${task.completed ? "Reopen" : "Complete"} ${task.title}`} aria-pressed={task.completed} onClick={() => toggleTask(task.id)}>
+        {task.completed ? <Check weight="bold" /> : <Circle />}
+      </button>
+      <button className="task-copy" onClick={() => setDraft({ ...task })}>
+        <strong>{task.title}</strong>
+        <span><Flag /> {task.project}{task.subtasks?.length ? ` · ${task.subtasks.length} subtasks` : ""}</span>
+      </button>
+      <time>{task.due}</time>
+      <span className={`priority ${task.priority.toLowerCase()}`}>{task.priority}</span>
+      <button className="row-menu" aria-label={`Edit ${task.title}`} onClick={() => setDraft({ ...task })}>Edit</button>
+    </article>
+  );
+
+  const overdueList = tasks.filter(t => matches(t, "Overdue"));
+  const todayList = tasks.filter(t => matches(t, "Today"));
+  const upcomingList = tasks.filter(t => matches(t, "Upcoming") || matches(t, "Inbox"));
+
   return <div className="app-shell">
     <a className="skip" href="#main">Skip to main content</a>
     <aside className="sidebar" aria-label="Primary navigation">
       <Link className="brand" href="/"><span className="brand-mark"/>Noema</Link>
-      <nav>{nav.map(([label,Icon])=><Link className={label==="Today"?"active":""} href={({Capture:"/capture",Calendar:"/calendar",Tasks:"/tasks",Vault:"/vault",Projects:"/projects",Study:"/study",Coding:"/coding",Automations:"/automations"} as Record<string,string>)[label]||"#"} key={label}><Icon/><span>{label}</span>{label==="Capture"&&<kbd>⇧C</kbd>}</Link>)}</nav>
+      <nav>{nav.map(([label,Icon])=><Link className={label==="Home"?"active":""} href={({Home:"/",Capture:"/capture",Calendar:"/calendar",Vault:"/vault"} as Record<string,string>)[label]||"#"} key={label}><Icon/><span>{label}</span>{label==="Capture"&&<kbd>⇧C</kbd>}</Link>)}</nav>
       <Link className="settings" href="/settings"><Gear/><span>Settings</span></Link>
     </aside>
 
@@ -78,13 +142,13 @@ export default function Today() {
     </header>
 
     <main id="main">
-      <section className="hero" aria-labelledby="today-title">
+      <section className="hero" aria-labelledby="home-title">
         <p className="mobile-date">{todayLabel}</p>
-        <h1 id="today-title">{greeting}</h1>
-        <p>{todayEvents.length} meeting{todayEvents.length===1?"":"s"}, {todayTasks.length} task{todayTasks.length===1?"":"s"} due, and <Link className="text-link" href="/capture">{pendingCaptures || "no"} capture{pendingCaptures===1?"":"s"} need review</Link>.</p>
+        <h1 id="home-title">{greeting}</h1>
+        <p>{todayEvents.length} meeting{todayEvents.length===1?"":"s"}, {readyTasks} task{readyTasks===1?" is":"s are"} ready, and <Link className="text-link" href="/capture">{pendingCaptures || "no"} capture{pendingCaptures===1?"":"s"} need review</Link>.</p>
       </section>
 
-      <form className="capture" id="quick-capture" onSubmit={submit}>
+      <form className="capture" id="quick-capture" onSubmit={submitCapture}>
         <label htmlFor="capture">Quick capture</label>
         <Plus aria-hidden="true"/>
         <input ref={input} id="capture" name="quick-capture" type="text" inputMode="text" autoComplete="off" autoCapitalize="sentences" spellCheck value={capture} onChange={e=>setCapture(e.target.value)} placeholder="Capture a thought, task, event, file, or command…"/>
@@ -102,8 +166,154 @@ export default function Today() {
         <div className="review-actions"><Link className="secondary" href={`/capture?open=${review.id}`}>{review.status==="processing"?"Continue in Capture":"Edit"}</Link>{review.status==="review"&&review.objects.length>0&&<button className="primary" onClick={()=>closeReview("confirmed")}><Check/>Confirm all</button>}</div>
       </section>}
 
-      <section className="timeline" aria-labelledby="timeline-title">
-        <div className="section-head"><h2 id="timeline-title">Today</h2><Link href="/calendar">Open calendar <CaretRight/></Link></div>
+      <section className="tasks-section" aria-labelledby="tasks-section-title" style={{marginTop:"32px"}}>
+        <div className="module-header" style={{marginBottom:"20px"}}>
+          <div>
+            <h2 id="tasks-section-title">Tasks</h2>
+            <p>{readyTasks} task{readyTasks === 1 ? " is" : "s are"} ready.</p>
+          </div>
+          <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+            <button className="primary top-primary" onClick={() => setDraft(blankTask())}><Plus />New task</button>
+            <label className="task-view-select">
+              <CalendarBlank />
+              <span className="sr-only">Task view</span>
+              <select aria-label="Task view" value={filter} onChange={event=>setFilter(event.target.value)}>
+                {LABELS.map(label => <option key={label}>{label}</option>)}
+              </select>
+            </label>
+          </div>
+        </div>
+
+        <div className="task-layout">
+          <nav className="subnav" aria-label="Task views">
+            {LABELS.map(label => (
+              <button className={label === filter ? "active" : ""} key={label} onClick={() => setFilter(label)}>
+                <span>{label}</span>
+                <small>{counts[label]}</small>
+              </button>
+            ))}
+          </nav>
+
+          <section className="task-list" aria-labelledby="task-list-title">
+            <div className="list-title">
+              <h3 id="task-list-title">{filter}</h3>
+              <span>{visibleTasks.length} shown</span>
+            </div>
+
+            {filter === "All" ? (
+              <div className="task-grouped-sections">
+                {overdueList.length > 0 && (
+                  <div className="task-group">
+                    <h4 className="task-group-title overdue">Overdue ({overdueList.length})</h4>
+                    {overdueList.map(renderTask)}
+                  </div>
+                )}
+                {todayList.length > 0 && (
+                  <div className="task-group">
+                    <h4 className="task-group-title today">Today ({todayList.length})</h4>
+                    {todayList.map(renderTask)}
+                  </div>
+                )}
+                {upcomingList.length > 0 && (
+                  <div className="task-group">
+                    <h4 className="task-group-title upcoming">Upcoming ({upcomingList.length})</h4>
+                    {upcomingList.map(renderTask)}
+                  </div>
+                )}
+                {!visibleTasks.length && (
+                  <div className="empty-state">
+                    <Check />
+                    <h3>Nothing here</h3>
+                    <p>This view is clear.</p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <>
+                {visibleTasks.map(renderTask)}
+                {!visibleTasks.length && (
+                  <div className="empty-state">
+                    <Check />
+                    <h3>Nothing here</h3>
+                    <p>This view is clear.</p>
+                  </div>
+                )}
+              </>
+            )}
+          </section>
+
+          {draft ? (
+            <aside className="object-inspector">
+              <div className="object-inspector-head">
+                <div>
+                  <span>{tasks.some(task => task.id === draft.id) ? "Edit task" : "New task"}</span>
+                  <small>{draft.vaultSource ? "Changes rewrite only this Obsidian checklist line." : "Use plain language; changes appear on Home immediately."}</small>
+                </div>
+                <button className="icon-button" aria-label="Close task inspector" onClick={() => setDraft(null)}><X /></button>
+              </div>
+              <form onSubmit={submitTask}>
+                <label>Task name<input autoFocus value={draft.title} onChange={e => setDraft({ ...draft, title: e.target.value })} placeholder="What needs doing?" required /></label>
+                <label>Project
+                  <select value={draft.projectId || ""} onChange={e => { const project = projects.find(item => item.id === e.target.value); setDraft({ ...draft, projectId: project?.id || null, project: project?.name || "Inbox" }) }}>
+                    <option value="">Inbox</option>
+                    {projects.filter(item => item.status !== "Archived").map(project => <option key={project.id} value={project.id}>{project.name}</option>)}
+                  </select>
+                </label>
+                <div className="field-row">
+                  <label>Due<input type="date" value={dateValue(draft.dueAt)} onChange={e => setDraft({ ...draft, dueAt: e.target.value ? new Date(`${e.target.value}T00:00:00+07:00`).toISOString() : null, scheduledStartAt: null })} /></label>
+                  <label>Priority
+                    <select value={draft.priority} onChange={e => setDraft({ ...draft, priority: e.target.value as Task["priority"] })}>
+                      <option>High</option>
+                      <option>Medium</option>
+                      <option>Low</option>
+                    </select>
+                  </label>
+                </div>
+                <label>Scheduled time<input type="datetime-local" value={dateTimeValue(draft.scheduledStartAt)} onChange={e => setDraft({ ...draft, scheduledStartAt: e.target.value ? jakartaIso(e.target.value) : null, dueAt: e.target.value ? jakartaIso(e.target.value) : draft.dueAt })} /></label>
+                <label>Reminder<input type="datetime-local" value={dateTimeValue(draft.reminderAt)} onChange={e => setDraft({ ...draft, reminderAt: e.target.value ? jakartaIso(e.target.value) : null })} /></label>
+                <label>Repeat
+                  <select value={draft.recurrence || "Never"} onChange={e => setDraft({ ...draft, recurrence: e.target.value })}>
+                    <option>Never</option>
+                    <option>Daily</option>
+                    <option>Weekdays</option>
+                    <option>Weekly</option>
+                    <option>Monthly</option>
+                  </select>
+                </label>
+                <label>Subtasks<textarea value={(draft.subtasks || []).join("\n")} onChange={e => setDraft({ ...draft, subtasks: e.target.value.split("\n").filter(Boolean) })} placeholder="One subtask per line" /></label>
+                <label className="check-field"><input type="checkbox" checked={draft.completed} onChange={e => setDraft({ ...draft, completed: e.target.checked })} /> Mark completed</label>
+                {draft.vaultSource && (
+                  <div className="permission-note">
+                    <CalendarBlank />
+                    <span>
+                      <strong>{draft.vaultSource.sourceName} · {draft.vaultSource.relativePath}</strong>
+                      <small>Line {draft.vaultSource.lineNumber} · ^{draft.vaultSource.blockId}</small>
+                      <Link href={`/vault?open=${encodeURIComponent(draft.vaultSource.noteId)}`}>Open source note</Link>
+                    </span>
+                  </div>
+                )}
+                <div className="inspector-actions">
+                  {tasks.some(task => task.id === draft.id) && (
+                    <button type="button" className="icon-button danger" aria-label="Archive task" onClick={() => { archiveTask(draft.id); setDraft(null) }}><Archive /></button>
+                  )}
+                  <button type="button" className="secondary" onClick={() => setDraft(null)}>Cancel</button>
+                  <button className="primary">Save task</button>
+                </div>
+              </form>
+            </aside>
+          ) : (
+            <aside className="task-focus">
+              <Flag />
+              <h3>Select a task</h3>
+              <p>Open any task to change its schedule, recurrence, subtasks, project, or priority.</p>
+              <button className="secondary" onClick={() => setDraft(blankTask())}><Plus />Add task</button>
+            </aside>
+          )}
+        </div>
+      </section>
+
+      <section className="timeline" aria-labelledby="timeline-title" style={{marginTop:"40px"}}>
+        <div className="section-head"><h2 id="timeline-title">Today's Schedule</h2><Link href="/calendar">Open calendar <CaretRight/></Link></div>
         <div className="timeline-list">
           {todayEvents.map(event=><article key={event.id}><time>{event.time}</time><span className="timeline-dot active-dot"/>{event.title.toLowerCase().includes("lecture")?<BookOpen/>:<CalendarBlank/>}<div><strong>{event.title}</strong><span>{event.location||"Calendar event"}</span></div><Link className="row-action" aria-label={`Open ${event.title}`} href="/calendar"><CaretRight/></Link></article>)}
           {todayTasks.map(task=><article className={task.completed?"completed":""} key={task.id}><time>Today</time><span className="timeline-dot"/><button className="checkbox" aria-label={task.completed?`Mark ${task.title} incomplete`:`Complete ${task.title}`} aria-pressed={task.completed} onClick={()=>toggleTask(task.id)}>{task.completed&&<Check weight="bold"/>}</button><div><strong>{task.title}</strong><span>{task.project} · Due today</span></div></article>)}
@@ -120,10 +330,10 @@ export default function Today() {
     </aside>
 
     <nav className="mobile-nav" aria-label="Mobile navigation">
-      {([["Today","/",House],["Capture","/capture",Plus],["Tasks","/tasks",ListChecks],["Vault","/vault",Folder],["Coding","/coding",Code],["Automations","/automations",Lightning],["Settings","/settings",Gear]] as const).map(([label,href,Icon],i)=><Link className={`${i===0?"active":""} ${i===1?"capture-nav":""}`} href={href} key={label}><Icon/><span>{label}</span></Link>)}
+      {([["Home","/",House],["Capture","/capture",Plus],["Calendar","/calendar",CalendarBlank],["Vault","/vault",Folder],["Coding","/coding",Code]] as const).map(([label,href,Icon],i)=><Link className={`${i===0?"active":""} ${i===1?"capture-nav":""}`} href={href} key={label}><Icon/><span>{label}</span></Link>)}
     </nav>
 
-    {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus aria-label="Search commands" placeholder="Search Noema or run a command…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><p>Quick actions</p>{([["New capture","#capture",Plus,"⌘ ⇧ C"],["Add task","/tasks",CheckSquare,"⌘ ⇧ T"],["Open calendar","/calendar",CalendarBlank,"G C"],["Search vault","/vault",Folder,"G V"]] as const).map(([label,href,Icon,key])=><Link href={href} onClick={()=>setPalette(false)} key={label}><Icon/><span>{label}</span><kbd>{key}</kbd></Link>)}</ModalDialog>}
+    {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus aria-label="Search commands" placeholder="Search Noema or run a command…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><p>Quick actions</p>{([["New capture","#capture",Plus,"⌘ ⇧ C"],["Add task","/?open=new",CheckSquare,"⌘ ⇧ T"],["Open calendar","/calendar",CalendarBlank,"G C"],["Search vault","/vault",Folder,"G V"]] as const).map(([label,href,Icon,key])=><Link href={href} onClick={()=>{setPalette(false);if(href==="/?open=new")setDraft(blankTask())}} key={label}><Icon/><span>{label}</span><kbd>{key}</kbd></Link>)}</ModalDialog>}
     {handwriting&&<HandwritingCapture onClose={()=>setHandwriting(false)}/>}
   </div>;
 }
