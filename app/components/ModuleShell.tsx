@@ -38,8 +38,42 @@ export function ModuleShell({active,title,action,assistantContext,children}:{act
   useEffect(()=>{document.documentElement.dataset.theme=theme;localStorage.setItem("noema-theme",theme)},[theme]);
   useEffect(()=>{const key=(event:KeyboardEvent)=>{if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==="k"){event.preventDefault();setPalette(true)}if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==="j"){event.preventDefault();setAssistant(true)}if(event.key==="Escape"){setPalette(false);setNotifications(false);setAssistant(false)}};addEventListener("keydown",key);return()=>removeEventListener("keydown",key)},[]);
   useEffect(()=>{if(!notifications)return;setNotificationError("");fetch("/api/v1/notifications").then(async response=>{if(!response.ok)throw new Error(response.status===401?"Sign in to view notifications.":"Notifications are unavailable.");return response.json()}).then(data=>setNotificationItems(data.notifications)).catch(error=>setNotificationError(error.message))},[notifications]);
-  useEffect(()=>{if(!assistant)return;void (async()=>{try{let context=assistantContext;if(!context&&active==="Projects"){const data=await (await fetch("/api/v1/projects")).json(),project=data.projects?.find((item:{id:string;name:string})=>item.name===title);if(project){context={type:"project",id:project.id};setResolvedAssistantContext(context)}}if(!context)return;const response=await fetch(`/api/v1/recommendations?contextType=${context.type}&contextId=${context.id}&generate=true`),data=await response.json();if(!response.ok)throw new Error(data.error?.message);setRecommendations(data.recommendations)}catch(error){setAssistantError((error as Error).message)}})()},[assistant,assistantContext?.type,assistantContext?.id,active,title]);
-  useEffect(()=>{
+  const [loadingAssistant, setLoadingAssistant] = useState(false);
+  const [planPrompt, setPlanPrompt] = useState("");
+
+  async function loadRecommendations(customContext = assistantContext) {
+    setLoadingAssistant(true);
+    setAssistantError("");
+    try {
+      let context = customContext;
+      if (!context && active === "Projects") {
+        const data = await (await fetch("/api/v1/projects")).json(),
+          project = data.projects?.find((item: { id: string; name: string }) => item.name === title);
+        if (project) {
+          context = { type: "project", id: project.id };
+          setResolvedAssistantContext(context);
+        }
+      }
+      const url = context
+        ? `/api/v1/recommendations?contextType=${context.type}&contextId=${context.id}&generate=true`
+        : `/api/v1/recommendations?generate=true`;
+      const response = await fetch(url),
+        data = await response.json();
+      if (!response.ok) throw new Error(data.error?.message || "Failed to load recommendations");
+      setRecommendations(data.recommendations || []);
+    } catch (error) {
+      setAssistantError((error as Error).message);
+    } finally {
+      setLoadingAssistant(false);
+    }
+  }
+
+  useEffect(() => {
+    if (!assistant) return;
+    void loadRecommendations();
+  }, [assistant, assistantContext?.type, assistantContext?.id, active, title]);
+
+  useEffect(() => {
     const term=query.trim();
     if(term.length<2){setSearchResults([]);setSearching(false);setSearchError("");return}
     const controller=new AbortController(),timer=setTimeout(async()=>{setSearching(true);setSearchError("");try{const response=await fetch(`/api/v1/search?q=${encodeURIComponent(term)}&semantic=${semanticSearch}`,{signal:controller.signal});if(!response.ok)throw new Error(response.status===401?"Sign in to search your workspace.":"Search is unavailable.");const data=await response.json();setRankingSource(data.ranking.mode==="semantic"?`Semantic ranking · ${data.ranking.source} ${data.ranking.model}`:data.ranking.fallback?`Local ranking · ${data.ranking.fallback}`:"Local ranking · SQLite FTS/LIKE");setSearchResults([
@@ -67,6 +101,93 @@ export function ModuleShell({active,title,action,assistantContext,children}:{act
     <main id="module-main" className="module-main">{children}</main>
     <nav className="mobile-nav" aria-label="Mobile navigation">{([["Home","/",House],["Capture","/capture",Plus],["Calendar","/calendar",CalendarBlank],["Vault","/vault",Folder],["Coding","/coding",Code]] as const).map(([label,href,Icon],i)=><Link className={`${label===active?"active":""} ${i===1?"capture-nav":""}`} href={href} key={label}><Icon/><span>{label}</span></Link>)}</nav>
     {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus value={query} onChange={event=>setQuery(event.target.value)} aria-label="Search workspace" placeholder="Search notes, tasks, events, captures…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><label className="semantic-search-toggle"><input type="checkbox" checked={semanticSearch} onChange={event=>setSemanticSearch(event.target.checked)}/><span>Semantic ranking</span><small>Sends result titles and excerpts to the configured OpenAI embedding model</small></label><p aria-live="polite">{searching?"Searching…":searchError||`${results.length} results${rankingSource?` · ${rankingSource}`:""}`}</p>{results.map(({id,label,detail,href,Icon})=><button key={id} onClick={()=>go(href)}><Icon/><span><strong>{label}</strong><small>{detail}</small></span><kbd>↵</kbd></button>)}{!searching&&!searchError&&!results.length&&<div className="palette-empty">No workspace results match “{query}”.</div>}</ModalDialog>}
-    {assistant&&<aside className="ai-panel" aria-label="Contextual assistant"><header><span><Sparkle/><strong>Plan with Noema</strong></span><button className="icon-button" aria-label="Close assistant" onClick={()=>setAssistant(false)}><X/></button></header>{assistantError&&<p role="alert">{assistantError}</p>}{!assistantContext?<p>Open a project to receive grounded recommendations.</p>:recommendations.length?<ol>{recommendations.map(item=><li key={item.id}><CheckSquare/><span><strong>{item.proposal.title}</strong><small>{item.proposal.priority} · {item.sources.map(source=>source.title).join(", ")} · {item.provider}</small><button className="secondary" onClick={()=>void decide(item,"rejected")}>Reject</button><button className="primary" onClick={()=>void decide(item,"accepted")}>Create task</button></span></li>)}</ol>:<p>No pending recommendations.</p>}<small>Suggestions are persisted drafts. Nothing changes without confirmation.</small></aside>}
+    {assistant && (
+      <aside className="ai-panel" aria-label="Contextual assistant">
+        <header>
+          <span>
+            <Sparkle />
+            <strong>Plan with Noema</strong>
+          </span>
+          <button className="icon-button" aria-label="Close assistant" onClick={() => setAssistant(false)}>
+            <X />
+          </button>
+        </header>
+
+        {assistantError && <p role="alert">{assistantError}</p>}
+
+        <form
+          className="ai-plan-form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (!planPrompt.trim()) return;
+            void (async () => {
+              try {
+                setLoadingAssistant(true);
+                const res = await fetch("/api/v1/capture", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ input: `Plan request: ${planPrompt}` })
+                });
+                if (!res.ok) throw new Error("Could not submit plan request");
+                setPlanPrompt("");
+                await loadRecommendations();
+              } catch (err) {
+                setAssistantError((err as Error).message);
+              } finally {
+                setLoadingAssistant(false);
+              }
+            })();
+          }}
+        >
+          <input
+            type="text"
+            value={planPrompt}
+            onChange={(e) => setPlanPrompt(e.target.value)}
+            placeholder="Ask Noema to plan something..."
+            aria-label="Ask Noema to plan something"
+          />
+          <button type="submit" className="primary" disabled={loadingAssistant || !planPrompt.trim()}>
+            {loadingAssistant ? "…" : "Plan"}
+          </button>
+        </form>
+
+        <div className="ai-plan-actions">
+          <button type="button" className="secondary" onClick={() => void loadRecommendations()}>
+            <Sparkle size={14} /> Refresh suggestions
+          </button>
+        </div>
+
+        {loadingAssistant ? (
+          <p className="ai-loading">Generating grounded recommendations…</p>
+        ) : recommendations.length ? (
+          <ol>
+            {recommendations.map((item) => (
+              <li key={item.id}>
+                <CheckSquare />
+                <span>
+                  <strong>{item.proposal.title}</strong>
+                  <small>
+                    {item.proposal.priority} · {item.sources.map((source) => source.title).join(", ") || "Workspace"} · {item.provider}
+                  </small>
+                  <button className="secondary" onClick={() => void decide(item, "rejected")}>
+                    Reject
+                  </button>
+                  <button className="primary" onClick={() => void decide(item, "accepted")}>
+                    Create task
+                  </button>
+                </span>
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <div className="ai-empty">
+            <p>No pending recommendations for this context.</p>
+            <p className="ai-empty-sub">Type a request above to generate custom grounded plans.</p>
+          </div>
+        )}
+
+        <small>Suggestions are persisted drafts. Nothing changes without confirmation.</small>
+      </aside>
+    )}
   </div>;
 }
