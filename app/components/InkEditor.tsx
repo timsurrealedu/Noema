@@ -103,7 +103,7 @@ export function InkEditor({
 
   const bounds = selectionBounds(strokes, selected);
 
-  const initialFitted = useRef(false);
+  const userInteracted = useRef(false);
 
   useEffect(() => {
     loadInkDraft(id)
@@ -112,21 +112,15 @@ export function InkEditor({
         if (replay.length) {
           setStrokes(replay);
           onChange?.(replay);
-          if (!initialFitted.current && canvasSize.width > 0 && canvasSize.height > 0) {
-            initialFitted.current = true;
-            setView(fitInkView(replay, canvasSize.width, canvasSize.height));
-          }
         }
       })
       .catch(() => {});
-  }, [id, onChange, canvasSize.width, canvasSize.height]);
+  }, [id, onChange]);
 
   useEffect(() => {
-    if (initial.length > 0 && !initialFitted.current && canvasSize.width > 0 && canvasSize.height > 0) {
-      initialFitted.current = true;
-      setView(fitInkView(initial, canvasSize.width, canvasSize.height));
-    }
-  }, [initial, canvasSize.width, canvasSize.height]);
+    if (!strokes.length || !canvasSize.width || !canvasSize.height || userInteracted.current) return;
+    setView(fitInkView(strokes, canvasSize.width, canvasSize.height));
+  }, [strokes, canvasSize.width, canvasSize.height]);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -509,7 +503,10 @@ export function InkEditor({
         <button
           type="button"
           aria-label="Fit drawing"
-          onClick={() => setView(fitInkView(strokes, canvasSize.width, canvasSize.height))}
+          onClick={() => {
+            userInteracted.current = false;
+            setView(fitInkView(strokes, canvasSize.width, canvasSize.height));
+          }}
         >
           Fit
         </button>
