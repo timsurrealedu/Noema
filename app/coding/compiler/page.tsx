@@ -717,6 +717,7 @@ export default function CompilerPage() {
               type="button"
               className="btn primary code-run"
               disabled={running || !code.trim()}
+              suppressHydrationWarning
               onClick={(e) => void run(e)}
               title="Run code (⌘ Enter)"
             >
@@ -767,6 +768,7 @@ export default function CompilerPage() {
                 type="button"
                 className="icon-btn"
                 disabled={!filePath.trim()}
+                suppressHydrationWarning
                 onClick={() => void saveFile()}
                 title="Save file"
                 aria-label="Save file"
@@ -787,7 +789,8 @@ export default function CompilerPage() {
             className="icon-btn"
             aria-label="Undo edit"
             title="Undo"
-            disabled={mounted ? history.length === 0 : true}
+            disabled={!history.length}
+            suppressHydrationWarning
             onClick={handleUndo}
           >
             <ArrowCounterClockwise size={16} />
@@ -797,7 +800,8 @@ export default function CompilerPage() {
             className="icon-btn"
             aria-label="Redo edit"
             title="Redo"
-            disabled={mounted ? redoStack.length === 0 : true}
+            disabled={!redoStack.length}
+            suppressHydrationWarning
             onClick={handleRedo}
           >
             <ArrowClockwise size={16} />
