@@ -18,4 +18,4 @@ export function saveAIAgent(userId,input,encryptionKey,db=getDatabase()){
   return view(db.prepare("SELECT * FROM ai_agents WHERE id=?").get(id));
 }
 export function deleteAIAgent(userId,id,db=getDatabase()){const result=db.prepare("DELETE FROM ai_agents WHERE id=? AND user_id=?").run(id,userId);if(!result.changes)throw Object.assign(new Error("AI agent not found"),{status:404})}
-export function runtimeAIAgents(config,db=getDatabase(config)){return db.prepare("SELECT * FROM ai_agents WHERE enabled=1 ORDER BY profile,position,created_at").all().map(row=>({...view(row),apiKey:open(row.api_key_enc,config.appEncryptionKey)}))}
+export function runtimeAIAgents(config,db=config?.db||getDatabase(config)){return db.prepare("SELECT * FROM ai_agents WHERE enabled=1 ORDER BY profile,position,created_at").all().map(row=>({...view(row),apiKey:open(row.api_key_enc,config.appEncryptionKey)}))}

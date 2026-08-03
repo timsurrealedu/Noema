@@ -35,6 +35,6 @@ export function loadConfig(env=process.env){
 }
 
 export function ensureDataDirs(config=loadConfig()){
-  for(const dir of [config.dataDir,config.objectsDir,config.jobsDir,config.backupsDir,config.pluginsDir,config.savedCodeDir])mkdirSync(dir,{recursive:true,mode:0o700});
+  for(const dir of [config.dataDir,config.objectsDir,config.jobsDir,config.backupsDir,config.pluginsDir,config.savedCodeDir])if(dir)mkdirSync(dir,{recursive:true,mode:0o700});
   return config;
 }
