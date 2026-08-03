@@ -25,7 +25,12 @@ const basic=(text:string,key:string,onNavigateNote?:(target:string)=>void)=>{
         }} {...props}>{children}</a>;
       }
       return <a href={href} target="_blank" rel="noreferrer" {...props}>{children}</a>;
-    }
+    },
+    table:({children,...props}:any)=>(
+      <div className="table-scroll-wrapper" role="region" aria-label="Table data" tabIndex={0}>
+        <table {...props}>{children}</table>
+      </div>
+    )
   };
   return <ReactMarkdown key={key} remarkPlugins={[remarkGfm,remarkMath]} rehypePlugins={[rehypeKatex]} components={components}>{processedText}</ReactMarkdown>;
 };
