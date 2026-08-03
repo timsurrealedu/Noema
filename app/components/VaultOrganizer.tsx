@@ -137,10 +137,12 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
         <button className="icon-button" aria-label={drawer?"Collapse folder sidebar":"Expand folder sidebar"} aria-expanded={drawer} suppressHydrationWarning title={drawer?"Collapse folders":"Expand folders"} onClick={()=>setDrawer(value=>{const next=!value;localStorage.setItem("noema-vault-drawer",next?"open":"closed");return next})}><SidebarSimple/></button>
         <select aria-label="Vault source" value={sourceId} onChange={event=>{setFolder("");setSourceId(event.target.value);void load(event.target.value)}}>{sources.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>
         <label className="vault-organizer-search"><MagnifyingGlass/><span className="sr-only">Search vault</span><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search vault"/></label>
-        <button className={`secondary ${showGraph?"active":""}`} onClick={()=>setShowGraph(!showGraph)}><ShareNetwork/>Graph</button>
-        <button className="secondary" disabled={Boolean(busy||!sourceId)} suppressHydrationWarning onClick={sync}><ArrowClockwise/>{busy?"Syncing…":"Sync"}</button>
-        <button className="secondary icon-button" aria-label="New folder" title="New folder" disabled={Boolean(!sourceId||folder.startsWith("@"))} suppressHydrationWarning onClick={()=>void createFolder()}><FolderPlus/></button>
-        <button className="primary icon-button" aria-label="New note" title="New note" disabled={Boolean(!sourceId||folder.startsWith("@"))} suppressHydrationWarning onClick={()=>void create()}><FilePlus/></button>
+        <div className="vault-organizer-actions">
+          <button className={`secondary ${showGraph?"active":""}`} onClick={()=>setShowGraph(!showGraph)}><ShareNetwork/>Graph</button>
+          <button className="secondary" disabled={Boolean(busy||!sourceId)} suppressHydrationWarning onClick={sync}><ArrowClockwise/>{busy?"Syncing…":"Sync"}</button>
+          <button className="secondary icon-button" aria-label="New folder" title="New folder" disabled={Boolean(!sourceId||folder.startsWith("@"))} suppressHydrationWarning onClick={()=>void createFolder()}><FolderPlus/></button>
+          <button className="primary icon-button" aria-label="New note" title="New note" disabled={Boolean(!sourceId||folder.startsWith("@"))} suppressHydrationWarning onClick={()=>void create()}><FilePlus/></button>
+        </div>
       </header>
       {error&&<div className="tutor-error" role="alert">{error}</div>}
       {!sources.length?<div className="empty-state"><Folder/><h3>Connect your Obsidian vault</h3><p>Add its local path in Settings, then return here to browse the exact folder structure.</p><Link className="primary" href="/settings">Open Settings</Link></div>:(
