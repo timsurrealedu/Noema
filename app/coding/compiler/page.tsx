@@ -356,8 +356,7 @@ export default function CompilerPage() {
 
     if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
       event.preventDefault();
-      const form = el.form;
-      if (form) form.requestSubmit();
+      void run();
       return;
     }
 
@@ -614,8 +613,8 @@ export default function CompilerPage() {
     }
   }
 
-  async function run(event: FormEvent) {
-    event.preventDefault();
+  async function run(event?: React.SyntheticEvent) {
+    if (event) event.preventDefault();
     setRunning(true);
     setError("");
     setResult(null);
@@ -626,7 +625,10 @@ export default function CompilerPage() {
         body: JSON.stringify({ language, code, stdin })
       });
       const body = await response.json();
-      if (!response.ok) throw new Error(body.error?.message || "Compilation failed");
+      if (!response.ok) {
+        setError(body.error?.message || `Run failed (${response.status})`);
+        return;
+      }
       setResult(body);
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Compilation failed");
