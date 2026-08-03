@@ -298,6 +298,10 @@ export default function CompilerPage() {
 
   useEffect(() => {
     setMounted(true);
+    const savedLang = localStorage.getItem("noema-compiler-language") as Language | null;
+    if (savedLang && starters[savedLang]) {
+      setLanguage(savedLang);
+    }
   }, []);
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -555,6 +559,7 @@ export default function CompilerPage() {
   function changeLanguage(value: Language) {
     if (mode === "scratch") localStorage.setItem(`noema-scratch-${language}`, code);
     setLanguage(value);
+    localStorage.setItem("noema-compiler-language", value);
     setResult(null);
     setError("");
   }
