@@ -48,6 +48,7 @@ type Props = {
   transcript?: string;
   ocrStatus?: string;
   capture?: boolean;
+  showTranscript?: boolean;
   onChange?: (strokes: InkStroke[]) => void;
   onSaved?: () => void;
 };
@@ -62,6 +63,7 @@ export function InkEditor({
   transcript = "",
   ocrStatus = "pending",
   capture = false,
+  showTranscript = false,
   onChange,
   onSaved = () => {}
 }: Props) {
@@ -644,7 +646,7 @@ export function InkEditor({
           </g>
         )}
       </svg>
-      {!capture && (
+      {showTranscript && !capture && (
         <div className="ink-transcript">
           <label>
             OCR transcript <small>{ocrStatus}</small>
