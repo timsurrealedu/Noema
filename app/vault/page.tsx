@@ -18,7 +18,7 @@ const MixedNoteEditor=dynamic(()=>import("../components/MixedNoteEditor").then(m
 
 const blankNote=():Note=>({id:createId(),title:"Untitled note",excerpt:"",content:"# Untitled note\n\n",tags:[],time:"Now",ai:false,source:"Created in Noema"});
 type Optimization={id:string;mode:string;state:string;before_content:string;after_content:string|null;summary:string|null;provider:string|null;error:string|null};
-const renderMarkdown=(text:string)=><MarkdownContent text={text}/>;
+const renderMarkdown=(text:string,onNavigateNote?:(target:string)=>void)=><MarkdownContent text={text} onNavigateNote={onNavigateNote}/>;
 
 export default function VaultPage(){
   const {notes,saveNote,trashNote}=useAppState();
@@ -30,10 +30,84 @@ export default function VaultPage(){
   const [tutorOpen,setTutorOpen]=useState(false);
   const [fullscreen,setFullscreen]=useState(false);
   const [optimizations,setOptimizations]=useState<Optimization[]>([]),[optimizing,setOptimizing]=useState(false),[optimizationError,setOptimizationError]=useState(""),[openError,setOpenError]=useState("");
-  useEffect(()=>{const id=new URLSearchParams(location.search).get("open"),note=notes.find(item=>item.id===id);if(note)void openNote(note)},[notes]);
+  
+  function findNoteByNameOrId(target:string):Note|undefined{
+    const norm=decodeURIComponent(target).trim().toLowerCase();
+    return notes.find(item=>
+      item.id===target||
+      item.title.toLowerCase()===norm||
+      item.title.toLowerCase()===norm.replace(/\.md$/i,"")||
+      item.relativePath?.toLowerCase()===norm||
+      item.relativePath?.toLowerCase().replace(/\.md$/i,"")===norm||
+      (item.relativePath&&item.relativePath.split("/").pop()?.toLowerCase().replace(/\.md$/i,"")===norm)
+    );
+  }
+
+  function navigateToNote(target:string){
+    const found=findNoteByNameOrId(target);
+    if(found)void openNote(found);
+  }
+
+  useEffect(()=>{
+    const param=new URLSearchParams(location.search).get("open");
+    if(!param)return;
+    const note=findNoteByNameOrId(param);
+    if(note)void openNote(note);
+  },[notes]);
+
   useEffect(()=>{if(draft?.id)loadOptimizations(draft.id).catch(()=>{})},[draft?.id]);
   const filtered=notes.filter(note=>view==="Trash"?note.trashed:!note.trashed).filter(note=>view==="Favorites"?note.favorite:view==="Courses"?note.tags.some(tag=>["course","networking","database","study","operating-systems"].includes(tag)):view==="Projects"?note.tags.some(tag=>["revou","partnership","project"].includes(tag)):true).filter(note=>`${note.title} ${note.excerpt} ${note.tags}`.toLowerCase().includes(query.toLowerCase()));
-  async function openNote(note:Note){const fallback=`# ${note.title}\n\n${note.excerpt}`;setOpenError("");if(note.content!==undefined){setDraft({...note});return}try{const response=await fetch(`/api/v1/notes/${note.id}`),data=await response.json();if(!response.ok)throw new Error(data.error?.message||"Could not open note");setDraft({...note,...data,content:data.content||fallback})}catch(reason){setOpenError(reason instanceof Error?reason.message:"Could not open note")}}
+  function extractTagsFromContent(content:string):string[]{
+    if(!content||typeof content!=="string")return[];
+    const set=new Set<string>();
+    const fmMatch=content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+    if(fmMatch){
+      const yaml=fmMatch[1];
+      const tagMatch=yaml.match(/^(?:tags|tag):\s*([\s\S]*?)(?=\n[a-z0-9_-]+:|$)/mi);
+      if(tagMatch){
+        const section=tagMatch[1].trim();
+        if(section.startsWith("-")){
+          for(const line of section.split(/\r?\n/)){
+            const item=line.replace(/^\s*-\s*/,"").trim().replace(/^['"]|['"]$/g,"");
+            if(item)set.add(item.replace(/^#/,""));
+          }
+        }else if(section.startsWith("[")){
+          for(const item of section.replace(/^\[|\]$/g,"").split(",")){
+            const cleaned=item.trim().replace(/^['"]|['"]$/g,"");
+            if(cleaned)set.add(cleaned.replace(/^#/,""));
+          }
+        }else{
+          for(const item of section.split(/[, \t]+/)){
+            const cleaned=item.trim().replace(/^['"]|['"]$/g,"");
+            if(cleaned)set.add(cleaned.replace(/^#/,""));
+          }
+        }
+      }
+    }
+    for(const match of content.matchAll(/(?<=\s|^)#([a-zA-Z0-9_\-\/]+)(?=\s|$)/g)){
+      const tag=match[1].trim();
+      if(tag&&!/^\d+$/.test(tag))set.add(tag);
+    }
+    return Array.from(set);
+  }
+
+  async function openNote(note:Note){
+    const fallback=`# ${note.title}\n\n${note.excerpt}`;
+    setOpenError("");
+    let loaded={...note};
+    if(note.content===undefined){
+      try{
+        const response=await fetch(`/api/v1/notes/${note.id}`),data=await response.json();
+        if(!response.ok)throw new Error(data.error?.message||"Could not open note");
+        loaded={...note,...data,content:data.content||fallback};
+      }catch(reason){
+        setOpenError(reason instanceof Error?reason.message:"Could not open note");
+      }
+    }
+    const extracted=extractTagsFromContent(loaded.content||"");
+    const mergedTags=Array.from(new Set([...(loaded.tags||[]),...extracted]));
+    setDraft({...loaded,tags:mergedTags});
+  }
   function update(content:string){if(!draft)return;const title=content.match(/^# (.+)$/m)?.[1]||draft.title;setDraft({...draft,title,content,excerpt:content.replace(/[#*_>-]/g,"").trim().slice(0,140)})}
   function save(){if(draft){if(!draft.sourceId)saveNote({...draft,time:"Now"});setDraft(null)}}
   function exportNote(){if(!draft)return;const link=document.createElement("a");link.href=URL.createObjectURL(new Blob([draft.content],{type:"text/markdown"}));link.download=`${draft.title.toLowerCase().replace(/[^a-z0-9]+/g,"-")}.md`;link.click();URL.revokeObjectURL(link.href)}
@@ -42,6 +116,7 @@ export default function VaultPage(){
   async function optimize(){if(!draft)return;setOptimizing(true);setOptimizationError("");try{const saved=await fetch("/api/v1/notes",{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":createId()},body:JSON.stringify({...draft,draft:true})}),savedNote=await saved.json();if(!saved.ok)throw new Error(savedNote.error?.message||"Save failed");setDraft({...draft,draft:true,version:savedNote.version});const response=await fetch(`/api/v1/notes/${draft.id}/optimizations`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"organize"})}),result=await response.json();if(!response.ok)throw new Error(result.error?.message||"Optimization failed");for(let attempt=0;attempt<120;attempt++){await new Promise(resolve=>setTimeout(resolve,1000));const job=await (await fetch(`/api/v1/jobs/${result.jobId}`)).json();if(job.state==="completed"){await loadOptimizations(draft.id);return}if(["failed","cancelled"].includes(job.state))throw new Error(job.error||"Optimization failed")}throw new Error("Optimization is still running. Check again later.")}catch(reason){setOptimizationError((reason as Error).message)}finally{setOptimizing(false)}}
   async function decide(item:Optimization,action:"apply"|"reject"){const response=await fetch(`/api/v1/notes/optimizations/${item.id}/${action}`,{method:"POST",headers:action==="apply"?{"Idempotency-Key":createId()}:undefined});const data=await response.json();if(!response.ok){setOptimizationError(data.error?.message||"Action failed");return}if(action==="apply")location.reload();else loadOptimizations(draft!.id)}
   if(!draft)return <ModuleShell active="Vault" title="Vault">{openError&&<div className="tutor-error" role="alert">{openError}</div>}<VaultOrganizer notes={notes} onOpen={openNote}/></ModuleShell>
-  if(draft?.sourceId)return <ModuleShell active="Vault" title="Note editor" action={<button className="primary top-primary" onClick={()=>setDraft(null)}>Done</button>}><section className={`note-workspace mixed-workspace ${fullscreen?"fullscreen":""}`}><header className="note-toolbar"><button className="icon-button" aria-label="Back to notes" onClick={()=>setDraft(null)}><ArrowLeft/></button><span className="mixed-note-path">{draft.relativePath}</span><button className="secondary note-secondary-action" onClick={()=>setTutorOpen(true)}><Sparkle/>Ask tutor</button><button className="secondary note-secondary-action" onClick={exportNote}><DownloadSimple/>Export</button><button className="secondary fullscreen-toggle" aria-label={fullscreen?"Exit fullscreen":"Open note fullscreen"} onClick={()=>setFullscreen(value=>!value)}>{fullscreen?<ArrowsIn/>:<ArrowsOut/>}<span>{fullscreen?"Exit":"Fullscreen"}</span></button></header><MixedNoteEditor noteId={draft.id} initialInk={new URLSearchParams(location.search).get("ink")==="1"}/><aside className="note-inspector"><div className="object-inspector-head"><div><span>Properties</span><small>Saved to Obsidian automatically.</small></div></div><div><small>Source</small><strong>{draft.source}</strong></div><div><small>Sync</small><strong>{draft.syncState}</strong></div><div><small>Blocks</small><strong>{draft.blocks?.length||1} ordered blocks</strong></div></aside></section>{tutorOpen&&<TutorPanel kind="note" context={{id:draft.id,title:draft.title,content:draft.content}} onApply={()=>{}} onClose={()=>setTutorOpen(false)}/>}</ModuleShell>
-  if(draft){const proposal=optimizations.find(item=>item.state==="ready");return <ModuleShell active="Vault" title="Note editor" action={<button className="primary top-primary" onClick={save}>Save note</button>}><section className={`note-workspace ${fullscreen?"fullscreen":""}`}><header className="note-toolbar"><button className="icon-button" aria-label="Back to notes" onClick={()=>setDraft(null)}><ArrowLeft/></button><div className="mode-switch" role="group" aria-label="Editor view">{(["write","split","read"] as const).map(item=><button className={mode===item?"active":""} onClick={()=>setMode(item)} key={item}>{item}</button>)}</div><button className="secondary note-secondary-action" onClick={()=>setTutorOpen(true)}><Sparkle/>Ask tutor</button>{draft.draft&&<button className="secondary note-secondary-action" disabled={optimizing} onClick={optimize}><Sparkle/>{optimizing?"Optimizing…":"Optimize draft"}</button>}<button className="secondary note-secondary-action" onClick={exportNote}><DownloadSimple/>Export</button><button className="secondary fullscreen-toggle" aria-label={fullscreen?"Exit fullscreen":"Open note fullscreen"} onClick={()=>setFullscreen(value=>!value)}>{fullscreen?<ArrowsIn/>:<ArrowsOut/>}<span>{fullscreen?"Exit":"Fullscreen"}</span></button><button className="icon-button danger note-secondary-action" aria-label="Move note to trash" onClick={()=>{trashNote(draft.id);setDraft(null)}}><Trash/></button></header><div className={`note-editor ${mode}`}><div className="markdown-write"><MarkdownToolbar textarea={textarea} onChange={update}/><NoteAttachmentButton textarea={textarea} onChange={update}/><textarea ref={textarea} aria-label="Markdown note" value={draft.content} onChange={e=>update(e.target.value)} onKeyDown={event=>markdownKey(event,update)} spellCheck/><WikilinkCompletion textarea={textarea} value={draft.content} onChange={update}/></div>{mode!=="write"&&<article className="markdown-preview">{renderMarkdown(draft.content)}</article>}</div><aside className="note-inspector"><div className="object-inspector-head"><div><span>Note details</span><small>Portable Markdown with its source intact.</small></div><X/></div><label>Title<input value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/></label><label>Tags<input value={draft.tags.join(", ")} onChange={e=>setDraft({...draft,tags:e.target.value.split(",").map(tag=>tag.trim()).filter(Boolean)})}/></label><label className="check-field"><input type="checkbox" checked={!!draft.draft} onChange={e=>setDraft({...draft,draft:e.target.checked})}/> Draft note</label><div><small>Source</small><strong>{draft.source}</strong></div><div><small>Relationships</small><strong>{draft.tags.length||0} related topics</strong></div>{draft.ai&&<div className="ai-provenance"><Sparkle/><span><strong>AI-assisted</strong><small>Generated content remains identified.</small></span></div>}</aside></section>{optimizationError&&<div className="tutor-error" role="alert">{optimizationError}</div>}{proposal&&<section className="optimization-review"><header><div><h2>Optimization review</h2><p>{proposal.summary}</p></div><small>{proposal.provider} · {proposal.mode}</small></header><div><article><h3>Original</h3><pre>{proposal.before_content}</pre></article><article><h3>Proposed</h3><pre>{proposal.after_content}</pre></article></div><footer><button className="secondary" onClick={()=>decide(proposal,"reject")}>Reject</button><button className="primary" onClick={()=>decide(proposal,"apply")}>Apply proposal</button></footer></section>}{tutorOpen&&<TutorPanel kind="note" context={{id:draft.id,title:draft.title,content:draft.content}} onApply={value=>update(`${draft.content.trim()}\n\n${value.trim()}\n`)} onClose={()=>setTutorOpen(false)}/>}</ModuleShell>}
+  if(draft?.sourceId)return <ModuleShell active="Vault" title="Note editor" action={<button className="primary top-primary" onClick={()=>setDraft(null)}>Done</button>}><section className={`note-workspace mixed-workspace ${fullscreen?"fullscreen":""}`}><header className="note-toolbar"><button className="icon-button" aria-label="Back to notes" onClick={()=>setDraft(null)}><ArrowLeft/></button><span className="mixed-note-path">{draft.relativePath}</span><button className="secondary note-secondary-action" onClick={()=>setTutorOpen(true)}><Sparkle/>Ask tutor</button><button className="secondary note-secondary-action" onClick={exportNote}><DownloadSimple/>Export</button><button className="secondary fullscreen-toggle" aria-label={fullscreen?"Exit fullscreen":"Open note fullscreen"} onClick={()=>setFullscreen(value=>!value)}>{fullscreen?<ArrowsIn/>:<ArrowsOut/>}<span>{fullscreen?"Exit":"Fullscreen"}</span></button></header><MixedNoteEditor noteId={draft.id} initialInk={new URLSearchParams(location.search).get("ink")==="1"} onNavigateNote={navigateToNote}/><aside className="note-inspector"><div className="object-inspector-head"><div><span>Properties</span></div><button className="icon-button" aria-label="Close note details" onClick={()=>setDraft(null)}><X/></button></div><label>Title<input value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/></label><label>Tags<input value={draft.tags.join(", ")} onChange={e=>setDraft({...draft,tags:e.target.value.split(",").map(tag=>tag.trim()).filter(Boolean)})} placeholder="e.g. course, binus, bncc"/></label>{draft.tags.length>0&&<div className="tag-pills">{draft.tags.map(tag=><span className="tag-pill" key={tag}>#{tag}</span>)}</div>}<div><small>Source</small><strong>{draft.source}</strong></div><div><small>Sync</small><strong>{draft.syncState||"synced"}</strong></div><div><small>Blocks</small><strong>{draft.blocks?.length||1} ordered blocks</strong></div></aside></section>{tutorOpen&&<TutorPanel kind="note" context={{id:draft.id,title:draft.title,content:draft.content}} onApply={()=>{}} onClose={()=>setTutorOpen(false)}/>}</ModuleShell>
+  if(draft){const proposal=optimizations.find(item=>item.state==="ready");return <ModuleShell active="Vault" title="Note editor" action={<button className="primary top-primary" onClick={save}>Save note</button>}><section className={`note-workspace ${fullscreen?"fullscreen":""}`}><header className="note-toolbar"><button className="icon-button" aria-label="Back to notes" onClick={()=>setDraft(null)}><ArrowLeft/></button><div className="mode-switch" role="group" aria-label="Editor view">{(["write","split","read"] as const).map(item=><button className={mode===item?"active":""} onClick={()=>setMode(item)} key={item}>{item}</button>)}</div><button className="secondary note-secondary-action" onClick={()=>setTutorOpen(true)}><Sparkle/>Ask tutor</button>{draft.draft&&<button className="secondary note-secondary-action" disabled={optimizing} onClick={optimize}><Sparkle/>{optimizing?"Optimizing…":"Optimize draft"}</button>}<button className="secondary note-secondary-action" onClick={exportNote}><DownloadSimple/>Export</button><button className="secondary fullscreen-toggle" aria-label={fullscreen?"Exit fullscreen":"Open note fullscreen"} onClick={()=>setFullscreen(value=>!value)}>{fullscreen?<ArrowsIn/>:<ArrowsOut/>}<span>{fullscreen?"Exit":"Fullscreen"}</span></button><button className="icon-button danger note-secondary-action" aria-label="Move note to trash" onClick={()=>{trashNote(draft.id);setDraft(null)}}><Trash/></button></header><div className={`note-editor ${mode}`}><div className="markdown-write"><MarkdownToolbar textarea={textarea} onChange={update}/><NoteAttachmentButton textarea={textarea} onChange={update}/><textarea ref={textarea} aria-label="Markdown note" value={draft.content} onChange={e=>update(e.target.value)} onKeyDown={event=>markdownKey(event,update)} spellCheck/><WikilinkCompletion textarea={textarea} value={draft.content} onChange={update}/></div>{mode!=="write"&&<article className="markdown-preview">{renderMarkdown(draft.content,navigateToNote)}</article>}</div><aside className="note-inspector"><div className="object-inspector-head"><div><span>Note details</span><small>Portable Markdown with its source intact.</small></div><button className="icon-button" aria-label="Close note details" onClick={()=>setDraft(null)}><X/></button></div><label>Title<input value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/></label><label>Tags<input value={draft.tags.join(", ")} onChange={e=>setDraft({...draft,tags:e.target.value.split(",").map(tag=>tag.trim()).filter(Boolean)})} placeholder="e.g. course, binus, bncc"/></label>{draft.tags.length>0&&<div className="tag-pills">{draft.tags.map(tag=><span className="tag-pill" key={tag}>#{tag}</span>)}</div>}<label className="check-field"><input type="checkbox" checked={!!draft.draft} onChange={e=>setDraft({...draft,draft:e.target.checked})}/> Draft note</label><div><small>Source</small><strong>{draft.source}</strong></div><div><small>Relationships</small><strong>{draft.tags.length||0} related topics</strong></div>{draft.ai&&<div className="ai-provenance"><Sparkle/><span><strong>AI-assisted</strong><small>Generated content remains identified.</small></span></div>}</aside></section>{optimizationError&&<div className="tutor-error" role="alert">{optimizationError}</div>}{proposal&&<section className="optimization-review"><header><div><h2>Optimization review</h2><p>{proposal.summary}</p></div><small>{proposal.provider} · {proposal.mode}</small></header><div><article><h3>Original</h3><pre>{proposal.before_content}</pre></article><article><h3>Proposed</h3><pre>{proposal.after_content}</pre></article></div><footer><button className="secondary" onClick={()=>decide(proposal,"reject")}>Reject</button><button className="primary" onClick={()=>decide(proposal,"apply")}>Apply proposal</button></footer></section>}{tutorOpen&&<TutorPanel kind="note" context={{id:draft.id,title:draft.title,content:draft.content}} onApply={value=>update(`${draft.content.trim()}\n\n${value.trim()}\n`)} onClose={()=>setTutorOpen(false)}/>}</ModuleShell>}
   return <ModuleShell active="Vault" title="Vault" action={<button className="primary top-primary" onClick={()=>setDraft(blankNote())}><Plus/>New note</button>}><div className="module-header vault-header"><div><h2>Your knowledge, connected</h2><p>Notes stay portable, searchable, and linked to their original sources.</p></div><label className="vault-search"><MagnifyingGlass/><span className="sr-only">Search notes</span><input value={query} onChange={e=>setQuery(e.target.value)} placeholder="Search notes…"/></label></div><div className="vault-layout"><nav className="subnav" aria-label="Vault views">{[["All notes",FileText],["Recent",Clock],["Favorites",Star],["Courses",BookOpen],["Projects",Folder],["Tags",Tag],["Trash",Trash]].map(([label,Icon])=><button className={view===label?"active":""} onClick={()=>setView(label as string)} key={label as string}><Icon/><span>{label as string}</span></button>)}</nav><section className="notes"><div className="list-title"><h3>{filtered.length} notes</h3><label className="secondary import-note"><UploadSimple/>Import .md<input type="file" accept=".md,text/markdown" onChange={importNote}/></label></div><div className="note-list">{filtered.map(note=><button className="note-row" key={note.id} onClick={()=>openNote(note)}><FileText/><div><strong>{note.title}</strong><p>{note.excerpt}</p><span>{note.tags.map(tag=><small key={tag}>#{tag}</small>)}</span></div><time>{note.time}</time>{note.ai&&<em><Sparkle/>Generated</em>}</button>)}{!filtered.length&&<div className="empty-state"><MagnifyingGlass/><h3>No matching notes</h3><p>Try a broader title, tag, or topic.</p></div>}</div></section><aside className="vault-context"><Sparkle/><h3>Connections</h3><p>Noema found three notes related to your current Computer Networks course.</p><button className="secondary">Review suggestions</button></aside></div></ModuleShell>}
+

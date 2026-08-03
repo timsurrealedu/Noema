@@ -15,7 +15,39 @@ export function lifeosMigrationInventory({vaultPath:rootPath,codeRoots=[]}){if(!
 export function convertLifeosInk(strokes){if(!Array.isArray(strokes)||strokes.length>2000)throw fail("Invalid LifeOS ink sidecar");const raw=strokes.map((stroke,index)=>{const source=stroke.tool==="pen"?stroke.points:[stroke.a,stroke.b],points=Array.isArray(source)?source.filter(point=>Number.isFinite(point?.x)&&Number.isFinite(point?.y)):[];if(!points.length)throw fail("Invalid LifeOS ink stroke");return {id:`lifeos-${index}`,tool:{rect:"rectangle",ruler:"pen"}[stroke.tool]||stroke.tool,color:/^#[0-9a-f]{6}$/i.test(stroke.color)?stroke.color:"#111827",width:Math.min(100,Math.max(.25,Number(stroke.size)||2)),points:points.map((point,position)=>({x:Number(point.x),y:Number(point.y),pressure:.5,time:position}))}}),points=raw.flatMap(stroke=>stroke.points),minX=Math.min(0,...points.map(point=>point.x)),minY=Math.min(0,...points.map(point=>point.y)),shifted=raw.map(stroke=>({...stroke,points:stroke.points.map(point=>({...point,x:point.x-minX,y:point.y-minY}))})),width=Math.max(1,...shifted.flatMap(stroke=>stroke.points.map(point=>point.x+stroke.width))),height=Math.max(1,...shifted.flatMap(stroke=>stroke.points.map(point=>point.y+stroke.width)));return validateStrokes({formatVersion:2,coordinateSpace:"world",width:Math.ceil(width),height:Math.ceil(height),strokes:shifted})}
 export function importLifeosInkSidecars(sourceId,actor,db=getDatabase()){const source=sourceRow(sourceId,actor.workspaceId,db),inventory=lifeosMigrationInventory({vaultPath:source.root_path}),time=now();let imported=0,skipped=0;for(const jsonPath of inventory.inkSidecars){if(db.prepare("SELECT 1 FROM note_ink_blocks WHERE json_path=? LIMIT 1").get(jsonPath)){skipped++;continue}const imagePath=jsonPath.replace(/\.ink\.json$/i,".png"),entry=db.prepare("SELECT e.note_id,n.content FROM vault_entries e JOIN notes n ON n.id=e.note_id WHERE e.source_id=? AND e.deleted_at IS NULL AND (n.content LIKE ? OR n.content LIKE ?) LIMIT 1").get(sourceId,`%${imagePath}%`,`%${basename(imagePath)}%`);if(!entry){skipped++;continue}let converted;try{converted=convertLifeosInk(JSON.parse(readFileSync(vaultPath(source.root_path,jsonPath,{mustExist:true}),"utf8")))}catch{skipped++;continue}ensureNoteBlocks(entry.note_id,db);const id=randomUUID(),position=db.prepare("SELECT COALESCE(MAX(position),-1)+1 value FROM note_blocks WHERE note_id=?").get(entry.note_id).value;db.prepare("INSERT INTO note_blocks(id,note_id,position,kind,created_at,updated_at) VALUES(?,?,?,?,?,?)").run(id,entry.note_id,position,"ink",time,time);db.prepare("INSERT INTO note_ink_blocks(block_id,width,height,strokes_json,json_path,stroke_hash,ocr_status,updated_at) VALUES(?,?,?,?,?,?,?,?)").run(id,converted.width,converted.height,converted.json,jsonPath,hash(converted.json),"unavailable",time);imported++}return {imported,skipped}}
 function title(content,path){return content.match(/^---\r?\n[\s\S]*?^title:\s*["']?(.+?)["']?\s*$[\s\S]*?^---$/mi)?.[1]||content.match(/^#\s+(.+)$/m)?.[1]||basename(path,".md")}
-function tags(content){const raw=content.match(/^---\r?\n[\s\S]*?^tags:\s*(.+?)\s*$[\s\S]*?^---$/mi)?.[1];return raw?raw.replace(/^\[|\]$/g,"").split(",").map(v=>v.trim().replace(/^['"]|['"]$/g,"")).filter(Boolean):[]}
+function tags(content){
+  if(!content||typeof content!=="string")return[];
+  const set=new Set();
+  const fmMatch=content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+  if(fmMatch){
+    const yaml=fmMatch[1];
+    const tagMatch=yaml.match(/^(?:tags|tag):\s*([\s\S]*?)(?=\n[a-z0-9_-]+:|$)/mi);
+    if(tagMatch){
+      const section=tagMatch[1].trim();
+      if(section.startsWith("-")){
+        for(const line of section.split(/\r?\n/)){
+          const item=line.replace(/^\s*-\s*/,"").trim().replace(/^['"]|['"]$/g,"");
+          if(item)set.add(item.replace(/^#/,""));
+        }
+      }else if(section.startsWith("[")){
+        for(const item of section.replace(/^\[|\]$/g,"").split(",")){
+          const cleaned=item.trim().replace(/^['"]|['"]$/g,"");
+          if(cleaned)set.add(cleaned.replace(/^#/,""));
+        }
+      }else{
+        for(const item of section.split(/[, \t]+/)){
+          const cleaned=item.trim().replace(/^['"]|['"]$/g,"");
+          if(cleaned)set.add(cleaned.replace(/^#/,""));
+        }
+      }
+    }
+  }
+  for(const match of content.matchAll(/(?<=\s|^)#([a-zA-Z0-9_\-\/]+)(?=\s|$)/g)){
+    const tag=match[1].trim();
+    if(tag&&!/^\d+$/.test(tag))set.add(tag);
+  }
+  return Array.from(set);
+}
 function atomicWrite(path,content){mkdirSync(dirname(path),{recursive:true});const temporary=join(dirname(path),`.${basename(path)}.${randomUUID()}.tmp`);writeFileSync(temporary,content,{encoding:"utf8",mode:0o600,flag:"wx"});renameSync(temporary,path)}
 function sourceRow(sourceId,workspaceId,db){const row=db.prepare("SELECT * FROM vault_sources WHERE id=? AND workspace_id=?").get(sourceId,workspaceId);if(!row)throw fail("Vault source not found",404);return row}
 export function connectVault({rootPath,name="Obsidian",taskFolders=["TODO/"]},workspaceId,db=getDatabase()){if(!isAbsolute(rootPath))throw fail("Vault root must be absolute");const root=realpathSync(rootPath);if(!statSync(root).isDirectory())throw fail("Vault root must be a directory");const folders=taskFolders.map(v=>safeRelativePath(String(v).replace(/\/$/,""))+"/");const existing=db.prepare("SELECT * FROM vault_sources WHERE workspace_id=? AND root_path=?").get(workspaceId,root),time=now(),id=existing?.id||randomUUID();if(existing)db.prepare("UPDATE vault_sources SET name=?,task_folders_json=?,state='connected',updated_at=? WHERE id=?").run(name,JSON.stringify(folders),time,id);else db.prepare("INSERT INTO vault_sources(id,workspace_id,name,root_path,task_folders_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?)").run(id,workspaceId,name,root,JSON.stringify(folders),time,time);return getVaultSource(id,workspaceId,db)}
