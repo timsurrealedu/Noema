@@ -310,7 +310,6 @@ export default function Home() {
               <Flag />
               <h3>Select a task</h3>
               <p>Open any task to change its schedule, recurrence, subtasks, project, or priority.</p>
-              <button className="secondary" onClick={() => setDraft(blankTask())}><Plus />Add task</button>
             </aside>
           )}
         </div>
