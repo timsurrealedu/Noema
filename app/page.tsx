@@ -16,7 +16,7 @@ import {createId} from "./lib/id";
 
 const nav = [
   ["Home",House],["Capture",Plus],["Calendar",CalendarBlank],
-  ["Vault",Folder]
+  ["Vault",Folder],["Coding",Code]
 ] as const;
 
 const blankTask=():Task=>({id:createId(),title:"",project:"Inbox",due:"",dueAt:new Date().toISOString(),priority:"Medium",completed:false,status:"open"});
@@ -128,7 +128,7 @@ export default function Home() {
     <a className="skip" href="#main">Skip to main content</a>
     <aside className="sidebar" aria-label="Primary navigation">
       <Link className="brand" href="/"><span className="brand-mark"/>Noema</Link>
-      <nav>{nav.map(([label,Icon])=><Link className={label==="Home"?"active":""} href={({Home:"/",Capture:"/capture",Calendar:"/calendar",Vault:"/vault"} as Record<string,string>)[label]||"#"} key={label}><Icon/><span>{label}</span>{label==="Capture"&&<kbd>⇧C</kbd>}</Link>)}</nav>
+      <nav>{nav.map(([label,Icon])=><Link className={label==="Home"?"active":""} href={({Home:"/",Capture:"/capture",Calendar:"/calendar",Vault:"/vault",Coding:"/coding"} as Record<string,string>)[label]||"#"} key={label}><Icon/><span>{label}</span>{label==="Capture"&&<kbd>⇧C</kbd>}</Link>)}</nav>
       <Link className="settings" href="/settings"><Gear/><span>Settings</span></Link>
     </aside>
 
