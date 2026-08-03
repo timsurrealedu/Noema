@@ -637,68 +637,235 @@ export default function CompilerPage() {
 
   const isDirty = mode === "saved" && filePath && code !== originalContent;
   const fileTree = buildFileTree(files);
+  const gutterRef = useRef<HTMLDivElement>(null);
+  const [stdinOpen, setStdinOpen] = useState(false);
+
+  function syncScroll() {
+    const ta = textareaRef.current;
+    const hl = hlRef.current;
+    const gt = gutterRef.current;
+    if (!ta) return;
+    if (hl) {
+      hl.scrollTop = ta.scrollTop;
+      hl.scrollLeft = ta.scrollLeft;
+    }
+    if (gt) {
+      gt.scrollTop = ta.scrollTop;
+    }
+  }
 
   return (
-    <ModuleShell
-      active="Coding"
-      title="Compiler"
-      action={
-        <Link className="secondary" href="/coding">
-          <ArrowLeft />
-          Coding
-        </Link>
-      }
-    >
-      <div className="compiler-modebar">
-        <button className={mode === "scratch" ? "active" : ""} onClick={() => selectMode("scratch")}>
-          Scratch
-        </button>
-        <button className={mode === "saved" ? "active" : ""} onClick={() => selectMode("saved")}>
-          <Folder />
-          Saved
-        </button>
-        {mode === "saved" && (
-          <>
+    <ModuleShell active="Coding" title="Compiler">
+      <div className="compiler-container">
+        {/* Top Header Bar matching lifeOS .code-top */}
+        <div className="code-top">
+          <div className="seg code-mode">
             <button
               type="button"
-              className="compiler-drawer-toggle"
-              onClick={() => setDrawerOpen((v) => !v)}
+              className={mode === "scratch" ? "active" : ""}
+              onClick={() => selectMode("scratch")}
             >
-              <FolderOpen /> Files ({files.length})
-            </button>
-            <input
-              aria-label="Saved filename"
-              value={filePath}
-              onChange={(event) => setFilePath(event.target.value)}
-              placeholder="folder/main.py"
-            />
-            <button
-              type="button"
-              onClick={() => {
-                setFilePath("");
-                setCode(starters[language]);
-                setOriginalContent(starters[language]);
-              }}
-            >
-              <Plus />
-              New file
+              Scratch
             </button>
             <button
               type="button"
-              className="primary"
-              disabled={!filePath.trim()}
-              onClick={() => void saveFile()}
+              className={mode === "saved" ? "active" : ""}
+              onClick={() => selectMode("saved")}
             >
-              <FloppyDisk />
-              Save file {isDirty ? "*" : ""}
+              Saved
             </button>
-          </>
-        )}
-      </div>
+          </div>
 
-      <form className="compiler-workspace" onSubmit={run}>
-        {mode === "saved" && (
-          <aside className={`compiler-files ${drawerOpen ? "drawer-open" : ""}`} aria-label="Saved files">
+          <div className="code-top-actions">
+            {mode === "saved" && (
+              <button
+                type="button"
+                className={`icon-btn ${drawerOpen ? "active" : ""}`}
+                onClick={() => setDrawerOpen(!drawerOpen)}
+                title="Project files"
+                aria-label="Toggle saved files drawer"
+              >
+                <FolderOpen size={16} />
+              </button>
+            )}
+            <button
+              type="button"
+              className="icon-btn"
+              onClick={() => setTutorOpen(true)}
+              title="Ask tutor"
+              aria-label="Ask tutor"
+            >
+              <Sparkle size={16} />
+            </button>
+            <button
+              type="button"
+              className={`icon-btn ${stdinOpen ? "active" : ""}`}
+              onClick={() => setStdinOpen(!stdinOpen)}
+              title="Toggle input (stdin)"
+              aria-label="Toggle input (stdin)"
+            >
+              <Terminal size={16} />
+            </button>
+            <button
+              type="button"
+              className="btn primary code-run"
+              disabled={running || !code.trim()}
+              onClick={(e) => void run(e)}
+              title="Run code (⌘ Enter)"
+            >
+              <Play size={14} weight="fill" />
+              <span>{running ? "Running…" : "Run"}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Subbar matching lifeOS .code-subbar */}
+        <div className="code-subbar">
+          {mode === "scratch" ? (
+            <select
+              className="code-lang-select"
+              value={language}
+              onChange={(event) => changeLanguage(event.target.value as Language)}
+              aria-label="Select language"
+            >
+              {Object.keys(starters).map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          ) : (
+            <div className="code-file-actions">
+              <input
+                className="code-filename-input"
+                aria-label="Saved filename"
+                value={filePath}
+                onChange={(event) => setFilePath(event.target.value)}
+                placeholder="folder/main.py"
+              />
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => {
+                  setFilePath("");
+                  setCode(starters[language]);
+                  setOriginalContent(starters[language]);
+                }}
+                title="New file"
+                aria-label="New file"
+              >
+                <Plus size={16} />
+              </button>
+              <button
+                type="button"
+                className="icon-btn"
+                disabled={!filePath.trim()}
+                onClick={() => void saveFile()}
+                title="Save file"
+                aria-label="Save file"
+              >
+                <FloppyDisk size={16} />
+              </button>
+            </div>
+          )}
+
+          <small className="caret-pos-indicator">
+            Ln {caretPos.line}, Col {caretPos.col}
+          </small>
+
+          <div className="spacer" />
+
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Undo edit"
+            title="Undo"
+            disabled={!history.length}
+            onClick={handleUndo}
+          >
+            <ArrowCounterClockwise size={16} />
+          </button>
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Redo edit"
+            title="Redo"
+            disabled={!redoStack.length}
+            onClick={handleRedo}
+          >
+            <ArrowClockwise size={16} />
+          </button>
+          <button
+            type="button"
+            className={`icon-btn ${highlight ? "active" : ""}`}
+            onClick={() => setHighlight((value) => !value)}
+            title="Show highlighting"
+            aria-label="Show highlighting"
+          >
+            {highlight ? <EyeSlash size={16} /> : <Eye size={16} />}
+          </button>
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Outdent selection"
+            title="Outdent selection"
+            onClick={() => indent(true)}
+          >
+            <TextOutdent size={16} />
+          </button>
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Indent selection"
+            title="Indent selection"
+            onClick={() => indent()}
+          >
+            <TextIndent size={16} />
+          </button>
+        </div>
+
+        {/* Collapsible Stdin Panel matching lifeOS .code-stdin-wrap */}
+        {stdinOpen && (
+          <div className="code-stdin-wrap">
+            <textarea
+              value={stdin}
+              onChange={(event) => setStdin(event.target.value)}
+              placeholder="Program input (stdin)..."
+              rows={2}
+              aria-label="Standard input"
+            />
+          </div>
+        )}
+
+        {/* Collapsible Output Panel matching lifeOS .code-panel */}
+        {(result || error) && (
+          <div className="code-panel">
+            <div className="code-panel-head">
+              <span className={`code-status ${error ? "err" : "ok"}`}>
+                {error ? "Compilation error" : `Output · ${result?.durationMs}ms · exit ${result?.code}`}
+              </span>
+              <button
+                type="button"
+                className="icon-btn"
+                onClick={() => {
+                  setResult(null);
+                  setError("");
+                }}
+                title="Close output"
+                aria-label="Close output"
+              >
+                <X size={14} />
+              </button>
+            </div>
+            <pre className={`code-out-body ${error ? "oe" : ""}`}>
+              {error || result?.output || "(No output)"}
+            </pre>
+          </div>
+        )}
+
+        {/* Saved Files Drawer overlay if open */}
+        {mode === "saved" && drawerOpen && (
+          <aside className="compiler-files drawer-open" aria-label="Saved files">
             <div className="compiler-files-header">
               <span>Saved files</span>
               <div className="compiler-files-search">
@@ -711,6 +878,9 @@ export default function CompilerPage() {
                   aria-label="Filter saved files"
                 />
               </div>
+              <button type="button" className="icon-btn" onClick={() => setDrawerOpen(false)} title="Close files">
+                <X size={14} />
+              </button>
             </div>
             <div className="compiler-tree-container">
               {fileTree.length === 0 ? (
@@ -730,95 +900,15 @@ export default function CompilerPage() {
           </aside>
         )}
 
-        <header>
-          <div>
-            <h2>Run code safely</h2>
-            <p>Each run uses a disposable, network-isolated workspace with time and output limits.</p>
-          </div>
-          <button className="secondary" type="button" onClick={() => setTutorOpen(true)}>
-            <Sparkle />
-            Ask tutor
-          </button>
-          <label>
-            Language
-            <select value={language} onChange={(event) => changeLanguage(event.target.value as Language)}>
-              {Object.keys(starters).map((item) => (
-                <option key={item}>{item}</option>
+        {/* Code Editor Stack with Line Numbers Gutter matching lifeOS .code-editor */}
+        <div className="code-editor">
+          <div className="code-gutter" ref={gutterRef}>
+            <div className="code-gutter-inner">
+              {code.split("\n").map((_, i) => (
+                <div key={i}>{i + 1}</div>
               ))}
-            </select>
-          </label>
-          <button className="primary" disabled={running || !code.trim()} title="Run code (⌘ Enter)">
-            {running ? (
-              "Running…"
-            ) : (
-              <>
-                <Play />
-                Run
-              </>
-            )}
-          </button>
-        </header>
-
-        <label className="code-editor">
-          <div className="code-editor-head">
-            <span>
-              {mode === "scratch" ? `Scratch (${language})` : filePath || "New saved file"}
-              {isDirty ? " *" : ""}
-            </span>
-            <span className="code-editor-actions">
-              <small className="caret-pos-indicator">
-                Ln {caretPos.line}, Col {caretPos.col}
-              </small>
-              <button
-                type="button"
-                className="icon-only"
-                aria-label="Undo edit"
-                title="Undo"
-                disabled={!history.length}
-                onClick={handleUndo}
-              >
-                <ArrowCounterClockwise size={15} />
-              </button>
-              <button
-                type="button"
-                className="icon-only"
-                aria-label="Redo edit"
-                title="Redo"
-                disabled={!redoStack.length}
-                onClick={handleRedo}
-              >
-                <ArrowClockwise size={15} />
-              </button>
-              <button
-                type="button"
-                className="highlight-toggle-btn"
-                onClick={() => setHighlight((value) => !value)}
-                title="Toggle syntax highlighting"
-              >
-                {highlight ? <EyeSlash size={15} /> : <Eye size={15} />}
-                <span>{highlight ? "Hide highlighting" : "Show highlighting"}</span>
-              </button>
-              <button
-                type="button"
-                className="icon-only"
-                aria-label="Outdent selection"
-                title="Outdent"
-                onClick={() => indent(true)}
-              >
-                <TextOutdent size={15} />
-              </button>
-              <button
-                type="button"
-                className="icon-only"
-                aria-label="Indent selection"
-                title="Indent"
-                onClick={() => indent()}
-              >
-                <TextIndent size={15} />
-              </button>
-            </span>
+            </div>
           </div>
-
           <div className="code-stack">
             {highlight && (
               <pre className="code-hl" ref={hlRef} aria-hidden="true">
@@ -840,78 +930,36 @@ export default function CompilerPage() {
               aria-label="Source code"
             />
           </div>
+        </div>
 
-          <div className="code-symbols-wrap">
-            <div className="code-symbols">
-              {CODE_KEYS.map((k) => (
-                <SymbolButton
-                  key={k.t}
-                  k={k}
-                  onInsert={(text) => insert(text)}
-                  onInsertPair={(open, close) => {
-                    const el = textareaRef.current;
-                    if (!el) return;
-                    const start = el.selectionStart;
-                    const end = el.selectionEnd;
-                    const selected = el.value.slice(start, end);
-                    el.setRangeText(`${open}${selected}${close}`, start, end, "end");
-                    if (!selected) el.setSelectionRange(start + open.length, start + open.length);
-                    updateCode(el.value);
-                    el.focus();
-                    updateCaretPos();
-                  }}
-                />
-              ))}
-            </div>
-            <div className="code-arrows">
-              <JoystickButton onMoveCaret={moveCaret} />
-            </div>
+        {/* Symbol Bar & Joystick matching lifeOS .code-symbols-wrap */}
+        <div className="code-symbols-wrap">
+          <div className="code-symbols">
+            {CODE_KEYS.map((k) => (
+              <SymbolButton
+                key={k.t}
+                k={k}
+                onInsert={(text) => insert(text)}
+                onInsertPair={(open, close) => {
+                  const el = textareaRef.current;
+                  if (!el) return;
+                  const start = el.selectionStart;
+                  const end = el.selectionEnd;
+                  const selected = el.value.slice(start, end);
+                  el.setRangeText(`${open}${selected}${close}`, start, end, "end");
+                  if (!selected) el.setSelectionRange(start + open.length, start + open.length);
+                  updateCode(el.value);
+                  el.focus();
+                  updateCaretPos();
+                }}
+              />
+            ))}
           </div>
-        </label>
-
-        <label className="compiler-stdin-label">
-          Standard input
-          <textarea
-            value={stdin}
-            onChange={(event) => setStdin(event.target.value)}
-            aria-label="Standard input"
-            placeholder="Pass inputs to stdin here..."
-          />
-        </label>
-
-        <section className="compiler-output" aria-live="polite">
-          <header>
-            <Terminal />
-            <strong>Output</strong>
-            {result && (
-              <small>
-                {result.stage} · {result.durationMs} ms · exit {result.code}
-              </small>
-            )}
-          </header>
-          {error ? (
-            <div className="compiler-error" role="alert">
-              <WarningCircle />
-              <span>{error}</span>
-            </div>
-          ) : result ? (
-            <>
-              <div className={result.code === 0 ? "compiler-success" : "compiler-error"}>
-                {result.code === 0 ? <CheckCircle /> : <WarningCircle />}
-                <span>
-                  {result.code === 0 ? "Run completed" : "Run failed"}
-                  {result.truncated ? " · output truncated" : ""}
-                </span>
-              </div>
-              <pre>
-                <code>{result.output || "(no output)"}</code>
-              </pre>
-            </>
-          ) : (
-            <p>Run output appears here.</p>
-          )}
-        </section>
-      </form>
+          <div className="code-arrows">
+            <JoystickButton onMoveCaret={moveCaret} />
+          </div>
+        </div>
+      </div>
 
       {tutorOpen && (
         <TutorPanel
