@@ -8,6 +8,7 @@ import {
   House, Lightning, ListChecks, MagnifyingGlass, Moon, Plus, ShareNetwork, Sparkle, Sun, Tray, X
 } from "@phosphor-icons/react";
 import {ModalDialog} from "./ModalDialog";
+import {NoemaLogo} from "./NoemaLogo";
 
 import { ContextualAssistant } from "./ContextualAssistant";
 
@@ -58,7 +59,7 @@ export function ModuleShell({active,title,action,assistantContext,children}:{act
   return <div className="module-shell">
     <a className="skip" href="#module-main">Skip to main content</a>
     <aside className="sidebar" aria-label="Primary navigation">
-      <Link className="brand" href="/"><span className="brand-mark"/>Noema</Link>
+      <Link className="brand" href="/"><NoemaLogo />Noema</Link>
       <nav>{nav.map(([label,href,Icon])=><Link className={label===active?"active":""} href={href} key={label}><Icon/><span>{label}</span></Link>)}</nav>
       <Link className="settings" href="/settings"><Gear/><span>Settings</span></Link>
     </aside>

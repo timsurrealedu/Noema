@@ -160,12 +160,6 @@ export function VaultOrganizer({notes,onOpen}:{notes:Note[];onOpen:(note:Note)=>
                     <h2>{title}</h2>
                     <p>{current?.folders.length||0} folders · {visible.length} notes</p>
                   </div>
-                  {!folder.startsWith("@")&&(
-                    <div className="vault-folder-actions">
-                      <button className="secondary" disabled={Boolean(!sourceId)} onClick={()=>void createFolder()}><FolderPlus/> Folder</button>
-                      <button className="primary" disabled={Boolean(!sourceId)} onClick={()=>void create()}><FilePlus/> Note</button>
-                    </div>
-                  )}
                 </div>
                 <div className="vault-folder-grid">
                   {current?.folders.map(item=>(

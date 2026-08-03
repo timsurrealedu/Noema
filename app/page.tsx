@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Archive, Bell, BookOpen, CalendarBlank, CaretRight, Check, CheckSquare, Clock,
+  Archive, Bell, BookOpen, CalendarBlank, CaretRight, Check, CheckSquare, CircleNotch, Clock,
   Code, Command, FileText, Flag, Folder, Gear, House, Lightning, ListChecks,
   MagnifyingGlass, Microphone, Moon, Paperclip, PaperPlaneTilt, PenNib, Plus, Sparkle,
   Sun, Tray, UploadSimple, Warning, X, Circle
@@ -13,6 +13,7 @@ import { ModalDialog } from "./components/ModalDialog";
 import { HandwritingCapture } from "./components/HandwritingCapture";
 import { ContextualAssistant } from "./components/ContextualAssistant";
 import { showUnavailable } from "./components/ServiceNotice";
+import { NoemaLogo } from "./components/NoemaLogo";
 import { createId } from "./lib/id";
 
 const nav = [
@@ -108,29 +109,33 @@ export default function Home() {
   const visibleTasks = tasks.filter(task => matches(task, filter));
   const readyTasks = tasks.filter(task => !task.completed && !task.archived).length;
 
-  const renderTask = (task: Task) => (
-    <article className={`${task.completed ? "completed " : ""}${draft?.id === task.id ? "selected" : ""}`} key={task.id}>
-      <button className="task-check" aria-label={`${task.completed ? "Reopen" : "Complete"} ${task.title}`} aria-pressed={task.completed} onClick={() => toggleTask(task.id)}>
-        {task.completed ? <Check weight="bold" /> : <Circle />}
-      </button>
-      <button className="task-copy" onClick={() => setDraft({ ...task })}>
-        <strong>{task.title}</strong>
-        <span><Flag /> {task.project}{task.subtasks?.length ? ` · ${task.subtasks.length} subtasks` : ""}</span>
-      </button>
-      <time>{task.due}</time>
-      <span className={`priority ${task.priority.toLowerCase()}`}>{task.priority}</span>
-      <button className="row-menu" aria-label={`Edit ${task.title}`} onClick={() => setDraft({ ...task })}>Edit</button>
-    </article>
-  );
+  const renderTask = (task: Task) => {
+    const isOverdue = matches(task, "Overdue");
+    return (
+      <article className={`${task.completed ? "completed " : ""}${draft?.id === task.id ? "selected " : ""}${isOverdue ? "overdue" : ""}`} key={task.id}>
+        <button className={`task-check ${isOverdue ? "overdue-check" : ""}`} aria-label={`${task.completed ? "Reopen" : "Complete"} ${task.title}`} aria-pressed={task.completed} onClick={() => toggleTask(task.id)}>
+          {task.completed ? <Check weight="bold" /> : <Circle />}
+        </button>
+        <button className="task-copy" onClick={() => setDraft({ ...task })}>
+          <strong>{task.title}</strong>
+          <span><Flag /> {task.project}{task.subtasks?.length ? ` · ${task.subtasks.length} subtasks` : ""}</span>
+        </button>
+        <time>{task.due}</time>
+        <span className={`priority ${task.priority.toLowerCase()}`}>{task.priority}</span>
+        <button className="row-menu" aria-label={`Edit ${task.title}`} onClick={() => setDraft({ ...task })}>Edit</button>
+      </article>
+    );
+  };
 
   const overdueList = tasks.filter(t => matches(t, "Overdue"));
   const todayList = tasks.filter(t => matches(t, "Today"));
   const upcomingList = tasks.filter(t => matches(t, "Upcoming") || matches(t, "Inbox"));
 
+
   return <div className="app-shell">
     <a className="skip" href="#main">Skip to main content</a>
     <aside className="sidebar" aria-label="Primary navigation">
-      <Link className="brand" href="/"><span className="brand-mark"/>Noema</Link>
+      <Link className="brand" href="/"><NoemaLogo />Noema</Link>
       <nav>{nav.map(([label,Icon])=><Link className={label==="Home"?"active":""} href={({Home:"/",Capture:"/capture",Calendar:"/calendar",Vault:"/vault",Coding:"/coding"} as Record<string,string>)[label]||"#"} key={label}><Icon/><span>{label}</span>{label==="Capture"&&<kbd>⇧C</kbd>}</Link>)}</nav>
       <Link className="settings" href="/settings"><Gear/><span>Settings</span></Link>
     </aside>
@@ -166,42 +171,26 @@ export default function Home() {
 
       {review&&<section className="review" aria-live="polite">
         <div className="review-head"><span><Sparkle/>{review.status==="processing"?"Interpreting capture":review.status==="failed"?"Interpretation failed":"Interpretation ready"}</span><button aria-label="Dismiss review" onClick={()=>closeReview("dismissed")}><X/></button></div>
-        {review.status==="processing"?<p>Reading the capture and identifying useful objects…</p>:review.status==="failed"?<p role="alert">{review.error||"Processing failed. Open Capture to retry."}</p>:<div className="review-items">{review.objects.map((object,index)=><article key={`${object.type}-${index}`}>{object.type==="event"?<CalendarBlank/>:object.type==="task"?<CheckSquare/>:<FileText/>}<div><strong>{object.title}</strong><span>{object.detail}</span></div></article>)}</div>}
+        {review.status==="processing"?<div className="review-processing"><CircleNotch className="spin"/><span>Reading the capture and identifying useful objects…</span></div>:review.status==="failed"?<p className="review-status-text" role="alert">{review.error||"Processing failed. Open Capture to retry."}</p>:<div className="review-items">{review.objects.map((object,index)=><article key={`${object.type}-${index}`}>{object.type==="event"?<CalendarBlank/>:object.type==="task"?<CheckSquare/>:<FileText/>}<div><strong>{object.title}</strong><span>{object.detail}</span></div></article>)}</div>}
         <div className="review-actions"><Link className="secondary" href={`/capture?open=${review.id}`}>{review.status==="processing"?"Continue in Capture":"Edit"}</Link>{review.status==="review"&&review.objects.length>0&&<button className="primary" onClick={()=>closeReview("confirmed")}><Check/>Confirm all</button>}</div>
       </section>}
 
-      <section className="tasks-section" aria-labelledby="tasks-section-title" style={{marginTop:"32px"}}>
-        <div className="module-header" style={{marginBottom:"20px"}}>
-          <div>
-            <h2 id="tasks-section-title">Tasks</h2>
-            <p>{readyTasks} task{readyTasks === 1 ? " is" : "s are"} ready.</p>
-          </div>
-          <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
-            <button className="primary top-primary" onClick={() => setDraft(blankTask())}><Plus />New task</button>
-            <label className="task-view-select">
-              <CalendarBlank />
-              <span className="sr-only">Task view</span>
-              <select aria-label="Task view" value={filter} onChange={event=>setFilter(event.target.value)}>
-                {LABELS.map(label => <option key={label}>{label}</option>)}
-              </select>
-            </label>
-          </div>
-        </div>
-
-        <div className="task-layout">
-          <nav className="subnav" aria-label="Task views">
-            {LABELS.map(label => (
-              <button className={label === filter ? "active" : ""} key={label} onClick={() => setFilter(label)}>
-                <span>{label}</span>
-                <small>{counts[label]}</small>
-              </button>
-            ))}
-          </nav>
-
-          <section className="task-list" aria-labelledby="task-list-title">
-            <div className="list-title">
-              <h3 id="task-list-title">{filter}</h3>
-              <span>{visibleTasks.length} shown</span>
+      <section className="tasks-section" aria-label="Tasks" style={{marginTop:"24px"}}>
+        <div className="task-layout no-subnav">
+          <section className="task-list" aria-label="Task list">
+            <div className="list-title" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"12px",marginBottom:"16px"}}>
+              <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+                <label className="task-view-select">
+                  <CalendarBlank />
+                  <span className="sr-only">Task view</span>
+                  <select aria-label="Task view" value={filter} onChange={event=>setFilter(event.target.value)}>
+                    {LABELS.map(label => <option key={label}>{label}</option>)}
+                  </select>
+                </label>
+                <h3 id="task-list-title" style={{display:"none"}}>{filter}</h3>
+                <span style={{color:"var(--muted)",fontSize:".8rem"}}>{visibleTasks.length} shown</span>
+              </div>
+              <button className="primary top-primary" onClick={() => setDraft(blankTask())}><Plus />New task</button>
             </div>
 
             {filter === "All" ? (
@@ -312,14 +301,6 @@ export default function Home() {
               <p>Open any task to change its schedule, recurrence, subtasks, project, or priority.</p>
             </aside>
           )}
-        </div>
-      </section>
-
-      <section className="timeline" aria-labelledby="timeline-title" style={{marginTop:"40px"}}>
-        <div className="section-head"><h2 id="timeline-title">Today's Schedule</h2><Link href="/calendar">Open calendar <CaretRight/></Link></div>
-        <div className="timeline-list">
-          {todayEvents.map(event=><article key={event.id}><time>{event.time}</time><span className="timeline-dot active-dot"/>{event.title.toLowerCase().includes("lecture")?<BookOpen/>:<CalendarBlank/>}<div><strong>{event.title}</strong><span>{event.location||"Calendar event"}</span></div><Link className="row-action" aria-label={`Open ${event.title}`} href="/calendar"><CaretRight/></Link></article>)}
-          {todayTasks.map(task=><article className={task.completed?"completed":""} key={task.id}><time>Today</time><span className="timeline-dot"/><button className="checkbox" aria-label={task.completed?`Mark ${task.title} incomplete`:`Complete ${task.title}`} aria-pressed={task.completed} onClick={()=>toggleTask(task.id)}>{task.completed&&<Check weight="bold"/>}</button><div><strong>{task.title}</strong><span>{task.project} · Due today</span></div></article>)}
         </div>
       </section>
 
