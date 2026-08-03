@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowCounterClockwise, ArrowClockwise,
-  CaretDown, CaretRight, CheckCircle, FileCode, FloppyDisk, Folder, FolderOpen, FolderSimple,
+  CaretDown, CaretRight, CheckCircle, Eye, EyeSlash, FileCode, FloppyDisk, Folder, FolderOpen, FolderSimple,
   MagnifyingGlass, Play, Plus, Sparkle, Terminal, TextIndent, TextOutdent, WarningCircle
 } from "@phosphor-icons/react";
 import { ModuleShell } from "../../components/ModuleShell";
@@ -296,6 +296,33 @@ export default function CompilerPage() {
   const [caretPos, setCaretPos] = useState({ line: 1, col: 1 });
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const hlRef = useRef<HTMLPreElement>(null);
+
+  const keywords = /^(?:async|await|break|case|class|const|continue|def|else|enum|export|false|fn|for|from|func|function|go|if|import|in|interface|let|new|null|package|pub|return|static|struct|switch|true|type|var|void|while)$/;
+
+  function renderTokens(sourceCode: string) {
+    const tokens = sourceCode.split(/(\/\/[^\n]*|#[^\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\b[A-Za-z_$][\w$]*\b|\b\d+(?:\.\d+)?\b)/g);
+    return tokens.map((token, index) => {
+      let cls: string | undefined = undefined;
+      if (keywords.test(token)) cls = "syntax-keyword";
+      else if (/^['"]/.test(token)) cls = "syntax-string";
+      else if (/^\d/.test(token)) cls = "syntax-number";
+      else if (/^(?:\/\/|#)/.test(token)) cls = "syntax-comment";
+      return (
+        <span key={index} className={cls}>
+          {token}
+        </span>
+      );
+    });
+  }
+
+  function syncScroll() {
+    const ta = textareaRef.current;
+    const hl = hlRef.current;
+    if (!ta || !hl) return;
+    hl.scrollTop = ta.scrollTop;
+    hl.scrollLeft = ta.scrollLeft;
+  }
 
   useEffect(() => {
     if (mode === "scratch") {
@@ -307,27 +334,113 @@ export default function CompilerPage() {
     }
   }, [language, mode]);
 
-  useEffect(() => {
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
     const el = textareaRef.current;
     if (!el) return;
-    const onKey = (event: KeyboardEvent) => {
-      if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+
+    if ((event.metaKey || event.ctrlKey) && event.key === "Enter") {
+      event.preventDefault();
+      const form = el.form;
+      if (form) form.requestSubmit();
+      return;
+    }
+
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "z") {
+      event.preventDefault();
+      if (event.shiftKey) handleRedo();
+      else handleUndo();
+      return;
+    }
+    if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "y") {
+      event.preventDefault();
+      handleRedo();
+      return;
+    }
+
+    const start = el.selectionStart;
+    const end = el.selectionEnd;
+    const val = el.value;
+
+    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+      event.preventDefault();
+      const lineStart = val.lastIndexOf("\n", start - 1) + 1;
+      const currentLine = val.slice(lineStart, start);
+      const indentStr = (currentLine.match(/^[\t ]*/) || [""])[0];
+
+      const autoPairs: Record<string, string> = { "(": ")", "{": "}", "[": "]" };
+
+      if (start === end && start > 0 && autoPairs[val[start - 1]] && autoPairs[val[start - 1]] === val[start]) {
+        const mid = "\n" + indentStr + "    ";
+        const next = val.slice(0, start) + mid + "\n" + indentStr + val.slice(end);
+        updateCode(next);
+        requestAnimationFrame(() => {
+          el.focus();
+          el.setSelectionRange(start + mid.length, start + mid.length);
+          updateCaretPos();
+        });
+      } else {
+        const opens = /[[({:]$/.test(currentLine.replace(/\s+$/, ""));
+        const nextIndent = indentStr + (opens ? "    " : "");
+        const next = val.slice(0, start) + "\n" + nextIndent + val.slice(end);
+        updateCode(next);
+        requestAnimationFrame(() => {
+          el.focus();
+          el.setSelectionRange(start + 1 + nextIndent.length, start + 1 + nextIndent.length);
+          updateCaretPos();
+        });
+      }
+      return;
+    }
+
+    if (event.key === "Tab") {
+      event.preventDefault();
+      indent(event.shiftKey);
+      return;
+    }
+
+    const closers = new Set([")", "}", "]", '"', "'", "`"]);
+    if (start === end && closers.has(event.key) && val[start] === event.key) {
+      event.preventDefault();
+      el.setSelectionRange(start + 1, start + 1);
+      updateCaretPos();
+      return;
+    }
+
+    const autoPairs: Record<string, string> = { "(": ")", "{": "}", "[": "]", '"': '"', "'": "'", "`": "`" };
+    if (autoPairs[event.key]) {
+      event.preventDefault();
+      const open = event.key;
+      const close = autoPairs[open];
+      const selected = val.slice(start, end);
+      const next = val.slice(0, start) + open + selected + close + val.slice(end);
+      updateCode(next);
+      requestAnimationFrame(() => {
+        el.focus();
+        if (selected) {
+          el.setSelectionRange(start + open.length, start + open.length + selected.length);
+        } else {
+          el.setSelectionRange(start + open.length, start + open.length);
+        }
+        updateCaretPos();
+      });
+      return;
+    }
+
+    if (event.key === "Backspace" && start === end && start > 0) {
+      const autoPairs: Record<string, string> = { "(": ")", "{": "}", "[": "]", '"': '"', "'": "'", "`": "`" };
+      if (val[start - 1] && autoPairs[val[start - 1]] === val[start]) {
         event.preventDefault();
-        const form = el.form;
-        if (form) form.requestSubmit();
+        const next = val.slice(0, start - 1) + val.slice(start + 1);
+        updateCode(next);
+        requestAnimationFrame(() => {
+          el.focus();
+          el.setSelectionRange(start - 1, start - 1);
+          updateCaretPos();
+        });
         return;
       }
-      if (event.key!=="Enter"||event.shiftKey||event.isComposing) return;
-      const before = el.value.slice(0, el.selectionStart);
-      const indentStr = before.slice(before.lastIndexOf("\n") + 1).match(/^\s*/)?.[0] || "";
-      if (!indentStr) return;
-      event.preventDefault();
-      el.setRangeText(`\n${indentStr}`, el.selectionStart, el.selectionEnd, "end");
-      updateCode(el.value);
-    };
-    el.addEventListener("keydown", onKey);
-    return () => el.removeEventListener("keydown", onKey);
-  }, [language, mode, code]);
+    }
+  }
 
   function updateCode(newCode: string) {
     setHistory((h) => [...h.slice(-30), code]);
@@ -636,56 +749,81 @@ export default function CompilerPage() {
               {mode === "scratch" ? `Scratch (${language})` : filePath || "New saved file"}
               {isDirty ? " *" : ""}
             </span>
-            <span>
+            <span className="code-editor-actions">
               <small className="caret-pos-indicator">
                 Ln {caretPos.line}, Col {caretPos.col}
               </small>
               <button
                 type="button"
+                className="icon-only"
                 aria-label="Undo edit"
+                title="Undo"
                 disabled={!history.length}
                 onClick={handleUndo}
               >
-                <ArrowCounterClockwise size={14} />
+                <ArrowCounterClockwise size={15} />
               </button>
               <button
                 type="button"
+                className="icon-only"
                 aria-label="Redo edit"
+                title="Redo"
                 disabled={!redoStack.length}
                 onClick={handleRedo}
               >
-                <ArrowClockwise size={14} />
+                <ArrowClockwise size={15} />
               </button>
-              <button type="button" onClick={() => setHighlight((value) => !value)}>
-                {highlight ? "Hide highlighting" : "Show highlighting"}
+              <button
+                type="button"
+                className="highlight-toggle-btn"
+                onClick={() => setHighlight((value) => !value)}
+                title="Toggle syntax highlighting"
+              >
+                {highlight ? <EyeSlash size={15} /> : <Eye size={15} />}
+                <span>{highlight ? "Hide highlighting" : "Show highlighting"}</span>
               </button>
-              <button type="button" aria-label="Outdent selection" onClick={() => indent(true)}>
-                <TextOutdent />
+              <button
+                type="button"
+                className="icon-only"
+                aria-label="Outdent selection"
+                title="Outdent"
+                onClick={() => indent(true)}
+              >
+                <TextOutdent size={15} />
               </button>
-              <button type="button" aria-label="Indent selection" onClick={() => indent()}>
-                <TextIndent />
+              <button
+                type="button"
+                className="icon-only"
+                aria-label="Indent selection"
+                title="Indent"
+                onClick={() => indent()}
+              >
+                <TextIndent size={15} />
               </button>
             </span>
           </div>
 
-          <textarea
-            ref={textareaRef}
-            value={code}
-            onChange={(event) => {
-              updateCode(event.target.value);
-            }}
-            onClick={updateCaretPos}
-            onKeyUp={updateCaretPos}
-            onKeyDown={(event) => {
-              if (event.key === "Tab") {
-                event.preventDefault();
-                indent(event.shiftKey);
-              }
-            }}
-            spellCheck={false}
-            aria-label="Source code"
-          />
-          {highlight && <LazySyntaxPreview code={code} language={language} />}
+          <div className="code-stack">
+            {highlight && (
+              <pre className="code-hl" ref={hlRef} aria-hidden="true">
+                <code className={`language-${language}`}>
+                  {renderTokens(code)}
+                </code>
+              </pre>
+            )}
+            <textarea
+              ref={textareaRef}
+              className={`code-body ${highlight ? "highlighted" : "plain"}`}
+              value={code}
+              onChange={(event) => updateCode(event.target.value)}
+              onScroll={syncScroll}
+              onClick={updateCaretPos}
+              onKeyUp={updateCaretPos}
+              onKeyDown={handleKeyDown}
+              spellCheck={false}
+              aria-label="Source code"
+            />
+          </div>
 
           <div className="code-symbols-wrap">
             <div className="code-symbols">
