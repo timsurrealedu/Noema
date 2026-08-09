@@ -198,6 +198,7 @@ export function InkEditor({
           active.current = null;
           setStrokes(items => items.slice(0, -1));
         }
+        userInteracted.current = true;
         return;
       }
     }
@@ -206,6 +207,7 @@ export function InkEditor({
     event.currentTarget.setPointerCapture(event.pointerId);
     const first = point(event);
     if (tool === "pan") {
+      userInteracted.current = true;
       pan.current = {x: event.clientX, y: event.clientY};
       return;
     }
@@ -230,6 +232,7 @@ export function InkEditor({
       lasso.current = first;
       return;
     }
+    userInteracted.current = true;
     active.current = {id: createId(), tool, color, width: size, points: [first]};
     setStrokes([...strokes, active.current]);
   }
@@ -243,16 +246,22 @@ export function InkEditor({
         const [a, b] = [...touches.current.values()];
         const distance = Math.hypot(a.x - b.x, a.y - b.y);
         const center = {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2};
-        const centerDx = center.x - pinchCenter.current.x;
-        const centerDy = center.y - pinchCenter.current.y;
+        const previousCenter = pinchCenter.current;
         const distRatio = distance / Math.max(1, pinchDistance.current);
         pinchDistance.current = distance;
         pinchCenter.current = center;
-        setView(val => ({
-          x: val.x - centerDx / val.zoom,
-          y: val.y - centerDy / val.zoom,
-          zoom: Math.max(0.25, Math.min(4, val.zoom * distRatio))
-        }));
+        userInteracted.current = true;
+        setView(val => {
+          const rect = svg.current?.getBoundingClientRect();
+          const zoom = Math.max(0.25, Math.min(4, val.zoom * distRatio));
+          if (!rect) return {...val, zoom};
+          const previousX = (previousCenter.x - rect.left) / rect.width * canvasSize.width;
+          const previousY = (previousCenter.y - rect.top) / rect.height * canvasSize.height;
+          const nextX = (center.x - rect.left) / rect.width * canvasSize.width;
+          const nextY = (center.y - rect.top) / rect.height * canvasSize.height;
+          const pinchAnchor = {x: val.x + previousX / val.zoom, y: val.y + previousY / val.zoom};
+          return {x: pinchAnchor.x - nextX / zoom, y: pinchAnchor.y - nextY / zoom, zoom};
+        });
         return;
       }
     }
@@ -260,6 +269,7 @@ export function InkEditor({
       const dx = event.clientX - pan.current.x;
       const dy = event.clientY - pan.current.y;
       pan.current = {x: event.clientX, y: event.clientY};
+      userInteracted.current = true;
       setView(val => ({
         ...val,
         x: val.x - dx / val.zoom,
@@ -322,24 +332,11 @@ export function InkEditor({
       isErasing.current = false;
     }
     if (active.current) {
-      const drawn = active.current;
       active.current = null;
       const nextStrokes = strokes;
       persist(nextStrokes);
       setRedo([]);
 
-      const minX = view.x + 20 / view.zoom;
-      const maxX = view.x + canvasSize.width / view.zoom - 20 / view.zoom;
-      const minY = view.y + 20 / view.zoom;
-      const maxY = view.y + canvasSize.height / view.zoom - 20 / view.zoom;
-
-      const extendsBoundary = drawn.points.some(
-        p => p.x <= minX || p.x >= maxX || p.y <= minY || p.y >= maxY
-      );
-
-      if (extendsBoundary && nextStrokes.length > 0) {
-        setView(fitInkView(nextStrokes, canvasSize.width, canvasSize.height));
-      }
     }
     if (drag.current) {
       persist(drag.current.next);
@@ -372,6 +369,7 @@ export function InkEditor({
 
   function wheel(event: React.WheelEvent<SVGSVGElement>) {
     event.preventDefault();
+    userInteracted.current = true;
     const rect = event.currentTarget.getBoundingClientRect();
     const anchor = screenToWorld(
       event.clientX,

@@ -1,18 +1,26 @@
 "use client";
 
 import {createId} from "../lib/id";
-import {FormEvent, useEffect, useState} from "react";
+import {CSSProperties, FormEvent, useEffect, useState} from "react";
 import {ArrowsClockwise, CaretLeft, CaretRight, Check, Clock, Plus, VideoCamera, X} from "@phosphor-icons/react";
 import {ModuleShell} from "../components/ModuleShell";
 import {Event, useAppState} from "../components/AppState";
 
-const monday = (offset = 0) => {
-  const date = new Date();
+const startOfWeek = (value: Date) => {
+  const date = new Date(value);
   const day = (date.getDay() + 6) % 7;
-  date.setDate(date.getDate() - day + offset * 7);
+  date.setDate(date.getDate() - day);
   date.setHours(0, 0, 0, 0);
   return date;
 };
+
+const monday = (offset = 0) => {
+  const date = startOfWeek(new Date());
+  date.setDate(date.getDate() + offset * 7);
+  return date;
+};
+
+const weekOffsetFor = (date: Date) => Math.round((startOfWeek(date).getTime() - monday().getTime()) / 604800000);
 
 const weekDays = (offset = 0) =>
   Array.from({length: 7}, (_, day) => {
@@ -38,6 +46,9 @@ const blankEvent = (): Event => {
 };
 
 const positionFor = (time: string) => 76 + (Number(time.slice(0, 2)) - 9) * 51 + Number(time.slice(3)) * 0.85;
+const dayPositionFor = (time: string) => Number(time.slice(0, 2)) * 51 + Number(time.slice(3)) * 0.85;
+const dayTimes = ["00:00", "02:00", "04:00", "06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00"];
+const eventTime = (value?: string) => value ? new Date(value).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", hour12: false}) : "";
 const reminderValue = (value?: string | null) =>
   value ? new Date(new Date(value).getTime() - new Date(value).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
 
@@ -65,7 +76,11 @@ export default function CalendarPage() {
   const today = (new Date().getDay() + 6) % 7;
   const realToday = new Date();
   const [selectedDay, setSelectedDay] = useState<number>(today);
-  const [selectedDateNum, setSelectedDateNum] = useState<number | null>(null);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const date = new Date();
+    date.setHours(0, 0, 0, 0);
+    return date;
+  });
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
@@ -121,7 +136,7 @@ export default function CalendarPage() {
   const dates = weekDays(weekOffset);
   const days = dates.map(date => date.toLocaleDateString(undefined, {weekday: "short", day: "numeric"}));
 
-  const viewMonthDate = dates[0] || new Date();
+  const viewMonthDate = view === "Month" ? selectedDate : dates[0] || new Date();
   const currentYear = viewMonthDate.getFullYear();
   const currentMonth = viewMonthDate.getMonth();
   const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
@@ -131,9 +146,22 @@ export default function CalendarPage() {
   const isCurrentMonthView = realToday.getFullYear() === currentYear && realToday.getMonth() === currentMonth;
   const todayDateNum = isCurrentMonthView ? realToday.getDate() : -1;
 
-  const activeSelectedDate = selectedDateNum !== null
-    ? new Date(currentYear, currentMonth, selectedDateNum)
-    : dates[selectedDay];
+  const activeSelectedDate = selectedDate;
+
+  function selectDate(date: Date) {
+    const next = new Date(date);
+    next.setHours(0, 0, 0, 0);
+    setSelectedDate(next);
+    setSelectedDay((next.getDay() + 6) % 7);
+    setWeekOffset(weekOffsetFor(next));
+  }
+
+  function movePeriod(direction: number) {
+    const next = new Date(selectedDate);
+    if (view === "Month") next.setMonth(next.getMonth() + direction);
+    else next.setDate(next.getDate() + direction * (view === "Week" ? 7 : 1));
+    selectDate(next);
+  }
 
   const taskItems=calendarItems.filter(item=>item.kind==="task")
     .map(item => (item.kind === "task" ? item.task : null))
@@ -143,9 +171,21 @@ export default function CalendarPage() {
       const day = Math.floor((new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() - dates[0].getTime()) / 86400000);
       const timed = !!task!.scheduledStartAt;
       const time = timed ? date.toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", hour12: false}) : "All day";
-      return {...task!, kind: "task" as const, day, time, top: timed ? positionFor(time) : 28, height: 42};
+      return {...task!, kind: "task" as const, day, time, top: timed ? dayPositionFor(time) : 0, height: 42};
     })
     .filter(task => task.day >= 0 && task.day < 7);
+
+  const weekColumnWidths = dates.map((_, day) => {
+    const longestTitle = Math.max(0, ...events.filter(event => event.day === day).map(event => event.title.length), ...taskItems.filter(task => task.day === day).map(task => task.title.length));
+    return Math.min(320, Math.max(140, 72 + longestTitle * 7));
+  });
+  const weekColumns = weekColumnWidths.map(width => `${width}px`).join(" ");
+  const weekItemStyle = (day: number, top: number, height: number): CSSProperties => ({
+    left: weekColumnWidths.slice(0, day).reduce((total, width) => total + width, 0) + 4,
+    width: weekColumnWidths[day] - 8,
+    top,
+    height
+  });
 
   const allTasks = calendarItems
     .filter(item => item.kind === "task")
@@ -208,16 +248,18 @@ export default function CalendarPage() {
     if (!draft?.title.trim()) return;
     const start = dates[draft.day];
     start.setHours(draft.allDay ? 0 : Number(draft.time.slice(0, 2)), draft.allDay ? 0 : Number(draft.time.slice(3)), 0, 0);
-    const duration = draft.allDay
-      ? 86400000
-      : draft.startAt && draft.endAt
-      ? new Date(draft.endAt).getTime() - new Date(draft.startAt).getTime()
-      : 3600000;
+    const end = new Date(start);
+    const endTime = eventTime(draft.endAt);
+    if (draft.allDay) end.setDate(end.getDate() + 1);
+    else if (endTime) {
+      end.setHours(Number(endTime.slice(0, 2)), Number(endTime.slice(3)), 0, 0);
+      if (end <= start) end.setDate(end.getDate() + 1);
+    } else end.setTime(start.getTime() + 3600000);
     saveEvent({
       ...draft,
       title: draft.title.trim(),
       startAt:start.toISOString(),
-      endAt: new Date(start.getTime() + duration).toISOString(),
+      endAt: end.toISOString(),
       timezone: draft.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone,
       top: positionFor(draft.time),
       location: draft.location?.trim()
@@ -260,27 +302,25 @@ export default function CalendarPage() {
       )}
       <div className="calendar-toolbar">
         <div>
-          <button className="icon-button" aria-label="Previous period" onClick={() => setWeekOffset(w => w - 1)}>
+          <button className="icon-button" aria-label="Previous period" onClick={() => movePeriod(-1)}>
             <CaretLeft />
           </button>
-          <button className="icon-button" aria-label="Next period" onClick={() => setWeekOffset(w => w + 1)}>
+          <button className="icon-button" aria-label="Next period" onClick={() => movePeriod(1)}>
             <CaretRight />
           </button>
           <button
             className="secondary"
             onClick={() => {
-              setWeekOffset(0);
-              setSelectedDay(today);
-              setSelectedDateNum(todayDateNum > 0 ? todayDateNum : null);
+              selectDate(realToday);
             }}
           >
             Today
           </button>
           <h2>
             {view === "Month"
-              ? dates[0].toLocaleDateString(undefined, {month: "long", year: "numeric"})
+              ? viewMonthDate.toLocaleDateString(undefined, {month: "long", year: "numeric"})
               : view === "Day" || view === "Agenda"
-              ? dates[selectedDay]?.toLocaleDateString(undefined, {weekday: "long", month: "long", day: "numeric"})
+              ? activeSelectedDate.toLocaleDateString(undefined, {weekday: "long", month: "long", day: "numeric"})
               : period}
           </h2>
         </div>
@@ -323,7 +363,7 @@ export default function CalendarPage() {
 
       <div className="calendar-layout">
         {view === "Week" && (
-          <section className="week" aria-label="Week calendar">
+          <section className="week" aria-label="Week calendar" style={{"--week-columns": weekColumns} as CSSProperties}>
             <div className="week-head">
               <span />
               <>
@@ -333,10 +373,8 @@ export default function CalendarPage() {
                     key={day}
                     style={{cursor: "pointer"}}
                     title={`Click to view tasks for ${day}`}
-                    onClick={() => {
-                      setSelectedDay(index);
-                      setSelectedDateNum(null);
-                    }}
+                    onClick={() => selectDate(dates[index])}
+                    onDoubleClick={() => { selectDate(dates[index]); setView("Day"); }}
                   >
                     {day}
                   </strong>
@@ -345,7 +383,7 @@ export default function CalendarPage() {
             </div>
             <div className="week-body">
               <div className="times">
-                {["08:00", "10:00", "12:00", "14:00", "16:00"].map(t => (
+                {dayTimes.map(t => (
                   <time key={t}>{t}</time>
                 ))}
               </div>
@@ -354,16 +392,14 @@ export default function CalendarPage() {
                   <div
                     key={day}
                     style={{cursor: "pointer"}}
-                    onClick={() => {
-                      setSelectedDay(index);
-                      setSelectedDateNum(null);
-                    }}
+                    onClick={() => selectDate(dates[index])}
+                    onDoubleClick={() => { selectDate(dates[index]); setView("Day"); }}
                   />
                 ))}
                 {events.map(event => (
                   <button
                     className={`calendar-event ${event.active ? "active" : ""} ${draft?.id === event.id ? "selected" : ""}`}
-                    style={{gridColumn: event.day + 1, top: event.top, height: event.height}}
+                    style={weekItemStyle(event.day, dayPositionFor(event.time), event.height)}
                     key={event.id}
                     onClick={() => setDraft({...event})}
                   >
@@ -374,7 +410,7 @@ export default function CalendarPage() {
                 {taskItems.map(task => (
                   <button
                     className="calendar-event calendar-task"
-                    style={{gridColumn: task.day + 1, top: task.top, height: task.height}}
+                    style={weekItemStyle(task.day, task.top, task.height)}
                     key={`task-${task.id}`}
                     onClick={() => openTask(task.id)}
                   >
@@ -390,22 +426,22 @@ export default function CalendarPage() {
         {view === "Day" && (
           <section className="day-view">
             <div className="times">
-              {["08:00", "10:00", "12:00", "14:00", "16:00"].map(t => (
+              {dayTimes.map(t => (
                 <time key={t}>{t}</time>
               ))}
             </div>
             <div>
-              {agenda.map(event => (
-                <button style={{top: event.top, height: event.height}} key={event.id} onClick={() => setDraft({...event})}>
+              {selectedEvents.map(event => (
+                <button style={{top: dayPositionFor(event.time), height: event.height}} key={event.id} onClick={() => setDraft({...event})}>
                   <time>{event.time}</time>
                   <strong>{event.title}</strong>
                   <small>{event.location}</small>
                 </button>
               ))}
-              {taskAgenda.map(task => (
+              {selectedTasks.map(task => (
                 <button
                   className="calendar-task"
-                  style={{top: task.top, height: task.height}}
+                  style={{top: task.scheduledStartAt ? dayPositionFor(task.time) : 0, height: 42}}
                   key={`task-${task.id}`}
                   onClick={() => openTask(task.id)}
                 >
@@ -428,9 +464,9 @@ export default function CalendarPage() {
               const isValidDate = dateNum > 0 && dateNum <= daysInMonth;
               const dayOfWeekIndex = index % 7;
               const isTodayDate = isValidDate && dateNum === todayDateNum;
-              const isSelected = selectedDateNum !== null ? selectedDateNum === dateNum : (selectedDay === dayOfWeekIndex && isTodayDate);
 
               const cellDate = isValidDate ? new Date(currentYear, currentMonth, dateNum) : null;
+              const isSelected = !!cellDate && isSameDate(cellDate, activeSelectedDate);
               const cellTasks = cellDate
                 ? allTasks.filter(task => isSameDate(task.scheduledStartAt || task.dueAt, cellDate))
                 : [];
@@ -444,8 +480,13 @@ export default function CalendarPage() {
                   key={index}
                   onClick={() => {
                     if (isValidDate) {
-                      setSelectedDateNum(dateNum);
-                      setSelectedDay(dayOfWeekIndex);
+                      selectDate(cellDate!);
+                    }
+                  }}
+                  onDoubleClick={() => {
+                    if (cellDate) {
+                      selectDate(cellDate);
+                      setView("Day");
                     }
                   }}
                 >
@@ -531,7 +572,7 @@ export default function CalendarPage() {
                   </select>
                 </label>
                 <label>
-                  Time
+                  Start time
                   <input
                     type="time"
                     value={draft.time}
@@ -540,6 +581,20 @@ export default function CalendarPage() {
                   />
                 </label>
               </div>
+              <label>
+                End time (optional)
+                <input
+                  type="time"
+                  value={eventTime(draft.endAt)}
+                  disabled={draft.allDay}
+                  onChange={e => {
+                    if (!e.target.value) return setDraft({...draft, endAt: undefined});
+                    const end = new Date(dates[draft.day]);
+                    end.setHours(Number(e.target.value.slice(0, 2)), Number(e.target.value.slice(3)), 0, 0);
+                    setDraft({...draft, endAt: end.toISOString()});
+                  }}
+                />
+              </label>
               <label className="check-field">
                 <input type="checkbox" checked={!!draft.allDay} onChange={e => setDraft({...draft, allDay: e.target.checked})} />
                 <span>All day</span>
@@ -607,17 +662,14 @@ export default function CalendarPage() {
           <aside className="agenda">
             <div style={{display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "12px"}}>
               <h3 style={{margin: 0}}>
-                {selectedDateNum !== null
-                  ? new Date(currentYear, currentMonth, selectedDateNum).toLocaleDateString(undefined, {weekday: "long", month: "short", day: "numeric"})
-                  : dates[selectedDay]?.toLocaleDateString(undefined, {weekday: "long", month: "short", day: "numeric"})}
+                {activeSelectedDate.toLocaleDateString(undefined, {weekday: "long", month: "short", day: "numeric"})}
               </h3>
-              {(selectedDay !== today || selectedDateNum !== null) && (
+              {!isSameDate(activeSelectedDate, realToday) && (
                 <button
                   className="secondary icon-button"
                   style={{fontSize: ".75rem", padding: "2px 8px"}}
                   onClick={() => {
-                    setSelectedDay(today);
-                    setSelectedDateNum(todayDateNum > 0 ? todayDateNum : null);
+                    selectDate(realToday);
                   }}
                 >
                   Today

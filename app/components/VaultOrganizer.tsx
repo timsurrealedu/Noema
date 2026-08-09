@@ -10,7 +10,18 @@ type TreeNote={name:string;path:string;noteId:string;syncState:string};
 type Tree={name:string;path:string;folders:Tree[];notes:TreeNote[]};
 type DragPayload={type:"note"|"folder";path:string;name:string;noteId?:string};
 
-const request=async(path:string,options?:RequestInit)=>{const response=await fetch(path,options),data=await response.json();if(!response.ok)throw new Error(data.error?.message||"Vault request failed");return data};
+const request = async (path: string, options?: RequestInit) => {
+  const response = await fetch(path, options);
+  const contentType = response.headers.get("content-type") || "";
+  let data: any = {};
+  if (contentType.includes("application/json")) {
+    try {
+      data = await response.json();
+    } catch {}
+  }
+  if (!response.ok) throw new Error(data.error?.message || `Vault request failed (${response.status})`);
+  return data;
+};
 
 function TreeFolder({node,current,onSelect,dragTarget,dragItem,onDragStart,onDragOver,onDragLeave,onDrop}:{node:Tree;current:string;onSelect:(path:string)=>void;dragTarget:string|null;dragItem:DragPayload|null;onDragStart:(e:React.DragEvent,item:DragPayload)=>void;onDragOver:(e:React.DragEvent,path:string)=>void;onDragLeave:(e:React.DragEvent)=>void;onDrop:(e:React.DragEvent,targetPath:string)=>void}){
   const [open,setOpen]=useState(true);

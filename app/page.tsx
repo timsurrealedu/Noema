@@ -25,6 +25,7 @@ const blankTask=():Task=>({id:createId(),title:"",project:"Inbox",due:"",dueAt:n
 const jakartaParts=(value:string)=>Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(value)).map(part=>[part.type,part.value]));
 const dateValue=(value?:string|null)=>{if(!value)return "";const part=jakartaParts(value);return `${part.year}-${part.month}-${part.day}`};
 const dateTimeValue=(value?:string|null)=>{if(!value)return "";const part=jakartaParts(value);return `${part.year}-${part.month}-${part.day}T${part.hour}:${part.minute}`};
+const taskStartTime=(value?:string|null)=>value?new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Jakarta",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date(value)):"Any time";
 const jakartaIso=(value:string)=>new Date(`${value}:00+07:00`).toISOString();
 
 const LABELS = ["All", "Inbox", "Today", "Upcoming", "Overdue", "Completed"] as const;
@@ -121,7 +122,7 @@ export default function Home() {
           <span><Flag /> {task.project}{task.subtasks?.length ? ` · ${task.subtasks.length} subtasks` : ""}</span>
         </button>
         <time>{task.due}</time>
-        <span className={`priority ${task.priority.toLowerCase()}`}>{task.priority}</span>
+        <span className="task-start">{taskStartTime(task.scheduledStartAt)}</span>
         <button className="row-menu" aria-label={`Edit ${task.title}`} onClick={() => setDraft({ ...task })}>Edit</button>
       </article>
     );
@@ -175,7 +176,7 @@ export default function Home() {
       </section>}
 
       <section className="tasks-section" aria-label="Tasks" style={{marginTop:"24px"}}>
-        <div className="task-layout no-subnav">
+        <div className={`task-layout no-subnav${draft ? " editing" : " no-inspector"}`}>
           <section className="task-list" aria-label="Task list">
             <div className="list-title" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"12px",marginBottom:"16px"}}>
               <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
@@ -234,7 +235,7 @@ export default function Home() {
             )}
           </section>
 
-          {draft ? (
+          {draft && (
             <aside className="object-inspector">
               <div className="object-inspector-head">
                 <div>
@@ -292,12 +293,6 @@ export default function Home() {
                   <button className="primary">Save task</button>
                 </div>
               </form>
-            </aside>
-          ) : (
-            <aside className="task-focus">
-              <Flag />
-              <h3>Select a task</h3>
-              <p>Open any task to change its schedule, recurrence, subtasks, project, or priority.</p>
             </aside>
           )}
         </div>

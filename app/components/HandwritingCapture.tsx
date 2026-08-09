@@ -131,6 +131,18 @@ export function HandwritingCapture({onClose}: {onClose: () => void}) {
             </div>
           </button>
 
+          <a
+            className="handwriting-option-card"
+            href="/vault?new=ink"
+            onClick={onClose}
+          >
+            <NotePencil className="card-icon" />
+            <div>
+              <strong>Open Integrated Ink & Text Note</strong>
+              <small>Write and type together directly over your note</small>
+            </div>
+          </a>
+
           <button
             type="button"
             className="handwriting-option-card"
