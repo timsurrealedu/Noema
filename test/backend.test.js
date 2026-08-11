@@ -224,8 +224,8 @@ test("all v1 AI workflows are registered as managed Codex skills",async()=>{
 
 test("Gemini fallback keeps keys in headers and returns structured output",async()=>{
   const {geminiSchema,isCapacityError,runGemini}=await import("../server/ai.mjs");let request;
-  const result=await runGemini({prompt:"Tutor",schema:{type:"object",required:["answer"],properties:{answer:{type:"string",maxLength:20}}},config:{geminiApiKey:"test-secret",geminiModel:"gemini-2.5-flash"},fetcher:async(url,options)=>{request={url,options};return Response.json({candidates:[{content:{parts:[{text:'{"answer":"grounded"}'}]}}]})}});
-  assert.equal(result.provider,"gemini");assert.equal(result.result.answer,"grounded");assert.equal(request.options.headers["x-goog-api-key"],"test-secret");assert.equal(request.url.includes("test-secret"),false);assert.equal("maxLength" in geminiSchema({maxLength:2,type:"string"}),false);assert.equal(isCapacityError(new Error("429 RESOURCE_EXHAUSTED")),true);assert.equal(isCapacityError(new Error("invalid schema")),false);
+  const result=await runGemini({prompt:"Tutor",schema:{type:"object",required:["answer"],properties:{answer:{type:"string",maxLength:20}}},geminiSchema:{type:"object",required:["answerJson"],properties:{answerJson:{type:"string"}}},config:{geminiApiKey:"test-secret",geminiModel:"gemini-2.5-flash"},fetcher:async(url,options)=>{request={url,options};return Response.json({candidates:[{content:{parts:[{text:'{"answer":"grounded"}'}]}}]})}});
+  const body=JSON.parse(request.options.body);assert.equal(result.provider,"gemini");assert.equal(result.result.answer,"grounded");assert.equal(body.generationConfig.responseSchema.required[0],"answerJson");assert.equal(request.options.headers["x-goog-api-key"],"test-secret");assert.equal(request.url.includes("test-secret"),false);assert.equal("maxLength" in geminiSchema({maxLength:2,type:"string"}),false);assert.equal(isCapacityError(new Error("429 RESOURCE_EXHAUSTED")),true);assert.equal(isCapacityError(new Error("invalid schema")),false);
 });
 
 test("Gemini multimodal sends base64 inline data and returns extracted text",async()=>{

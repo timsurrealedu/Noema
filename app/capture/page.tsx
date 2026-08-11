@@ -21,7 +21,7 @@ const sourceMeta:Record<CaptureSource,{label:string;Icon:typeof Keyboard}>={
   file:{label:"File",Icon:File}, link:{label:"Web link",Icon:Globe}, handwriting:{label:"Handwriting",Icon:PenNib},
 };
 
-function timeFor(value:string){return new Intl.DateTimeFormat("en-US",{hour:"numeric",minute:"2-digit",timeZone:"Asia/Jakarta"}).format(new Date(value))}
+function timeFor(value:string){const date=new Date(value),options:Intl.DateTimeFormatOptions={weekday:"long",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",hourCycle:"h23",timeZone:"Asia/Jakarta"};if(date.getFullYear()!==new Date().getFullYear())options.year="numeric";return new Intl.DateTimeFormat("en-US",options).format(date)}
 function matches(capture:Capture,filter:Filter){if(filter==="All")return true;if(filter==="Processing")return capture.status==="queued"||capture.status==="processing";return capture.status===({"Needs review":"review","Done":"confirmed","Failed":"failed"} as const)[filter]}
 
 export default function CaptureInbox(){

@@ -26,7 +26,17 @@ test("vault proposals must cite their connected vault target",async()=>{
 
 test("Gemini receives a supported capture proposal schema",async()=>{
   const {geminiSchema}=await import("../server/ai.mjs"),{captureProposalSchema}=await import("../server/worker/handlers/interpret-capture.mjs"),schema=geminiSchema(captureProposalSchema),text=JSON.stringify(schema);
-  assert.equal(text.includes("additionalProperties"),false);assert.equal(text.includes("oneOf"),false);assert.equal(text.includes("anyOf"),false);assert.equal(schema.properties.schemaVersion.type,"integer");assert.equal(schema.properties.schemaVersion.enum,undefined);assert.deepEqual(schema.properties.actions.items.properties.type.enum,["task.create","event.create","note.create","vault.note.create"]);
+  assert.equal(text.includes("additionalProperties"),false);assert.equal(text.includes("oneOf"),false);assert.equal(text.includes("anyOf"),false);assert.equal(text.includes("maxItems"),false);assert.equal(schema.properties.schemaVersion.type,"integer");assert.equal(schema.properties.schemaVersion.enum,undefined);assert.deepEqual(schema.properties.actions.items.properties.type.enum,["task.create","event.create","note.create","vault.note.create"]);
+});
+
+test("capture prompts state the exact action JSON contract",async()=>{
+  const {captureProposalInstructions}=await import("../server/worker/handlers/interpret-capture.mjs");
+  for(const type of ["task.create","event.create","note.create","vault.note.create"])assert.match(captureProposalInstructions,new RegExp(type.replace(".","\\.")));assert.match(captureProposalInstructions,/sourceReferences/);assert.match(captureProposalInstructions,/arguments/);
+});
+
+test("capture action parsing keeps the first complete Gemini array",async()=>{
+  const {parseActionsJson}=await import("../server/worker/handlers/interpret-capture.mjs");
+  assert.deepEqual(parseActionsJson('[{"id":"task-1"}] trailing text'),[{id:"task-1"}]);
 });
 
 test("AI capture processing proposes a connected vault note",async()=>{
