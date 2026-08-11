@@ -1,6 +1,6 @@
 "use client";
 import type {RefObject} from "react";
-import {Code, LinkSimple, ListBullets, ListNumbers, MathOperations, Quotes, Table} from "@phosphor-icons/react";
+import {ArrowCounterClockwise, ArrowClockwise, Code, LinkSimple, ListBullets, ListNumbers, MathOperations, Quotes, Table} from "@phosphor-icons/react";
 
 type Action = {
   label: string;
@@ -92,7 +92,7 @@ const actions: Action[] = [
 const table = "| Column 1 | Column 2 |\n| --- | --- |\n| Value 1 | Value 2 |";
 const equation = "$$\n\\begin{aligned}\nf(x) &= x^2\n\\end{aligned}\n$$";
 
-export function MarkdownToolbar({textarea, onChange}: {textarea: RefObject<HTMLTextAreaElement | null>; onChange?: (value: string) => void}) {
+export function MarkdownToolbar({textarea, onChange, onUndo, onRedo, canUndo = false, canRedo = false}: {textarea: RefObject<HTMLTextAreaElement | null>; onChange?: (value: string) => void; onUndo?: () => void; onRedo?: () => void; canUndo?: boolean; canRedo?: boolean}) {
   function insert(action: Action | string) {
     const field = textarea.current;
     if (!field) return;
@@ -137,6 +137,7 @@ export function MarkdownToolbar({textarea, onChange}: {textarea: RefObject<HTMLT
         <MathOperations />
         <small>Block</small>
       </button>
+      {(onUndo || onRedo) && <><span className="toolbar-separator" /><button type="button" title="Undo" aria-label="Undo" onMouseDown={event => event.preventDefault()} onClick={onUndo} disabled={!canUndo}><ArrowCounterClockwise /></button><button type="button" title="Redo" aria-label="Redo" onMouseDown={event => event.preventDefault()} onClick={onRedo} disabled={!canRedo}><ArrowClockwise /></button></>}
     </div>
   );
 }

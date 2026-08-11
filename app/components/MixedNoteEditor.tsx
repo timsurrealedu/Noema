@@ -1,7 +1,7 @@
 "use client";
 
 import {createId} from "../lib/id";
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useMemo,useRef,useState} from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -13,6 +13,7 @@ import {
   CaretDown,
   CaretUp,
   Copy,
+  DotsThree,
   Eye,
   EyeSlash,
   HighlighterCircle,
@@ -31,10 +32,8 @@ import {
   sanitizeStrokes,
   strokePath
 } from "../lib/ink";
-import {MarkdownToolbar} from "./MarkdownToolbar";
 import {MarkdownContent} from "./MarkdownContent";
-import {markdownKey} from "../lib/markdownEdit";
-import {WikilinkCompletion} from "./WikilinkCompletion";
+import {LiveMarkdownEditor} from "./LiveMarkdownEditor";
 
 type Block = {
   id: string;
@@ -64,30 +63,15 @@ function MarkdownBlock({
   onInsertInk: (block: Block, value: string, caret: number) => void;
   onNavigateNote?: (target: string) => void;
 }) {
-  const textarea = useRef<HTMLTextAreaElement>(null);
   const [value, setValue] = useState(block.markdown);
+
+  useEffect(() => {
+    setValue(block.markdown);
+  }, [block.markdown]);
 
   return (
     <div className="markdown-block-editor">
-      {!preview ? (
-        <>
-          <MarkdownToolbar textarea={textarea} onChange={setValue} />
-          <textarea
-            ref={textarea}
-            aria-label="Markdown block"
-            value={value}
-            onChange={event => setValue(event.target.value)}
-            onKeyDown={event => markdownKey(event, setValue)}
-            onBlur={() => value !== block.markdown && onSave(block, value)}
-            spellCheck
-          />
-          <WikilinkCompletion textarea={textarea} value={value} onChange={setValue} />
-        </>
-      ) : (
-        <article className="markdown-preview block-preview">
-          <MarkdownContent text={value} onNavigateNote={onNavigateNote} />
-        </article>
-      )}
+      {!preview ? <LiveMarkdownEditor value={value} onChange={setValue} onBlur={() => value !== block.markdown && onSave(block, value)} /> : <article className="markdown-preview block-preview"><MarkdownContent text={value} onNavigateNote={onNavigateNote} /></article>}
     </div>
   );
 }
@@ -117,9 +101,11 @@ function IntegratedOverlayCanvas({
   const drawing = useRef(false);
   const activeStroke = useRef<InkStroke | null>(null);
   const [currentStrokes, setCurrentStrokes] = useState<InkStroke[]>(strokes);
+  const liveStrokes = useRef<InkStroke[]>(strokes);
 
   useEffect(() => {
     setCurrentStrokes(strokes);
+    liveStrokes.current = strokes;
   }, [strokes]);
 
   if (!visible) return null;
@@ -145,7 +131,8 @@ function IntegratedOverlayCanvas({
     (event.target as HTMLElement).setPointerCapture?.(event.pointerId);
 
     if (activeTool === "eraser") {
-      const erased = eraseAt(currentStrokes, pt, size * 4);
+      const erased = eraseAt(liveStrokes.current, pt, size * 4);
+      liveStrokes.current = erased;
       setCurrentStrokes(erased);
       onChange(erased);
       return;
@@ -160,7 +147,8 @@ function IntegratedOverlayCanvas({
       points: [pt]
     };
     activeStroke.current = stroke;
-    setCurrentStrokes(prev => [...prev, stroke]);
+    liveStrokes.current = [...liveStrokes.current, stroke];
+    setCurrentStrokes(liveStrokes.current);
   }
 
   function handlePointerMove(event: React.PointerEvent<SVGSVGElement>) {
@@ -169,7 +157,8 @@ function IntegratedOverlayCanvas({
     if (!pt) return;
 
     if (activeTool === "eraser") {
-      const erased = eraseAt(currentStrokes, pt, size * 4);
+      const erased = eraseAt(liveStrokes.current, pt, size * 4);
+      liveStrokes.current = erased;
       setCurrentStrokes(erased);
       onChange(erased);
       return;
@@ -181,7 +170,8 @@ function IntegratedOverlayCanvas({
         points: [...activeStroke.current.points, pt]
       };
       activeStroke.current = updated;
-      setCurrentStrokes(prev => prev.map(s => (s.id === updated.id ? updated : s)));
+      liveStrokes.current = liveStrokes.current.map(stroke => stroke.id === updated.id ? updated : stroke);
+      setCurrentStrokes(liveStrokes.current);
     }
   }
 
@@ -192,7 +182,8 @@ function IntegratedOverlayCanvas({
     if (activeStroke.current) {
       const finalStroke = activeStroke.current;
       activeStroke.current = null;
-      const next = currentStrokes.map(s => (s.id === finalStroke.id ? finalStroke : s));
+      const next = liveStrokes.current.map(stroke => stroke.id === finalStroke.id ? finalStroke : stroke);
+      liveStrokes.current = next;
       onChange(next);
     }
   }
@@ -210,12 +201,18 @@ function IntegratedOverlayCanvas({
     >
       {currentStrokes.map(stroke => {
         const isHighlighter = stroke.tool === "highlighter";
+        const theme = (typeof document !== "undefined" && document.documentElement.dataset.theme) || "dark";
+        const isDarkTheme = theme === "dark";
+        const norm = (stroke.color || "").toLowerCase().trim();
+        const displayColor = isDarkTheme
+          ? (norm === "#000000" || norm === "#000" || norm === "#1e293b" || norm === "#0f172a" || norm === "black" ? "#ffffff" : stroke.color)
+          : (norm === "#ffffff" || norm === "#fff" || norm === "#f8fafc" || norm === "white" ? "#000000" : stroke.color);
         return (
           <path
             key={stroke.id}
             d={strokePath(stroke)}
             fill="none"
-            stroke={stroke.color}
+            stroke={displayColor}
             strokeWidth={stroke.width * (isHighlighter ? 4 : 1)}
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -260,21 +257,61 @@ export function MixedNoteEditor({
   }, [fullscreen, onToggleFullscreen]);
 
   // Integrated Editor State
-  const [viewMode, setViewMode] = useState<"write" | "preview">("write");
+  const [viewMode, setViewMode] = useState<"write" | "preview">(() => {
+    if (typeof window !== "undefined" && window.innerWidth <= 600) {
+      return "preview";
+    }
+    return "preview";
+  });
   const [editorMode, setEditorMode] = useState<"text" | "ink">(initialInk ? "ink" : "text");
   const [paletteCollapsed, setPaletteCollapsed] = useState(false);
   const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait");
   const [showAnnotations, setShowAnnotations] = useState(true);
+  const [theme, setTheme] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return document.documentElement.dataset.theme || localStorage.getItem("noema-theme") || "dark";
+    }
+    return "dark";
+  });
   const [activeTool, setActiveTool] = useState<InkTool>("pen");
+  const [penOptionsOpen, setPenOptionsOpen] = useState(false);
   const [color, setColor] = useState(() => {
     if (typeof window !== "undefined") {
-      const isLight = document.documentElement.classList.contains("light") ||
-                      document.body.classList.contains("light-theme") ||
-                      window.matchMedia?.("(prefers-color-scheme: light)").matches;
-      return isLight ? "#0f172a" : "#f8fafc";
+      const current = document.documentElement.dataset.theme || localStorage.getItem("noema-theme");
+      if (current === "light") return "#000000";
+      if (current === "dark") return "#ffffff";
     }
-    return "#f8fafc";
+    return "#000000";
   });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const updateTheme = () => {
+      const current = document.documentElement.dataset.theme || localStorage.getItem("noema-theme") || "dark";
+      setTheme(current);
+      const isLight = current === "light";
+      const targetDefault = isLight ? "#000000" : "#ffffff";
+      setColor(prev => {
+        if (prev === "#1e293b" || prev === "#0f172a" || prev === "#f8fafc" || prev === "#000000" || prev === "#ffffff") {
+          return targetDefault;
+        }
+        return prev;
+      });
+    };
+
+    updateTheme();
+
+    const observer = new MutationObserver(mutations => {
+      for (const m of mutations) {
+        if (m.type === "attributes" && m.attributeName === "data-theme") {
+          updateTheme();
+        }
+      }
+    });
+
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
   const [size, setSize] = useState(3);
   const [viewportHeight, setViewportHeight] = useState(600);
   const [viewportWidth, setViewportWidth] = useState(800);
@@ -282,7 +319,7 @@ export function MixedNoteEditor({
   const [redoStack, setRedoStack] = useState<InkStroke[][]>([]);
 
   const inkBlock = blocks.find(b => b.kind === "ink");
-  const overlayStrokes = sanitizeStrokes(inkBlock?.strokes || []);
+  const overlayStrokes = useMemo(() => sanitizeStrokes(inkBlock?.strokes || []), [inkBlock?.strokes]);
 
   async function load() {
     try {
@@ -331,9 +368,11 @@ export function MixedNoteEditor({
     if (!pageRef.current) return;
     const observer = new ResizeObserver(entries => {
       for (const entry of entries) {
-        if (entry.contentRect) {
-          setViewportWidth(Math.floor(entry.contentRect.width));
-          setViewportHeight(Math.max(500, Math.floor(entry.contentRect.height)));
+        if (pageRef.current) {
+          const scrollH = pageRef.current.scrollHeight || 0;
+          const contentH = entry.contentRect ? Math.floor(entry.contentRect.height) : 0;
+          setViewportWidth(Math.floor(pageRef.current.getBoundingClientRect().width));
+          setViewportHeight(Math.max(500, scrollH, contentH));
         }
       }
     });
@@ -354,16 +393,20 @@ export function MixedNoteEditor({
   async function saveInkStrokes(nextStrokes: InkStroke[]) {
     setUndoStack(prev => [...prev, overlayStrokes]);
     setRedoStack([]);
+    const targetInkId = inkBlock?.id || createId();
+    setBlocks(items => {
+      const existing = items.find(item => item.id === targetInkId);
+      if (existing) return items.map(item => item.id === targetInkId ? {...item, strokes: nextStrokes} : item);
+      return [...items, {id: targetInkId, position: items.length, kind: "ink", markdown: "", version: 1, inkVersion: 0, strokes: nextStrokes}];
+    });
 
     pendingStrokesRef.current = nextStrokes;
     if (savingInkRef.current) return;
     savingInkRef.current = true;
 
     while (pendingStrokesRef.current !== null) {
-      const strokesToSave = pendingStrokesRef.current;
+      const strokesToSave: InkStroke[] = pendingStrokesRef.current;
       pendingStrokesRef.current = null;
-
-      const targetInkId = inkBlock?.id || createId();
 
       try {
         const response = await fetch(`/api/v1/notes/${noteId}/ink`, {
@@ -391,11 +434,8 @@ export function MixedNoteEditor({
 
         if (response.ok) {
           const data = await response.json();
-          if (data.version !== undefined || data.inkVersion !== undefined) {
-            currentInkVersion.current = data.version ?? data.inkVersion;
-          } else {
-            currentInkVersion.current += 1;
-          }
+          currentInkVersion.current = data.version ?? data.inkVersion ?? currentInkVersion.current + 1;
+          setBlocks(items => items.map(item => item.id === targetInkId ? {...item, strokes: strokesToSave, inkVersion: currentInkVersion.current} : item));
           setError("");
         } else {
           const errData = await response.json().catch(() => ({}));
@@ -407,7 +447,6 @@ export function MixedNoteEditor({
     }
 
     savingInkRef.current = false;
-    await load();
   }
 
   function handleUndo() {
@@ -535,7 +574,15 @@ export function MixedNoteEditor({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  if (loading) return <div className="mixed-editor-loading">Loading document…</div>;
+  if (loading) return (
+    <div className="integrated-note-editor mixed-note-editor">
+      <div className="integrated-doc-container">
+        <div className="integrated-doc-page portrait" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div className="mixed-editor-loading">Loading document…</div>
+        </div>
+      </div>
+    </div>
+  );
 
   const markdownBlocks = blocks.filter(b => b.kind === "markdown");
 
@@ -547,78 +594,112 @@ export function MixedNoteEditor({
         </div>
       )}
 
-      {/* Sleek Floating Palette Dock */}
-      <div className={`integrated-floating-palette ${paletteCollapsed ? "collapsed" : ""}`} role="toolbar" aria-label="Floating Note Palette">
-        {paletteCollapsed ? (
-          <div className="palette-group">
-            <button
-              onClick={() => setPaletteCollapsed(false)}
-              title="Expand Toolbar Palette"
-              aria-label="Expand Toolbar Palette"
-              className="palette-expand-btn"
-            >
-              <PencilLine size={16} />
-              <CaretDown size={14} />
-            </button>
+      <div className={`integrated-floating-palette ${paletteCollapsed ? "collapsed" : ""}`} role="toolbar" aria-label="Note controls">
+        {paletteCollapsed ? <button className="palette-expand-btn" onClick={() => setPaletteCollapsed(false)} aria-label="Expand note controls" title="Expand note controls"><PencilLine size={18} /><CaretDown size={14} /></button> : <>
+        <div className="palette-row">
+          <div className="palette-group" aria-label="Document view">
+            <button className={viewMode === "write" ? "active" : ""} onClick={() => setViewMode("write")} aria-pressed={viewMode === "write"}>Edit</button>
+            <button className={viewMode === "preview" ? "active" : ""} onClick={() => setViewMode("preview")} aria-pressed={viewMode === "preview"}>Preview</button>
           </div>
-        ) : (
-          <>
-            <div className="palette-group">
-              <button
-                className={viewMode === "write" ? "active" : ""}
-                onClick={() => setViewMode("write")}
-                title="Write Mode (Edit Markdown)"
-                aria-label="Write Mode"
-              >
-                Write
-              </button>
-              <button
-                className={viewMode === "preview" ? "active" : ""}
-                onClick={() => setViewMode("preview")}
-                title="Preview Mode (Rendered Markdown)"
-                aria-label="Preview Mode"
-              >
-                Preview
-              </button>
+          <button className={`ink-mode-toggle ${editorMode === "ink" ? "active" : ""}`} onClick={() => setEditorMode(mode => mode === "ink" ? "text" : "ink")} aria-pressed={editorMode === "ink"} title="Toggle ink layer">
+            <PencilLine size={18} /><span>Ink</span>
+          </button>
+          <details className="note-toolbar-menu">
+            <summary aria-label="More note options" title="More note options"><DotsThree size={20} /></summary>
+            <div>
+              <button onClick={() => setShowAnnotations(v => !v)}>{showAnnotations ? <Eye size={18} /> : <EyeSlash size={18} />}<span>{showAnnotations ? "Hide ink" : "Show ink"}</span></button>
+              {onToggleFullscreen && <button onClick={onToggleFullscreen}>{fullscreen ? <ArrowsIn size={18} /> : <ArrowsOut size={18} />}<span>{fullscreen ? "Exit fullscreen" : "Fullscreen"}</span></button>}
             </div>
-
-            <div className="palette-divider" />
-
-            <div className="palette-group">
-              <button
-                className={editorMode === "text" ? "active" : ""}
-                onClick={() => setEditorMode("text")}
-                title="Type Text Mode"
-                aria-label="Type Text Mode"
-              >
-                <TextT size={18} />
-              </button>
-              <button
-                className={editorMode === "ink" ? "active" : ""}
-                onClick={() => setEditorMode("ink")}
-                title="Annotate & Ink Mode"
-                aria-label="Annotate & Ink Mode"
-              >
-                <PencilLine size={18} />
-              </button>
-            </div>
-
-            <div className="palette-divider" />
-
+          </details>
+          <button onClick={() => setPaletteCollapsed(true)} aria-label="Collapse note controls" title="Collapse note controls"><CaretUp size={18} /></button>
+        </div>
             {editorMode === "ink" && (
-              <>
+              <div className="palette-row">
                 <div className="palette-group">
-                  <button
-                    className={activeTool === "pen" ? "active" : ""}
-                    onClick={() => setActiveTool("pen")}
-                    title="Pen"
-                    aria-label="Pen tool"
-                  >
-                    <PenNib size={18} />
-                  </button>
+                  <div className="pen-tool-wrapper">
+                    <button
+                      className={activeTool === "pen" ? "active" : ""}
+                      onClick={() => {
+                        if (activeTool === "pen") {
+                          setPenOptionsOpen(open => !open);
+                        } else {
+                          setActiveTool("pen");
+                          setPenOptionsOpen(false);
+                        }
+                      }}
+                      onDoubleClick={() => {
+                        setActiveTool("pen");
+                        setPenOptionsOpen(true);
+                      }}
+                      title="Pen (Double click for options)"
+                      aria-label="Pen tool"
+                    >
+                      <PenNib size={18} />
+                      <span
+                        className="pen-color-dot"
+                        style={{backgroundColor: color === "#000000" && theme === "dark" ? "#ffffff" : color}}
+                      />
+                    </button>
+
+                    {activeTool === "pen" && penOptionsOpen && (
+                      <div className="pen-options-popover" role="dialog" aria-label="Pen Options">
+                        <header>
+                          <span>Pen Settings</span>
+                          <button type="button" className="close-btn icon-button" onClick={() => setPenOptionsOpen(false)}>×</button>
+                        </header>
+                        <div className="popover-section">
+                          <label>Colors</label>
+                          <div className="ink-color-presets" role="group" aria-label="Ink color presets">
+                            {[
+                              { id: "default", name: theme === "light" ? "Black (Theme default)" : "White (Theme default)", value: theme === "light" ? "#000000" : "#ffffff" },
+                              { id: "red", name: "Red", value: "#ef4444" },
+                              { id: "blue", name: "Blue", value: "#3b82f6" },
+                              { id: "green", name: "Green", value: "#22c55e" },
+                              { id: "yellow", name: "Yellow", value: "#eab308" }
+                            ].map(p => {
+                              const isDefaultPill = p.id === "default";
+                              const isActive = isDefaultPill
+                                ? (color === "#000000" || color === "#ffffff" || color === "#1e293b" || color === "#0f172a" || color === "#f8fafc")
+                                : color === p.value;
+                              return (
+                                <button
+                                  type="button"
+                                  key={p.id}
+                                  title={p.name}
+                                  aria-label={p.name}
+                                  className={`color-swatch-btn ${isActive ? "active" : ""}`}
+                                  style={{
+                                    backgroundColor: p.value,
+                                    borderColor: isActive ? "var(--primary, #0284c7)" : (p.value === "#ffffff" ? "#cbd5e1" : p.value)
+                                  }}
+                                  onClick={() => setColor(p.value)}
+                                />
+                              );
+                            })}
+                          </div>
+                        </div>
+                        <div className="popover-section">
+                          <label>
+                            <span>Stroke Width</span>
+                            <small>{size}px</small>
+                          </label>
+                          <input
+                            type="range"
+                            min="1"
+                            max="16"
+                            value={size}
+                            onChange={e => setSize(Number(e.target.value))}
+                            title="Stroke Thickness"
+                            aria-label="Stroke Thickness"
+                            className="palette-range-input"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
                   <button
                     className={activeTool === "highlighter" ? "active" : ""}
-                    onClick={() => setActiveTool("highlighter")}
+                    onClick={() => { setActiveTool("highlighter"); setPenOptionsOpen(false); }}
                     title="Highlighter"
                     aria-label="Highlighter tool"
                   >
@@ -626,33 +707,13 @@ export function MixedNoteEditor({
                   </button>
                   <button
                     className={activeTool === "eraser" ? "active" : ""}
-                    onClick={() => setActiveTool("eraser")}
+                    onClick={() => { setActiveTool("eraser"); setPenOptionsOpen(false); }}
                     title="Eraser"
                     aria-label="Eraser tool"
                   >
                     <Broom size={18} />
                   </button>
                 </div>
-
-                <input
-                  type="color"
-                  value={color}
-                  onChange={e => setColor(e.target.value)}
-                  title="Ink Color"
-                  aria-label="Ink Color"
-                  className="palette-color-input"
-                />
-
-                <input
-                  type="range"
-                  min="1"
-                  max="16"
-                  value={size}
-                  onChange={e => setSize(Number(e.target.value))}
-                  title="Stroke Thickness"
-                  aria-label="Stroke Thickness"
-                  className="palette-range-input"
-                />
 
                 <div className="palette-divider" />
 
@@ -667,41 +728,9 @@ export function MixedNoteEditor({
                     <Trash size={16} />
                   </button>
                 </div>
-
-                <div className="palette-divider" />
-              </>
+              </div>
             )}
-
-            <div className="palette-group">
-              <button
-                className={showAnnotations ? "active" : ""}
-                onClick={() => setShowAnnotations(v => !v)}
-                title={showAnnotations ? "Hide Ink Annotations" : "Show Ink Annotations"}
-                aria-label={showAnnotations ? "Hide Ink Annotations" : "Show Ink Annotations"}
-              >
-                {showAnnotations ? <Eye size={18} /> : <EyeSlash size={18} />}
-              </button>
-
-              {onToggleFullscreen && (
-                <button
-                  onClick={onToggleFullscreen}
-                  title={fullscreen ? "Exit Fullscreen (Esc)" : "Enter Fullscreen"}
-                  aria-label={fullscreen ? "Exit Fullscreen" : "Enter Fullscreen"}
-                >
-                  {fullscreen ? <ArrowsIn size={18} /> : <ArrowsOut size={18} />}
-                </button>
-              )}
-
-              <button
-                onClick={() => setPaletteCollapsed(true)}
-                title="Collapse Toolbar Palette"
-                aria-label="Collapse Toolbar Palette"
-              >
-                <CaretUp size={18} />
-              </button>
-            </div>
-          </>
-        )}
+        </>}
       </div>
 
       {/* Dual-Layer Viewport Bounded Sheet */}
@@ -739,5 +768,3 @@ export function MixedNoteEditor({
     </div>
   );
 }
-
-

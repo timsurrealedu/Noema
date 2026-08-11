@@ -704,8 +704,8 @@ export default function CompilerPage() {
               type="button"
               className="icon-btn"
               onClick={() => setTutorOpen(true)}
-              title="Ask tutor"
-              aria-label="Ask tutor"
+              title="Tutor"
+              aria-label="Tutor"
             >
               <Sparkle size={16} />
             </button>

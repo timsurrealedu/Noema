@@ -87,14 +87,30 @@ export function InkEditor({
   const pinchDistance = useRef(0);
   const pinchCenter = useRef({x: 0, y: 0});
   const lastTwoTap = useRef(0);
+  const drawFrame = useRef<number | null>(null);
+  const liveStrokes = useRef<InkStroke[]>([]);
 
   const [fullScreen, setFullScreen] = useState(false);
   const [view, setView] = useState({x: 0, y: 0, zoom: 1});
   const [strokes, setStrokes] = useState(() => sanitizeStrokes(initial));
   const [redo, setRedo] = useState<InkStroke[][]>([]);
   const [selected, setSelected] = useState<string[]>([]);
+  const [theme, setTheme] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      return document.documentElement.dataset.theme || localStorage.getItem("noema-theme") || "dark";
+    }
+    return "dark";
+  });
   const [tool, setTool] = useState<InkTool>("pen");
-  const [color, setColor] = useState("#1e293b");
+  const [penOptionsOpen, setPenOptionsOpen] = useState(false);
+  const [color, setColor] = useState(() => {
+    if (typeof window !== "undefined") {
+      const current = document.documentElement.dataset.theme || localStorage.getItem("noema-theme");
+      if (current === "light") return "#000000";
+      if (current === "dark") return "#ffffff";
+    }
+    return "#000000";
+  });
   const [size, setSize] = useState(3);
   const [canvasSize, setCanvasSize] = useState({width, height});
   const [saving, setSaving] = useState(false);
@@ -104,6 +120,43 @@ export function InkEditor({
   const bounds = selectionBounds(strokes, selected);
 
   const userInteracted = useRef(false);
+
+  useEffect(() => {
+    liveStrokes.current = strokes;
+  }, [strokes]);
+
+  useEffect(() => () => {
+    if (drawFrame.current !== null) cancelAnimationFrame(drawFrame.current);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const updateTheme = () => {
+      const current = document.documentElement.dataset.theme || localStorage.getItem("noema-theme") || "dark";
+      setTheme(current);
+      const isLight = current === "light" || capture;
+      const targetDefault = isLight ? "#000000" : "#ffffff";
+      setColor(prev => {
+        if (prev === "#1e293b" || prev === "#0f172a" || prev === "#f8fafc" || prev === "#000000" || prev === "#ffffff") {
+          return targetDefault;
+        }
+        return prev;
+      });
+    };
+
+    updateTheme();
+
+    const observer = new MutationObserver(mutations => {
+      for (const m of mutations) {
+        if (m.type === "attributes" && m.attributeName === "data-theme") {
+          updateTheme();
+        }
+      }
+    });
+
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, [capture]);
 
   useEffect(() => {
     loadInkDraft(id)
@@ -139,6 +192,7 @@ export function InkEditor({
   }, [capture]);
 
   function persist(next: InkStroke[]) {
+    liveStrokes.current = next;
     setStrokes(next);
     onChange?.(next);
     void saveInkDraft({
@@ -147,6 +201,14 @@ export function InkEditor({
       width: canvasSize.width,
       height: canvasSize.height,
       strokes: next
+    });
+  }
+
+  function scheduleStrokeRender() {
+    if (drawFrame.current !== null) return;
+    drawFrame.current = requestAnimationFrame(() => {
+      drawFrame.current = null;
+      setStrokes(liveStrokes.current);
     });
   }
 
@@ -201,6 +263,7 @@ export function InkEditor({
         userInteracted.current = true;
         return;
       }
+      return;
     }
     if (!acceptInkPointer(event.pointerType, penActive.current)) return;
     if (event.pointerType==="pen") penActive.current = true;
@@ -234,7 +297,8 @@ export function InkEditor({
     }
     userInteracted.current = true;
     active.current = {id: createId(), tool, color, width: size, points: [first]};
-    setStrokes([...strokes, active.current]);
+    liveStrokes.current = [...strokes, active.current];
+    setStrokes(liveStrokes.current);
   }
 
   function move(event: React.PointerEvent<SVGSVGElement>) {
@@ -264,6 +328,7 @@ export function InkEditor({
         });
         return;
       }
+      return;
     }
     if (pan.current) {
       const dx = event.clientX - pan.current.x;
@@ -320,20 +385,21 @@ export function InkEditor({
           ? [active.current.points[0], snapInkPoint(active.current.points[0], points.at(-1)!)]
           : [...active.current.points, ...points]
     };
-    setStrokes(items => [...items.slice(0, -1), active.current!]);
+    liveStrokes.current = [...liveStrokes.current.slice(0, -1), active.current!];
+    scheduleStrokeRender();
   }
 
   function up(event: React.PointerEvent<SVGSVGElement>) {
     if (event.pointerType==="touch") {
       touches.current.delete(event.pointerId);
-      if (touches.current.size) return;
+      return;
     }
     if (isErasing.current) {
       isErasing.current = false;
     }
     if (active.current) {
       active.current = null;
-      const nextStrokes = strokes;
+      const nextStrokes = liveStrokes.current;
       persist(nextStrokes);
       setRedo([]);
 
@@ -470,34 +536,96 @@ export function InkEditor({
       aria-label="Handwriting block"
     >
       <div className="ink-toolbar" role="toolbar" aria-label="Ink tools">
-        {toolList.map(([name, label, Icon]) => (
-          <button
-            type="button"
-            key={name}
-            className={tool === name ? "active" : ""}
-            aria-pressed={tool === name}
-            aria-label={label}
-            onClick={() => setTool(name as InkTool)}
-          >
-            <Icon />
-          </button>
-        ))}
-        <input
-          type="color"
-          aria-label="Ink color"
-          value={color}
-          onChange={event => setColor(event.target.value)}
-        />
-        <label>
-          Width
-          <input
-            type="range"
-            min="1"
-            max="28"
-            value={size}
-            onChange={event => setSize(Number(event.target.value))}
-          />
-        </label>
+        {toolList.map(([name, label, Icon]) => {
+          const isPen = name === "pen";
+          const isActive = tool === name;
+          return (
+            <div key={name} className="pen-tool-wrapper">
+              <button
+                type="button"
+                className={isActive ? "active" : ""}
+                aria-pressed={isActive}
+                aria-label={`${label}${isPen ? " (Double-click for options)" : ""}`}
+                title={`${label}${isPen ? " (Double click to customize ink)" : ""}`}
+                onClick={() => {
+                  if (isActive && isPen) {
+                    setPenOptionsOpen(open => !open);
+                  } else {
+                    setTool(name as InkTool);
+                    if (!isPen) setPenOptionsOpen(false);
+                  }
+                }}
+                onDoubleClick={() => {
+                  if (isPen) {
+                    setTool("pen");
+                    setPenOptionsOpen(true);
+                  }
+                }}
+              >
+                <Icon />
+                {isPen && (
+                  <span
+                    className="pen-color-dot"
+                    style={{backgroundColor: color === "#000000" && theme === "dark" ? "#ffffff" : color}}
+                  />
+                )}
+              </button>
+
+              {isPen && penOptionsOpen && (
+                <div className="pen-options-popover" role="dialog" aria-label="Pen Options">
+                  <header>
+                    <span>Pen Settings</span>
+                    <button type="button" className="close-btn icon-button" onClick={() => setPenOptionsOpen(false)}>×</button>
+                  </header>
+                  <div className="popover-section">
+                    <label>Colors</label>
+                    <div className="ink-color-presets" role="group" aria-label="Ink color presets">
+                      {[
+                        { id: "default", name: (theme === "light" || capture) ? "Black (Theme default)" : "White (Theme default)", value: (theme === "light" || capture) ? "#000000" : "#ffffff" },
+                        { id: "red", name: "Red", value: "#ef4444" },
+                        { id: "blue", name: "Blue", value: "#3b82f6" },
+                        { id: "green", name: "Green", value: "#22c55e" },
+                        { id: "yellow", name: "Yellow", value: "#eab308" }
+                      ].map(p => {
+                        const isDefaultPill = p.id === "default";
+                        const isSwatchActive = isDefaultPill
+                          ? (color === "#000000" || color === "#ffffff" || color === "#1e293b" || color === "#0f172a" || color === "#f8fafc")
+                          : color === p.value;
+                        return (
+                          <button
+                            type="button"
+                            key={p.id}
+                            title={p.name}
+                            aria-label={p.name}
+                            className={`color-swatch-btn ${isSwatchActive ? "active" : ""}`}
+                            style={{
+                              backgroundColor: p.value,
+                              borderColor: isSwatchActive ? "var(--primary, #0284c7)" : (p.value === "#ffffff" ? "#cbd5e1" : p.value)
+                            }}
+                            onClick={() => setColor(p.value)}
+                          />
+                        );
+                      })}
+                    </div>
+                  </div>
+                  <div className="popover-section">
+                    <label>
+                      <span>Stroke Width</span>
+                      <small>{size}px</small>
+                    </label>
+                    <input
+                      type="range"
+                      min="1"
+                      max="28"
+                      value={size}
+                      onChange={event => setSize(Number(event.target.value))}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          );
+        })}
         <button
           type="button"
           aria-label="Fit drawing"
@@ -630,20 +758,27 @@ export function InkEditor({
       >
         {strokes
           .filter(stroke => stroke.tool !== "eraser")
-          .map(stroke => (
-            <path
-              key={stroke.id}
-              d={strokePath(stroke)}
-              fill="none"
-              stroke={stroke.color}
-              strokeWidth={stroke.width}
-              opacity={
-                selected.includes(stroke.id) ? 0.5 : stroke.tool === "highlighter" ? 0.35 : 1
-              }
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          ))}
+          .map(stroke => {
+            const isDarkCanvas = theme === "dark" && !capture;
+            const norm = (stroke.color || "").toLowerCase().trim();
+            const displayColor = isDarkCanvas
+              ? (norm === "#000000" || norm === "#000" || norm === "#1e293b" || norm === "#0f172a" || norm === "black" ? "#ffffff" : stroke.color)
+              : (norm === "#ffffff" || norm === "#fff" || norm === "#f8fafc" || norm === "white" ? "#000000" : stroke.color);
+            return (
+              <path
+                key={stroke.id}
+                d={strokePath(stroke)}
+                fill="none"
+                stroke={displayColor}
+                strokeWidth={stroke.width}
+                opacity={
+                  selected.includes(stroke.id) ? 0.5 : stroke.tool === "highlighter" ? 0.35 : 1
+                }
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            );
+          })}
         {bounds && tool === "lasso" && (
           <g className="ink-selection">
             <rect

@@ -23,27 +23,31 @@ const request = async (path: string, options?: RequestInit) => {
   return data;
 };
 
-function TreeFolder({node,current,onSelect,dragTarget,dragItem,onDragStart,onDragOver,onDragLeave,onDrop}:{node:Tree;current:string;onSelect:(path:string)=>void;dragTarget:string|null;dragItem:DragPayload|null;onDragStart:(e:React.DragEvent,item:DragPayload)=>void;onDragOver:(e:React.DragEvent,path:string)=>void;onDragLeave:(e:React.DragEvent)=>void;onDrop:(e:React.DragEvent,targetPath:string)=>void}){
-  const [open,setOpen]=useState(true);
+function TreeFolder({node,current,onSelect,onOpenNote,dragTarget,dragItem,onDragStart,onDragOver,onDragLeave,onDrop}:{node:Tree;current:string;onSelect:(path:string)=>void;onOpenNote:(id:string)=>void;dragTarget:string|null;dragItem:DragPayload|null;onDragStart:(e:React.DragEvent,item:DragPayload)=>void;onDragOver:(e:React.DragEvent,path:string)=>void;onDragLeave:(e:React.DragEvent)=>void;onDrop:(e:React.DragEvent,targetPath:string)=>void}){
+  const [open,setOpen]=useState(false);
   const isDropTarget=dragTarget===node.path;
   const isDraggingSelf=dragItem?.path===node.path;
   return (
     <div className="vault-tree-folder">
-      <button
+      <div className="vault-tree-folder-row">
+        <button className="vault-tree-disclosure" aria-label={`${open?"Collapse":"Expand"} ${node.name}`} aria-expanded={open} onClick={()=>setOpen(value=>!value)}>
+          {open?<CaretDown/>:<CaretRight/>}
+        </button>
+        <button
         className={`${current===node.path?"active":""} ${isDropTarget?"drag-over":""} ${isDraggingSelf?"dragging":""}`}
         draggable
         onDragStart={e=>onDragStart(e,{type:"folder",path:node.path,name:node.name})}
         onDragOver={e=>onDragOver(e,node.path)}
         onDragLeave={onDragLeave}
         onDrop={e=>onDrop(e,node.path)}
-        onClick={()=>{setOpen(true);onSelect(node.path)}}
+        onClick={()=>onSelect(node.path)}
       >
-        {open?<CaretDown/>:<CaretRight/>}
         {open?<FolderOpen/>:<Folder/>}
         <span>{node.name}</span>
         <small>{node.notes.length+node.folders.length}</small>
       </button>
-      {open&&<div>{node.folders.map(folder=><TreeFolder node={folder} current={current} onSelect={onSelect} dragTarget={dragTarget} dragItem={dragItem} onDragStart={onDragStart} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop} key={folder.path}/>)}</div>}
+      </div>
+      {open&&<div className="vault-tree-children">{node.folders.map(folder=><TreeFolder node={folder} current={current} onSelect={onSelect} onOpenNote={onOpenNote} dragTarget={dragTarget} dragItem={dragItem} onDragStart={onDragStart} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop} key={folder.path}/>)}{node.notes.map(note=><button className="vault-tree-note" onClick={()=>onOpenNote(note.noteId)} key={note.noteId}><FileText/><span>{note.name.replace(/\.md$/i,"")}</span></button>)}</div>}
     </div>
   );
 }
@@ -67,12 +71,12 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
     }
   },[initialFolder]);
 
-  async function load(preferred=sourceId){try{const data=await request(`/api/v1/vault-sources?tree=true${preferred?`&sourceId=${encodeURIComponent(preferred)}`:""}`);setSources(data.sources);setSourceId(data.selectedSourceId);setTree(data.tree);if(new URLSearchParams(location.search).get("new")==="ink"&&data.selectedSourceId&&!startedInk.current){startedInk.current=true;void create(`Handwritten note ${new Date().toISOString().slice(0,16).replace(/[T:]/g,"-")}`,data.selectedSourceId,true)}}catch(reason){setError((reason as Error).message)}}
-  useEffect(()=>{setDrawer(matchMedia("(max-width: 900px)").matches?false:localStorage.getItem("noema-vault-drawer")!=="closed");void load()},[]);
+  async function load(preferred=sourceId){try{const data=await request(`/api/v1/vault-sources?tree=true${preferred?`&sourceId=${encodeURIComponent(preferred)}`:""}`);setSources(data.sources);setSourceId(data.selectedSourceId);setTree(data.tree);if(new URLSearchParams(location.search).get("new")==="ink"&&data.selectedSourceId&&!startedInk.current){startedInk.current=true;void create(`Handwritten note ${new Date().toISOString().slice(0,19).replace(/[T:]/g,"-")}`,data.selectedSourceId,true)}}catch(reason){setError((reason as Error).message)}}
+  useEffect(()=>{setDrawer(!matchMedia("(max-width: 900px)").matches&&localStorage.getItem("noema-vault-drawer")==="open");void load()},[]);
 
   async function sync(){if(!sourceId)return;setBusy(true);try{await request(`/api/v1/vault-sources/${sourceId}/sync`,{method:"POST"});await load(sourceId)}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
 
-  async function create(givenName?:string,selected=sourceId,ink=false){if(!selected)return;const name=givenName||prompt("Note name");if(!name)return;const file=`${name.replace(/\.md$/i,"").replace(/[\\/:*?\"<>|]/g,"-").trim()}.md`,relativePath=folder&&!folder.startsWith("@")?`${folder}/${file}`:file;try{const created=await request(`/api/v1/vault-sources/${selected}/entries`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({relativePath})});await load(selected);location.assign(`/vault?open=${created.noteId}${ink?"&ink=1":""}`)}catch(reason){setError((reason as Error).message)}}
+  async function create(givenName?:string,selected=sourceId,ink=false){if(!selected)return;const name=givenName||prompt("Note name");if(!name)return;const file=`${name.replace(/\.md$/i,"").replace(/[\\/:*?\"<>|]/g,"-").trim()}.md`,relativePath=folder&&!folder.startsWith("@")?`${folder}/${file}`:file;try{const created=await request(`/api/v1/vault-sources/${selected}/entries`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({relativePath})});await load(selected);location.assign(`/vault?open=${created.noteId}${ink?"&ink=1":""}`)}catch(reason:any){if(givenName&&reason?.message?.includes("already exists")){const altFile=`${name.replace(/\.md$/i,"").replace(/[\\/:*?\"<>|]/g,"-").trim()}-${Math.floor(Math.random()*1000)}.md`,altPath=folder&&!folder.startsWith("@")?`${folder}/${altFile}`:altFile;try{const retryCreated=await request(`/api/v1/vault-sources/${selected}/entries`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({relativePath:altPath})});await load(selected);location.assign(`/vault?open=${retryCreated.noteId}${ink?"&ink=1":""}`);return}catch{}}setError((reason as Error).message)}}
 
   async function createFolder(){if(!sourceId)return;const name=prompt("Folder name");if(!name)return;const cleanName=name.replace(/[\\/:*?\"<>|]/g,"-").trim();if(!cleanName)return;const folderPath=folder&&!folder.startsWith("@")?`${folder}/${cleanName}`:cleanName;const relativePath=`${folderPath}/Untitled note.md`;setBusy(true);try{const created=await request(`/api/v1/vault-sources/${sourceId}/entries`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({relativePath})});setFolder(folderPath);await load(sourceId);if(created.noteId)location.assign(`/vault?open=${created.noteId}`)}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
 
@@ -161,7 +165,7 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
           <aside className="obsidian-tree" aria-label="Vault folders">
             <div className="vault-derived-views">{views.map(view=><button className={folder===view.id?"active":""} onClick={()=>{setShowGraph(false);setFolder(view.id)}} key={view.id}><view.icon/><span>{view.label}</span></button>)}</div>
             <button className={`${!folder&&!showGraph?"active":""} ${dragTarget===""?"drag-over":""}`} onDragOver={e=>handleDragOver(e,"")} onDragLeave={handleDragLeave} onDrop={e=>handleDrop(e,"")} onClick={()=>{setShowGraph(false);setFolder("")}}><FolderOpen/><span>{source?.name}</span></button>
-            {tree?.folders.map(item=><TreeFolder node={item} current={showGraph?"":folder} onSelect={path=>{setShowGraph(false);setFolder(path)}} dragTarget={dragTarget} dragItem={dragItem} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} key={item.path}/>)}
+            {tree?.folders.map(item=><TreeFolder node={item} current={showGraph?"":folder} onSelect={path=>{setShowGraph(false);setFolder(path)}} onOpenNote={id=>onOpen(noteMap.get(id))} dragTarget={dragTarget} dragItem={dragItem} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} key={item.path}/>)}
           </aside>
           <main>
             {showGraph?<KnowledgeGraphView onOpenNote={id=>{const found=notes.find(item=>item.id===id||item.title===id);if(found)onOpen(found)}}/>:(
@@ -223,4 +227,3 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
     </section>
   );
 }
-
