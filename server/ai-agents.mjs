@@ -1,7 +1,7 @@
 import {createCipheriv,createDecipheriv,createHash,randomBytes,randomUUID} from "node:crypto";
 import {getDatabase} from "./db.mjs";
 
-const providers=new Set(["gemini","openai","deepseek","glm","kimi","qwen"]),profiles=new Set(["fast","balanced","quality"]);
+const providers=new Set(["gemini","openai","deepseek","glm","kimi","qwen","openrouter"]),profiles=new Set(["fast","balanced","quality"]);
 const key=value=>{if(!value||value.length<32)throw new Error("NOEMA_ENCRYPTION_KEY is required to store API keys") ;return createHash("sha256").update(value).digest()};
 const seal=(value,secret)=>{const iv=randomBytes(12),cipher=createCipheriv("aes-256-gcm",key(secret),iv),body=Buffer.concat([cipher.update(value,"utf8"),cipher.final()]);return Buffer.concat([iv,cipher.getAuthTag(),body]).toString("base64url")};
 const open=(value,secret)=>{const packed=Buffer.from(value,"base64url"),cipher=createDecipheriv("aes-256-gcm",key(secret),packed.subarray(0,12));cipher.setAuthTag(packed.subarray(12,28));return Buffer.concat([cipher.update(packed.subarray(28)),cipher.final()]).toString("utf8")};

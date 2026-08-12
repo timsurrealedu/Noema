@@ -37,9 +37,11 @@ Set a strong `NOEMA_OWNER_PASSWORD` in `.env.local`. Backend features are disabl
 
 Optional two-factor login: set `NOEMA_TOTP_SECRET` to the same 160-bit-or-longer base32 secret configured in your authenticator app. Enabling it also requires MFA-authenticated sessions for AI approvals and session revocation. Compiler runs require an authenticated editor session and execute immediately inside the configured isolation boundary.
 
+Google login uses `NOEMA_GOOGLE_CLIENT_ID`, `NOEMA_GOOGLE_CLIENT_SECRET`, and `NOEMA_GOOGLE_LOGIN_REDIRECT_URI`. It accepts only verified Google accounts that already belong to a workspace or have an active workspace invitation; the first invited Google sign-in creates a private `My workspace`, consumes the shared-workspace invitation, and persists a subject-bound account and session.
+
 Saved compiler files use `NOEMA_SAVED_CODE_DIR` (default `~/Documents/mycode/snippets`). Only allowlisted text/code extensions up to 1 MiB are editable; traversal and symlinks are rejected and saves are atomic.
 
-Set `GEMINI_API_KEY`, `OPENAI_API_KEY`, `DEEPSEEK_API_KEY`, `GLM_API_KEY`, `KIMI_API_KEY`, or `QWEN_API_KEY` server-side. Configure comma-separated `provider:model` candidates with `NOEMA_AI_FAST_CHAIN`, `NOEMA_AI_BALANCED_CHAIN`, and `NOEMA_AI_QUALITY_CHAIN`. Without chains, Capture tries Gemini → OpenAI fast → Codex, skipping unavailable providers. Fast is the default user profile. Attempts are timeout-bounded and recorded in content-free `ai_runs` metrics; prompts, capture text, extracted content, object IDs, and credentials are never stored there.
+Set `GEMINI_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `DEEPSEEK_API_KEY`, `GLM_API_KEY`, `KIMI_API_KEY`, or `QWEN_API_KEY` server-side. With `OPENROUTER_API_KEY`, every unconfigured profile (Fast, Balanced, Quality) falls back to `openrouter/free`, which selects from OpenRouter's current free-model pool; override it with `NOEMA_OPENROUTER_MODEL`. Configure comma-separated `provider:model` candidates with `NOEMA_AI_FAST_CHAIN`, `NOEMA_AI_BALANCED_CHAIN`, and `NOEMA_AI_QUALITY_CHAIN`; explicit chains and saved per-profile agents take precedence over the default fallback. Without them, Capture tries Gemini → OpenAI fast → OpenRouter → Codex, skipping unavailable providers. Fast is the default user profile. Attempts are timeout-bounded and recorded in content-free `ai_runs` metrics; prompts, capture text, extracted content, object IDs, and credentials are never stored there.
 
 ## Verification
 

@@ -3,7 +3,7 @@ import {FormEvent,useEffect,useState} from "react";
 import {Key,Plus,Robot,Trash} from "@phosphor-icons/react";
 
 type Agent={id:string;name:string;provider:string;model:string;profile:string;baseUrl:string;enabled:boolean;hasApiKey:boolean};
-const providers=["gemini","openai","deepseek","glm","kimi","qwen"];
+const providers=["gemini","openai","deepseek","glm","kimi","qwen","openrouter"];
 export function AIAgentSettings(){
   const [agents,setAgents]=useState<Agent[]>([]),[error,setError]=useState(""),[saving,setSaving]=useState(false);
   async function load(){const response=await fetch("/api/v1/ai-agents"),data=await response.json();if(!response.ok)throw new Error(data.error?.message||"Could not load AI agents");setAgents(data.agents)}
