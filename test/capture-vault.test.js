@@ -39,6 +39,19 @@ test("capture action parsing keeps the first complete Gemini array",async()=>{
   assert.deepEqual(parseActionsJson('[{"id":"task-1"}] trailing text'),[{id:"task-1"}]);
 });
 
+test("capture tasks create linked timed or all-day calendar events",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-capture-schedule-")),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    core.createCapture({id:"timed",text:"Study",source:"typed"},db);
+    core.saveInterpretation("timed",{schemaVersion:1,summary:"Study",clarifications:[],actions:[{id:"t",type:"task.create",confidence:.9,sourceReferences:["capture:timed"],arguments:{title:"Study",dueAt:"2026-08-13T10:00:00+07:00",project:"Inbox",linkedActionId:null}}]},db);
+    core.applyCaptureInterpretation("timed",db);const timed=core.listState(db);assert.equal(timed.tasks[0].reminderAt,null);assert.equal(timed.events[0].endAt,"2026-08-13T04:00:00.000Z");assert.equal(timed.events[0].taskId,timed.tasks[0].id);assert.equal(db.prepare("SELECT COUNT(*) count FROM event_reminders WHERE event_id=?").get(timed.events[0].id).count,3);
+    core.createCapture({id:"day",text:"Submit",source:"typed"},db);
+    core.saveInterpretation("day",{schemaVersion:1,summary:"Submit",clarifications:[],actions:[{id:"d",type:"task.create",confidence:.9,sourceReferences:["capture:day"],arguments:{title:"Submit",dueAt:"2026-08-14",project:"Inbox",linkedActionId:null}}]},db);
+    core.applyCaptureInterpretation("day",db);const event=core.listState(db).events.find(item=>item.title==="Submit");assert.equal(event.allDay,true);assert.equal(event.reminders.length,0);
+    const audit=core.listAuditEvents(10,db).find(item=>item.objectId==="timed"&&item.action==="apply");core.undoAuditEvent(audit.id,db);assert.equal(core.listState(db).events.some(item=>item.title==="Study"),false);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
 test("AI capture processing proposes a connected vault note",async()=>{
   const dir=mkdtempSync(join(tmpdir(),"noema-capture-ai-vault-")),vaultDir=join(dir,"vault"),jobsDir=join(dir,"jobs");mkdirSync(vaultDir);mkdirSync(jobsDir);
   const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),core=await import("../server/core.mjs"),vault=await import("../server/vault.mjs"),jobs=await import("../server/jobs.mjs"),{handleInterpretCapture}=await import("../server/worker/handlers/interpret-capture.mjs"),db=openDatabase(join(dir,"test.sqlite"));
