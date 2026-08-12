@@ -32,7 +32,8 @@ const normalized = (item, calendar) => {
     const allDay = !!item.start?.date,
         timezone = item.start?.timeZone || item.end?.timeZone || calendar.timezone || 'UTC',
         startAt = allDay ? midnight(item.start.date, timezone) : new Date(item.start?.dateTime).toISOString(),
-        endAt = allDay ? midnight(item.end.date, timezone) : new Date(item.end?.dateTime).toISOString();
+        rawEnd = allDay ? midnight(item.end.date, timezone) : new Date(item.end?.dateTime).toISOString(),
+        endAt = allDay && Date.parse(rawEnd) <= Date.parse(startAt) ? new Date(Date.parse(startAt) + 86400000).toISOString() : rawEnd;
     return {
         title: String(item.summary || 'Untitled event'),
         startAt,
