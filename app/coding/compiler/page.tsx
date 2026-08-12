@@ -341,14 +341,6 @@ export default function CompilerPage() {
     });
   }
 
-  function syncScroll() {
-    const ta = textareaRef.current;
-    const hl = hlRef.current;
-    if (!ta || !hl) return;
-    hl.scrollTop = ta.scrollTop;
-    hl.scrollLeft = ta.scrollLeft;
-  }
-
   useEffect(() => {
     if (mode === "scratch") {
       const saved = localStorage.getItem(`noema-scratch-${language}`) || starters[language];
@@ -385,7 +377,7 @@ export default function CompilerPage() {
     const end = el.selectionEnd;
     const val = el.value;
 
-    if (event.key === "Enter" && !event.shiftKey && !event.isComposing) {
+    if (event.key === "Enter" && !event.shiftKey && !event.nativeEvent.isComposing) {
       event.preventDefault();
       const lineStart = val.lastIndexOf("\n", start - 1) + 1;
       const currentLine = val.slice(lineStart, start);

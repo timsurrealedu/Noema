@@ -48,7 +48,7 @@ const blankEvent = (): Event => {
 const positionFor = (time: string) => 76 + (Number(time.slice(0, 2)) - 9) * 51 + Number(time.slice(3)) * 0.85;
 const dayPositionFor = (time: string) => Number(time.slice(0, 2)) * 51 + Number(time.slice(3)) * 0.85;
 const dayTimes = ["00:00", "02:00", "04:00", "06:00", "08:00", "10:00", "12:00", "14:00", "16:00", "18:00", "20:00", "22:00"];
-const eventTime = (value?: string) => value ? new Date(value).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", hour12: false}) : "";
+const eventTime = (value?: string | null) => value ? new Date(value).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", hour12: false}) : "";
 const reminderValue = (value?: string | null) =>
   value ? new Date(new Date(value).getTime() - new Date(value).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
 
@@ -122,7 +122,7 @@ export default function CalendarPage() {
         }
         throw new Error(data.error?.message || "Sync failed");
       }
-      setSync({ calendars: data.calendars || [], conflicts: data.conflicts || [] });
+      setSync({ calendars: data.calendars || [], writes: data.writes || [], conflicts: data.conflicts || [] });
       const pushedCount = data.result?.pushed?.completed ?? 0;
       const pulledCount = data.result?.pulled?.imported ?? 0;
       setSyncMessage(`Google Calendar sync completed · ${pushedCount} pushed · ${pulledCount} imported`);
@@ -504,7 +504,7 @@ export default function CalendarPage() {
                         openTask(task.id);
                       }}
                     >
-                      {task.time} {task.title}
+                      {eventTime(task.scheduledStartAt) || "All day"} {task.title}
                     </small>
                   ))}
                 </button>
