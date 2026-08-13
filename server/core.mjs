@@ -9,6 +9,7 @@ import {prepareVaultTaskWriteback} from "./vault-task-writeback.mjs";
 import {createVaultNote,sourceRoot,trashVaultEntry} from "./vault.mjs";
 import {copyFileSync,mkdirSync} from "node:fs";
 import {dirname,extname,join} from "node:path";
+import {occurrences,untilRule} from "./recurrence.mjs";
 
 const stamp=()=>new Date().toISOString();
 const formatSize=bytes=>bytes>1024*1024?`${(bytes/1048576).toFixed(1)} MB`:`${Math.max(1,Math.round(bytes/1024))} KB`;
@@ -111,6 +112,14 @@ export function saveEvent(input,db=getDatabase(),actor=null,options={}){
 }
 
 export function deleteEvent(id,version,db=getDatabase(),actor=null,options={}){const context=actorInfo(actor),before=findOwned(db,"events",id,context.workspaceId,"AND deleted_at IS NULL");if(!before)throw Object.assign(new Error("Event not found"),{status:404});requireVersion({version},before,{db,type:"event",actor});const time=stamp();db.prepare(`UPDATE events SET deleted_at=?,updated_at=?,version=version+1 WHERE id=?${context.workspaceId?" AND workspace_id=?":""}`).run(time,time,id,...(context.workspaceId?[context.workspaceId]:[]));const row=findOwned(db,"events",id,context.workspaceId);audit(db,"delete","event",id,before.title,{op:"restore",row:before},actor);if(!options.skipCalendarSync)queueCalendarWrite(db,row,"delete",context.id);return {ok:true,deletedAt:time,version:before.version+1}}
+
+export function eventOccurrences(id,rangeStart,rangeEnd,db=getDatabase(),actor=null){const context=actorInfo(actor),event=eventRow(findOwned(db,"events",id,context.workspaceId,"AND deleted_at IS NULL"),db);if(!event)throw Object.assign(new Error("Event not found"),{status:404});const overrides=db.prepare("SELECT original_start_at AS originalStartAt,start_at AS startAt,end_at AS endAt,all_day AS allDay,cancelled FROM event_occurrences WHERE event_id=?").all(id).map(row=>({...row,allDay:row.allDay==null?undefined:!!row.allDay,cancelled:!!row.cancelled}));return occurrences(event,rangeStart,rangeEnd,overrides)}
+
+export function mutateEventOccurrence(id,originalStartAt,input,db=getDatabase(),actor=null){const context=actorInfo(actor),event=eventRow(findOwned(db,"events",id,context.workspaceId,"AND deleted_at IS NULL"),db);if(!event)throw Object.assign(new Error("Event not found"),{status:404});requireVersion(input,event,{db,type:"event",actor});const original=absolute(originalStartAt,"originalStartAt").toISOString(),start=absolute(input.startAt,"startAt"),end=absolute(input.endAt,"endAt");if(end<=start)throw new Error("endAt must be after startAt");const scope=input.scope;if(!["this","following","all"].includes(scope))throw new Error("Invalid occurrence scope");
+  if(scope==="all")return saveEvent({...event,startAt:start.toISOString(),endAt:end.toISOString(),allDay:!!input.allDay,version:event.version},db,actor);
+  if(scope==="this"){const time=stamp();db.prepare("INSERT INTO event_occurrences(event_id,original_start_at,start_at,end_at,all_day,created_at,updated_at) VALUES(?,?,?,?,?,?,?) ON CONFLICT(event_id,original_start_at) DO UPDATE SET start_at=excluded.start_at,end_at=excluded.end_at,all_day=excluded.all_day,cancelled=0,updated_at=excluded.updated_at").run(id,original,start.toISOString(),end.toISOString(),input.allDay?1:0,time,time);audit(db,"occurrence-update","event",id,event.title,null,actor);return {event,scope,originalStartAt:original,startAt:start.toISOString(),endAt:end.toISOString(),allDay:!!input.allDay}}
+  const successor=saveEvent({...event,id:randomUUID(),startAt:start.toISOString(),endAt:end.toISOString(),allDay:!!input.allDay,recurrence:event.recurrence,version:undefined},db,actor);saveEvent({...event,recurrence:untilRule(event.recurrence,new Date(new Date(original).getTime()-1000).toISOString()),version:event.version},db,actor);db.prepare("DELETE FROM event_occurrences WHERE event_id=? AND original_start_at>=?").run(id,original);return {event:successor,scope,originalStartAt:original};
+}
 
 export function saveNote(input,db=getDatabase(),actor=null){
   const context=actorInfo(actor),id=input.id||randomUUID(),title=required(input.title,"title",500),content=String(input.content||""),time=stamp(),before=findOwned(db,"notes",id,context.workspaceId),excerpt=String(input.excerpt||content.replace(/[#*_>-]/g,"").trim().slice(0,140));

@@ -163,7 +163,9 @@ async function pullCalendar(account, calendar, access, db, fetcher, userId, reco
     db.prepare(`INSERT INTO google_calendar_sync(account_id,calendar_id,sync_token,last_synced_at,last_error) VALUES(?,?,?,?,NULL) ON CONFLICT(account_id,calendar_id) DO UPDATE SET sync_token=excluded.sync_token,last_synced_at=excluded.last_synced_at,last_error=NULL`).run(account.id, calendar.calendar_id, nextSync, now());
     return counts;
 }
-export async function pullGoogleCalendar(userId, config = loadConfig(), db = getDatabase(), fetcher = fetch) {
+export async function pullGoogleCalendar(actor, config = loadConfig(), db = getDatabase(), fetcher = fetch) {
+    const userId = typeof actor === 'object' ? actor.id : actor,
+        workspaceId = typeof actor === 'object' ? actor.workspaceId || actor.workspace?.id || null : null;
     const account = db.prepare('SELECT * FROM google_accounts WHERE user_id=?').get(userId);
     if (!account) throw Object.assign(new Error('Google Calendar is not connected'), { status: 409 });
     const calendars = db.prepare('SELECT * FROM google_calendars WHERE account_id=? AND selected=1').all(account.id);
@@ -178,7 +180,7 @@ export async function pullGoogleCalendar(userId, config = loadConfig(), db = get
         };
     for (const calendar of calendars) {
         try {
-            const counts = await pullCalendar(account, calendar, access, db, fetcher, userId);
+            const counts = await pullCalendar(account, calendar, access, db, fetcher, { id: userId, workspaceId });
             for (const key of Object.keys(total)) total[key] += counts[key];
         } catch (error) {
             db.prepare(`INSERT INTO google_calendar_sync(account_id,calendar_id,last_error) VALUES(?,?,?) ON CONFLICT(account_id,calendar_id) DO UPDATE SET last_error=excluded.last_error`).run(account.id, calendar.calendar_id, String(error.message).slice(0, 500));
