@@ -1,5 +1,5 @@
-import * as rruleModule from "rrule";
-const {rrulestr}=rruleModule.default||rruleModule;
+import {createRequire} from "node:module";
+const {rrulestr}=createRequire(import.meta.url)("rrule");
 
 const asRules=value=>Array.isArray(value?.rules)?value.rules:value?.frequency?[`RRULE:FREQ=${value.frequency.toUpperCase()}`]:[];
 export function occurrences(event,rangeStart,rangeEnd,overrides=[]){
