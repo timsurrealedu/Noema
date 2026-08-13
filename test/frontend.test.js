@@ -247,6 +247,8 @@ test("Week columns remain readable and can scroll horizontally",()=>{const page=
 test("Month cells keep equal widths and show event names without times",()=>{const page=read("app/calendar/page.tsx"),css=read("app/globals.css");assert.match(css,/\.month-scroll>\.month-view\{grid-template-columns:repeat\(7,minmax\(0,1fr\)\)/);assert.match(css,/\.month-view>strong,\.month-view>button\{min-width:0;overflow:hidden/);assert.doesNotMatch(page,/\{event\.time\} \{event\.title\}/)});
 test("Calendar supports optional end times and Home shows scheduled task starts",()=>{const calendar=read("app/calendar/page.tsx"),home=read("app/page.tsx"),core=read("server/core.mjs");for(const token of ["Start time","End time \\(optional\\)","3600000"])assert.match(calendar+core,new RegExp(token));assert.match(home,/task\.scheduledStartAt/);assert.doesNotMatch(home,/task\.priority\.toLowerCase\(\)/)});
 
+test("Calendar exposes direct manipulation, recurrence scope, and current-time affordances",()=>{const page=read("app/calendar/page.tsx"),css=read("app/globals.css");for(const token of ["overlapLayout","onPointerDown","onDrop","calendar-now","This and following","calendar-resize"])assert.match(page,new RegExp(token));assert.match(page,/occurrences\?start/);assert.match(css,/\.calendar-now/);assert.match(read("app/api/v1/events/\[id\]/occurrences/route.ts"),/eventOccurrences/)});
+
 test("Vault exposes reviewable Draft optimization",()=>{
   const vault=read("app/vault/page.tsx");assert.match(vault,/Optimize draft/);assert.match(vault,/Optimization review/);assert.match(vault,/Apply proposal/);assert.match(vault,/\/optimizations/);assert.match(read("server/worker.mjs"),/note-optimize/);
 });

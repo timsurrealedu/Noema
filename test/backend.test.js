@@ -19,7 +19,17 @@ test("SQLite core objects persist and remain searchable",async()=>{
 
 test("immutable migrations add canonical task scheduling fields",async()=>{
   const dir=temp(),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));
-  try{const task=core.saveTask({title:"Review lecture",dueAt:"2026-07-29T12:00:00+07:00",scheduledStartAt:"2026-07-29T10:00:00+07:00",scheduledEndAt:"2026-07-29T11:00:00+07:00",estimatedMinutes:60},db);assert.equal(task.due_at,"2026-07-29T05:00:00.000Z");assert.equal(task.status,"open");assert.equal(db.prepare("SELECT max(version) version FROM schema_migrations").get().version,45);assert.ok(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='event_occurrences'").get())}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+  try{const task=core.saveTask({title:"Review lecture",dueAt:"2026-07-29T12:00:00+07:00",scheduledStartAt:"2026-07-29T10:00:00+07:00",scheduledEndAt:"2026-07-29T11:00:00+07:00",estimatedMinutes:60},db);assert.equal(task.due_at,"2026-07-29T05:00:00.000Z");assert.equal(task.status,"open");assert.equal(db.prepare("SELECT max(version) version FROM schema_migrations").get().version,46);assert.ok(db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='event_occurrences'").get())}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("recurring events expand, override one instance, and split following instances",async()=>{
+  const dir=temp(),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{const event=core.saveEvent({title:"Standup",startAt:"2026-08-03T09:00:00.000Z",endAt:"2026-08-03T10:00:00.000Z",timezone:"UTC",recurrence:{rules:["RRULE:FREQ=WEEKLY"]}},db),range=["2026-08-01T00:00:00.000Z","2026-08-25T00:00:00.000Z"];assert.equal(core.eventOccurrences(event.id,...range,db).length,4);const original="2026-08-10T09:00:00.000Z";core.mutateEventOccurrence(event.id,original,{scope:"this",startAt:"2026-08-10T11:00:00.000Z",endAt:"2026-08-10T12:00:00.000Z",allDay:false,version:event.version},db);assert.equal(core.eventOccurrences(event.id,...range,db).find(item=>item.originalStartAt===original).startAt,"2026-08-10T11:00:00.000Z");const current=core.listState(db).events.find(item=>item.id===event.id);const split=core.mutateEventOccurrence(event.id,"2026-08-17T09:00:00.000Z",{scope:"following",startAt:"2026-08-17T13:00:00.000Z",endAt:"2026-08-17T14:00:00.000Z",allDay:false,version:current.version},db);assert.equal(split.scope,"following");assert.equal(core.listState(db).events.length,2)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("Google recurrence writes fetch an instance before updating it",async()=>{
+  const source=readFileSync(join(process.cwd(),"server/calendar-sync.mjs"),"utf8");
+  assert.match(source,/\/instances/);assert.match(source,/originalStartTime/);assert.match(source,/occurrence \? 'PUT' : 'PATCH'/);assert.match(source,/event_occurrences SET google_event_id/);
 });
 
 test("workspace canvases validate, version, and retain canonical object links",async()=>{

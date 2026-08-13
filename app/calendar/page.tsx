@@ -1,10 +1,11 @@
 "use client";
 
 import {createId} from "../lib/id";
-import {FormEvent, PointerEvent, useEffect, useRef, useState} from "react";
+import {DragEvent, FormEvent, KeyboardEvent, PointerEvent, useEffect, useRef, useState} from "react";
 import {ArrowsClockwise, CaretLeft, CaretRight, Check, Clock, Plus, VideoCamera, X} from "@phosphor-icons/react";
 import {ModuleShell} from "../components/ModuleShell";
 import {Event, useAppState} from "../components/AppState";
+import {DAY_MINUTES,minutesAt,overlapLayout,snapMinutes,withMinutes} from "../lib/calendar";
 
 const startOfWeek = (value: Date) => {
   const date = new Date(value);
@@ -59,6 +60,7 @@ type SyncStatus = {
   writes: {id: string; state: string}[];
   conflicts: {id: string; localSnapshot: {title: string}; googleSnapshot: {summary?: string}}[];
 };
+type CalendarEvent=Event&{originalStartAt?:string;lane?:number;lanes?:number};
 
 const isSameDate = (d1: Date | string | null | undefined, d2: Date) => {
   if (!d1) return false;
@@ -86,13 +88,25 @@ export default function CalendarPage() {
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
+  const [instances,setInstances]=useState<CalendarEvent[]>([]);
+  const [scopeDraft,setScopeDraft]=useState<CalendarEvent|null>(null);
+  const [saveMessage,setSaveMessage]=useState<string|null>(null);
+  const [now,setNow]=useState(()=>new Date());
   const pointerStart = useRef<{x:number;y:number;day:number}|null>(null);
   const [dragging,setDragging]=useState(false);
+  useEffect(()=>{const timer=setInterval(()=>setNow(new Date()),60000);return()=>clearInterval(timer)},[]);
 
-  const timeAt = (date:Date,y:number) => {const result=new Date(date);const minutes=Math.max(0,Math.min(1439,Math.round(y/15)*15));result.setHours(Math.floor(minutes/60),minutes%60,0,0);return result};
+  const timeAt = (date:Date,y:number) => withMinutes(date,snapMinutes(y));
   const beginSlot = (event:PointerEvent<HTMLDivElement>,day:number) => {if(matchMedia("(pointer: coarse)").matches)return;const rect=event.currentTarget.getBoundingClientRect();pointerStart.current={x:event.clientX,y:event.clientY-rect.top,day};setDragging(false)};
   const finishSlot = (event:PointerEvent<HTMLDivElement>,day:number) => {const start=pointerStart.current;if(!start)return;pointerStart.current=null;const rect=event.currentTarget.getBoundingClientRect(),endY=event.clientY-rect.top,moved=Math.abs(endY-start.y)>5||Math.abs(event.clientX-start.x)>5,setAt=timeAt(dates[start.day],start.y),endAt=moved?timeAt(dates[day],endY):new Date(setAt.getTime()+3600000);if(endAt<=setAt)endAt.setTime(setAt.getTime()+900000);setDragging(false);setDraft({...blankEvent(),day:start.day,time:eventTime(setAt.toISOString()),startAt:setAt.toISOString(),endAt:endAt.toISOString()})};
-  const moveItem = (event:PointerEvent<HTMLButtonElement>,item:Event|typeof timedTaskItems[number],kind:"event"|"task",day:number) => {event.preventDefault();event.stopPropagation();if(matchMedia("(pointer: coarse)").matches)return;const rect=event.currentTarget.parentElement!.getBoundingClientRect(),startY=event.clientY-rect.top,startTime=kind==="event"?new Date((item as Event).startAt||dates[day]):new Date((item as typeof timedTaskItems[number]).scheduledStartAt!),duration=kind==="event"?new Date((item as Event).endAt||startTime).getTime()-startTime.getTime():((item as typeof timedTaskItems[number]).estimatedMinutes||45)*60000;const onUp=(up:globalThis.PointerEvent)=>{window.removeEventListener("pointerup",onUp);const next=timeAt(dates[day],up.clientY-rect.top),end=new Date(next.getTime()+duration);if(Math.abs(up.clientY-event.clientY)<5){if(kind==="event")setDraft({...item as Event});else openTask(item.id);return}if(kind==="event")saveEvent({...item as Event,startAt:next.toISOString(),endAt:end.toISOString(),time:eventTime(next.toISOString())});else saveTask({...item as typeof timedTaskItems[number],scheduledStartAt:next.toISOString(),scheduledEndAt:end.toISOString(),estimatedMinutes:Math.round(duration/60000),dueAt:next.toISOString()})};window.addEventListener("pointerup",onUp,{once:true})};
+  const saveOccurrence=async(item:CalendarEvent,scope:"this"|"following"|"all")=>{const body={scope,startAt:item.startAt,endAt:item.endAt,allDay:!!item.allDay,version:item.version};const {originalStartAt,...event}=item;if(!originalStartAt||scope==="all"){saveEvent(event);return}const response=await fetch(`/api/v1/events/${item.id}/occurrences/${encodeURIComponent(originalStartAt)}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});if(!response.ok)throw new Error((await response.json()).error?.message||"Could not save occurrence");setSaveMessage("Recurring event saved");setScopeDraft(null)};
+  const persistEvent=(item:CalendarEvent)=>item.recurrence&&item.originalStartAt?setScopeDraft(item):saveEvent(item);
+  const moveItem = (event:PointerEvent<HTMLButtonElement>,item:CalendarEvent|typeof timedTaskItems[number],kind:"event"|"task",day:number) => {event.preventDefault();event.stopPropagation();if(matchMedia("(pointer: coarse)").matches)return;const rect=event.currentTarget.parentElement!.getBoundingClientRect(),duration=kind==="event"?new Date((item as CalendarEvent).endAt!).getTime()-new Date((item as CalendarEvent).startAt!).getTime():((item as typeof timedTaskItems[number]).estimatedMinutes||45)*60000;const onUp=(up:globalThis.PointerEvent)=>{const next=timeAt(dates[day],up.clientY-rect.top),end=new Date(next.getTime()+duration),moved=Math.abs(up.clientY-event.clientY)>=5;setDragging(moved);setTimeout(()=>setDragging(false),0);if(!moved){if(kind==="event")setDraft({...item as CalendarEvent});else openTask(item.id);return}if(kind==="event")persistEvent({...item as CalendarEvent,startAt:next.toISOString(),endAt:end.toISOString(),time:eventTime(next.toISOString())});else saveTask({...item as typeof timedTaskItems[number],scheduledStartAt:next.toISOString(),scheduledEndAt:end.toISOString(),estimatedMinutes:Math.round(duration/60000),dueAt:next.toISOString()})};window.addEventListener("pointerup",onUp,{once:true})};
+  const keyMove=(event:KeyboardEvent<HTMLButtonElement>,item:CalendarEvent)=>{if(!["ArrowUp","ArrowDown"].includes(event.key))return;event.preventDefault();const minutes=minutesAt(item.startAt!)+(event.key==="ArrowUp"?-15:15),duration=new Date(item.endAt!).getTime()-new Date(item.startAt!).getTime(),start=withMinutes(new Date(item.startAt!),snapMinutes(minutes));persistEvent({...item,startAt:start.toISOString(),endAt:new Date(start.getTime()+duration).toISOString()})};
+  const resizeEvent=(event:PointerEvent<HTMLSpanElement>,item:CalendarEvent,day:number)=>{event.preventDefault();event.stopPropagation();const rect=event.currentTarget.parentElement!.parentElement!.getBoundingClientRect();const onUp=(up:globalThis.PointerEvent)=>{const end=timeAt(dates[day],up.clientY-rect.top),start=new Date(item.startAt!);persistEvent({...item,endAt:new Date(Math.max(end.getTime(),start.getTime()+900000)).toISOString()})};window.addEventListener("pointerup",onUp,{once:true})};
+  const dragEvent=(event:DragEvent,item:CalendarEvent)=>event.dataTransfer.setData("application/noema-event",JSON.stringify(item));
+  const toAllDay=(event:DragEvent,day:number)=>{event.preventDefault();const item=JSON.parse(event.dataTransfer.getData("application/noema-event")||"null") as CalendarEvent|null;if(!item)return;const start=new Date(dates[day]);start.setHours(0,0,0,0);const end=new Date(start);end.setDate(end.getDate()+1);persistEvent({...item,startAt:start.toISOString(),endAt:end.toISOString(),allDay:true})};
+  const toTimed=(event:DragEvent,day:number)=>{event.preventDefault();const item=JSON.parse(event.dataTransfer.getData("application/noema-event")||"null") as CalendarEvent|null;if(!item)return;const rect=event.currentTarget.getBoundingClientRect(),start=timeAt(dates[day],event.clientY-rect.top),end=new Date(start.getTime()+Math.max(900000,new Date(item.endAt!).getTime()-new Date(item.startAt!).getTime()));persistEvent({...item,startAt:start.toISOString(),endAt:end.toISOString(),allDay:false})};
 
   async function connectGoogle() {
     try {
@@ -143,6 +157,7 @@ export default function CalendarPage() {
   }
 
   const dates = weekDays(weekOffset);
+  const todayColumn=dates.findIndex(date=>isSameDate(now,date)),nowTop=now.getHours()*60+now.getMinutes();
   const days = dates.map(date => date.toLocaleDateString(undefined, {weekday: "short", day: "numeric"}));
 
   const viewMonthDate = view === "Month" ? selectedDate : dates[0] || new Date();
@@ -182,11 +197,12 @@ export default function CalendarPage() {
       return {...task,day:dayFor(task.scheduledStartAt||task.dueAt),time,top:timed?dayPositionFor(time):0,height:durationHeight(task.scheduledStartAt,task.scheduledEndAt,task.estimatedMinutes||45)};
     })
     .filter(task => task.day >= 0 && task.day < 7);
-  const weekEvents=events.map(event=>({...event,weekDay:event.startAt?dayFor(event.startAt):event.day})).filter(event=>event.weekDay>=0&&event.weekDay<7);
+  const displayEvents:CalendarEvent[]=[...events.filter(event=>!event.recurrence),...instances];
+  const weekEvents=displayEvents.map(event=>({...event,weekDay:event.startAt?dayFor(event.startAt):event.day})).filter(event=>event.weekDay>=0&&event.weekDay<7);
   const allDayEvents=weekEvents.filter(event=>event.allDay),timedEvents=weekEvents.filter(event=>!event.allDay);
   const allDayTasks=taskItems.filter(task=>!task.scheduledStartAt),timedTaskItems=taskItems.filter(task=>!!task.scheduledStartAt);
 
-  const selectedEvents = events.filter(event => (event.startAt ? isSameDate(event.startAt, activeSelectedDate) : event.day === selectedDay));
+  const selectedEvents = displayEvents.filter(event => (event.startAt ? isSameDate(event.startAt, activeSelectedDate) : event.day === selectedDay));
   const selectedTasks = allTasks
     .filter(task => isSameDate(task.scheduledStartAt || task.dueAt, activeSelectedDate))
     .map(task => {
@@ -197,7 +213,7 @@ export default function CalendarPage() {
     });
   const hasSelectedItems = selectedTasks.length + selectedEvents.length > 0;
 
-  const agenda = events.filter(event => (event.startAt ? isSameDate(event.startAt, realToday) : event.day === today));
+  const agenda = displayEvents.filter(event => (event.startAt ? isSameDate(event.startAt, realToday) : event.day === today));
   const taskAgenda = allTasks
     .filter(task => isSameDate(task.scheduledStartAt || task.dueAt, realToday))
     .map(task => {
@@ -229,6 +245,8 @@ export default function CalendarPage() {
       .catch(() => {});
   }, []);
 
+  useEffect(()=>{const start=dates[0].toISOString(),end=new Date(dates[6].getTime()+86400000).toISOString(),recurring=events.filter(event=>event.recurrence);if(!recurring.length){setInstances([]);return}Promise.all(recurring.map(event=>fetch(`/api/v1/events/${event.id}/occurrences?start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`).then(response=>response.ok?response.json():{occurrences:[]}))).then(rows=>setInstances(rows.flatMap(row=>row.occurrences||[]))).catch(()=>setSaveMessage("Could not load recurring events"))},[events,weekOffset]);
+
   async function resolveConflict(id: string, choice: "local" | "google" | "duplicate") {
     const response = await fetch(`/api/v1/calendar-sync/conflicts/${id}`, {
       method: "POST",
@@ -250,7 +268,7 @@ export default function CalendarPage() {
       end.setHours(Number(endTime.slice(0, 2)), Number(endTime.slice(3)), 0, 0);
       if (end <= start) end.setDate(end.getDate() + 1);
     } else end.setTime(start.getTime() + 3600000);
-    saveEvent({
+    persistEvent({
       ...draft,
       title: draft.title.trim(),
       startAt:start.toISOString(),
@@ -367,11 +385,11 @@ export default function CalendarPage() {
               </div>
               <div className="week-all-day">
                 <span>All day</span>
-                <div>{dates.map((date,index)=><div key={date.toISOString()}>{allDayEvents.filter(event=>event.weekDay===index).map(event=><button className="calendar-all-day" key={event.id} onClick={()=>setDraft({...event})}>{event.title}</button>)}{allDayTasks.filter(task=>task.day===index).map(task=><button className="calendar-all-day calendar-task" key={`task-${task.id}`} onClick={()=>openTask(task.id)}>{task.title}</button>)}</div>)}</div>
+                <div>{dates.map((date,index)=><div key={date.toISOString()} onDragOver={event=>event.preventDefault()} onDrop={event=>toAllDay(event,index)}>{allDayEvents.filter(event=>event.weekDay===index).map(event=><button draggable className="calendar-all-day" key={event.id} onDragStart={drag=>dragEvent(drag,event)} onClick={()=>setDraft({...event})}>{event.title}</button>)}{allDayTasks.filter(task=>task.day===index).map(task=><button className="calendar-all-day calendar-task" key={`task-${task.id}`} onClick={()=>openTask(task.id)}>{task.title}</button>)}</div>)}</div>
               </div>
               <div className="week-body">
                 <div className="times">{dayTimes.map(t => <time key={t}>{t}</time>)}</div>
-                <div className="week-grid">{dates.map((date,index)=><div className="week-day-column" key={date.toISOString()} onPointerDown={event=>beginSlot(event,index)} onPointerUp={event=>finishSlot(event,index)} onClick={()=>!dragging&&selectDate(date)} onDoubleClick={()=>{selectDate(date);setView("Day")}}>{timedEvents.filter(event=>event.weekDay===index).map(event=><button className={`calendar-event ${event.active?"active":""} ${draft?.id===event.id?"selected":""}`} style={{top:dayPositionFor(event.time),height:durationHeight(event.startAt,event.endAt,event.height)}} key={event.id} onPointerDown={click=>moveItem(click,event,"event",index)}><time>{formatTimeRange(event.startAt,event.endAt,event.time)}</time><strong>{event.title}</strong><span className="calendar-resize" aria-label={`Resize ${event.title}`} role="separator" /></button>)}{timedTaskItems.filter(task=>task.day===index).map(task=><button className="calendar-event calendar-task" style={{top:task.top,height:task.height}} key={`task-${task.id}`} onPointerDown={click=>moveItem(click,task,"task",index)}><time>{formatTimeRange(task.scheduledStartAt,task.scheduledEndAt,task.time)}</time><strong>{task.title}</strong><small>Task</small></button>)}</div>)}</div>
+                <div className="week-grid">{dates.map((date,index)=><div className="week-day-column" key={date.toISOString()} onDragOver={event=>event.preventDefault()} onDrop={event=>toTimed(event,index)} onPointerDown={event=>beginSlot(event,index)} onPointerUp={event=>finishSlot(event,index)} onClick={()=>!dragging&&selectDate(date)} onDoubleClick={()=>{selectDate(date);setView("Day")}}>{index===todayColumn&&<span className="calendar-now" style={{top:nowTop}} aria-label="Current time"/>}{overlapLayout(timedEvents.filter(event=>event.weekDay===index).map(event=>({...event,start:minutesAt(event.startAt!),end:minutesAt(event.endAt!)}))).map(event=><button draggable className={`calendar-event ${event.active?"active":""} ${draft?.id===event.id?"selected":""}`} style={{top:event.start,height:Math.max(15,event.end-event.start),left:`calc(${event.lane/event.lanes*100}% + 4px)`,right:`calc(${(event.lanes-event.lane-1)/event.lanes*100}% + 4px)`}} key={`${event.id}-${event.originalStartAt||event.startAt}`} onDragStart={drag=>dragEvent(drag,event)} onPointerDown={click=>moveItem(click,event,"event",index)} onKeyDown={key=>keyMove(key,event)}><time>{formatTimeRange(event.startAt,event.endAt,event.time)}</time><strong>{event.title}</strong><span className="calendar-resize" aria-label={`Resize ${event.title}`} role="separator" onPointerDown={click=>resizeEvent(click,event,index)} /></button>)}{timedTaskItems.filter(task=>task.day===index).map(task=><button className="calendar-event calendar-task" style={{top:task.top,height:task.height}} key={`task-${task.id}`} onPointerDown={click=>moveItem(click,task,"task",index)}><time>{formatTimeRange(task.scheduledStartAt,task.scheduledEndAt,task.time)}</time><strong>{task.title}</strong><small>Task</small></button>)}</div>)}</div>
               </div>
             </div>
           </section>
@@ -425,7 +443,7 @@ export default function CalendarPage() {
                 ? allTasks.filter(task => isSameDate(task.scheduledStartAt || task.dueAt, cellDate))
                 : [];
               const cellEvents = cellDate
-                ? events.filter(event => (event.startAt ? isSameDate(event.startAt, cellDate) : event.day === dayOfWeekIndex && isTodayDate))
+                ? displayEvents.filter(event => (event.startAt ? isSameDate(event.startAt, cellDate) : event.day === dayOfWeekIndex && isTodayDate))
                 : [];
 
               return (
@@ -730,6 +748,8 @@ export default function CalendarPage() {
           </aside>
         ) : null}
       </div>
+      {scopeDraft&&<div className="calendar-scope" role="dialog" aria-modal="true" aria-labelledby="recurring-scope-title" onKeyDown={event=>event.key==="Escape"&&setScopeDraft(null)}><div><h2 id="recurring-scope-title">Update recurring event</h2><p>Which events should change?</p><button className="primary" autoFocus onClick={()=>void saveOccurrence(scopeDraft,"this")}>This event</button><button className="secondary" onClick={()=>void saveOccurrence(scopeDraft,"following")}>This and following</button><button className="secondary" onClick={()=>void saveOccurrence(scopeDraft,"all")}>All events</button><button className="secondary" onClick={()=>setScopeDraft(null)}>Cancel</button></div></div>}
+      {saveMessage&&<p className="calendar-live" role="status">{saveMessage}</p>}
     </ModuleShell>
   );
 }
