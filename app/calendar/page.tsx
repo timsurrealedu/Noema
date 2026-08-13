@@ -381,7 +381,7 @@ export default function CalendarPage() {
             <div className="week-scroll">
               <div className="week-head">
                 <span />
-                <>{days.map((day, index) => <strong className={`${day.includes("24") ? "active" : ""} ${index === selectedDay ? "selected-day" : ""}`} key={day} style={{cursor: "pointer"}} title={`Click to view tasks for ${day}`} onClick={() => selectDate(dates[index])} onDoubleClick={() => { selectDate(dates[index]); setView("Day"); }}>{day}</strong>)}</>
+                <>{dates.map((date, index) => <strong className={`${isSameDate(date,realToday) ? "active" : ""} ${index === selectedDay ? "selected-day" : ""}`} key={date.toISOString()} style={{cursor: "pointer"}} title={`Click to view tasks for ${days[index]}`} onClick={() => selectDate(date)} onDoubleClick={() => { selectDate(date); setView("Day"); }}><span>{date.toLocaleDateString(undefined,{weekday:"short"})}</span><b>{date.getDate()}</b></strong>)}</>
               </div>
               <div className="week-all-day">
                 <span>All day</span>
