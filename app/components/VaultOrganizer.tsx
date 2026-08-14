@@ -72,7 +72,7 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
   },[initialFolder]);
 
   async function load(preferred=sourceId){try{const data=await request(`/api/v1/vault-sources?tree=true${preferred?`&sourceId=${encodeURIComponent(preferred)}`:""}`);setSources(data.sources);setSourceId(data.selectedSourceId);setTree(data.tree);if(new URLSearchParams(location.search).get("new")==="ink"&&data.selectedSourceId&&!startedInk.current){startedInk.current=true;void create(`Handwritten note ${new Date().toISOString().slice(0,19).replace(/[T:]/g,"-")}`,data.selectedSourceId,true)}}catch(reason){setError((reason as Error).message)}}
-  useEffect(()=>{setDrawer(!matchMedia("(max-width: 900px)").matches&&localStorage.getItem("noema-vault-drawer")==="open");void load()},[]);
+  useEffect(()=>{setDrawer(localStorage.getItem("noema-vault-drawer")==="open");void load()},[]);
 
   async function sync(){if(!sourceId)return;setBusy(true);try{await request(`/api/v1/vault-sources/${sourceId}/sync`,{method:"POST"});await load(sourceId)}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
 
