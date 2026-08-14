@@ -76,6 +76,11 @@ test("command palettes use a focus-trapping native modal",()=>{
   assert.match(read("app/components/ModalDialog.tsx"),/showModal\(\)/);
   for(const file of ["app/page.tsx","app/components/ModuleShell.tsx"])assert.match(read(file),/<ModalDialog/);
 });
+test("product actions use themed dialogs instead of browser prompts",()=>{
+  const files=["app/automations/page.tsx","app/dashboards/page.tsx","app/plugins/page.tsx","app/coding/repositories/[id]/page.tsx","app/components/VaultOrganizer.tsx"];
+  for(const file of files)assert.doesNotMatch(read(file),/\b(?:confirm|prompt)\s*\(/,file);
+  assert.match(read("app/components/ActionDialog.tsx"),/showModal\(\)/);
+});
 
 test("PWA includes offline shell, share target, and raster icons",()=>{
   const manifest=JSON.parse(read("public/manifest.webmanifest"));
