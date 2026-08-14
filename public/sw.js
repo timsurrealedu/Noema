@@ -2,6 +2,7 @@ const CACHE="noema-shell-v2";
 const SHELL=["/","/capture","/tasks","/calendar","/vault","/manifest.webmanifest","/icon.svg"];
 self.addEventListener("install",event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(SHELL))));
 self.addEventListener("activate",event=>event.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(key=>key!==CACHE).map(key=>caches.delete(key))))));
+self.addEventListener("message",event=>{if(event.data?.type==="skip-waiting")self.skipWaiting()});
 self.addEventListener("sync",event=>{if(event.tag==="noema-mutations"||event.tag==="lifeos-mutations")event.waitUntil(self.clients.matchAll({type:"window",includeUncontrolled:true}).then(clients=>Promise.all(clients.map(client=>client.postMessage({type:"flush-mutations"}))))) });
 self.addEventListener("push",event=>{const data=event.data?.json()||{};event.waitUntil(self.registration.showNotification(data.title||"Noema",{body:data.body||"",tag:data.id||"noema",vibrate:[300,100,300,100,300],renotify:true,data:{url:"/notifications"}}))});
 self.addEventListener("notificationclick",event=>{event.notification.close();const url=event.notification.data?.url||"/notifications";event.waitUntil(self.clients.matchAll({type:"window",includeUncontrolled:true}).then(clients=>{const client=clients[0];if(client){client.focus();return client.navigate(url)}return self.clients.openWindow(url)}))});

@@ -84,6 +84,7 @@ test("PWA includes offline shell, share target, and raster icons",()=>{
   assert.ok(manifest.icons.some(icon=>icon.sizes==="512x512"));
   assert.match(read("public/sw.js"),/caches\.open/);
 });
+test("PWA only announces an actual waiting update",()=>{const pwa=read("app/components/PWARegister.tsx"),worker=read("public/sw.js");assert.match(pwa,/registration\.waiting&&navigator\.serviceWorker\.controller/);assert.match(pwa,/state===\"installed\"/);assert.match(pwa,/skip-waiting/);assert.match(worker,/event\.data\?\.type===\"skip-waiting\"/)});
 
 test("reduced motion and responsive breakpoints remain enforced",()=>{
   const css=read("app/globals.css");
