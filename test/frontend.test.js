@@ -71,6 +71,7 @@ test("browser code uses the HTTP-safe createId fallback",()=>{for(const file of 
 test("Vault opens tree notes even before their summaries hydrate",()=>{const organizer=read("app/components/VaultOrganizer.tsx"),vault=read("app/vault/page.tsx");assert.match(organizer,/notes\.find\(note=>note\.id===id\)\|\|/);assert.match(vault,/Could not open note/);assert.doesNotMatch(vault,/catch\{\}/)});
 
 test("global search exposes optional attributed semantic ranking",()=>{const shell=read("app/components/ModuleShell.tsx"),route=read("app/api/v1/search/route.ts"),search=read("server/search.mjs");assert.match(shell,/Semantic ranking/);assert.match(shell,/configured OpenAI embedding model/);assert.match(shell,/ranking\.source/);assert.match(route,/semantic:params\.get\("semantic"\)===\"true\"/);assert.match(search,/SQLite FTS\/LIKE/);assert.match(search,/selected\.add/);assert.match(search,/fallback:/) });
+test("AI agent settings expose Groq",()=>assert.match(read("app/components/AIAgentSettings.tsx"),/"groq"/));
 
 test("command palettes use a focus-trapping native modal",()=>{
   assert.match(read("app/components/ModalDialog.tsx"),/showModal\(\)/);
