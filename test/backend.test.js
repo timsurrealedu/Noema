@@ -55,7 +55,7 @@ test("Groq is accepted as an encrypted agent and default compatible fallback",as
 test("Groq JSON mode prompts explicitly request JSON",async()=>{
   const {runCompatible}=await import("../server/ai.mjs");let request;
   await runCompatible({provider:"groq",model:"llama-3.1-8b-instant",prompt:"Explain this note",schema:{type:"object",properties:{answer:{type:"string"}},required:["answer"]},config:{groqApiKey:"gsk-test",groqBaseUrl:"https://api.groq.com/openai/v1"},fetcher:async(url,options)=>{request=JSON.parse(options.body);return Response.json({model:"llama-3.1-8b-instant",choices:[{message:{content:'{"answer":"ok"}'}}]})}});
-  assert.match(request.messages[0].content,/json/i);
+  assert.match(request.messages[0].content,/json/i);assert.match(request.messages[0].content,/answer/);
 });
 
 test("skill context is bounded, relevant, and attributed",async()=>{
