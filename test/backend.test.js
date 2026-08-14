@@ -52,6 +52,12 @@ test("Groq is accepted as an encrypted agent and default compatible fallback",as
   try{db.prepare("INSERT INTO users(id,email,password_hash,created_at,updated_at) VALUES('u','groq@example.com','x','t','t')").run();assert.equal(agents.saveAIAgent("u",{name:"Groq Fast",provider:"groq",model:"llama-3.1-8b-instant",profile:"fast",apiKey:"gsk-private"},secret,db).provider,"groq");assert.deepEqual(configuredChain("fast",{groqApiKey:"gsk-test",groqModel:"llama-3.1-8b-instant"}),[{provider:"groq",model:"llama-3.1-8b-instant"}])}finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
+test("Groq JSON mode prompts explicitly request JSON",async()=>{
+  const {runCompatible}=await import("../server/ai.mjs");let request;
+  await runCompatible({provider:"groq",model:"llama-3.1-8b-instant",prompt:"Explain this note",schema:{type:"object",properties:{answer:{type:"string"}},required:["answer"]},config:{groqApiKey:"gsk-test",groqBaseUrl:"https://api.groq.com/openai/v1"},fetcher:async(url,options)=>{request=JSON.parse(options.body);return Response.json({model:"llama-3.1-8b-instant",choices:[{message:{content:'{"answer":"ok"}'}}]})}});
+  assert.match(request.messages[0].content,/json/i);
+});
+
 test("skill context is bounded, relevant, and attributed",async()=>{
   const dir=temp(),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),{retrieveSkillContext}=await import("../server/worker/context.mjs"),db=openDatabase(join(dir,"test.sqlite"));
   try{db.prepare("INSERT INTO users(id,email,password_hash,created_at,updated_at) VALUES('u','context@example.com','x','t','t')").run();db.prepare("INSERT INTO workspaces(id,name,created_by,created_at,updated_at) VALUES('w','Context','u','t','t')").run();const actor={id:"u",workspaceId:"w"};core.saveNote({title:"TCP congestion control",content:"Congestion window and slow start"},db,actor);core.saveNote({title:"Unrelated cooking",content:"Soup recipe"},db,actor);const context=retrieveSkillContext({query:"explain TCP congestion",skill:"explain",db,workspaceId:"w"});assert.ok(context.items.length<=12);assert.equal(context.items[0].objectType,"note");assert.match(context.items[0].retrievalReason,/FTS match/);assert.equal(typeof context.items[0].score,"number");assert.doesNotMatch(JSON.stringify(context),/Soup recipe/)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
