@@ -47,6 +47,11 @@ test("OpenRouter free fallback is available to every default AI profile",async()
   for(const profile of ["fast","balanced","quality"])assert.deepEqual(configuredChain(profile,config),[{provider:"openrouter",model:"openrouter/free"}]);
 });
 
+test("Groq is accepted as an encrypted agent and default compatible fallback",async()=>{
+  const dir=temp(),secret="test-encryption-key-with-more-than-32-characters",{openDatabase}=await import("../server/db.mjs"),agents=await import("../server/ai-agents.mjs"),{configuredChain}=await import("../server/ai.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{db.prepare("INSERT INTO users(id,email,password_hash,created_at,updated_at) VALUES('u','groq@example.com','x','t','t')").run();assert.equal(agents.saveAIAgent("u",{name:"Groq Fast",provider:"groq",model:"llama-3.1-8b-instant",profile:"fast",apiKey:"gsk-private"},secret,db).provider,"groq");assert.deepEqual(configuredChain("fast",{groqApiKey:"gsk-test",groqModel:"llama-3.1-8b-instant"}),[{provider:"groq",model:"llama-3.1-8b-instant"}])}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
 test("skill context is bounded, relevant, and attributed",async()=>{
   const dir=temp(),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),{retrieveSkillContext}=await import("../server/worker/context.mjs"),db=openDatabase(join(dir,"test.sqlite"));
   try{db.prepare("INSERT INTO users(id,email,password_hash,created_at,updated_at) VALUES('u','context@example.com','x','t','t')").run();db.prepare("INSERT INTO workspaces(id,name,created_by,created_at,updated_at) VALUES('w','Context','u','t','t')").run();const actor={id:"u",workspaceId:"w"};core.saveNote({title:"TCP congestion control",content:"Congestion window and slow start"},db,actor);core.saveNote({title:"Unrelated cooking",content:"Soup recipe"},db,actor);const context=retrieveSkillContext({query:"explain TCP congestion",skill:"explain",db,workspaceId:"w"});assert.ok(context.items.length<=12);assert.equal(context.items[0].objectType,"note");assert.match(context.items[0].retrievalReason,/FTS match/);assert.equal(typeof context.items[0].score,"number");assert.doesNotMatch(JSON.stringify(context),/Soup recipe/)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
