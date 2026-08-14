@@ -156,14 +156,13 @@ export default function Home() {
       <section className="hero" aria-labelledby="home-title">
         <p className="mobile-date">{todayLabel}</p>
         <h1 id="home-title">{greeting}</h1>
-        <p>{todayEvents.length} meeting{todayEvents.length===1?"":"s"}, {readyTasks} task{readyTasks===1?" is":"s are"} ready, and <Link className="text-link" href="/capture">{pendingCaptures || "no"} capture{pendingCaptures===1?"":"s"} need review</Link>.</p>
+        <p>{todayEvents.length} scheduled item{todayEvents.length===1?"":"s"} today, {readyTasks} task{readyTasks===1?" is":"s are"} ready, and <Link className="text-link" href="/capture">{pendingCaptures || "no"} capture{pendingCaptures===1?"":"s"} need review</Link>.</p>
       </section>
 
       <form className="capture" id="quick-capture" onSubmit={submitCapture}>
         <label htmlFor="capture">Quick capture</label>
-        <Plus aria-hidden="true"/>
+        <button type="button" className="capture-add" aria-label="Attach a file" onClick={()=>fileInput.current?.click()}><Plus/></button>
         <input ref={input} id="capture" name="quick-capture" type="text" inputMode="text" autoComplete="off" autoCapitalize="sentences" spellCheck value={capture} onChange={e=>setCapture(e.target.value)} placeholder="Capture a thought, task, event, file, or command…"/>
-        <button type="button" className="capture-tool" aria-label="Attach a file" onClick={()=>fileInput.current?.click()}><Paperclip/></button>
         <input ref={fileInput} type="file" hidden aria-hidden="true" tabIndex={-1} onChange={e=>{const file=e.target.files?.[0];if(file)addFileCapture(file);e.target.value=""}}/>
         <button type="button" className="capture-tool" aria-label="Write a handwritten note" onClick={()=>setHandwriting(true)}><PenNib/></button>
         <button type="button" className="capture-tool" aria-label={recording?"Stop recording":"Record voice"} aria-pressed={recording} onClick={()=>void toggleRecording()}><Microphone/></button>
@@ -189,7 +188,6 @@ export default function Home() {
                   </select>
                 </label>
                 <h3 id="task-list-title" style={{display:"none"}}>{filter}</h3>
-                <span style={{color:"var(--muted)",fontSize:".8rem"}}>{visibleTasks.length} shown</span>
               </div>
               <button className="primary top-primary" onClick={() => setDraft(blankTask())}><Plus />New task</button>
             </div>
