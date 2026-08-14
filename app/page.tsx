@@ -28,6 +28,7 @@ const dateTimeValue=(value?:string|null)=>{if(!value)return "";const part=jakart
 const taskStartTime=(value?:string|null)=>value?new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Jakarta",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date(value)):"Any time";
 const taskDue=(task:Task)=>{const value=task.dueAt||task.due;if(!value||value==="No date")return "No date";const date=new Date(value);if(Number.isNaN(date.valueOf()))return task.due;const options:Intl.DateTimeFormatOptions={weekday:"long",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",hourCycle:"h23",timeZone:"Asia/Jakarta"};if(date.getFullYear()!==new Date().getFullYear())options.year="numeric";return new Intl.DateTimeFormat("en-US",options).format(date)};
 const jakartaIso=(value:string)=>new Date(`${value}:00+07:00`).toISOString();
+const mobileTaskDue=(task:Task)=>taskDue(task).replace(", ","\n");
 
 const LABELS = ["All", "Inbox", "Today", "Upcoming", "Overdue", "Completed"] as const;
 
@@ -122,7 +123,7 @@ export default function Home() {
           <strong>{task.title}</strong>
           <span><Flag /> {task.project}{task.subtasks?.length ? ` · ${task.subtasks.length} subtasks` : ""}</span>
         </button>
-        <time>{taskDue(task)}</time>
+        <time>{mobileTaskDue(task)}</time>
         <span className="task-start">{taskStartTime(task.scheduledStartAt)}</span>
         <button className="row-menu" aria-label={`Edit ${task.title}`} onClick={() => setDraft({ ...task })}>Edit</button>
       </article>
