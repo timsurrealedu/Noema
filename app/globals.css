@@ -182,10 +182,10 @@ input::placeholder,textarea::placeholder{color:var(--faint);opacity:1}
   .module-header{margin-bottom:var(--space-5)}
   .mobile-nav>a,.mobile-nav>button{min-height:44px}
   .task-list article,.course-row,.session-row,.project-row,.automation-list article,.activity-row{padding-inline:0}
-  .task-list article{grid-template-columns:28px minmax(0,1fr) 36px;column-gap:10px;row-gap:0;align-items:center;padding-block:8px}
-  .task-list .task-check{grid-row:1/3}
+  .task-list article{grid-template-columns:28px minmax(0,1fr) max-content;column-gap:10px;row-gap:6px;align-items:center;padding-block:12px 20px}
+  .task-list .task-check{grid-row:1/3;align-self:start;margin-top:4px}
   .task-list .task-copy{grid-column:2;grid-row:1/3;align-self:stretch;justify-content:space-between}
-  .task-list article time{grid-column:3;grid-row:2;justify-self:end;text-align:right}
+  .task-list article time{grid-column:3;grid-row:2;justify-self:end;align-self:end;text-align:right;white-space:nowrap}
   .task-list .task-start{grid-column:3;grid-row:2;justify-self:end}
   .task-list .row-menu{grid-column:3;grid-row:1;padding:0}
 }
