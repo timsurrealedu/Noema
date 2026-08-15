@@ -121,8 +121,8 @@ export default function Home() {
         </button>
         <button className="task-copy" onClick={() => setDraft({ ...task })}>
           <strong>{task.title}</strong>
-          <span><Flag /> {task.project}{task.subtasks?.length ? ` · ${task.subtasks.length} subtasks` : ""}</span>
         </button>
+        <span className="task-source"><Flag /> {task.project}{task.subtasks?.length ? ` · ${task.subtasks.length} subtasks` : ""}</span>
         <time>{mobileTaskDue(task)}</time>
         <span className="task-start">{taskStartTime(task.scheduledStartAt)}</span>
         <button className="row-menu" aria-label={`Edit ${task.title}`} onClick={() => setDraft({ ...task })}>Edit</button>
