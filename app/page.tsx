@@ -159,9 +159,9 @@ export default function Home() {
         <p className="mobile-date">{todayLabel}</p>
         <h1 id="home-title">{greeting}</h1>
         <div className="home-attention-summary" aria-label="What needs your attention">
-          <span className="attention-stat"><strong>{todayEvents.length}</strong> scheduled</span>
-          <span className="attention-stat"><strong>{readyTasks}</strong> ready</span>
-          <Link className="attention-stat needs-review" href="/capture"><strong>{pendingCaptures}</strong> review</Link>
+          <span className="attention-stat scheduled"><strong>{todayEvents.length}</strong> scheduled</span>
+          <span className="attention-stat ready"><strong>{readyTasks}</strong> ready</span>
+          <Link className="attention-stat review" href="/capture"><strong>{pendingCaptures}</strong> review</Link>
         </div>
       </section>
 
