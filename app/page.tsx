@@ -2,9 +2,9 @@
 
 import {
   Archive, Bell, BookOpen, CalendarBlank, CaretRight, Check, CheckSquare, CircleNotch, Clock,
-  Code, Command, FileText, Flag, Folder, Gear, House, Lightning, ListChecks,
+  Code, Command, FileText, Folder, Gear, House, Lightning, ListChecks,
   MagnifyingGlass, Microphone, Moon, Paperclip, PaperPlaneTilt, PenNib, Plus, Sparkle,
-  Sun, Tray, UploadSimple, Warning, X, Circle
+  Sun, Tray, UploadSimple, Warning, X, Circle, DotsThree
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import {FormEvent, useEffect, useRef, useState} from "react";
@@ -29,6 +29,7 @@ const taskStartTime=(value?:string|null)=>value?new Intl.DateTimeFormat("en-GB",
 const taskDue=(task:Task)=>{const value=task.dueAt||task.due;if(!value||value==="No date")return "No date";const date=new Date(value);if(Number.isNaN(date.valueOf()))return task.due;const options:Intl.DateTimeFormatOptions={weekday:"long",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",hourCycle:"h23",timeZone:"Asia/Jakarta"};if(date.getFullYear()!==new Date().getFullYear())options.year="numeric";return new Intl.DateTimeFormat("en-US",options).format(date)};
 const jakartaIso=(value:string)=>new Date(`${value}:00+07:00`).toISOString();
 const mobileTaskDue=(task:Task)=>{const due=taskDue(task),comma=due.indexOf(", ");return comma<0?due:`${due.slice(0,3)}, ${due.slice(comma+2)}`};
+const overdueDays=(task:Task,today:string)=>task.dueAt?Math.max(1,Math.round((new Date(`${today}T00:00:00Z`).valueOf()-new Date(`${dateValue(task.dueAt)}T00:00:00Z`).valueOf())/86_400_000)):0;
 
 const LABELS = ["All", "Inbox", "Today", "Upcoming", "Overdue", "Completed"] as const;
 
@@ -43,6 +44,7 @@ export default function Home() {
   const [handwriting,setHandwriting] = useState(false);
   const [filter,setFilter] = useState<string>("All");
   const [draft,setDraft] = useState<Task|null>(null);
+  const [taskTitleError,setTaskTitleError] = useState("");
 
   const input = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -75,7 +77,6 @@ export default function Home() {
   const now=new Date(),todayLabel=new Intl.DateTimeFormat(undefined,{weekday:"long",month:"long",day:"numeric"}).format(now);
   const greeting=now.getHours()<12?"Good morning":now.getHours()<18?"Good afternoon":"Good evening";
   const todayEvents=events.filter(event=>event.day===(now.getDay()+6)%7).toSorted((a,b)=>a.time.localeCompare(b.time));
-  const todayTasks=tasks.filter(task=>!task.archived&&task.dueAt&&dateValue(task.dueAt)===dateValue(now.toISOString()));
   const pendingCaptures=captures.filter(item=>item.status==="review").length;
   const review=captures.find(item=>item.id===reviewId);
 
@@ -88,8 +89,9 @@ export default function Home() {
 
   function submitTask(event:FormEvent){
     event.preventDefault();
-    if(!draft?.title.trim())return;
+    if(!draft?.title.trim()){setTaskTitleError("Enter a task name.");return}
     saveTask({...draft,title:draft.title.trim()});
+    setTaskTitleError("");
     setDraft(null);
   }
 
@@ -121,11 +123,10 @@ export default function Home() {
         </button>
         <button className="task-copy" onClick={() => setDraft({ ...task })}>
           <strong>{task.title}</strong>
+          <span className="task-primary-meta">{task.project}{isOverdue&&<><span aria-hidden="true"> · </span><span className="task-overdue-relative">{overdueDays(task,todayStr)} day{overdueDays(task,todayStr)===1?"":"s"} overdue</span></>}</span>
+          <span className="task-due-exact">{mobileTaskDue(task)}{task.scheduledStartAt&&` · ${taskStartTime(task.scheduledStartAt)}`}</span>
         </button>
-        <span className="task-source"><Flag /> {task.project}{task.subtasks?.length ? ` · ${task.subtasks.length} subtasks` : ""}</span>
-        <time>{mobileTaskDue(task)}</time>
-        <span className="task-start">{taskStartTime(task.scheduledStartAt)}</span>
-        <button className="row-menu" aria-label={`Edit ${task.title}`} onClick={() => setDraft({ ...task })}>Edit</button>
+        <button className="row-menu" aria-label={`Edit ${task.title}`} onClick={() => setDraft({ ...task })}><DotsThree weight="bold" /></button>
       </article>
     );
   };
@@ -157,15 +158,19 @@ export default function Home() {
       <section className="hero" aria-labelledby="home-title">
         <p className="mobile-date">{todayLabel}</p>
         <h1 id="home-title">{greeting}</h1>
-        <p>{todayEvents.length} scheduled item{todayEvents.length===1?"":"s"} today, {readyTasks} task{readyTasks===1?" is":"s are"} ready, and <Link className="text-link" href="/capture">{pendingCaptures || "no"} capture{pendingCaptures===1?"":"s"} need review</Link>.</p>
+        <div className="home-attention-summary" aria-label="What needs your attention">
+          <span className="attention-stat"><strong>{todayEvents.length}</strong> scheduled</span>
+          <span className="attention-stat"><strong>{readyTasks}</strong> ready</span>
+          <Link className="attention-stat needs-review" href="/capture"><strong>{pendingCaptures}</strong> review</Link>
+        </div>
       </section>
 
       <form className="capture" id="quick-capture" onSubmit={submitCapture}>
         <label htmlFor="capture">Quick capture</label>
         <button type="button" className="capture-add" aria-label="Attach a file" onClick={()=>fileInput.current?.click()}><Plus/></button>
-        <input ref={input} id="capture" name="quick-capture" type="text" inputMode="text" autoComplete="off" autoCapitalize="sentences" spellCheck value={capture} onChange={e=>setCapture(e.target.value)} placeholder="Capture a thought, task, event, file, or command…"/>
+        <input ref={input} id="capture" name="quick-capture" type="text" inputMode="text" autoComplete="off" autoCapitalize="sentences" spellCheck value={capture} onChange={e=>setCapture(e.target.value)} placeholder="Capture anything…"/>
         <input ref={fileInput} type="file" hidden aria-hidden="true" tabIndex={-1} onChange={e=>{const file=e.target.files?.[0];if(file)addFileCapture(file);e.target.value=""}}/>
-        <button type="button" className="capture-tool" aria-label="Write a handwritten note" onClick={()=>setHandwriting(true)}><PenNib/></button>
+        <button type="button" className="capture-tool capture-handwriting" aria-label="Write a handwritten note" onClick={()=>setHandwriting(true)}><PenNib/></button>
         <button type="button" className="capture-tool" aria-label={recording?"Stop recording":"Record voice"} aria-pressed={recording} onClick={()=>void toggleRecording()}><Microphone/></button>
         <button className="send" disabled={!capture.trim()} aria-label="Process capture"><PaperPlaneTilt/></button>
       </form>
@@ -176,11 +181,11 @@ export default function Home() {
         <div className="review-actions"><Link className="secondary" href={`/capture?open=${review.id}`}>{review.status==="processing"?"Continue in Capture":"Edit"}</Link>{review.status==="review"&&review.objects.length>0&&<button className="primary" onClick={()=>closeReview("confirmed")}><Check/>Confirm all</button>}</div>
       </section>}
 
-      <section className="tasks-section" aria-label="Tasks" style={{marginTop:"24px"}}>
+      <section className="tasks-section home-tasks" aria-label="Tasks">
         <div className={`task-layout no-subnav${draft ? " editing" : " no-inspector"}`}>
           <section className="task-list" aria-label="Task list">
-            <div className="list-title" style={{display:"flex",alignItems:"center",justifyContent:"space-between",gap:"12px",marginBottom:"16px"}}>
-              <div style={{display:"flex",alignItems:"center",gap:"12px"}}>
+            <div className="list-title home-task-toolbar">
+              <div>
                 <label className="task-view-select">
                   <CalendarBlank />
                   <span className="sr-only">Task view</span>
@@ -190,7 +195,7 @@ export default function Home() {
                 </label>
                 <h3 id="task-list-title" style={{display:"none"}}>{filter}</h3>
               </div>
-              <button className="primary top-primary" onClick={() => setDraft(blankTask())}><Plus />New task</button>
+              <button className="secondary top-primary home-new-task" onClick={() => {setTaskTitleError("");setDraft(blankTask())}}><Plus />New task</button>
             </div>
 
             {filter === "All" ? (
@@ -217,7 +222,8 @@ export default function Home() {
                   <div className="empty-state">
                     <Check />
                     <h3>Nothing here</h3>
-                    <p>This view is clear.</p>
+                    <p>This view is clear. Add the next thing that needs your attention.</p>
+                    <button className="primary mobile-primary-action" onClick={()=>{setTaskTitleError("");setDraft(blankTask())}}>Create task</button>
                   </div>
                 )}
               </div>
@@ -228,7 +234,8 @@ export default function Home() {
                   <div className="empty-state">
                     <Check />
                     <h3>Nothing here</h3>
-                    <p>This view is clear.</p>
+                    <p>This view is clear. Add the next thing that needs your attention.</p>
+                    <button className="primary mobile-primary-action" onClick={()=>{setTaskTitleError("");setDraft(blankTask())}}>Create task</button>
                   </div>
                 )}
               </>
@@ -236,16 +243,17 @@ export default function Home() {
           </section>
 
           {draft && (
-            <aside className="object-inspector">
+            <aside className="object-inspector" role="dialog" aria-labelledby="task-editor-title">
               <div className="object-inspector-head">
                 <div>
-                  <span>{tasks.some(task => task.id === draft.id) ? "Edit task" : "New task"}</span>
+                  <span id="task-editor-title">{tasks.some(task => task.id === draft.id) ? "Edit task" : "New task"}</span>
                   <small>{draft.vaultSource ? "Changes rewrite only this Obsidian checklist line." : "Use plain language; changes appear on Home immediately."}</small>
                 </div>
                 <button className="icon-button" aria-label="Close task inspector" onClick={() => setDraft(null)}><X /></button>
               </div>
               <form onSubmit={submitTask}>
-                <label>Task name<input autoFocus value={draft.title} onChange={e => setDraft({ ...draft, title: e.target.value })} placeholder="What needs doing?" required /></label>
+                <label>Task name<input autoFocus value={draft.title} onChange={e => {setDraft({ ...draft, title: e.target.value });if(taskTitleError)setTaskTitleError("")}} placeholder="What needs doing?" aria-invalid={!!taskTitleError} aria-describedby={taskTitleError?"task-title-error":undefined} /></label>
+                {taskTitleError&&<p className="field-error" id="task-title-error" role="alert">{taskTitleError}</p>}
                 <label>Project
                   <select value={draft.projectId || ""} onChange={e => { const project = projects.find(item => item.id === e.target.value); setDraft({ ...draft, projectId: project?.id || null, project: project?.name || "Inbox" }) }}>
                     <option value="">Inbox</option>
@@ -290,7 +298,7 @@ export default function Home() {
                     <button type="button" className="icon-button danger" aria-label="Archive task" onClick={() => { archiveTask(draft.id); setDraft(null) }}><Archive /></button>
                   )}
                   <button type="button" className="secondary" onClick={() => setDraft(null)}>Cancel</button>
-                  <button className="primary">Save task</button>
+                  <button className="primary mobile-primary-action">Save task</button>
                 </div>
               </form>
             </aside>
@@ -306,6 +314,8 @@ export default function Home() {
       {captures.filter(item=>item.status==="review").slice(0,3).map(item=><Link className="attention-item" href={`/capture?open=${item.id}`} key={item.id}><span className="status-icon warning"><FileText/></span><span><strong>{item.text}</strong><small>{item.sourceLabel}</small><em>Needs review</em></span><CaretRight/></Link>)}
       {!pendingCaptures&&<p>Nothing needs review.</p>}
     </aside>
+
+    {!draft&&<button className="home-task-fab" aria-label="New task" onClick={()=>{setTaskTitleError("");setDraft(blankTask())}}><Plus/><span>New task</span></button>}
 
     <nav className="mobile-nav" aria-label="Mobile navigation">
       {([["Home","/",House],["Capture","/capture",Plus],["Calendar","/calendar",CalendarBlank],["Vault","/vault",Folder],["Coding","/coding",Code]] as const).map(([label,href,Icon],i)=><Link className={`${i===0?"active":""} ${i===1?"capture-nav":""}`} href={href} key={label}><Icon/><span>{label}</span></Link>)}

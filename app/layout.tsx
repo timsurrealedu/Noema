@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   manifest: "/manifest.webmanifest",
 };
 
-export const viewport: Viewport = {themeColor:"#0b0d0e", colorScheme:"dark light"};
+export const viewport: Viewport = {themeColor:"#0b0d0e",colorScheme:"dark light",viewportFit:"cover"};
 
 export default function RootLayout({children}:{children:React.ReactNode}) {
   return <html lang="en"><body><AppStateProvider>{children}<NavigationWarmup/><PWARegister/><ServiceNotice/></AppStateProvider></body></html>;

@@ -306,6 +306,15 @@ export default function CompilerPage() {
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const hlRef = useRef<HTMLPreElement>(null);
+  const filesButtonRef = useRef<HTMLButtonElement>(null);
+  const filesDrawerWasOpen = useRef(false);
+  useEffect(() => {
+    if (drawerOpen) filesDrawerWasOpen.current = true;
+    else if (filesDrawerWasOpen.current) {
+      filesDrawerWasOpen.current = false;
+      filesButtonRef.current?.focus();
+    }
+  }, [drawerOpen]);
 
   const KEYWORDS = new Set([
     "async", "await", "break", "case", "catch", "class", "const", "continue", "debugger", "default", "delete", "do", "else", "enum", "export", "extends", "false", "finally", "for", "function", "if", "import", "in", "instanceof", "interface", "let", "new", "null", "of", "package", "private", "protected", "public", "return", "static", "super", "switch", "this", "throw", "true", "try", "typeof", "var", "void", "while", "with", "yield",
@@ -683,6 +692,7 @@ export default function CompilerPage() {
           <div className="code-top-actions">
             {mode === "saved" && (
               <button
+                ref={filesButtonRef}
                 type="button"
                 className={`icon-btn ${drawerOpen ? "active" : ""}`}
                 onClick={() => setDrawerOpen(!drawerOpen)}
@@ -873,12 +883,13 @@ export default function CompilerPage() {
 
         {/* Saved Files Drawer overlay if open */}
         {mode === "saved" && drawerOpen && (
-          <aside className="compiler-files drawer-open" aria-label="Saved files">
+          <aside className="compiler-files drawer-open" role="dialog" aria-modal="false" aria-label="Saved files" onKeyDown={event=>{if(event.key==="Escape")setDrawerOpen(false)}}>
             <div className="compiler-files-header">
               <span>Saved files</span>
               <div className="compiler-files-search">
                 <MagnifyingGlass size={14} />
                 <input
+                  autoFocus
                   type="text"
                   placeholder="Filter files..."
                   value={fileFilter}
@@ -886,13 +897,13 @@ export default function CompilerPage() {
                   aria-label="Filter saved files"
                 />
               </div>
-              <button type="button" className="icon-btn" onClick={() => setDrawerOpen(false)} title="Close files">
+              <button type="button" className="icon-btn" onClick={() => setDrawerOpen(false)} title="Close files" aria-label="Close saved files">
                 <X size={14} />
               </button>
             </div>
             <div className="compiler-tree-container">
               {fileTree.length === 0 ? (
-                <p className="compiler-empty-files">No saved files found.</p>
+                <div className="compiler-empty-files"><p>No saved files found.</p><button type="button" className="primary" onClick={()=>{setDrawerOpen(false);setFilePath("");setCode(starters[language]);setOriginalContent(starters[language])}}>Create first file</button></div>
               ) : (
                 fileTree.map((node) => (
                   <FileTreeNode

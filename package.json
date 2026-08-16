@@ -13,7 +13,7 @@
     "test:backend": "node --test test/backend.test.js test/capture-vault.test.js",
     "test:frontend": "node --test test/frontend.test.js",
     "test:experimental": "node --test test/experimental.frontend.test.js",
-    "test:browser": "playwright test test/browser/00-capture.spec.ts",
+    "test:browser": "playwright test test/browser/00-capture.spec.ts && playwright test test/browser/01-release.spec.ts --grep \"mobile primary action docks\"",
     "test:browser:all": "playwright test",
     "backup": "node scripts/backup.mjs",
     "verify:backup": "node scripts/verify-backup.mjs",

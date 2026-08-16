@@ -1,6 +1,7 @@
 "use client";
 
 import {useEffect, useMemo, useState} from "react";
+import Link from "next/link";
 import {
   ArrowClockwise, ArrowLeft, ArrowSquareOut, CalendarBlank, Check, CheckCircle, CheckSquare,
   CircleNotch, File, Globe, Keyboard, Microphone, Note, PenNib, Plus, Sparkle, WarningCircle, X
@@ -57,7 +58,7 @@ export default function CaptureInbox(){
         {visible.length?<div className="capture-groups">
           <h3>Recent captures</h3>
           <div className="capture-rows">{visible.map(capture=><CaptureRow capture={capture} selected={selected?.id===capture.id} onSelect={()=>choose(capture.id)} onRetry={()=>retry(capture)} key={capture.id}/>)}</div>
-        </div>:<div className="capture-empty"><CheckCircle/><h3>{filter==="All"?"Inbox clear":`No ${filter.toLowerCase()} captures`}</h3><p>{filter==="All"?"New captures will appear here with their source and interpretation.":"Choose another status to keep reviewing your inbox."}</p>{filter!=="All"&&<button className="secondary" onClick={()=>setFilter("All")}>Show all captures</button>}</div>}
+        </div>:<div className="capture-empty"><CheckCircle/><h3>{filter==="All"?"Inbox clear":`No ${filter.toLowerCase()} captures`}</h3><p>{filter==="All"?"New captures will appear here with their source and interpretation.":"Choose another status to keep reviewing your inbox."}</p>{filter==="All"?<Link className="primary capture-primary-action" href="/#capture"><Plus/>Quick capture</Link>:<button className="secondary" onClick={()=>setFilter("All")}>Show all captures</button>}</div>}
       </section>
 
       <aside className="capture-inspector" aria-label="Capture details">
@@ -73,12 +74,13 @@ export default function CaptureInbox(){
             <section className="source-relationship"><h3>Source relationship</h3><div><SourceIcon source={selected.source}/><span><strong>Original source preserved</strong><small>{selected.sourceLabel}</small></span><Check/></div>{selected.assets?.map(asset=><div key={asset.id}><File/><span><strong>{asset.name}</strong><small>{asset.mime} · {asset.size>1048576?`${(asset.size/1048576).toFixed(1)} MB`:`${Math.max(1,Math.round(asset.size/1024))} KB`}</small></span><a className="row-action" href={`/api/v1/assets/${asset.id}`} target="_blank" rel="noreferrer" aria-label={`Open original ${asset.name}`}><ArrowSquareOut/></a></div>)}</section>
           </>}
           <footer className="inspector-actions">
-            {selected.status==="review"&&<><button className="secondary" onClick={()=>changeStatus(selected,"dismissed","Capture dismissed")}>Dismiss</button>{selected.objects.length===0&&<button className="secondary" onClick={()=>requestInterpretation(selected.id)}><Sparkle/>Re-interpret</button>}<button className="primary" onClick={()=>confirm(selected)}><Check/>{selected.objects.length===0?"Keep as raw note":"Confirm all"}</button></>}
+            {selected.status==="review"&&<><button className="secondary" onClick={()=>changeStatus(selected,"dismissed","Capture dismissed")}>Dismiss</button>{selected.objects.length===0&&<button className="secondary" onClick={()=>requestInterpretation(selected.id)}><Sparkle/>Re-interpret</button>}<button className="primary capture-primary-action" onClick={()=>confirm(selected)}><Check/>{selected.objects.length===0?"Keep as raw note":"Confirm all"}</button></>}
             {selected.status==="confirmed"&&<><button className="secondary" onClick={()=>requestInterpretation(selected.id)}><Sparkle/>Re-interpret</button><button className="secondary" onClick={()=>changeStatus(selected,"review","Capture reopened for review")}>Reopen review</button></>}
           </footer>
         </>:<div className="inspector-empty"><Sparkle/><h3>Select a capture</h3><p>Its source, interpretation, and actions will appear here.</p></div>}
       </aside>
     </div>
+    {!detailOpen&&<div className="mobile-action-dock capture-mobile-dock"><Link className="primary" href="/#capture"><Plus/>Quick capture</Link></div>}
     {toast&&<div className="undo-toast" role="status"><CheckCircle/><span>{toast.message}</span><button onClick={undo}>Undo</button><button aria-label="Dismiss notification" onClick={()=>setToast(null)}><X/></button></div>}
   </ModuleShell>
 }

@@ -57,7 +57,7 @@ function findFolder(root:Tree,path:string):Tree{if(!path)return root;for(const f
 
 export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{notes:Note[];onOpen:(note:Note)=>void;initialFolder?:string;onFolderChange?:(folder:string)=>void}){
   const {requestAction}=useActionDialog();
-  const [sources,setSources]=useState<VaultSource[]>([]),[sourceId,setSourceId]=useState(""),[tree,setTree]=useState<Tree|null>(null),[folder,setFolderState]=useState<string>(()=>initialFolder||(typeof window!=="undefined"?new URLSearchParams(location.search).get("folder")||"": "")),[query,setQuery]=useState(""),[drawer,setDrawer]=useState(false),[busy,setBusy]=useState(false),[error,setError]=useState(""),[showGraph,setShowGraph]=useState(false),startedInk=useRef(false);
+  const [sources,setSources]=useState<VaultSource[]>([]),[sourceId,setSourceId]=useState(""),[tree,setTree]=useState<Tree|null>(null),[folder,setFolderState]=useState<string>(()=>initialFolder||(typeof window!=="undefined"?new URLSearchParams(location.search).get("folder")||"": "")),[query,setQuery]=useState(""),[drawer,setDrawer]=useState(false),[busy,setBusy]=useState(false),[initialLoading,setInitialLoading]=useState(true),[error,setError]=useState(""),[showGraph,setShowGraph]=useState(false),startedInk=useRef(false);
   const [dragItem,setDragItem]=useState<DragPayload|null>(null);
   const [dragTarget,setDragTarget]=useState<string|null>(null);
   const noteMap=useMemo(()=>({get:(id:string)=>notes.find(note=>note.id===id)||({id,title:"Note",excerpt:"",tags:[],time:"",ai:false} as unknown as Note)}),[notes]);
@@ -73,7 +73,7 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
     }
   },[initialFolder]);
 
-  async function load(preferred=sourceId){try{const data=await request(`/api/v1/vault-sources?tree=true${preferred?`&sourceId=${encodeURIComponent(preferred)}`:""}`);setSources(data.sources);setSourceId(data.selectedSourceId);setTree(data.tree);if(new URLSearchParams(location.search).get("new")==="ink"&&data.selectedSourceId&&!startedInk.current){startedInk.current=true;void create(`Handwritten note ${new Date().toISOString().slice(0,19).replace(/[T:]/g,"-")}`,data.selectedSourceId,true)}}catch(reason){setError((reason as Error).message)}}
+  async function load(preferred=sourceId){try{const data=await request(`/api/v1/vault-sources?tree=true${preferred?`&sourceId=${encodeURIComponent(preferred)}`:""}`);setSources(data.sources);setSourceId(data.selectedSourceId);setTree(data.tree);if(new URLSearchParams(location.search).get("new")==="ink"&&data.selectedSourceId&&!startedInk.current){startedInk.current=true;void create(`Handwritten note ${new Date().toISOString().slice(0,19).replace(/[T:]/g,"-")}`,data.selectedSourceId,true)}}catch(reason){setError((reason as Error).message)}finally{setInitialLoading(false)}}
   useEffect(()=>{setDrawer(localStorage.getItem("noema-vault-drawer")==="open");void load()},[]);
 
   async function sync(){if(!sourceId)return;setBusy(true);try{await request(`/api/v1/vault-sources/${sourceId}/sync`,{method:"POST"});await load(sourceId)}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
@@ -162,7 +162,7 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
         </div>
       </header>
       {error&&<div className="tutor-error" role="alert">{error}</div>}
-      {!sources.length?<div className="empty-state"><Folder/><h3>Connect your Obsidian vault</h3><p>Add its local path in Settings, then return here to browse the exact folder structure.</p><Link className="primary" href="/settings">Open Settings</Link></div>:(
+      {initialLoading?<div className="vault-loading" role="status" aria-live="polite"><span/><span/><span/><p>Loading vault…</p></div>:!sources.length?<div className="empty-state"><Folder/><h3>Connect your Obsidian vault</h3><p>Add its local path in Settings, then return here to browse the exact folder structure.</p><Link className="primary" href="/settings">Open Settings</Link></div>:(
         <div className="obsidian-vault-body">
           <aside className="obsidian-tree" aria-label="Vault folders">
             <div className="vault-derived-views">{views.map(view=><button className={folder===view.id?"active":""} onClick={()=>{setShowGraph(false);setFolder(view.id)}} key={view.id}><view.icon/><span>{view.label}</span></button>)}</div>
@@ -219,13 +219,14 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
                       </article>
                     );
                   })}
-                  {!current?.folders.length&&!visible.length&&<div className="empty-state"><Folder/><h3>No notes here</h3><p>{query?"Try a broader search.":"Create a note or folder here to begin."}</p></div>}
+                  {!current?.folders.length&&!visible.length&&<div className="empty-state"><Folder/><h3>No notes here</h3><p>{query?"Try a broader search.":"Create a note or folder here to begin."}</p>{!query&&!folder.startsWith("@")&&<button className="primary" onClick={()=>void create()}>Create note</button>}</div>}
                 </div>
               </>
             )}
           </main>
         </div>
       )}
+      {!initialLoading&&sources.length>0&&<div className="vault-mobile-action"><button className="primary" disabled={Boolean(!sourceId||folder.startsWith("@"))} onClick={()=>void create()}><FilePlus/><span>New note</span></button></div>}
     </section>
   );
 }

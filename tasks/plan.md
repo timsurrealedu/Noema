@@ -1,83 +1,64 @@
-# Implementation Plan: Today Handwriting and Compiler Rework
+# Offline-native Noema for Android
 
-## Goal
+## Summary
 
-Make Today handwriting reliable and obvious, reuse lifeOS's proven infinite ink interaction, complete the handwriting intake lifecycle, and rebuild Compiler around lifeOS's Scratch/Saved workspace while preserving Noema styling and safety boundaries.
+Build a sideloaded Kotlin/Jetpack Compose Android app alongside the current web app. It is single-device, offline-first, encrypted with biometric access, and initially migrates captures, tasks, and notes through a one-time export/import.
 
-lifeOS is read-only reference material. No files there will be changed.
+Local AI replaces all current AI capabilities in phases. Cloud AI is optional, requires explicit approval per request, and uses a user-supplied API key stored in Android Keystore. The integrated code runner supports explicit, temporary C and JavaScript snippets only.
 
-## Current state
+## Implementation phases
 
-### Already present
+1. **Feasibility spikes**
+   - Benchmark 3B–4B quantized text models on the Xiaomi 14 for structured JSON capture, tutor/code responses, latency, RAM, heat, and battery.
+   - Validate an embedded C runtime/compiler on Android under strict execution, memory, output, and filesystem limits. Stop before the main migration if it cannot safely run a basic C subset; Termux is not an acceptable embedded dependency.
+   - Validate QuickJS for JavaScript snippets.
+   - Acceptance: capture JSON is schema-valid; each runtime can run/abort a sample without app instability.
 
-- Today opens `HandwritingCapture`.
-- Quick note and folder-selected modes exist.
-- Vault-backed ink, draft metadata, pending processing, OCR/intake jobs, generated Markdown above original ink, and capture Done metadata exist.
-- Compiler execution, Scratch buffers, Saved-file APIs, Syncthing-backed `NOEMA_SAVED_CODE_DIR`, and path/symlink/size validation exist.
+2. **Native foundation**
+   - Add an `android/` Gradle project with Compose navigation and a Room/SQLCipher-style encrypted local store.
+   - Gate app opening with Android biometric/device credentials; keep encryption keys in Android Keystore.
+   - Define local repositories for notes, tasks, and captures; all writes are transactional and auditable.
+   - Add versioned encrypted export/import compatible with a dedicated exporter in the current Noema app.
 
-### Not complete
+3. **Daily-use local slice**
+   - Implement capture inbox, task list, and Markdown notes.
+   - Add an on-device `LocalAiEngine` abstraction returning validated structured results for capture interpretation.
+   - Port capture extraction first; users review and apply proposed actions before data changes.
+   - Add model download, integrity verification, disk-space checks, cancellation, and clear “model unavailable” recovery states.
 
-- Today uses Noema's separate modal `InkEditor`, not lifeOS's proven full-screen infinite InkPad workflow; the reported flow is currently unusable.
-- Handwriting has no browser test covering Today → draw → save → Process Inbox → Done → open note.
-- Compiler does not match lifeOS's full-screen layout, nested file tree/drawer, editing controls, output flow, or responsive behavior.
-- The unit baseline is red; `capture-vault.test.js` currently exposes a worker path/config failure.
+4. **AI parity, in dependency order**
+   - Local embeddings and retrieval for semantic search.
+   - Text tutor and coding assistance using retrieved local context.
+   - Handwriting/OCR plus text-model interpretation as a separate vision pipeline.
+   - Preserve current feature semantics where practical, but do not claim identical cloud-model quality.
+   - Add an approval sheet for cloud fallback showing provider, model, and the exact content category being sent; no automatic fallback.
 
-## Architecture decisions
+5. **Integrated runner**
+   - Add a snippet editor with language selection, stdin, stdout/stderr, cancellation, and explicit Run.
+   - Support JavaScript through QuickJS and C through the validated embedded runtime only; temporary workspaces, no network, no persistent package installation, strict time/output/memory limits.
+   - Do not build a shell, Termux replacement, multi-file projects, or background/AI-triggered execution.
 
-- Port behavior, not lifeOS's global DOM architecture: adapt InkPad and Compiler interactions into focused React components using Noema APIs.
-- Keep existing Noema storage and security services. Do not replace vault ink blocks, compiler isolation, or saved-file validation.
-- Quick notes always enter `Drafts` and pending intake. Folder notes run AI only when Draft is checked.
-- AI output remains an ordered Markdown block followed by the unchanged editable ink block.
-- Capture status is the audit surface: Processing, Done, Failed, destination, action, confidence, source ink, and note link.
+6. **Migration and personal release**
+   - Add a web-side export for captures, tasks, and notes, including attachment references only when a supported Android import path exists.
+   - Import into a fresh encrypted Android workspace; preserve identifiers where possible and report skipped/invalid records.
+   - Produce a signed personal APK, install on the Xiaomi 14, and run a two-week daily-use trial before expanding module coverage.
 
-## Work plan
+## Interfaces and validation
 
-### Phase 1: Establish a working baseline
+- `LocalAiEngine`: structured capture, chat/tutor, embeddings, and model-health operations; every structured result is schema-validated before persistence.
+- `CloudAiEngine`: same request shape, but callable only after per-request consent.
+- `CodeRunner`: `{language, code, stdin}` → `{stage, exitCode, output, truncated, durationMs}`.
+- Export/import format is versioned, encrypted in transit, and rejects unknown/corrupt payloads without partial writes.
 
-1. Reproduce the Today handwriting failure on desktop and touch-sized viewports; record the failing interaction and console/network error.
-2. Fix the existing test baseline issue if it blocks the handwriting lifecycle.
-3. Add a browser regression for opening Handwrite, drawing, and saving a Quick note.
+## Test plan
 
-Checkpoint: focused backend tests, frontend tests, and the new browser test pass.
+- Unit tests for encryption-key handling, repositories, import validation, AI-schema validation, consent enforcement, and runner limits.
+- Instrumented tests for biometric lock, process death/relaunch, offline model use, cancelled inference, and interrupted imports.
+- End-to-end checks: capture → local interpretation → review → task/note; local semantic search; cloud approval/rejection; C/JS timeout and output-limit handling.
+- Benchmark gate: record median latency, peak memory, battery drain, and thermal behavior for the selected model on the Xiaomi 14.
 
-### Phase 2: Port the proven handwriting interaction
+## Assumptions
 
-4. Extract the applicable lifeOS `InkPad` behavior: full-screen canvas, world-coordinate pan/zoom, pen/touch handling, undo/redo, erase/clear, fit, and durable stroke return.
-5. Replace the cramped form-first flow with: choose Quick note or Choose folder → configure destination/Draft → enter full-screen canvas → Done/save.
-6. Preserve crash recovery and editable vector strokes through Noema's existing ink model.
-
-Checkpoint: mouse, pen, touch, rotation, cancel/reopen, and empty-canvas behavior verified.
-
-### Phase 3: Prove handwriting processing end to end
-
-7. Verify Quick note saves under `Drafts`, queues only on Process Inbox, and routes to an existing inferred folder or `Captures/#needs-filing` fallback.
-8. Verify folder + Draft enriches in place; folder without Draft stays untouched and queues no AI.
-9. Verify generated summary/expansion renders above the unchanged source ink and clears Draft only after success.
-10. Complete Capture Done/Failed detail and retry coverage, including final folder and Open note.
-
-Checkpoint: Today → Process Inbox → Done → final note passes in browser and backend tests.
-
-### Phase 4: Port the lifeOS Compiler workspace
-
-11. Recompose the page into lifeOS's full-screen editor layout using Noema colors: top controls, Scratch/Saved segment, central editor, stdin, output, and responsive toolbars.
-12. Add lifeOS's Saved file tree with nested folders, active file, new/save/dirty state, desktop dock, and mobile drawer/swipe behavior over existing safe file APIs.
-13. Bring across useful editor behavior: line gutter, synchronized highlighting, undo/redo, auto-indent/pairs, symbol bar, caret joystick, keyboard/visual-viewport handling.
-14. Retain Noema compiler execution isolation, Tutor integration, language discovery, local per-language Scratch recovery, and Syncthing-backed Saved storage.
-
-Checkpoint: Scratch persists per language; Saved round-trips through disk; compile/run/output works on desktop and mobile.
-
-### Phase 5: Finish
-
-15. Run unit, browser, build, responsive, accessibility, and traversal/symlink regression checks.
-16. Update `PROJECT.md` only where the verified behavior differs from its current claims.
-
-## Risks
-
-- lifeOS uses global DOM state; direct copying would fight React. Port its behavior and CSS structure, keeping Noema state/API contracts.
-- Gesture conflicts can break pen input or page scrolling. Verify pointer capture, touch-action, pinch, and viewport changes explicitly.
-- AI routing cannot safely invent folders. Restrict destinations to the current vault tree and keep the needs-filing fallback.
-- Syncthing may update a saved file while open. Preserve explicit save and surface conflicts instead of overwriting silently.
-
-## Approval gate
-
-No implementation starts until this plan is approved.
+- First release is personal, sideloaded, Android-only, and has no sync.
+- Current web app remains intact during migration.
+- Embedded C support is a gated feasibility requirement; if it fails, the native app proceeds without C rather than coupling itself to Termux.

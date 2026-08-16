@@ -275,6 +275,11 @@ export function MixedNoteEditor({
   });
   const [activeTool, setActiveTool] = useState<InkTool>("pen");
   const [penOptionsOpen, setPenOptionsOpen] = useState(false);
+  const penButtonRef = useRef<HTMLButtonElement>(null);
+  const closePenOptions = () => {
+    setPenOptionsOpen(false);
+    requestAnimationFrame(() => penButtonRef.current?.focus());
+  };
   const [color, setColor] = useState(() => {
     if (typeof window !== "undefined") {
       const current = document.documentElement.dataset.theme || localStorage.getItem("noema-theme");
@@ -618,6 +623,7 @@ export function MixedNoteEditor({
                 <div className="palette-group">
                   <div className="pen-tool-wrapper">
                     <button
+                      ref={penButtonRef}
                       className={activeTool === "pen" ? "active" : ""}
                       onClick={() => {
                         if (activeTool === "pen") {
@@ -642,10 +648,10 @@ export function MixedNoteEditor({
                     </button>
 
                     {activeTool === "pen" && penOptionsOpen && (
-                      <div className="pen-options-popover" role="dialog" aria-label="Pen Options">
+                      <div className="pen-options-popover" role="dialog" aria-modal="false" aria-label="Pen settings" onKeyDown={event=>{if(event.key==="Escape")closePenOptions()}}>
                         <header>
                           <span>Pen Settings</span>
-                          <button type="button" className="close-btn icon-button" onClick={() => setPenOptionsOpen(false)}>×</button>
+                          <button type="button" className="close-btn icon-button" aria-label="Close pen settings" onClick={closePenOptions}>×</button>
                         </header>
                         <div className="popover-section">
                           <label>Colors</label>
