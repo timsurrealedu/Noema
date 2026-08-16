@@ -1,5 +1,40 @@
 import {ReactNode} from "react";
-const basic=(text:string,key:string)=>text.split("\n").map((line,index)=>line.startsWith("# ")?<h1 key={`${key}-${index}`}>{line.slice(2)}</h1>:line.startsWith("## ")?<h2 key={`${key}-${index}`}>{line.slice(3)}</h2>:line.startsWith("- ")?<li key={`${key}-${index}`}>{line.slice(2)}</li>:line?<p key={`${key}-${index}`}>{line.replaceAll("**","")}</p>:<br key={`${key}-${index}`}/>);
-function Mermaid({source}:{source:string}){try{const lines=source.trim().split("\n"),edges=lines.slice(1).map(line=>line.match(/^\s*([\w-]+)(?:\[([^\]]+)\])?\s*-->\s*([\w-]+)(?:\[([^\]]+)\])?\s*$/)).filter(Boolean) as RegExpMatchArray[];if(!/^(graph|flowchart)\s+(TD|TB|LR)$/.test(lines[0])||!edges.length)throw new Error();const labels=new Map<string,string>();edges.forEach(match=>{labels.set(match[1],match[2]||match[1]);labels.set(match[3],match[4]||match[3])});const nodes=[...labels],height=Math.max(140,nodes.length*90);return <figure className="structured-content"><svg viewBox={`0 0 600 ${height}`} role="img" aria-label={`Flowchart: ${nodes.map(([,label])=>label).join(" to ")}`}><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z"/></marker></defs>{edges.map((edge,index)=><line key={index} x1="300" y1={nodes.findIndex(([id])=>id===edge[1])*90+59} x2="300" y2={nodes.findIndex(([id])=>id===edge[3])*90+15} markerEnd="url(#arrow)"/>)}{nodes.map(([id,label],index)=><g key={id}><rect x="120" y={index*90+15} width="360" height="44" rx="8"/><text x="300" y={index*90+43} textAnchor="middle">{label}</text></g>)}</svg><figcaption>Mermaid flowchart</figcaption><details><summary>View Mermaid source</summary><pre><code>{source}</code></pre></details></figure>}catch{return <figure className="structured-fallback"><figcaption>Diagram could not be rendered. Mermaid source:</figcaption><pre><code>{source}</code></pre></figure>}}
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import "katex/dist/katex.min.css";
+const basic=(text:string,key:string,onNavigateNote?:(target:string)=>void)=>{
+  const cleanText=text.replace(/^---\r?\n[\s\S]*?\r?\n---(?:\r?\n|$)/,"");
+  const processedText=cleanText.replace(/(?<!\!)\[\[([^\]|#\n]+)(?:#([^\]|]+))?(?:\|([^\]\n]+))?\]\]/g,(_,target,section,alias)=>{
+    const raw=target.trim(),display=alias?alias.trim():(section?`${raw}#${section.trim()}`:raw);
+    return `[${display}](/vault?open=${encodeURIComponent(raw)})`;
+  });
+  const components={
+    a:({href,children,...props}:any)=>{
+      if(href&&href.includes("/vault?open=")){
+        const target=decodeURIComponent(href.split("/vault?open=")[1]||"");
+        return <a href={href} className="wikilink-anchor" onClick={event=>{
+          event.preventDefault();
+          if(onNavigateNote){onNavigateNote(target)}
+          else{
+            const url=`/vault?open=${encodeURIComponent(target)}`;
+            window.history.pushState(null,"",url);
+            window.dispatchEvent(new Event("popstate"));
+          }
+        }} {...props}>{children}</a>;
+      }
+      return <a href={href} target="_blank" rel="noreferrer" {...props}>{children}</a>;
+    },
+    table:({children,...props}:any)=>(
+      <div className="table-scroll-wrapper" role="region" aria-label="Table data" tabIndex={0}>
+        <table {...props}>{children}</table>
+      </div>
+    )
+  };
+  return <ReactMarkdown key={key} remarkPlugins={[remarkGfm,remarkMath]} rehypePlugins={[rehypeKatex]} components={components}>{processedText}</ReactMarkdown>;
+};
+function Mermaid({source}:{source:string}){try{const lines=source.trim().split("\n"),edges=lines.slice(1).map(line=>line.match(/^\s*([\w-]+)(?:\[([^\]]+)\])?\s*-->\s*([\w-]+)(?:\[([^\]]+)\])?\s*$/)).filter(Boolean) as RegExpMatchArray[];if(!/^(graph|flowchart)\s+(TD|TB|LR)$/.test(lines[0])||!edges.length)throw new Error();const labels=new Map<string,string>();edges.forEach(match=>{labels.set(match[1],match[2]||match[1]);labels.set(match[3],match[4]||match[3])});const nodes=[...labels],height=Math.max(140,nodes.length*90);return <figure className="structured-content"><svg viewBox={`0 0 600 ${height}`} role="img" aria-label={`Flowchart: ${nodes.map(([,label])=>label).join(" to ")}`}><defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z"/></marker></defs>{edges.map((edge,index)=><line key={index} x1="300" y1={nodes.findIndex(([id])=>id===edge[1])*90+59} x2="300" y2={nodes.findIndex(([id])=>id===edge[3])*90+15} markerEnd="url(#arrow)"/>)}{nodes.map(([id,label],index)=><g key={id}><rect x="120" y={index*90+15} width="360" height="44" rx="8"/><text x="300" y={index*90+43} textAnchor="middle">{label}</text></g>)}</svg><figcaption>Mermaid flowchart</figcaption><details><summary>View Mermaid source</summary><pre><code>{source}</code></pre></details></figure>}catch{/* Diagram could not be rendered; View Mermaid source below. */return <figure className="structured-fallback"><figcaption>Diagram could not be rendered. Mermaid source:</figcaption><pre><code>{source}</code></pre></figure>}}
 function Chart({source}:{source:string}){const rows=source.trim().split("\n").map(line=>{const [label,value]=line.split(",");return {label:label?.trim(),value:Number(value)}}).filter(row=>row.label&&Number.isFinite(row.value));if(!rows.length)return <pre><code>{source}</code></pre>;const max=Math.max(...rows.map(row=>row.value),1);return <figure className="structured-content"><svg viewBox={`0 0 600 ${rows.length*48+30}`} role="img" aria-label={`Bar chart: ${rows.map(row=>`${row.label} ${row.value}`).join(", ")}`}>{rows.map((row,index)=><g key={row.label}><text x="0" y={index*48+28}>{row.label}</text><rect x="150" y={index*48+8} width={400*row.value/max} height="28"/><text x={160+400*row.value/max} y={index*48+28}>{row.value}</text></g>)}</svg><table><caption>Chart data</caption><thead><tr><th>Label</th><th>Value</th></tr></thead><tbody>{rows.map(row=><tr key={row.label}><th scope="row">{row.label}</th><td>{row.value}</td></tr>)}</tbody></table><details><summary>View chart source</summary><pre><code>{source}</code></pre></details></figure>}
-export function MarkdownContent({text}:{text:string}){const parts:ReactNode[]=[],pattern=/```(mermaid|chart)\s*\n([\s\S]*?)```/g;let start=0,match:RegExpExecArray|null,index=0;while((match=pattern.exec(text))){parts.push(...basic(text.slice(start,match.index),`text-${index}`));parts.push(match[1]==="mermaid"?<Mermaid key={`block-${index}`} source={match[2]}/>:<Chart key={`block-${index}`} source={match[2]}/>);start=pattern.lastIndex;index++}parts.push(...basic(text.slice(start),`text-${index}`));return <>{parts}</>}
+export function MarkdownContent({text,onNavigateNote}:{text:string;onNavigateNote?:(target:string)=>void}){const parts:ReactNode[]=[],pattern=/```(mermaid|chart)\s*\n([\s\S]*?)```/g;let start=0,match:RegExpExecArray|null,index=0;while((match=pattern.exec(text))){parts.push(basic(text.slice(start,match.index),`text-${index}`,onNavigateNote));parts.push(match[1]==="mermaid"?<Mermaid key={`block-${index}`} source={match[2]}/>:<Chart key={`block-${index}`} source={match[2]}/>);start=pattern.lastIndex;index++}parts.push(basic(text.slice(start),`text-${index}`,onNavigateNote));return <>{parts}</>}
+

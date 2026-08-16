@@ -4,7 +4,7 @@ import {ArrowClockwise,Bell,Check,Warning} from "@phosphor-icons/react";
 import {ModuleShell} from "../components/ModuleShell";
 type Notice={id:string;kind:string;title:string;body:string;read_at:string|null;related_type:string|null;related_id:string|null;created_at:string};
 type Delivery={id:string;notification_id:string;state:string;attempts:number;error:string|null;provider_status:number|null};
-const href=(item:Notice)=>item.related_type==="task"?`/tasks?open=${item.related_id}`:item.related_type==="event"?`/calendar?open=${item.related_id}`:item.related_type==="note"?`/vault?open=${item.related_id}`:item.related_type==="project"?`/projects?open=${item.related_id}`:null;
+const href=(item:Notice)=>item.related_type==="task"?`/?open=${item.related_id}`:item.related_type==="event"?`/calendar?open=${item.related_id}`:item.related_type==="note"?`/vault?open=${item.related_id}`:item.related_type==="project"?`/projects?open=${item.related_id}`:null;
 export default function NotificationsPage(){
   const [notices,setNotices]=useState<Notice[]>([]),[deliveries,setDeliveries]=useState<Delivery[]>([]),[filter,setFilter]=useState("all"),[error,setError]=useState("");
   const load=()=>Promise.all([fetch("/api/v1/notifications").then(r=>r.json()),fetch("/api/v1/notification-deliveries").then(r=>r.json())]).then(([a,b])=>{setNotices(a.notifications||[]);setDeliveries(b.deliveries||[])}).catch(reason=>setError(reason.message));

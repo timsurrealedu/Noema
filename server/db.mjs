@@ -1,5 +1,6 @@
 import {DatabaseSync} from "node:sqlite";
 import {ensureDataDirs,loadConfig} from "./config.mjs";
+import {migrate} from "./db/migrate.mjs";
 
 let singleton;
 
@@ -32,6 +33,7 @@ CREATE TABLE IF NOT EXISTS pdf_annotations(id TEXT PRIMARY KEY,asset_id TEXT NOT
 CREATE TABLE IF NOT EXISTS notification_deliveries(id TEXT PRIMARY KEY,notification_id TEXT NOT NULL REFERENCES notifications(id) ON DELETE CASCADE,subscription_id TEXT NOT NULL REFERENCES push_subscriptions(id) ON DELETE CASCADE,state TEXT NOT NULL DEFAULT 'pending',attempts INTEGER NOT NULL DEFAULT 0,next_attempt_at TEXT NOT NULL,lease_until TEXT,provider_status INTEGER,provider_response TEXT,error TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL,UNIQUE(notification_id,subscription_id));
 CREATE TABLE IF NOT EXISTS google_accounts(id TEXT PRIMARY KEY,user_id TEXT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,email TEXT NOT NULL,token_enc TEXT NOT NULL,scopes_json TEXT NOT NULL,expires_at TEXT NOT NULL,health TEXT NOT NULL DEFAULT 'connected',last_error TEXT,created_at TEXT NOT NULL,updated_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS google_oauth_states(state TEXT PRIMARY KEY,user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,expires_at TEXT NOT NULL,created_at TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS google_login_states(state TEXT PRIMARY KEY,expires_at TEXT NOT NULL,created_at TEXT NOT NULL);
 CREATE TABLE IF NOT EXISTS google_calendars(account_id TEXT NOT NULL REFERENCES google_accounts(id) ON DELETE CASCADE,calendar_id TEXT NOT NULL,name TEXT NOT NULL,timezone TEXT,access_role TEXT NOT NULL,selected INTEGER NOT NULL DEFAULT 0,updated_at TEXT NOT NULL,PRIMARY KEY(account_id,calendar_id));
 CREATE TABLE IF NOT EXISTS google_calendar_sync(account_id TEXT NOT NULL,calendar_id TEXT NOT NULL,sync_token TEXT,last_synced_at TEXT,last_error TEXT,PRIMARY KEY(account_id,calendar_id),FOREIGN KEY(account_id,calendar_id) REFERENCES google_calendars(account_id,calendar_id) ON DELETE CASCADE);
 CREATE TABLE IF NOT EXISTS calendar_event_mappings(id TEXT PRIMARY KEY,account_id TEXT NOT NULL,calendar_id TEXT NOT NULL,local_event_id TEXT NOT NULL UNIQUE REFERENCES events(id) ON DELETE CASCADE,google_event_id TEXT NOT NULL,google_etag TEXT,last_local_version INTEGER NOT NULL,google_snapshot_json TEXT NOT NULL,tombstone INTEGER NOT NULL DEFAULT 0,last_synced_at TEXT NOT NULL,UNIQUE(account_id,calendar_id,google_event_id),FOREIGN KEY(account_id,calendar_id) REFERENCES google_calendars(account_id,calendar_id) ON DELETE CASCADE);
@@ -94,6 +96,7 @@ CREATE INDEX IF NOT EXISTS tutor_sessions_subject ON tutor_sessions(kind,subject
 CREATE INDEX IF NOT EXISTS tutor_messages_session ON tutor_messages(session_id,created_at);
 CREATE INDEX IF NOT EXISTS analytics_events_user_created ON analytics_events(user_id,created_at);
 CREATE INDEX IF NOT EXISTS google_oauth_states_expiry ON google_oauth_states(expires_at);
+CREATE INDEX IF NOT EXISTS google_login_states_expiry ON google_login_states(expires_at);
 CREATE INDEX IF NOT EXISTS calendar_conflicts_state ON calendar_conflicts(state,created_at);
 CREATE INDEX IF NOT EXISTS calendar_sync_writes_due ON calendar_sync_writes(state,next_attempt_at);
 `;
@@ -104,6 +107,7 @@ export function openDatabase(path){
   db.exec(schema);
   ensureColumn(db,"jobs","attempts","INTEGER NOT NULL DEFAULT 0");
   ensureColumn(db,"jobs","max_attempts","INTEGER NOT NULL DEFAULT 3");
+  ensureColumn(db,"user_settings","ai_json","TEXT NOT NULL DEFAULT '{}'");
   ensureColumn(db,"sessions","mfa_verified_at","TEXT");
   ensureColumn(db,"users","totp_secret_enc","TEXT");
   ensureColumn(db,"users","totp_pending_enc","TEXT");
@@ -160,6 +164,8 @@ export function openDatabase(path){
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(31,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(32,?)").run(new Date().toISOString());
   db.prepare("INSERT OR IGNORE INTO schema_migrations(version,applied_at) VALUES(33,?)").run(new Date().toISOString());
+  migrate(db);
+  db.exec("CREATE INDEX IF NOT EXISTS tasks_workspace_created ON tasks(workspace_id,created_at DESC); CREATE INDEX IF NOT EXISTS notes_workspace_updated ON notes(workspace_id,updated_at DESC); CREATE INDEX IF NOT EXISTS captures_workspace_created ON captures(workspace_id,created_at DESC); CREATE INDEX IF NOT EXISTS events_workspace_start ON events(workspace_id,deleted_at,start_at); CREATE INDEX IF NOT EXISTS tasks_calendar ON tasks(workspace_id,archived,due_at,scheduled_start_at); CREATE INDEX IF NOT EXISTS vault_task_links_task ON vault_task_links(task_id); CREATE INDEX IF NOT EXISTS vault_entries_note ON vault_entries(note_id); CREATE INDEX IF NOT EXISTS note_blocks_note ON note_blocks(note_id);");
   return db;
 }
 

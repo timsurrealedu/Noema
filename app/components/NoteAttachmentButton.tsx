@@ -1,0 +1,4 @@
+"use client";
+import type {RefObject} from "react";
+import {Paperclip} from "@phosphor-icons/react";
+export function NoteAttachmentButton({textarea,onChange}:{textarea:RefObject<HTMLTextAreaElement|null>;onChange:(value:string)=>void}){async function upload(file:File){const form=new FormData();form.append("file",file);const response=await fetch("/api/v1/assets",{method:"POST",body:form}),body=await response.json();if(!response.ok)throw new Error(body.error?.message||"Attachment upload failed");const field=textarea.current,asset=body.assets[0];if(!field)return;const markdown=`${file.type.startsWith("image/")?"!":""}[${file.name}](/api/v1/assets/${asset.id})`,start=field.selectionStart,end=field.selectionEnd;field.setRangeText(markdown,start,end,"end");onChange(field.value);field.focus()}return <label className="secondary"><Paperclip/>Attach<input type="file" onChange={event=>{const file=event.target.files?.[0];if(file)void upload(file)}}/></label>}

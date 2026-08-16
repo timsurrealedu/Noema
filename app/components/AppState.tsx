@@ -1,23 +1,28 @@
 "use client";
 
+import {createId} from "../lib/id";
+
 import {createContext, ReactNode, useContext, useEffect, useState} from "react";
 import {showUnavailable} from "./ServiceNotice";
 import {flushQueue, queueOfflineCapture, queueRequest} from "../lib/offlineQueue";
 
-export type Task = {id:string; title:string; project:string; due:string; priority:"High"|"Medium"|"Low"; completed:boolean; recurrence?:string; reminderAt?:string|null; subtasks?:string[]; archived?:boolean; version?:number};
+export type VaultTaskSource={sourceId:string;sourceName:string;relativePath:string;blockId:string;lineNumber:number;noteId:string};
+export type Task = {id:string; title:string; project:string; due:string; priority:"High"|"Medium"|"Low"; completed:boolean; status?:"open"|"in_progress"|"blocked"|"completed"|"cancelled"; projectId?:string|null; courseId?:string|null; dueAt?:string|null; scheduledStartAt?:string|null; scheduledEndAt?:string|null; estimatedMinutes?:number|null; parentTaskId?:string|null; completedAt?:string|null; recurrence?:string; reminderAt?:string|null; subtasks?:string[]; archived?:boolean; vaultSource?:VaultTaskSource|null; version?:number};
 export type Event = {id:string; title:string; day:number; time:string; top:number; height:number; location?:string; reminderAt?:string|null; active?:boolean; startAt?:string; endAt?:string; timezone?:string; allDay?:boolean; recurrence?:{frequency?:string;rules?:string[]}|null; googleCalendarId?:string; version?:number};
-export type Note = {id:string; title:string; excerpt:string; content:string; tags:string[]; time:string; ai:boolean; draft?:boolean; source?:string; favorite?:boolean; trashed?:boolean; version?:number};
-export type CaptureSource = "typed"|"voice"|"file"|"link";
-export type CaptureObject = {id?:string; type:"task"|"event"|"note"; title:string; detail:string; confidence?:number; sourceReferences?:string[]; arguments?:Record<string,unknown>};
+export type CalendarItem={kind:"event";event:Event}|{kind:"task";task:Task};
+export type NoteBlockSummary={id:string;position:number;kind:"markdown"|"ink";version:number;width?:number;height?:number;transcript?:string;ocrStatus?:string};
+export type Note = {id:string; title:string; excerpt:string; content:string; tags:string[]; time:string; ai:boolean; draft?:boolean; source?:string; sourceId?:string|null; relativePath?:string|null; syncState?:string; blocks?:NoteBlockSummary[]; favorite?:boolean; trashed?:boolean; version?:number};
+export type CaptureSource = "typed"|"voice"|"file"|"link"|"handwriting";
+export type CaptureObject = {id?:string; type:"task"|"event"|"note"|"vault"; title:string; detail:string; confidence?:number; sourceReferences?:string[]; arguments?:Record<string,unknown>};
 export type Capture = {
-  id:string; text:string; createdAt:string; status:"processing"|"review"|"confirmed"|"failed"|"dismissed";
-  source:CaptureSource; sourceLabel:string; progress?:number; error?:string; jobId?:string; objects:CaptureObject[]; assets?:{id:string;name:string;mime:string;size:number}[]; version?:number;
+  id:string; text:string; createdAt:string; status:"queued"|"processing"|"review"|"confirmed"|"failed"|"dismissed";
+  source:CaptureSource; sourceLabel:string; progress?:number; error?:string; jobId?:string; objects:CaptureObject[]; assets?:{id:string;name:string;mime:string;size:number}[]; handwriting?:{noteId:string;inkBlockId:string;state:string;title:string;path:string;folder:string;action:"summary"|"expansion"|null;confidence:number|null;provider:string|null}|null; version?:number;
 };
 export type Project = {id:string; name:string; status:"Active"|"Planned"|"Archived"; summary:string; version?:number};
 export type TaskDependency = {taskId:string; dependsOnTaskId:string; createdAt:string};
 export type NoteLink = {sourceNoteId:string; targetNoteId:string; linkText:string; createdAt:string};
 
-type AppData = {tasks:Task[]; events:Event[]; notes:Note[]; captures:Capture[]; projects:Project[]; taskDependencies:TaskDependency[]; noteLinks:NoteLink[]};
+type AppData = {tasks:Task[]; events:Event[]; calendarItems:CalendarItem[]; notes:Note[]; captures:Capture[]; projects:Project[]; taskDependencies:TaskDependency[]; noteLinks:NoteLink[]};
 type AppState = AppData & {
   addCapture:(text:string)=>string;
   addAndInterpretCapture:(text:string)=>string;
@@ -34,54 +39,25 @@ type AppState = AppData & {
   archiveTask:(id:string)=>void;
 };
 
-const seed: AppData = {
-  tasks:[
-    {id:"proposal",title:"Review partnership proposal",project:"RevoU Partnership",due:"Today",priority:"High",completed:false},
-    {id:"normalization",title:"Finish database normalization exercises",project:"Computer Science",due:"Today",priority:"Medium",completed:false},
-    {id:"dian-questions",title:"Prepare questions for Dian",project:"RevoU Partnership",due:"Tomorrow",priority:"Medium",completed:false},
-    {id:"tcp-cards",title:"Review TCP congestion control flashcards",project:"Computer Networks",due:"Friday",priority:"Low",completed:false},
-  ],
-  events:[
-    {id:"study-block",day:0,top:76,height:58,title:"Study block",time:"09:00"},
-    {id:"project-review",day:2,top:170,height:76,title:"Project review",time:"11:00"},
-    {id:"networks",day:4,top:122,height:58,title:"Computer Networks lecture",time:"10:00",location:"Engineering Hall"},
-    {id:"dian",day:4,top:264,height:76,title:"Meeting with Dian",time:"13:00",location:"Google Meet · Prep ready",active:true},
-  ],
-  notes:[
-    {id:"tcp",title:"TCP Congestion Control",excerpt:"How TCP adapts its sending rate using slow start, congestion avoidance, and fast recovery.",content:"# TCP Congestion Control\n\nTCP adapts its sending rate using **slow start**, congestion avoidance, and fast recovery.\n\n## Source notes\n\n- Congestion window controls in-flight data\n- Packet loss signals congestion\n- AIMD stabilizes shared links",tags:["networking","tcp"],time:"12 min ago",ai:true,source:"Computer Networks lecture · July 24"},
-    {id:"revou",title:"RevoU Partnership Notes",excerpt:"Meeting context, partnership scope, open questions, and proposal review notes.",content:"# RevoU Partnership Notes\n\n## Open questions\n\n- Confirm review timeline\n- Define success measures\n- Prepare stakeholder proposal",tags:["revou","partnership"],time:"Yesterday",ai:false,source:"Meeting capture · July 23"},
-    {id:"database",title:"Database Normalization",excerpt:"Functional dependencies, normal forms, lossless decomposition, and worked examples.",content:"# Database Normalization\n\nNormalization reduces redundancy while preserving dependencies and lossless joins.",tags:["database","course"],time:"Yesterday",ai:false,source:"Imported PDF · database-week-4.pdf"},
-    {id:"os-plan",title:"OS Exam Study Plan",excerpt:"Four-week review sequence covering processes, memory, file systems, and concurrency.",content:"# OS Exam Study Plan\n\n1. Processes and scheduling\n2. Memory management\n3. File systems\n4. Concurrency",tags:["operating-systems","study"],time:"Jul 22",ai:true,source:"Generated from course syllabus"},
-  ],
-  captures:[
-    {id:"dentist",text:"Book dentist appointment next Tuesday morning",createdAt:"2026-07-24T09:41:00+07:00",status:"review",source:"voice",sourceLabel:"Voice · 18 sec",objects:[{type:"task",title:"Book dentist appointment",detail:"Due Tuesday · Personal"},{type:"event",title:"Dentist appointment",detail:"Tuesday · 9:00–9:30 AM"}]},
-    {id:"aurora",text:"Project Aurora PRD v1.2.docx",createdAt:"2026-07-24T09:32:00+07:00",status:"confirmed",source:"file",sourceLabel:"Document · 2.4 MB",objects:[{type:"note",title:"Project Aurora requirements",detail:"12 sections · Source preserved"}]},
-    {id:"linear-link",text:"https://linear.app/team/aurora/issue/1234",createdAt:"2026-07-24T09:21:00+07:00",status:"confirmed",source:"link",sourceLabel:"Web link · linear.app",objects:[{type:"task",title:"Review Aurora issue 1234",detail:"Project Aurora · No due date"}]},
-    {id:"roadmap",text:"@Alex can you review the Q2 roadmap?",createdAt:"2026-07-24T08:58:00+07:00",status:"processing",source:"typed",sourceLabel:"Typed capture",progress:62,objects:[]},
-    {id:"invoice",text:"Fwd: Invoice INV-001873",createdAt:"2026-07-24T08:15:00+07:00",status:"failed",source:"file",sourceLabel:"Email attachment · PDF",error:"The attachment could not be read. Try processing it again.",objects:[]},
-    {id:"newsletter",text:"Ideas for the next newsletter",createdAt:"2026-07-23T19:16:00+07:00",status:"confirmed",source:"voice",sourceLabel:"Voice · 42 sec",objects:[{type:"note",title:"Newsletter ideas",detail:"6 ideas · Source preserved"}]},
-  ],
-  projects:[],
-  taskDependencies:[],
-  noteLinks:[],
-};
+const seed:AppData={tasks:[],events:[],calendarItems:[],notes:[],captures:[],projects:[],taskDependencies:[],noteLinks:[]};
 
-const storageKey="noema-state-v2",legacyStorageKey="lifeos-state-v2";
+const storageKey="noema-state-v3",staleStorageKeys=["noema-state-v2","lifeos-state-v2"];
 const Context=createContext<AppState|null>(null);
 
 async function api(path:string,method="GET",value?:unknown,key?:string){
-  const response=await fetch(`/api/v1${path}`,{method,headers:value?{"Content-Type":"application/json","Idempotency-Key":key||crypto.randomUUID()}:undefined,body:value?JSON.stringify(value):undefined});
+  const response=await fetch(`/api/v1${path}`,{method,headers:value?{"Content-Type":"application/json","Idempotency-Key":key||createId()}:undefined,body:value?JSON.stringify(value):undefined});
   if(!response.ok){const error=new Error((await response.json()).error?.message||"Backend request failed") as Error&{status?:number};error.status=response.status;throw error}
   return response.json();
 }
+const proposalCards=(actions:any[]=[]):CaptureObject[]=>actions.map(action=>{const type=(action.type==="vault.note.create"?"vault":action.type.split(".")[0]) as CaptureObject["type"],args=action.arguments||{},detail=type==="event"?`${args.startAt} · ${args.timezone}`:type==="task"?args.dueAt||args.project||"No due date":String(args.content||"").slice(0,140);return {id:action.id,type,title:args.title,detail,confidence:action.confidence,sourceReferences:action.sourceReferences,arguments:args}});
 
 export function AppStateProvider({children}:{children:ReactNode}) {
   const [data,setData]=useState(seed);
   const [loaded,setLoaded]=useState(false);
 
   useEffect(()=>{
-    try {const saved=localStorage.getItem(storageKey)||localStorage.getItem(legacyStorageKey);if(saved){setData({...seed,...JSON.parse(saved)});localStorage.setItem(storageKey,saved);localStorage.removeItem(legacyStorageKey)}} catch {}
-    api("/state").then(remote=>setData(current=>({...current,...remote,projects:remote.projects||[],taskDependencies:remote.taskDependencies||[],noteLinks:remote.noteLinks||[]}))).catch(()=>{});
+    try {for(const key of staleStorageKeys)localStorage.removeItem(key);const saved=localStorage.getItem(storageKey);if(saved)setData({...seed,...JSON.parse(saved)})} catch {}
+    api("/state").then(remote=>setData(current=>({...current,...remote,projects:remote.projects||[],taskDependencies:remote.taskDependencies||[],noteLinks:remote.noteLinks||[]}))).catch(error=>{if(error.status===401&&!['/login','/join'].includes(location.pathname))location.assign("/login")});
     setLoaded(true);
   },[]);
   useEffect(()=>{if(loaded)localStorage.setItem(storageKey,JSON.stringify(data))},[data,loaded]);
@@ -93,12 +69,16 @@ export function AppStateProvider({children}:{children:ReactNode}) {
     return()=>{window.removeEventListener("online",online);clearInterval(timer)};
   },[]);
 
-  const persist=(path:string,method:string,value:unknown)=>{const idempotencyKey=crypto.randomUUID();void api(path,method,value,idempotencyKey).catch(error=>{if(!error.status||error.status>=500)void queueRequest({path,method,body:value,idempotencyKey,dependencies:[]});showUnavailable(`${error.message} Your change remains saved in this browser and will retry when the server is reachable.`)});};
+  const persist=(path:string,method:string,value:unknown)=>{const idempotencyKey=createId();void api(path,method,value,idempotencyKey).catch(error=>{if(!error.status||error.status>=500)void queueRequest({path,method,body:value,idempotencyKey,dependencies:[]});showUnavailable(`${error.message} Your change remains saved in this browser and will retry when the server is reachable.`)});};
   const patchCapture=(id:string,patch:Partial<Capture>)=>setData(current=>({...current,captures:current.captures.map(item=>item.id===id?{...item,...patch}:item)}));
   const interpret=(capture:Capture)=>api(`/captures/${capture.id}/interpret`,"POST",{}).then(({jobId})=>{patchCapture(capture.id,{jobId});
     const source=new EventSource(`/api/v1/jobs/${jobId}/events`),close=(patch:Partial<Capture>)=>{source.close();patchCapture(capture.id,patch)};
     source.addEventListener("state",event=>{const info=JSON.parse((event as MessageEvent).data);
-      if(info.state==="completed")api(`/jobs/${jobId}`).then(job=>close({status:"review",objects:job.result?.objects||[],progress:undefined,jobId:undefined})).catch(()=>close({status:"failed",error:"The completed interpretation could not be loaded.",progress:undefined,jobId:undefined}));
+      if(info.state==="completed")api(`/jobs/${jobId}`).then(job=>{
+        const objects=proposalCards(job.result?.actions);
+        const status=objects.length===0?"confirmed":"review";
+        close({status,objects,version:job.result?.captureVersion,progress:undefined,jobId:undefined});
+      }).catch(()=>close({status:"failed",error:"The completed interpretation could not be loaded.",progress:undefined,jobId:undefined}));
       else if(info.state==="failed"||info.state==="cancelled"||info.state==="expired")close({status:"failed",error:info.state==="cancelled"?"Interpretation cancelled.":"Processing failed on the server. Try again.",progress:undefined,jobId:undefined});
     });
   }).catch(error=>{showUnavailable(`${error.message} Server interpretation is unavailable.`);patchCapture(capture.id,{status:"failed",error:error.message,progress:undefined})});
@@ -111,11 +91,12 @@ export function AppStateProvider({children}:{children:ReactNode}) {
     }
     return {...current,tasks,events,notes};
   });
-  const value:AppState={...data,
-    addCapture:text=>{const capture={id:crypto.randomUUID(),text,createdAt:new Date().toISOString(),status:"review" as const,source:"typed" as const,sourceLabel:"Typed capture",objects:[],version:1};setData(current=>({...current,captures:[capture,...current.captures]}));persist("/captures","POST",capture);return capture.id},
-    addAndInterpretCapture:text=>{const capture={id:crypto.randomUUID(),text,createdAt:new Date().toISOString(),status:"processing" as const,source:"typed" as const,sourceLabel:"Typed capture",objects:[],progress:10,version:1};setData(current=>({...current,captures:[capture,...current.captures]}));api("/captures","POST",capture).then(()=>interpret(capture)).catch(error=>{showUnavailable(`${error.message} The capture remains saved in this browser.`);patchCapture(capture.id,{status:"failed",error:error.message,progress:undefined})});return capture.id},
+  const calendarItems:CalendarItem[]=[...data.events.map(event=>({kind:"event" as const,event})),...data.tasks.filter(task=>!task.archived&&(task.dueAt||task.scheduledStartAt)).map(task=>({kind:"task" as const,task}))];
+  const value:AppState={...data,calendarItems,
+    addCapture:text=>{const capture={id:createId(),text,createdAt:new Date().toISOString(),status:"review" as const,source:"typed" as const,sourceLabel:"Typed capture",objects:[],version:1};setData(current=>({...current,captures:[capture,...current.captures]}));persist("/captures","POST",capture);return capture.id},
+    addAndInterpretCapture:text=>{const capture={id:createId(),text,createdAt:new Date().toISOString(),status:"processing" as const,source:"typed" as const,sourceLabel:"Typed capture",objects:[],progress:10,version:1};setData(current=>({...current,captures:[capture,...current.captures]}));api("/captures","POST",capture).then(()=>interpret(capture)).catch(error=>{showUnavailable(`${error.message} The capture remains saved in this browser.`);patchCapture(capture.id,{status:"failed",error:error.message,progress:undefined})});return capture.id},
     addFileCapture:file=>{const size=file.size>1024*1024?`${(file.size/1048576).toFixed(1)} MB`:`${Math.max(1,Math.round(file.size/1024))} KB`;const kind=file.type.startsWith("image/")?"Image":file.type.startsWith("audio/")?"Audio":file.type==="application/pdf"?"Document":"File";
-      const capture={id:crypto.randomUUID(),text:file.name,createdAt:new Date().toISOString(),status:"review" as const,source:"file" as const,sourceLabel:`${kind} · ${size}`,objects:[],version:1};
+      const capture={id:createId(),text:file.name,createdAt:new Date().toISOString(),status:"review" as const,source:"file" as const,sourceLabel:`${kind} · ${size}`,objects:[],version:1};
       setData(current=>({...current,captures:[capture,...current.captures]}));
       const form=new FormData();form.append("file",file);
       fetch("/api/v1/assets",{method:"POST",body:form}).then(async response=>{if(!response.ok)throw new Error((await response.json()).error?.message||"Upload failed");return response.json()})
@@ -128,7 +109,7 @@ export function AppStateProvider({children}:{children:ReactNode}) {
       patchCapture(id,{status:"confirmed"});
       api(`/captures/${id}/apply`,"POST",{}).then(result=>applyObjects(result.created||[])).catch(error=>{
         showUnavailable(`${error.message} Interpreted objects were created in this browser only.`);
-        applyObjects(capture.objects.map(object=>({type:object.type,object:object.type==="task"?{id:crypto.randomUUID(),title:object.title,project:"Inbox",due:"No date",priority:"Medium",completed:false,version:1}:object.type==="event"?{id:crypto.randomUUID(),title:object.title,day:new Date().getDay(),time:"09:00",top:0,height:58,location:undefined,active:false,version:1}:{id:crypto.randomUUID(),title:object.title,excerpt:object.detail.slice(0,140),content:object.detail||object.title,tags_json:"[]",updated_at:new Date().toISOString(),ai:true,version:1}})));
+        applyObjects(capture.objects.map(object=>({type:object.type,object:object.type==="task"?{id:createId(),title:object.title,project:"Inbox",due:"No date",priority:"Medium",completed:false,version:1}:object.type==="event"?{id:createId(),title:object.title,day:new Date().getDay(),time:"09:00",top:0,height:58,location:undefined,active:false,version:1}:{id:createId(),title:object.title,excerpt:object.detail.slice(0,140),content:object.detail||object.title,tags_json:"[]",updated_at:new Date().toISOString(),ai:true,version:1}})));
       });
     },
     cancelInterpretation:id=>{const capture=data.captures.find(item=>item.id===id);if(!capture?.jobId)return;void api(`/jobs/${capture.jobId}/cancel`,"POST",{}).catch(error=>showUnavailable(error.message))},

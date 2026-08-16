@@ -43,7 +43,9 @@ export async function verifyPassword(password,encoded){
 export async function ensureOwner({email,password},db=getDatabase()){
   const normalized=email.trim().toLowerCase();if(!normalized||!password)return null;
   const found=db.prepare("SELECT id,email FROM users WHERE email=?").get(normalized);if(found)return found;
-  const id=randomUUID(),stamp=now();db.prepare("INSERT INTO users(id,email,password_hash,created_at,updated_at) VALUES(?,?,?,?,?)").run(id,normalized,await hashPassword(password),stamp,stamp);return {id,email:normalized};
+  const id=randomUUID(),stamp=now(),hash=await hashPassword(password);
+  try{db.prepare("INSERT INTO users(id,email,password_hash,created_at,updated_at) VALUES(?,?,?,?,?)").run(id,normalized,hash,stamp,stamp);return {id,email:normalized}}
+  catch(error){const concurrent=db.prepare("SELECT id,email FROM users WHERE email=?").get(normalized);if(concurrent)return concurrent;throw error}
 }
 
 export async function login({email,password,device="",totpCode="",recoveryCode="",totpSecret="",encryptionKey=""},db=getDatabase(),hours=720){
@@ -55,6 +57,11 @@ export async function login({email,password,device="",totpCode="",recoveryCode="
   db.prepare("INSERT INTO sessions(id,user_id,token_hash,expires_at,device,created_at,mfa_verified_at) VALUES(?,?,?,?,?,?,?)").run(randomUUID(),user.id,hashToken(token),expires,String(device).slice(0,200),stamp,mfaVerified?stamp:null);
   clearLoginRateLimit(normalized,db);
   return {token,expiresAt:expires,user:{id:user.id,email:user.email}};
+}
+
+export function createFederatedSession(email,device="",db=getDatabase(),hours=720){
+  const user=db.prepare("SELECT id,email FROM users WHERE email=?").get(String(email).trim().toLowerCase());if(!user)throw Object.assign(new Error("Google account is not authorized"),{status:403});
+  const token=randomBytes(32).toString("base64url"),stamp=now(),expires=new Date(Date.now()+hours*3600000).toISOString();db.prepare("INSERT INTO sessions(id,user_id,token_hash,expires_at,device,created_at,mfa_verified_at) VALUES(?,?,?,?,?,?,NULL)").run(randomUUID(),user.id,hashToken(token),expires,String(device).slice(0,200),stamp);auditSecurity(db,user.id,"google-sign-in","Signed in with Google");return {token,expiresAt:expires,user};
 }
 
 export function authenticate(token,db=getDatabase()){

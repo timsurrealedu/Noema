@@ -25,7 +25,68 @@ export function createNotification(input,db=getDatabase(),workspaceId=null){cons
 export const listNotifications=(db=getDatabase(),workspaceId=null)=>db.prepare(`SELECT * FROM notifications${workspaceId?" WHERE workspace_id=?":""} ORDER BY created_at DESC LIMIT 200`).all(...(workspaceId?[workspaceId]:[]));
 export function readNotification(id,db=getDatabase(),workspaceId=null){const result=db.prepare(`UPDATE notifications SET read_at=? WHERE id=?${workspaceId?" AND workspace_id=?":""}`).run(now(),id,...(workspaceId?[workspaceId]:[]));if(!result.changes)throw Object.assign(new Error("Notification not found"),{status:404});return {ok:true}}
 export function readAllNotifications(db=getDatabase(),workspaceId=null){return {updated:db.prepare(`UPDATE notifications SET read_at=? WHERE read_at IS NULL${workspaceId?" AND workspace_id=?":""}`).run(now(),...(workspaceId?[workspaceId]:[])).changes}}
-export function deliverDueReminders(date=new Date(),db=getDatabase()){const due=date.toISOString(),sent=[];db.exec("BEGIN IMMEDIATE");try{for(const [table,kind] of [["tasks","task"],["events","event"]])for(const row of db.prepare(`SELECT id,title,reminder_at,workspace_id FROM ${table} WHERE reminder_at<=? AND reminder_sent_at IS NULL ${table==="tasks"?"AND completed=0 AND archived=0":""} ORDER BY reminder_at LIMIT 100`).all(due)){if(db.prepare(`UPDATE ${table} SET reminder_sent_at=? WHERE id=? AND reminder_sent_at IS NULL`).run(due,row.id).changes){sent.push(createNotification({kind:`${kind}-reminder`,title:row.title,body:`Reminder scheduled for ${row.reminder_at}`},db,row.workspace_id))}}db.exec("COMMIT");return sent}catch(error){db.exec("ROLLBACK");throw error}}
+export function deliverDueReminders(date=new Date(),db=getDatabase()){
+  const due=date.toISOString(),sent=[];
+  db.exec("BEGIN IMMEDIATE");
+  try{
+    for(const [table,kind] of [["tasks","task"],["events","event"]]){
+      const query = table === "tasks"
+        ? `SELECT id,title,reminder_at,scheduled_start_at,due_at,workspace_id FROM tasks WHERE reminder_at<=? AND reminder_sent_at IS NULL AND completed=0 AND archived=0 ORDER BY reminder_at LIMIT 100`
+        : `SELECT id,title,reminder_at,start_at,workspace_id FROM events WHERE reminder_at<=? AND reminder_sent_at IS NULL AND deleted_at IS NULL ORDER BY reminder_at LIMIT 100`;
+
+      for(const row of db.prepare(query).all(due)){
+        const targetIso = table === "tasks" ? (row.scheduled_start_at || row.due_at) : row.start_at;
+        const targetMs = targetIso ? new Date(targetIso).getTime() : null;
+        const currentReminderMs = new Date(row.reminder_at).getTime();
+
+        let minutesBefore = targetMs && !Number.isNaN(targetMs) ? Math.round((targetMs - currentReminderMs) / 60000) : null;
+        let bodyText = "";
+        if (minutesBefore !== null && minutesBefore > 0) {
+          bodyText = `Starting in ${minutesBefore} minute${minutesBefore === 1 ? "" : "s"}: ${row.title}`;
+        } else if (minutesBefore === 0) {
+          bodyText = `Starting now: ${row.title}`;
+        } else {
+          bodyText = `Reminder: ${row.title}`;
+        }
+
+        let nextReminderIso = null;
+        if (targetMs) {
+          const intervals = [60, 30, 5, 0];
+          const nextInterval = intervals.find(m => (targetMs - m * 60000) > (currentReminderMs + 1000));
+          if (nextInterval !== undefined) {
+            nextReminderIso = new Date(targetMs - nextInterval * 60000).toISOString();
+          }
+        }
+
+        if (nextReminderIso) {
+          db.prepare(`UPDATE ${table} SET reminder_at=? WHERE id=?`).run(nextReminderIso, row.id);
+          sent.push(createNotification({
+            kind: `${kind}-reminder`,
+            title: row.title,
+            body: bodyText,
+            relatedType: kind,
+            relatedId: row.id
+          }, db, row.workspace_id));
+        } else {
+          if (db.prepare(`UPDATE ${table} SET reminder_sent_at=? WHERE id=? AND reminder_sent_at IS NULL`).run(due, row.id).changes) {
+            sent.push(createNotification({
+              kind: `${kind}-reminder`,
+              title: row.title,
+              body: bodyText,
+              relatedType: kind,
+              relatedId: row.id
+            }, db, row.workspace_id));
+          }
+        }
+      }
+    }
+    db.exec("COMMIT");
+    return sent;
+  } catch(error){
+    db.exec("ROLLBACK");
+    throw error;
+  }
+}
 export function savePushSubscription(input,db=getDatabase()){const endpoint=text(input.endpoint,"endpoint",4000),keys=input.keys&&typeof input.keys==="object"?input.keys:{};if(!endpoint.startsWith("https://"))throw new Error("Push endpoint must use HTTPS");const id=randomUUID(),time=now();db.prepare("INSERT INTO push_subscriptions(id,endpoint,keys_json,created_at,updated_at) VALUES(?,?,?,?,?) ON CONFLICT(endpoint) DO UPDATE SET keys_json=excluded.keys_json,updated_at=excluded.updated_at").run(id,endpoint,JSON.stringify(keys),time,time);return {ok:true}}
 export function deletePushSubscription(endpoint,db=getDatabase()){if(typeof endpoint!=="string"||!endpoint.startsWith("https://"))throw new Error("Valid push endpoint required");return {deleted:db.prepare("DELETE FROM push_subscriptions WHERE endpoint=?").run(endpoint).changes}}
 

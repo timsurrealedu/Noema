@@ -1,8 +1,11 @@
 "use client";
 
+import {createId} from "../lib/id";
+
 import {FormEvent,useEffect,useState} from "react";
 import {ArrowClockwise,ArrowLeft,ArrowRight,Circle,Clock,Copy,Lightning,Pause,PencilSimple,Play,Plus,Trash,Warning} from "@phosphor-icons/react";
 import {ModuleShell} from "../components/ModuleShell";
+import {useActionDialog} from "../components/ActionDialog";
 import {AutomationBuilder,type Draft,type Step} from "./AutomationBuilder";
 
 type Automation={id:string;name:string;trigger_kind:"manual"|"schedule"|"capture";schedule:string|null;action_kind:"notification"|"skill";config_json:string;enabled:number;last_run_at:string|null;version:number};
@@ -18,6 +21,7 @@ const payload=(draft:Draft)=>({id:draft.id,version:draft.version,name:draft.name
 const editDraft=(item:Automation):Draft=>{const config=JSON.parse(item.config_json),steps=config.steps?.map((step:{kind:string;config:object})=>stepDraft(step.kind,step.config))||[stepDraft(item.action_kind,config)];return {id:item.id,version:item.version,name:item.name,triggerKind:item.trigger_kind,schedule:item.schedule||"",conditions:config.conditions||[],steps,enabled:!!item.enabled}};
 
 export default function AutomationsPage(){
+  const {requestAction,dialog}=useActionDialog();
   const [automations,setAutomations]=useState<Automation[]>([]),[selected,setSelected]=useState<Automation|null>(null),[runs,setRuns]=useState<Run[]>([]),[metrics,setMetrics]=useState<Metrics|null>(null),[skills,setSkills]=useState<{id:string;description:string}[]>([]);
   const [tab,setTab]=useState("Runs"),[editing,setEditing]=useState(false),[draft,setDraft]=useState<Draft>(empty),[preview,setPreview]=useState<Preview|null>(null),[busy,setBusy]=useState(false),[error,setError]=useState("");
   const load=()=>request("/api/v1/automations").then(data=>{setAutomations(data.automations);setSelected(current=>current?data.automations.find((item:Automation)=>item.id===current.id)||null:null)}).catch(reason=>setError(reason.message));
@@ -27,17 +31,17 @@ export default function AutomationsPage(){
   useEffect(()=>{if(!selected)return;const source=new EventSource(`/api/v1/automations/${selected.id}/events`);source.addEventListener("snapshot",event=>{const data=JSON.parse((event as MessageEvent).data);setRuns(data.runs);setMetrics(data.metrics)});return()=>source.close()},[selected?.id]);
   function openEditor(value:Draft){setDraft(value);setPreview(null);setError("");setEditing(true)}
   async function inspect(){setBusy(true);setError("");try{setPreview(await request("/api/v1/automations/preview",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload(draft))}))}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
-  async function save(event:FormEvent){event.preventDefault();setBusy(true);setError("");try{await request("/api/v1/automations",{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":crypto.randomUUID()},body:JSON.stringify(payload(draft))});setEditing(false);setDraft(empty);setPreview(null);await load()}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
+  async function save(event:FormEvent){event.preventDefault();setBusy(true);setError("");try{await request("/api/v1/automations",{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":createId()},body:JSON.stringify(payload(draft))});setEditing(false);setDraft(empty);setPreview(null);await load()}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
   async function duplicate(item:Automation){const copy=editDraft(item);delete copy.id;delete copy.version;copy.name=`${copy.name} copy`;copy.enabled=false;openEditor(copy)}
-  async function remove(item:Automation){if(!confirm(`Delete “${item.name}” and its run history?`))return;setBusy(true);setError("");try{await request(`/api/v1/automations/${item.id}?version=${item.version}`,{method:"DELETE"});setSelected(null);await load()}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
-  async function toggle(item:Automation){setBusy(true);setError("");try{await request("/api/v1/automations",{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":crypto.randomUUID()},body:JSON.stringify({...payload(editDraft(item)),enabled:!item.enabled})});await load()}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
+  async function remove(item:Automation){if(!await requestAction({title:"Delete automation?",detail:`“${item.name}” and its run history will be removed.`,confirmLabel:"Delete",danger:true}))return;setBusy(true);setError("");try{await request(`/api/v1/automations/${item.id}?version=${item.version}`,{method:"DELETE"});setSelected(null);await load()}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
+  async function toggle(item:Automation){setBusy(true);setError("");try{await request("/api/v1/automations",{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":createId()},body:JSON.stringify({...payload(editDraft(item)),enabled:!item.enabled})});await load()}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
   async function run(item:Automation,test=false){setBusy(true);setError("");try{await request(`/api/v1/automations/${item.id}/${test?"test":"runs"}`,{method:"POST"});await Promise.all([load(),loadRuns(item.id)])}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
   async function runAction(runId:string,action:"cancel"|"retry"){setBusy(true);setError("");try{await request(`/api/v1/automations/${selected!.id}/runs/${runId}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({action})});await loadRuns(selected!.id)}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
 
   const editor=<><AutomationBuilder draft={draft} skills={skills} busy={busy} onChange={value=>{setDraft(value);setPreview(null)}} onPreview={()=>void inspect()} onClose={()=>setEditing(false)} onSubmit={save}/>{preview&&<section className="automation-preview" aria-live="polite"><strong>Preview</strong><span>{preview.trigger}</span><ArrowRight/><span>{preview.actions.join(" → ")}</span><em>{preview.enabled?"Enabled":"Saved paused"}</em></section>}</>;
 
   if(editing)return <ModuleShell active="Automations" title="Automation builder">{error&&<div className="warning-text" role="alert"><Warning/>{error}</div>}{editor}</ModuleShell>;
-  if(selected)return <ModuleShell active="Automations" title={selected.name} action={<button className="secondary" onClick={()=>setSelected(null)}><ArrowLeft/>Automations</button>}>
+  if(selected)return <ModuleShell active="Automations" title={selected.name} action={<button className="secondary" onClick={()=>setSelected(null)}><ArrowLeft/>Automations</button>}>{dialog}
     {error&&<div className="warning-text" role="alert"><Warning/>{error}</div>}<div className="workspace-head"><div><h2>{selected.name}</h2><p>{selected.action_kind} · {selected.trigger_kind}{selected.schedule?` · ${selected.schedule}`:""}</p></div><span className={`status-live ${selected.enabled?"active":""}`}><Circle weight="fill"/>{selected.enabled?"Enabled":"Paused"}</span></div>
     <nav className="workspace-tabs" aria-label="Automation details">{["Runs","Steps","Logs","Metrics","Definition"].map(item=><button className={tab===item?"active":""} onClick={()=>setTab(item)} key={item}>{item}</button>)}</nav><div className="automation-workspace"><section>
       {tab==="Runs"&&(runs.length?runs.map(run=><article className="workspace-row" key={run.id}><Lightning/><span><strong>{run.id.slice(0,8)}</strong><small>{when(run.started_at)}</small></span><div className="run-actions"><em>{run.state}</em>{run.job_id&&["queued","running","cancelling"].includes(run.state)&&<button disabled={busy||run.state==="cancelling"} onClick={()=>void runAction(run.id,"cancel")}>Cancel</button>}{run.job_id&&run.state==="failed"&&<button disabled={busy} onClick={()=>void runAction(run.id,"retry")}><ArrowClockwise/>Retry</button>}</div></article>):<div className="empty-state"><Clock/><h3>No runs yet</h3><p>Run this automation manually or wait for its trigger.</p></div>)}

@@ -2,14 +2,14 @@ import {randomUUID} from "node:crypto";
 import {getDatabase} from "./db.mjs";
 
 const now=()=>new Date().toISOString();
-export function enqueueJob(kind,input,db=getDatabase(),workspaceId=null){const id=randomUUID(),time=now();db.prepare("INSERT INTO jobs(id,kind,state,input_json,created_at,updated_at,workspace_id) VALUES(?,?,?,?,?,?,?)").run(id,kind,"queued",JSON.stringify(input),time,time,workspaceId);addJobEvent(id,"queued",{},db);return id}
+export function enqueueJob(kind,input,db=getDatabase(),workspaceId=null,options={}){const dedupeKey=options.dedupeKey||null;if(dedupeKey){const existing=db.prepare("SELECT id FROM jobs WHERE dedupe_key=? AND state IN ('queued','claimed','running')").get(dedupeKey);if(existing)return existing.id}const id=randomUUID(),time=now(),profile=options.profile||input.profile||"fast";db.prepare("INSERT INTO jobs(id,kind,state,input_json,created_at,updated_at,workspace_id,dedupe_key,next_attempt_at,profile,max_attempts) VALUES(?,?,?,?,?,?,?,?,?,?,?)").run(id,kind,"queued",JSON.stringify({...input,profile}),time,time,workspaceId,dedupeKey,time,profile,options.maxAttempts||3);addJobEvent(id,"queued",{profile},db);return id}
 export function addJobEvent(id,type,data,db=getDatabase()){db.prepare("INSERT INTO job_events(job_id,type,data_json,created_at) VALUES(?,?,?,?)").run(id,type,JSON.stringify(data),now())}
 export function claimJob(kinds,leaseSeconds=60,db=getDatabase()){
   const placeholders=kinds.map(()=>"?").join(",");db.exec("BEGIN IMMEDIATE");
   try{
     for(;;){
       const time=now();
-      const job=db.prepare(`SELECT * FROM jobs WHERE kind IN (${placeholders}) AND (state='queued' OR (state IN ('claimed','running') AND lease_until<?)) ORDER BY created_at LIMIT 1`).get(...kinds,time);
+      const job=db.prepare(`SELECT * FROM jobs WHERE kind IN (${placeholders}) AND ((state='queued' AND (next_attempt_at IS NULL OR next_attempt_at<=?)) OR (state IN ('claimed','running') AND lease_until<?)) ORDER BY created_at LIMIT 1`).get(...kinds,time,time);
       if(!job){db.exec("COMMIT");return null}
       if(job.cancel_requested){db.prepare("UPDATE jobs SET state='cancelled',lease_until=NULL,updated_at=?,version=version+1 WHERE id=?").run(time,job.id);addJobEvent(job.id,"cancelled",{},db);continue}
       const lease=new Date(Date.now()+leaseSeconds*1000).toISOString(),reclaimed=job.state!=="queued";
@@ -20,7 +20,7 @@ export function finishJob(id,result,db=getDatabase()){const changed=db.prepare("
 export function failJob(id,error,db=getDatabase()){
   const job=db.prepare("SELECT attempts,max_attempts FROM jobs WHERE id=?").get(id),attempts=(job?.attempts||0)+1,max=job?.max_attempts||3,message=String(error).slice(0,4000);
   if(error?.code==="JOB_CANCELLED"||db.prepare("SELECT cancel_requested FROM jobs WHERE id=?").get(id)?.cancel_requested){db.prepare("UPDATE jobs SET state='cancelled',attempts=?,error=NULL,lease_until=NULL,updated_at=?,version=version+1 WHERE id=?").run(attempts,now(),id);addJobEvent(id,"cancelled",{attempt:attempts},db);return}
-  if(job&&attempts<max){db.prepare("UPDATE jobs SET state='queued',attempts=?,error=?,lease_until=NULL,updated_at=?,version=version+1 WHERE id=?").run(attempts,message,now(),id);addJobEvent(id,"retry-scheduled",{attempt:attempts,maxAttempts:max,message},db)}
+  if(job&&attempts<max){const nextAttemptAt=new Date(Date.now()+Math.min(30000,1000*2**(attempts-1))).toISOString();db.prepare("UPDATE jobs SET state='queued',attempts=?,error=?,lease_until=NULL,next_attempt_at=?,updated_at=?,version=version+1 WHERE id=?").run(attempts,message,nextAttemptAt,now(),id);addJobEvent(id,"retry-scheduled",{attempt:attempts,maxAttempts:max,nextAttemptAt,message},db)}
   else{db.prepare("UPDATE jobs SET state='failed',attempts=?,error=?,lease_until=NULL,updated_at=?,version=version+1 WHERE id=?").run(attempts,message,now(),id);addJobEvent(id,"failed",{message},db)}
 }
 export function cancelJob(id,db=getDatabase(),workspaceId=null){const job=db.prepare(`SELECT state FROM jobs WHERE id=?${workspaceId?" AND workspace_id=?":""}`).get(id,...(workspaceId?[workspaceId]:[]));if(!job||!["queued","claimed","running"].includes(job.state))return false;const state=job.state==="queued"?"cancelled":job.state;db.prepare(`UPDATE jobs SET cancel_requested=1,state=?,lease_until=CASE WHEN ?='cancelled' THEN NULL ELSE lease_until END,updated_at=?,version=version+1 WHERE id=?${workspaceId?" AND workspace_id=?":""}`).run(state,state,now(),id,...(workspaceId?[workspaceId]:[]));addJobEvent(id,state==="cancelled"?"cancelled":"cancel-requested",{},db);return true}

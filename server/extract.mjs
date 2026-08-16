@@ -7,6 +7,7 @@ import {runGeminiMultimodal} from "./ai.mjs";
 
 const execFileAsync=promisify(execFile);
 const maxExtractedChars=20000;
+export const maxMultimodalBytes=10*1024*1024;
 function stripXml(xml){return xml.replace(/<[^>]+>/g,"").replace(/&lt;/g,"<").replace(/&gt;/g,">").replace(/&amp;/g,"&").replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&nbsp;/g," ").replace(/\s+/g," ").trim()}
 
 /**
@@ -32,6 +33,7 @@ export async function extractText(asset,config=loadConfig(),fetcher=fetch){
     }catch{return null}
   }
   if((asset.mime.startsWith("image/")||asset.mime.startsWith("audio/"))&&config.geminiApiKey){
+    if(asset.size>maxMultimodalBytes)return null;
     try{
       const base64=await readFile(path,"base64");
       const prompt=asset.mime.startsWith("image/")?"Extract all visible text from this image.":"Transcribe the spoken content from this audio file.";

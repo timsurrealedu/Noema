@@ -1,5 +1,7 @@
 "use client";
 
+import {createId} from "../lib/id";
+
 import {FormEvent,useEffect,useState} from "react";
 import {ArrowLeft,BookOpen,Brain,CalendarBlank,Camera,Cards,FileText,Pen,Plus,UploadSimple,Warning} from "@phosphor-icons/react";
 import {ModuleShell} from "../components/ModuleShell";
@@ -10,7 +12,7 @@ type Card={id:string;course_id:string|null;front:string;back:string;due_at:strin
 type Question={id:string;prompt:string;choices:string[]};type Quiz={id:string;course_id:string|null;title:string;questions:Question[];version:number};
 type Workspace="dashboard"|"course"|"review"|"quiz"|"handwriting"|"upload";
 async function request(path:string,init?:RequestInit){const response=await fetch(path,init),data=await response.json();if(!response.ok)throw new Error(data.error?.message||"Request failed");return data}
-const post=(path:string,body:unknown)=>request(path,{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":crypto.randomUUID()},body:JSON.stringify(body)});
+const post=(path:string,body:unknown)=>request(path,{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":createId()},body:JSON.stringify(body)});
 
 export default function StudyPage(){
   const [workspace,setWorkspace]=useState<Workspace>("dashboard"),[courses,setCourses]=useState<Course[]>([]),[assignments,setAssignments]=useState<Assignment[]>([]),[cards,setCards]=useState<Card[]>([]),[quizzes,setQuizzes]=useState<Quiz[]>([]),[quiz,setQuiz]=useState<Quiz|null>(null),[answers,setAnswers]=useState<Record<string,number>>({}),[score,setScore]=useState<number|null>(null),[loading,setLoading]=useState(true),[error,setError]=useState(""),[hw,setHw]=useState({extracting:false,text:"",equations:[] as {latex:string;confidence:string}[],error:""});

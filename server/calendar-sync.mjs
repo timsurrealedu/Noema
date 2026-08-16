@@ -32,7 +32,8 @@ const normalized = (item, calendar) => {
     const allDay = !!item.start?.date,
         timezone = item.start?.timeZone || item.end?.timeZone || calendar.timezone || 'UTC',
         startAt = allDay ? midnight(item.start.date, timezone) : new Date(item.start?.dateTime).toISOString(),
-        endAt = allDay ? midnight(item.end.date, timezone) : new Date(item.end?.dateTime).toISOString();
+        rawEnd = allDay ? midnight(item.end.date, timezone) : new Date(item.end?.dateTime).toISOString(),
+        endAt = allDay && Date.parse(rawEnd) <= Date.parse(startAt) ? new Date(Date.parse(startAt) + 86400000).toISOString() : rawEnd;
     return {
         title: String(item.summary || 'Untitled event'),
         startAt,
@@ -162,7 +163,9 @@ async function pullCalendar(account, calendar, access, db, fetcher, userId, reco
     db.prepare(`INSERT INTO google_calendar_sync(account_id,calendar_id,sync_token,last_synced_at,last_error) VALUES(?,?,?,?,NULL) ON CONFLICT(account_id,calendar_id) DO UPDATE SET sync_token=excluded.sync_token,last_synced_at=excluded.last_synced_at,last_error=NULL`).run(account.id, calendar.calendar_id, nextSync, now());
     return counts;
 }
-export async function pullGoogleCalendar(userId, config = loadConfig(), db = getDatabase(), fetcher = fetch) {
+export async function pullGoogleCalendar(actor, config = loadConfig(), db = getDatabase(), fetcher = fetch) {
+    const userId = typeof actor === 'object' ? actor.id : actor,
+        workspaceId = typeof actor === 'object' ? actor.workspaceId || actor.workspace?.id || null : null;
     const account = db.prepare('SELECT * FROM google_accounts WHERE user_id=?').get(userId);
     if (!account) throw Object.assign(new Error('Google Calendar is not connected'), { status: 409 });
     const calendars = db.prepare('SELECT * FROM google_calendars WHERE account_id=? AND selected=1').all(account.id);
@@ -177,7 +180,7 @@ export async function pullGoogleCalendar(userId, config = loadConfig(), db = get
         };
     for (const calendar of calendars) {
         try {
-            const counts = await pullCalendar(account, calendar, access, db, fetcher, userId);
+            const counts = await pullCalendar(account, calendar, access, db, fetcher, { id: userId, workspaceId });
             for (const key of Object.keys(total)) total[key] += counts[key];
         } catch (error) {
             db.prepare(`INSERT INTO google_calendar_sync(account_id,calendar_id,last_error) VALUES(?,?,?) ON CONFLICT(account_id,calendar_id) DO UPDATE SET last_error=excluded.last_error`).run(account.id, calendar.calendar_id, String(error.message).slice(0, 500));
@@ -231,24 +234,32 @@ export async function pushGoogleCalendar(userId, config = loadConfig(), db = get
             continue;
         }
         const base = `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(mapping.calendar_id)}/events`,
-            url = write.operation === 'create' ? base : `${base}/${encodeURIComponent(mapping.google_event_id)}`,
+            occurrence = write.operation === 'instance' ? JSON.parse(write.payload_json) : null;
+        let instance;
+        if (occurrence) {
+            const response = await fetcher(`${base}/${encodeURIComponent(mapping.google_event_id)}/instances`, { headers: { Authorization: `Bearer ${access}` } });
+            if (!response.ok) { db.prepare("UPDATE calendar_sync_writes SET state='retry',next_attempt_at=?,last_error=?,updated_at=? WHERE id=?").run(new Date(Date.now()+60000).toISOString(),`Could not load Google instances (${response.status})`,now(),write.id);counts.retried++;continue; }
+            instance = (await response.json()).items?.find(item => new Date(item.originalStartTime?.dateTime || `${item.originalStartTime?.date}T00:00:00Z`).toISOString() === occurrence.originalStartAt);
+            if (!instance) { db.prepare("UPDATE calendar_sync_writes SET state='failed',last_error='Google instance is missing',updated_at=? WHERE id=?").run(now(),write.id);continue; }
+        }
+        const url = write.operation === 'create' ? base : `${base}/${encodeURIComponent(occurrence ? instance.id : mapping.google_event_id)}`,
             headers = {
                 Authorization: `Bearer ${access}`,
                 'Content-Type': 'application/json',
-                ...(mapping.google_etag && write.operation !== 'create'
+                ...((occurrence ? instance.etag : mapping.google_etag) && write.operation !== 'create'
                     ? {
-                          'If-Match': mapping.google_etag,
+                          'If-Match': occurrence ? instance.etag : mapping.google_etag,
                       }
                     : {}),
             },
             result = await fetcher(url, {
-                method: write.operation === 'create' ? 'POST' : write.operation === 'delete' ? 'DELETE' : 'PATCH',
+                method: write.operation === 'create' ? 'POST' : write.operation === 'delete' ? 'DELETE' : occurrence ? 'PUT' : 'PATCH',
                 headers,
                 body:
                     write.operation === 'delete'
                         ? undefined
                         : JSON.stringify({
-                              ...googlePayload(row),
+                              ...googlePayload(occurrence ? {...row,start_at:occurrence.startAt,end_at:occurrence.endAt,all_day:occurrence.allDay?1:0} : row),
                               ...(write.operation === 'create'
                                   ? {
                                         id: mapping.google_event_id,
@@ -284,7 +295,8 @@ export async function pushGoogleCalendar(userId, config = loadConfig(), db = get
                           status: 'cancelled',
                       }
                     : await result.json();
-        db.prepare('UPDATE calendar_event_mappings SET google_event_id=?,google_etag=?,last_local_version=?,google_snapshot_json=?,tombstone=?,last_synced_at=? WHERE id=?').run(remote.id || mapping.google_event_id, remote.etag || mapping.google_etag, write.local_version, JSON.stringify(remote), write.operation === 'delete' ? 1 : 0, now(), mapping.id);
+        if (occurrence) db.prepare("UPDATE event_occurrences SET google_event_id=?,google_etag=?,updated_at=? WHERE event_id=? AND original_start_at=?").run(remote.id,remote.etag,now(),row.id,occurrence.originalStartAt);
+        else db.prepare('UPDATE calendar_event_mappings SET google_event_id=?,google_etag=?,last_local_version=?,google_snapshot_json=?,tombstone=?,last_synced_at=? WHERE id=?').run(remote.id || mapping.google_event_id, remote.etag || mapping.google_etag, write.local_version, JSON.stringify(remote), write.operation === 'delete' ? 1 : 0, now(), mapping.id);
         db.prepare("UPDATE calendar_sync_writes SET state='completed',last_error=NULL,updated_at=? WHERE id=?").run(now(), write.id);
         counts.completed++;
     }
