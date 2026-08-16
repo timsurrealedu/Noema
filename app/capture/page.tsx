@@ -80,7 +80,7 @@ export default function CaptureInbox(){
         </>:<div className="inspector-empty"><Sparkle/><h3>Select a capture</h3><p>Its source, interpretation, and actions will appear here.</p></div>}
       </aside>
     </div>
-    {!detailOpen&&<div className="mobile-action-dock capture-mobile-dock"><Link className="primary" href="/#capture"><Plus/>Quick capture</Link></div>}
+    {!detailOpen&&<div className="mobile-action-dock capture-mobile-dock"><Link className="primary" href="/#capture"><Plus/><span>Quick capture</span></Link></div>}
     {toast&&<div className="undo-toast" role="status"><CheckCircle/><span>{toast.message}</span><button onClick={undo}>Undo</button><button aria-label="Dismiss notification" onClick={()=>setToast(null)}><X/></button></div>}
   </ModuleShell>
 }

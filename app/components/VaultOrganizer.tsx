@@ -146,14 +146,71 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
     }catch(reason){setError((reason as Error).message)}finally{setDragItem(null);setBusy(false)}
   }
 
-  const current=tree&&!folder.startsWith("@")?findFolder(tree,folder):null,source=sources.find(item=>item.id===sourceId),views:{id:string;label:string;icon:typeof House}[]=[{id:"@all",label:"All notes",icon:House},{id:"@favorites",label:"Favorites",icon:Star},{id:"@tags",label:"Tags",icon:Tag},{id:"@local",label:"Local",icon:FileText},{id:"@trash",label:"Trash",icon:Trash}],specialNotes=folder==="@all"?notes.filter(note=>!note.trashed):folder==="@favorites"?notes.filter(note=>note.favorite&&!note.trashed):folder==="@tags"?notes.filter(note=>note.tags.length&&!note.trashed):folder==="@local"?notes.filter(note=>!note.sourceId&&!note.trashed):folder==="@trash"?notes.filter(note=>note.trashed):[],visible=(folder.startsWith("@")?specialNotes.map(note=>({name:`${note.title}.md`,path:note.relativePath||"Local",noteId:note.id,syncState:note.syncState||"local"})):current?.notes||[]).filter(item=>`${item.name} ${item.path}`.toLowerCase().includes(query.toLowerCase())),title=views.find(view=>view.id===folder)?.label||folder.split("/").at(-1)||source?.name;
+  const current=tree&&!folder.startsWith("@")?findFolder(tree,folder):null,source=sources.find(item=>item.id===sourceId),views:{id:string;label:string;icon:typeof House}[]=[{id:"@all",label:"All notes",icon:House},{id:"@favorites",label:"Favorites",icon:Star},{id:"@tags",label:"Tags",icon:Tag},{id:"@local",label:"Local",icon:FileText},{id:"@trash",label:"Trash",icon:Trash}],specialNotes=folder==="@all"?notes.filter(note=>!note.trashed):folder==="@favorites"?notes.filter(note=>note.favorite&&!note.trashed):folder==="@tags"?notes.filter(note=>note.tags.length&&!note.trashed):folder==="@local"?notes.filter(note=>!note.sourceId&&!note.trashed):folder==="@trash"?notes.filter(note=>note.trashed):[];
+
+  const queryLower=query.trim().toLowerCase();
+  const visible=(folder.startsWith("@")?specialNotes.map(note=>({name:`${note.title}.md`,path:note.relativePath||"Local",noteId:note.id,syncState:note.syncState||"local"})):current?.notes||[]).filter(item=>{
+    if(!queryLower)return true;
+    const note=noteMap.get(item.noteId);
+    const text=`${item.name} ${item.path} ${note?.title||""} ${note?.excerpt||""} ${note?.tags?.join(" ")||""} ${note?.content||""}`.toLowerCase();
+    return text.includes(queryLower);
+  });
+
+  const title=views.find(view=>view.id===folder)?.label||folder.split("/").at(-1)||source?.name;
+  const isRootView=!folder&&!query;
+  const isVaultNameHeading=!folder||title===source?.name;
+  const showSubnavTabs=!folder||folder.startsWith("@")||title===source?.name;
+  const folderCount=current?.folders.length||0;
+  const noteCount=visible.length;
+
+  const recentNotes=useMemo(()=>{
+    return notes.filter(n=>!n.trashed).slice(0,4);
+  },[notes]);
+
+  const draftNotes=useMemo(()=>{
+    return notes.filter(n=>!n.trashed&&(n.tags?.includes("draft")||n.excerpt?.toLowerCase().includes("draft")||(n as any).status==="review"));
+  },[notes]);
+
+  const [activeTab,setActiveTab]=useState<"recent"|"drafts"|"favorites"|"folders">("recent");
+
+  const formatShortDate=(timeStr?:string)=>{
+    if(!timeStr)return "";
+    if(timeStr==="Today"||timeStr==="Yesterday")return timeStr;
+    try{
+      const d=new Date(timeStr);
+      if(isNaN(d.getTime()))return timeStr;
+      const now=new Date();
+      const diffDays=Math.floor((now.getTime()-d.getTime())/(1000*60*60*24));
+      if(diffDays===0)return "Today";
+      if(diffDays===1)return "Yesterday";
+      if(diffDays>0&&diffDays<7)return `${diffDays}d ago`;
+      return d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+    }catch{
+      return timeStr;
+    }
+  };
+
+  const cleanExcerpt=(excerpt?:string,noteTitle?:string):string=>{
+    if(!excerpt)return "";
+    let text=excerpt
+      .replace(/^---[\s\S]*?---/g,"")
+      .replace(/^tags:\s*\[.*?\]/g,"")
+      .replace(/^tags:\s*.*$/gm,"")
+      .replace(/^title:\s*.*$/gm,"")
+      .replace(/^#+\s*.*$/gm,"")
+      .trim();
+    if(noteTitle&&text.toLowerCase().startsWith(noteTitle.toLowerCase())){
+      text=text.slice(noteTitle.length).replace(/^[\s:—–\-#]+/,"").trim();
+    }
+    return text;
+  };
 
   return (
     <section className={`obsidian-vault ${drawer?"drawer-open":""}`} onDragOver={e=>e.preventDefault()} onDrop={()=>setDragTarget(null)}>
       <header>
         <button className="icon-button" aria-label={drawer?"Collapse folder sidebar":"Expand folder sidebar"} aria-expanded={drawer} suppressHydrationWarning title={drawer?"Collapse folders":"Expand folders"} onClick={()=>setDrawer(value=>{const next=!value;localStorage.setItem("noema-vault-drawer",next?"open":"closed");return next})}><SidebarSimple/></button>
         <select aria-label="Vault source" value={sourceId} onChange={event=>{setFolder("");setSourceId(event.target.value);void load(event.target.value)}}>{sources.map(item=><option value={item.id} key={item.id}>{item.name}</option>)}</select>
-        <label className="vault-organizer-search"><MagnifyingGlass/><span className="sr-only">Search vault</span><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search vault"/></label>
+        <label className="vault-organizer-search"><MagnifyingGlass/><span className="sr-only">Search vault</span><input value={query} onChange={event=>setQuery(event.target.value)} placeholder="Search content, tags, equations..."/></label>
         <div className="vault-organizer-actions">
           <button className={`secondary ${showGraph?"active":""}`} onClick={()=>setShowGraph(!showGraph)}><ShareNetwork/>Graph</button>
           <button className="secondary" disabled={Boolean(busy||!sourceId)} suppressHydrationWarning onClick={sync}><ArrowClockwise/>{busy?"Syncing…":"Sync"}</button>
@@ -165,15 +222,15 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
       {initialLoading?<div className="vault-loading" role="status" aria-live="polite"><span/><span/><span/><p>Loading vault…</p></div>:!sources.length?<div className="empty-state"><Folder/><h3>Connect your Obsidian vault</h3><p>Add its local path in Settings, then return here to browse the exact folder structure.</p><Link className="primary" href="/settings">Open Settings</Link></div>:(
         <div className="obsidian-vault-body">
           <aside className="obsidian-tree" aria-label="Vault folders">
-            <div className="vault-derived-views">{views.map(view=><button className={folder===view.id?"active":""} onClick={()=>{setShowGraph(false);setFolder(view.id)}} key={view.id}><view.icon/><span>{view.label}</span></button>)}</div>
-            <button className={`${!folder&&!showGraph?"active":""} ${dragTarget===""?"drag-over":""}`} onDragOver={e=>handleDragOver(e,"")} onDragLeave={handleDragLeave} onDrop={e=>handleDrop(e,"")} onClick={()=>{setShowGraph(false);setFolder("")}}><FolderOpen/><span>{source?.name}</span></button>
+            <div className="vault-derived-views">{views.map(view=><button className={folder===view.id?"active":""} onClick={()=>{setShowGraph(false);setFolder(view.id);if(view.id==="@favorites")setActiveTab("favorites")}} key={view.id}><view.icon/><span>{view.label}</span></button>)}</div>
+            <button className={`${!folder&&!showGraph?"active":""} ${dragTarget===""?"drag-over":""}`} onDragOver={e=>handleDragOver(e,"")} onDragLeave={handleDragLeave} onDrop={e=>handleDrop(e,"")} onClick={()=>{setShowGraph(false);setFolder("");setActiveTab("recent")}}><FolderOpen/><span>{source?.name}</span></button>
             {tree?.folders.map(item=><TreeFolder node={item} current={showGraph?"":folder} onSelect={path=>{setShowGraph(false);setFolder(path)}} onOpenNote={id=>onOpen(noteMap.get(id))} dragTarget={dragTarget} dragItem={dragItem} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} key={item.path}/>)}
           </aside>
           <main>
             {showGraph?<KnowledgeGraphView onOpenNote={id=>{const found=notes.find(item=>item.id===id||item.title===id);if(found)onOpen(found)}}/>:(
               <>
                 <nav className="vault-breadcrumbs" aria-label="Breadcrumb">
-                  <button className={dragTarget===""?"drag-over":""} onDragOver={e=>handleDragOver(e,"")} onDragLeave={handleDragLeave} onDrop={e=>handleDrop(e,"")} onClick={()=>setFolder("")}>{source?.name}</button>
+                  <button className={dragTarget===""?"drag-over":""} onDragOver={e=>handleDragOver(e,"")} onDragLeave={handleDragLeave} onDrop={e=>handleDrop(e,"")} onClick={()=>{setFolder("");setActiveTab("recent")}}>{source?.name}</button>
                   {!folder.startsWith("@")&&folder.split("/").filter(Boolean).map((part,index)=>{
                     const parentPath=folder.split("/").slice(0,index+1).join("/");
                     return (
@@ -184,49 +241,118 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
                     );
                   })}
                 </nav>
+
                 <div className="vault-folder-heading">
                   <div>
-                    <h2>{title}</h2>
-                    <p>{current?.folders.length||0} folders · {visible.length} notes</p>
+                    <h2>{isVaultNameHeading?"Knowledge Vault":title}</h2>
+                    <p>
+                      {folderCount===1?"1 folder":`${folderCount} folders`} · {noteCount===1?"1 note":`${noteCount} notes`}
+                      {draftNotes.length>0?` · ${draftNotes.length===1?"1 draft":`${draftNotes.length} drafts`} ready to review`:""}
+                    </p>
                   </div>
                 </div>
-                <div className="vault-folder-grid">
-                  {current?.folders.map(item=>(
-                    <button
-                      className={`vault-folder-card ${dragTarget===item.path?"drag-over":""} ${dragItem?.path===item.path?"dragging":""}`}
-                      draggable={!folder.startsWith("@")}
-                      onDragStart={e=>handleDragStart(e,{type:"folder",path:item.path,name:item.name})}
-                      onDragOver={e=>handleDragOver(e,item.path)}
-                      onDragLeave={handleDragLeave}
-                      onDrop={e=>handleDrop(e,item.path)}
-                      onClick={()=>setFolder(item.path)}
-                      key={item.path}
-                    >
-                      <Folder/>
-                      <span><strong>{item.name}</strong><small>{item.folders.length+item.notes.length} items</small></span>
-                      <CaretRight/>
-                    </button>
-                  ))}
-                  {visible.map(item=>{
-                    const note=noteMap.get(item.noteId);
-                    const isDraggingThis=dragItem?.path===item.path;
-                    return (
-                      <article className={`vault-file-card ${isDraggingThis?"dragging":""}`} draggable={!folder.startsWith("@")} onDragStart={e=>handleDragStart(e,{type:"note",path:item.path,name:item.name,noteId:item.noteId})} key={item.noteId}>
-                        <button onClick={()=>note&&onOpen(note)}><FileText/><span><strong>{item.name.replace(/\.md$/i,"")}</strong><small>{item.path}</small></span></button>
-                        <span className={`sync-dot ${item.syncState}`} title={item.syncState}/>
-                        <button aria-label={`Draw in ${item.name}`} disabled={Boolean(!note?.sourceId)} suppressHydrationWarning onClick={()=>note&&onOpen(note)}><PencilSimple/></button>
-                        {!folder.startsWith("@")&&<><button aria-label={`Move ${item.name}`} onClick={()=>move(item)}><Folder/></button><button aria-label={`Trash ${item.name}`} onClick={()=>trash(item)}><Trash/></button></>}
-                      </article>
-                    );
-                  })}
-                  {!current?.folders.length&&!visible.length&&<div className="empty-state"><Folder/><h3>No notes here</h3><p>{query?"Try a broader search.":"Create a note or folder here to begin."}</p>{!query&&!folder.startsWith("@")&&<button className="primary" onClick={()=>void create()}>Create note</button>}</div>}
-                </div>
+
+                {showSubnavTabs&&(
+                  <div className="vault-subnav-tabs" role="tablist" aria-label="Vault quick views">
+                    <button role="tab" aria-selected={activeTab==="recent"&&!folder} className={activeTab==="recent"&&!folder?"active":""} onClick={()=>{setFolder("");setActiveTab("recent")}}>Recent</button>
+                    <button role="tab" aria-selected={activeTab==="folders"&&!folder} className={activeTab==="folders"&&!folder?"active":""} onClick={()=>{setFolder("");setActiveTab("folders")}}>Folders</button>
+                    <button role="tab" aria-selected={folder==="@favorites"||activeTab==="favorites"} className={folder==="@favorites"||activeTab==="favorites"?"active":""} onClick={()=>{setFolder("@favorites");setActiveTab("favorites")}}>Favorites</button>
+                    <button role="tab" aria-selected={activeTab==="drafts"&&!folder} className={activeTab==="drafts"&&!folder?"active":""} onClick={()=>{setFolder("");setActiveTab("drafts")}}>Drafts {draftNotes.length>0&&<span className="tab-count">{draftNotes.length}</span>}</button>
+                  </div>
+                )}
+
+                {isRootView&&(activeTab==="recent"||activeTab==="drafts")&&draftNotes.length>0&&(
+                  <section className="vault-home-section">
+                    <div className="vault-section-title">
+                      <h3>Drafts & AI Captures</h3>
+                      <span className="vault-section-badge warning">Review</span>
+                    </div>
+                    <div className="vault-recent-grid">
+                      {draftNotes.map(n=>(
+                        <button className="vault-recent-card draft-card" onClick={()=>onOpen(n)} key={n.id}>
+                          <div className="recent-card-head">
+                            <FileText/>
+                            <strong>{n.title}</strong>
+                          </div>
+                          {cleanExcerpt(n.excerpt,n.title)&&<p>{cleanExcerpt(n.excerpt,n.title)}</p>}
+                          <div className="recent-card-meta">
+                            <span className="draft-pill">Draft · Ready to optimize</span>
+                            {n.time&&<time>{formatShortDate(n.time)}</time>}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {isRootView&&activeTab==="recent"&&recentNotes.length>0&&(
+                  <section className="vault-home-section">
+                    <div className="vault-section-title">
+                      <h3>Recent Activity</h3>
+                    </div>
+                    <div className="vault-recent-grid">
+                      {recentNotes.map(n=>(
+                        <button className="vault-recent-card" onClick={()=>onOpen(n)} key={n.id}>
+                          <div className="recent-card-head">
+                            <FileText/>
+                            <strong>{n.title}</strong>
+                          </div>
+                          {cleanExcerpt(n.excerpt,n.title)&&<p>{cleanExcerpt(n.excerpt,n.title)}</p>}
+                          <div className="recent-card-meta">
+                            <span>{n.tags?.slice(0,2).map(t=><span className="recent-tag" key={t}>#{t} </span>)}</span>
+                            {n.time&&<time>Updated {formatShortDate(n.time)}</time>}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </section>
+                )}
+
+                {(activeTab==="folders"||!isRootView||activeTab==="favorites"||folder==="@favorites")&&(
+                  <>
+                    {isRootView&&activeTab==="folders"&&<div className="vault-section-title"><h3>Folders & Files</h3></div>}
+                    <div className="vault-folder-grid">
+                      {current?.folders.map(item=>{
+                        const count=item.folders.length+item.notes.length;
+                        return (
+                          <button
+                            className={`vault-folder-card ${dragTarget===item.path?"drag-over":""} ${dragItem?.path===item.path?"dragging":""}`}
+                            draggable={!folder.startsWith("@")}
+                            onDragStart={e=>handleDragStart(e,{type:"folder",path:item.path,name:item.name})}
+                            onDragOver={e=>handleDragOver(e,item.path)}
+                            onDragLeave={handleDragLeave}
+                            onDrop={e=>handleDrop(e,item.path)}
+                            onClick={()=>setFolder(item.path)}
+                            key={item.path}
+                          >
+                            <Folder/>
+                            <span><strong>{item.name}</strong><small>{count===1?"1 item":`${count} items`}</small></span>
+                            <CaretRight className="folder-chevron"/>
+                          </button>
+                        );
+                      })}
+                      {visible.map(item=>{
+                        const note=noteMap.get(item.noteId);
+                        const isDraggingThis=dragItem?.path===item.path;
+                        return (
+                          <article className={`vault-file-card ${isDraggingThis?"dragging":""}`} draggable={!folder.startsWith("@")} onDragStart={e=>handleDragStart(e,{type:"note",path:item.path,name:item.name,noteId:item.noteId})} key={item.noteId}>
+                            <button onClick={()=>note&&onOpen(note)}><FileText/><span><strong>{item.name.replace(/\.md$/i,"")}</strong><small>{item.path}</small></span></button>
+                            <span className={`sync-dot ${item.syncState}`} title={item.syncState}/>
+                            <button aria-label={`Draw in ${item.name}`} disabled={Boolean(!note?.sourceId)} suppressHydrationWarning onClick={()=>note&&onOpen(note)}><PencilSimple/></button>
+                            {!folder.startsWith("@")&&<><button aria-label={`Move ${item.name}`} onClick={()=>move(item)}><Folder/></button><button aria-label={`Trash ${item.name}`} onClick={()=>trash(item)}><Trash/></button></>}
+                          </article>
+                        );
+                      })}
+                      {!current?.folders.length&&!visible.length&&<div className="empty-state"><Folder/><h3>No notes here</h3><p>{query?"Try a broader search.":"Create a note or folder here to begin."}</p>{!query&&!folder.startsWith("@")&&<button className="primary" onClick={()=>void create()}>Create note</button>}</div>}
+                    </div>
+                  </>
+                )}
               </>
             )}
           </main>
         </div>
       )}
-      {!initialLoading&&sources.length>0&&<div className="vault-mobile-action"><button className="primary" disabled={Boolean(!sourceId||folder.startsWith("@"))} onClick={()=>void create()}><FilePlus/><span>New note</span></button></div>}
+      {!initialLoading&&sources.length>0&&<div className="vault-mobile-action" style={{display:"none"}}><button className="primary" disabled={Boolean(!sourceId||folder.startsWith("@"))} onClick={()=>void create()}><FilePlus/><span>New note</span></button></div>}
     </section>
   );
 }
