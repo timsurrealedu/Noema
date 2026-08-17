@@ -1,7 +1,7 @@
 "use client";
 
 import {FormEvent, useEffect, useState} from "react";
-import {ArrowLeft, CheckCircle, Folder, Lightning, NotePencil, X} from "@phosphor-icons/react";
+import {ArrowLeft, CheckCircle, Folder, NotePencil, X} from "@phosphor-icons/react";
 import {createId} from "../lib/id";
 import {InkStroke, normalizeInk} from "../lib/ink";
 import {deleteInkDraft} from "../lib/offlineQueue";
@@ -12,7 +12,6 @@ type Source = {id: string; name: string};
 
 export function HandwritingCapture({onClose}: {onClose: () => void}) {
   const [step, setStep] = useState<"option" | "folder" | "canvas">("option");
-  const [mode, setMode] = useState<"quick" | "folder">("quick");
   const [draft, setDraft] = useState(true);
   const [title, setTitle] = useState("");
   const [sourceId, setSourceId] = useState("");
@@ -74,7 +73,7 @@ export function HandwritingCapture({onClose}: {onClose: () => void}) {
   }, [sourceId]);
 
   async function handleSave() {
-    if (!strokes.length || (mode === "folder" && (!title.trim() || !folder))) return;
+    if (!strokes.length || !title.trim() || !folder) return;
     setSaving(true);
     setError("");
     try {
@@ -83,10 +82,10 @@ export function HandwritingCapture({onClose}: {onClose: () => void}) {
         method: "POST",
         headers: {"Content-Type": "application/json", "Idempotency-Key": createId()},
         body: JSON.stringify({
-          mode,
+          mode: "folder",
           vaultSourceId: sourceId,
-          folder: mode === "quick" ? "" : folder,
-          title: mode === "quick" ? "" : title.trim(),
+          folder,
+          title: title.trim(),
           draft,
           ink
         })
@@ -116,21 +115,6 @@ export function HandwritingCapture({onClose}: {onClose: () => void}) {
           </button>
         </div>
         <div className="handwriting-option-list">
-          <button
-            type="button"
-            className="handwriting-option-card"
-            onClick={() => {
-              setMode("quick");
-              setStep("canvas");
-            }}
-          >
-            <Lightning className="card-icon" />
-            <div>
-              <strong>Quick note</strong>
-              <small>Start writing immediately in Drafts</small>
-            </div>
-          </button>
-
           <a
             className="handwriting-option-card"
             href="/vault?new=ink"
@@ -138,8 +122,8 @@ export function HandwritingCapture({onClose}: {onClose: () => void}) {
           >
             <NotePencil className="card-icon" />
             <div>
-              <strong>Open Integrated Ink & Text Note</strong>
-              <small>Write and type together directly over your note</small>
+              <strong>Quick note</strong>
+              <small>Write and type together in a new Vault note</small>
             </div>
           </a>
 
@@ -147,7 +131,6 @@ export function HandwritingCapture({onClose}: {onClose: () => void}) {
             type="button"
             className="handwriting-option-card"
             onClick={() => {
-              setMode("folder");
               setStep("folder");
             }}
           >
@@ -269,8 +252,8 @@ export function HandwritingCapture({onClose}: {onClose: () => void}) {
                 <ArrowLeft />
               </button>
               <span>
-                <strong>{mode === "quick" ? "Quick Note" : title || "Untitled Note"}</strong>
-                <small>{mode === "quick" ? "Drafts Vault" : `${folder || "Root"}`}</small>
+                <strong>{title || "Untitled Note"}</strong>
+                <small>{folder || "Root"}</small>
               </span>
             </div>
             <div className="canvas-header-actions">
