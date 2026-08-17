@@ -1,4 +1,4 @@
-import {ReactNode} from "react";
+import {ReactNode, useState} from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
@@ -243,5 +243,4 @@ export function MarkdownContent({text,onNavigateNote,onTagClick}:{text:string;on
   parts.push(basic(cleanText.slice(start),`text-${index}`,onNavigateNote));
   return <>{parts}</>;
 }
-
 
