@@ -237,7 +237,7 @@ input::placeholder,textarea::placeholder{color:var(--faint);opacity:1}
 .handwriting-option-head p { font-size: 0.8rem; color: var(--muted); margin: 0; }
 .handwriting-option-head .close-btn { position: absolute; top: 0; right: 0; }
 .handwriting-option-list { display: flex; flex-direction: column; gap: 12px; }
-.handwriting-option-card { display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); color: var(--ink); text-align: left; cursor: pointer; transition: all 0.15s ease; width: 100%; }
+.handwriting-option-card { display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid var(--border); border-radius: var(--r-md); background: var(--surface); color: var(--ink); text-align: left; text-decoration: none; cursor: pointer; transition: all 0.15s ease; width: 100%; }
 .handwriting-option-card:hover { border-color: var(--primary); background: var(--primary-soft); }
 .handwriting-option-card .card-icon { width: 24px; height: 24px; color: var(--primary); flex-shrink: 0; }
 .handwriting-option-card strong { display: block; font-size: 0.95rem; margin-bottom: 2px; }
