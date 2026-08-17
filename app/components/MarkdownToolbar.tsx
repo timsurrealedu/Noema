@@ -1,6 +1,7 @@
 "use client";
-import type {RefObject} from "react";
-import {ArrowCounterClockwise, ArrowClockwise, Code, LinkSimple, ListBullets, ListNumbers, MathOperations, Quotes, Table} from "@phosphor-icons/react";
+
+import {useState, type RefObject} from "react";
+import {ArrowCounterClockwise, ArrowClockwise, Code, DotsThree, LinkSimple, ListBullets, ListNumbers, MathOperations, Quotes, Table} from "@phosphor-icons/react";
 
 type Action = {
   label: string;
@@ -23,6 +24,13 @@ const actions: Action[] = [
     label: "H2",
     title: "Heading 2",
     prefix: "## ",
+    placeholder: "Heading",
+    block: true,
+  },
+  {
+    label: "H3",
+    title: "Heading 3",
+    prefix: "### ",
     placeholder: "Heading",
     block: true,
   },
@@ -93,6 +101,8 @@ const table = "| Column 1 | Column 2 |\n| --- | --- |\n| Value 1 | Value 2 |";
 const equation = "$$\n\\begin{aligned}\nf(x) &= x^2\n\\end{aligned}\n$$";
 
 export function MarkdownToolbar({textarea, onChange, onUndo, onRedo, canUndo = false, canRedo = false}: {textarea: RefObject<HTMLTextAreaElement | null>; onChange?: (value: string) => void; onUndo?: () => void; onRedo?: () => void; canUndo?: boolean; canRedo?: boolean}) {
+  const [expanded, setExpanded] = useState(false);
+
   function insert(action: Action | string) {
     const field = textarea.current;
     if (!field) return;
@@ -120,24 +130,30 @@ export function MarkdownToolbar({textarea, onChange, onUndo, onRedo, canUndo = f
     onChange?.(field.value);
   }
   return (
-    <div className="markdown-toolbar" role="toolbar" aria-label="Text formatting">
-      {actions.map((action) => {
-        const Icon = action.icon;
-        return (
-          <button type="button" title={action.title} aria-label={action.title} onClick={() => insert(action)} key={action.title}>
-            {Icon ? <Icon /> : <span className={action.label === "I" ? "italic" : undefined}>{action.label}</span>}
-          </button>
-        );
-      })}
-      <span className="toolbar-separator" />
-      <button type="button" title="Insert table" aria-label="Insert table" onClick={() => insert(table)}>
-        <Table />
+    <div className={`markdown-toolbar ${expanded ? "expanded" : ""}`} role="toolbar" aria-label="Text formatting">
+      <div className="toolbar-actions">
+        {actions.map((action) => {
+          const Icon = action.icon;
+          return (
+            <button type="button" title={action.title} aria-label={action.title} onClick={() => insert(action)} key={action.title}>
+              {Icon ? <Icon size={18} /> : <span className={action.label === "I" ? "italic" : undefined}>{action.label}</span>}
+            </button>
+          );
+        })}
+        <span className="toolbar-separator" />
+        <button type="button" title="Insert table" aria-label="Insert table" onClick={() => insert(table)}>
+          <Table size={18} />
+        </button>
+        <button type="button" title="Insert display equation" aria-label="Insert display equation" onClick={() => insert(equation)}>
+          <MathOperations size={18} />
+          <small>Block</small>
+        </button>
+        {(onUndo || onRedo) && <><span className="toolbar-separator" /><button type="button" title="Undo" aria-label="Undo" onMouseDown={event => event.preventDefault()} onClick={onUndo} disabled={!canUndo}><ArrowCounterClockwise size={18} /></button><button type="button" title="Redo" aria-label="Redo" onMouseDown={event => event.preventDefault()} onClick={onRedo} disabled={!canRedo}><ArrowClockwise size={18} /></button></>}
+      </div>
+      <button type="button" className={`markdown-toolbar-more-btn ${expanded ? "active" : ""}`} title={expanded ? "Collapse toolbar" : "More formatting options"} aria-label={expanded ? "Collapse toolbar" : "More formatting options"} onClick={() => setExpanded(v => !v)}>
+        <DotsThree size={20} />
       </button>
-      <button type="button" title="Insert display equation" aria-label="Insert display equation" onClick={() => insert(equation)}>
-        <MathOperations />
-        <small>Block</small>
-      </button>
-      {(onUndo || onRedo) && <><span className="toolbar-separator" /><button type="button" title="Undo" aria-label="Undo" onMouseDown={event => event.preventDefault()} onClick={onUndo} disabled={!canUndo}><ArrowCounterClockwise /></button><button type="button" title="Redo" aria-label="Redo" onMouseDown={event => event.preventDefault()} onClick={onRedo} disabled={!canRedo}><ArrowClockwise /></button></>}
     </div>
   );
 }
+

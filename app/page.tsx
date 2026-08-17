@@ -128,10 +128,12 @@ export default function Home() {
     );
   };
 
+  const categories = ["Today", "Upcoming", "Overdue", "Inbox", "Completed"] as const;
   const overdueList = tasks.filter(t => matches(t, "Overdue"));
   const todayList = tasks.filter(t => matches(t, "Today"));
   const upcomingList = tasks.filter(t => matches(t, "Upcoming") || matches(t, "Inbox"));
   const completedList = tasks.filter(t => matches(t, "Completed"));
+  const counts=Object.fromEntries(categories.map(c=>[c,tasks.filter(t=>matches(t,c)).length]));
 
 
   return <div className="app-shell">

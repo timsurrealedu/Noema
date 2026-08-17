@@ -231,15 +231,32 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
               <>
                 <nav className="vault-breadcrumbs" aria-label="Breadcrumb">
                   <button className={dragTarget===""?"drag-over":""} onDragOver={e=>handleDragOver(e,"")} onDragLeave={handleDragLeave} onDrop={e=>handleDrop(e,"")} onClick={()=>{setFolder("");setActiveTab("recent")}}>{source?.name}</button>
-                  {!folder.startsWith("@")&&folder.split("/").filter(Boolean).map((part,index)=>{
-                    const parentPath=folder.split("/").slice(0,index+1).join("/");
+                  {!folder.startsWith("@")&&(() => {
+                    const parts = folder.split("/").filter(Boolean);
+                    if (!parts.length) return null;
+                    if (parts.length === 1) {
+                      return (
+                        <span key={parts[0]}>
+                          <CaretRight/>
+                          <button className={dragTarget===folder?"drag-over":""} onDragOver={e=>handleDragOver(e,folder)} onDragLeave={handleDragLeave} onDrop={e=>handleDrop(e,folder)} onClick={()=>setFolder(folder)}>{parts[0]}</button>
+                        </span>
+                      );
+                    }
+                    const parentPath = parts.slice(0, -1).join("/");
+                    const tailPart = parts[parts.length - 1];
                     return (
-                      <span key={`${part}-${index}`}>
-                        <CaretRight/>
-                        <button className={dragTarget===parentPath?"drag-over":""} onDragOver={e=>handleDragOver(e,parentPath)} onDragLeave={handleDragLeave} onDrop={e=>handleDrop(e,parentPath)} onClick={()=>setFolder(parentPath)}>{part}</button>
-                      </span>
+                      <>
+                        <span>
+                          <CaretRight/>
+                          <button className={dragTarget===parentPath?"drag-over":""} onDragOver={e=>handleDragOver(e,parentPath)} onDragLeave={handleDragLeave} onDrop={e=>handleDrop(e,parentPath)} onClick={()=>setFolder(parentPath)}>...</button>
+                        </span>
+                        <span key={tailPart}>
+                          <CaretRight/>
+                          <button className={dragTarget===folder?"drag-over":""} onDragOver={e=>handleDragOver(e,folder)} onDragLeave={handleDragLeave} onDrop={e=>handleDrop(e,folder)} onClick={()=>setFolder(folder)}>{tailPart}</button>
+                        </span>
+                      </>
                     );
-                  })}
+                  })()}
                 </nav>
 
                 <div className="vault-folder-heading">

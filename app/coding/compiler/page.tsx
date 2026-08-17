@@ -16,12 +16,12 @@ const LazySyntaxPreview = dynamic(() => import("../../components/LazySyntaxPrevi
 const starters = {
   javascript: "console.log(6 * 7);",
   python: "print(6 * 7)",
-  c: '#include <stdio.h>\nint main(void) { printf("%d\\n", 6 * 7); }',
-  cpp: '#include <iostream>\nint main() { std::cout << 6 * 7 << "\\n"; }',
-  go: 'package main\nimport "fmt"\nfunc main() { fmt.Println(6 * 7) }',
-  rust: 'fn main() { println!("{}", 6 * 7); }',
-  java: 'public class Main { public static void main(String[] args) { System.out.println(6 * 7); } }',
-  bash: 'printf "Hello from Bash\\n"'
+  c: '#include <stdio.h>\nint main(){\n    printf("hi there");\n}',
+  cpp: '#include <iostream>\nint main() { std::cout << "hi there\\n"; }',
+  go: 'package main\nimport "fmt"\nfunc main() { fmt.Println("hi there") }',
+  rust: 'fn main() { println!("hi there"); }',
+  java: 'public class Main { public static void main(String[] args) { System.out.println("hi there"); } }',
+  bash: 'printf "hi there\\n"'
 };
 type Language = keyof typeof starters;
 type Result = { code: number; output: string; truncated: boolean; stage: string; durationMs: number };
@@ -668,7 +668,7 @@ export default function CompilerPage() {
   }
 
   return (
-    <ModuleShell active="Coding" title="Compiler">
+    <ModuleShell active="Coding" title="">
       <div className="compiler-container">
         {/* Top Header Bar matching lifeOS .code-top */}
         <div className="code-top">
@@ -737,18 +737,23 @@ export default function CompilerPage() {
         {/* Subbar matching lifeOS .code-subbar */}
         <div className="code-subbar">
           {mode === "scratch" ? (
-            <select
-              className="code-lang-select"
-              value={language}
-              onChange={(event) => changeLanguage(event.target.value as Language)}
-              aria-label="Select language"
-            >
-              {Object.keys(starters).map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
+            <>
+              <select
+                className="code-lang-select"
+                value={language}
+                onChange={(event) => changeLanguage(event.target.value as Language)}
+                aria-label="Select language"
+              >
+                {Object.keys(starters).map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+              <span className="caret-pos-indicator">
+                Ln {caretPos.line}, Col {caretPos.col}
+              </span>
+            </>
           ) : (
             <div className="code-file-actions">
               <input
@@ -785,61 +790,59 @@ export default function CompilerPage() {
             </div>
           )}
 
-          <small className="caret-pos-indicator">
-            Ln {caretPos.line}, Col {caretPos.col}
-          </small>
-
           <div className="spacer" />
 
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label="Undo edit"
-            title="Undo"
-            disabled={!history.length}
-            suppressHydrationWarning
-            onClick={handleUndo}
-          >
-            <ArrowCounterClockwise size={16} />
-          </button>
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label="Redo edit"
-            title="Redo"
-            disabled={!redoStack.length}
-            suppressHydrationWarning
-            onClick={handleRedo}
-          >
-            <ArrowClockwise size={16} />
-          </button>
-          <button
-            type="button"
-            className={`icon-btn ${highlight ? "active" : ""}`}
-            onClick={() => setHighlight((value) => !value)}
-            title="Show highlighting"
-            aria-label="Show highlighting"
-          >
-            {highlight ? <EyeSlash size={16} /> : <Eye size={16} />}
-          </button>
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label="Outdent selection"
-            title="Outdent selection"
-            onClick={() => indent(true)}
-          >
-            <TextOutdent size={16} />
-          </button>
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label="Indent selection"
-            title="Indent selection"
-            onClick={() => indent()}
-          >
-            <TextIndent size={16} />
-          </button>
+          <div className="code-action-buttons">
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Undo edit"
+              title="Undo"
+              disabled={!history.length}
+              suppressHydrationWarning
+              onClick={handleUndo}
+            >
+              <ArrowCounterClockwise size={16} />
+            </button>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Redo edit"
+              title="Redo"
+              disabled={!redoStack.length}
+              suppressHydrationWarning
+              onClick={handleRedo}
+            >
+              <ArrowClockwise size={16} />
+            </button>
+            <button
+              type="button"
+              className={`icon-btn ${highlight ? "active" : ""}`}
+              onClick={() => setHighlight((value) => !value)}
+              title="Show highlighting"
+              aria-label="Show highlighting"
+            >
+              {highlight ? <EyeSlash size={16} /> : <Eye size={16} />}
+            </button>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Outdent selection"
+              title="Outdent selection"
+              onClick={() => indent(true)}
+            >
+              <TextOutdent size={16} />
+            </button>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Indent selection"
+              title="Indent selection"
+              onClick={() => indent()}
+            >
+              <TextIndent size={16} />
+            </button>
+          </div>
         </div>
 
         {/* Collapsible Stdin Panel matching lifeOS .code-stdin-wrap */}

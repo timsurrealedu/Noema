@@ -123,13 +123,41 @@ export function mutateEventOccurrence(id,originalStartAt,input,db=getDatabase(),
 }
 
 export function saveNote(input,db=getDatabase(),actor=null){
-  const context=actorInfo(actor),id=input.id||randomUUID(),title=required(input.title,"title",500),content=String(input.content||""),time=stamp(),before=findOwned(db,"notes",id,context.workspaceId),excerpt=String(input.excerpt||content.replace(/[#*_>-]/g,"").trim().slice(0,140));
+  const context=actorInfo(actor),id=input.id||randomUUID(),before=findOwned(db,"notes",id,context.workspaceId);
+  let content=String(input.content||"");
+  const h1Match=content.match(/^#\s+(.+)$/m);
+  const derivedTitle=h1Match?h1Match[1].trim():undefined;
+  let title=input.title;
+  if(derivedTitle&&(!title||title===before?.title||(derivedTitle!==before?.title&&input.title===before?.title))){
+    title=derivedTitle;
+  }
+  title=required(title||derivedTitle||"Untitled","title",500);
+  if(derivedTitle&&title!==derivedTitle&&/^#\s+.*/.test(content)){
+    content=content.replace(/^#\s+.*/,`# ${title}`);
+  }
+  const time=stamp(),excerpt=String(input.excerpt||content.replace(/[#*_>-]/g,"").trim().slice(0,140));
   requireVersion(input,before,{db,type:"note",actor});
   db.prepare(`INSERT INTO notes(id,title,excerpt,content,tags_json,ai,draft,source,favorite,trashed,created_at,updated_at,workspace_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,excerpt=excluded.excerpt,content=excluded.content,tags_json=excluded.tags_json,ai=excluded.ai,draft=excluded.draft,source=excluded.source,favorite=excluded.favorite,trashed=excluded.trashed,updated_at=excluded.updated_at,version=notes.version+1`).run(id,title,excerpt,content,JSON.stringify(input.tags||[]),input.ai?1:0,input.draft?1:0,input.source||null,input.favorite?1:0,input.trashed?1:0,before?.created_at||time,time,context.workspaceId);
   db.prepare("DELETE FROM notes_fts WHERE id=?").run(id);db.prepare("INSERT INTO notes_fts(id,title,content,tags) VALUES(?,?,?,?)").run(id,title,content,(input.tags||[]).join(" "));
   reindexNoteLinks(id,content,db,context.workspaceId);
   const saved=findOwned(db,"notes",id,context.workspaceId);db.prepare("INSERT INTO note_versions(note_id,version,title,content,tags_json,created_at) VALUES(?,?,?,?,?,?)").run(id,saved.version,title,content,saved.tags_json,time);
-  audit(db,before?"update":"create","note",id,title,before?{op:"restore",row:before}:{op:"delete"},actor);return saved;
+  audit(db,before?"update":"create","note",id,title,before?{op:"restore",row:before}:{op:"delete"},actor);
+
+  if(before&&before.title!==title){
+    const entry=db.prepare("SELECT * FROM vault_entries WHERE note_id=? AND deleted_at IS NULL").get(id);
+    if(entry){
+      const parentDir=entry.relative_path.includes("/")?entry.relative_path.slice(0,entry.relative_path.lastIndexOf("/")+1):"";
+      const cleanName=title.trim().replace(/[\/\\?%*:|"<>]/g,"-").replace(/\s+/g," ").trim()||"Untitled";
+      const targetRelativePath=`${parentDir}${cleanName}.md`;
+      if(entry.relative_path!==targetRelativePath){
+        try{
+          moveVaultEntry(entry.source_id,{from:entry.relative_path,to:targetRelativePath},actor||{id:"system",workspaceId:context.workspaceId},db);
+        }catch(_){}
+      }
+    }
+  }
+
+  return saved;
 }
 
 export function createCapture(input,db=getDatabase(),actor=null){

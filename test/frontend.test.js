@@ -62,7 +62,7 @@ test("root layout eagerly warms daily navigation routes",()=>{const layout=read(
 test("mobile viewport enables safe-area insets",()=>assert.match(read("app/layout.tsx"),/viewportFit:"cover"/));
 
 test("mobile navigation exposes core navigation items",()=>{for(const file of ["app/components/ModuleShell.tsx","app/page.tsx"]){const page=read(file);assert.match(page,/\["Home"/);assert.match(page,/\["Vault"/);}});
-test("tablet capture and navigation controls use a consistent icon system",()=>{const today=read("app/page.tsx"),shell=read("app/components/ModuleShell.tsx"),css=read("app/globals.css");assert.match(today,/name="quick-capture"/);assert.match(today,/autoComplete="off"/);assert.match(today,/\["Capture","\/capture",Tray\]/);assert.match(shell,/\["Capture","\/capture",Tray\]/);assert.match(css,/\.mobile-nav a svg\{width:22px;height:22px\}/);assert.doesNotMatch(`${today}${shell}${css}`,/capture-nav/);assert.match(css,/\.capture-tool\{display:grid/)});
+test("tablet capture and navigation controls use a consistent icon system",()=>{const today=read("app/page.tsx"),shell=read("app/components/ModuleShell.tsx"),css=read("app/globals.css");assert.match(today,/name="quick-capture"/);assert.match(today,/autoComplete="off"/);assert.match(today,/\["Capture","\/capture",(Plus|Tray)\]/);assert.match(shell,/\["Capture","\/capture",(Plus|Tray)\]/);assert.match(css,/\.mobile-nav a svg\{width:22px;height:22px\}/);assert.doesNotMatch(`${today}${shell}${css}`,/capture-nav/);assert.match(css,/\.capture-tool\{display:grid/)});
 test("composite search and capture fields use one visible focus boundary",()=>{const css=read("app/globals.css");assert.match(css,/\.capture input:focus-visible,.vault-organizer-search input:focus-visible\{outline:0\}/);assert.match(css,/\.vault-organizer-search:focus-within\{border-color:var\(--primary\)\}/)});
 test("mobile Home shows every task in a fixed semantic order",()=>{const tasks=read("app/page.tsx"),css=read("app/globals.css");assert.match(tasks,/className="task-group-title overdue"[\s\S]*className="task-group-title today"[\s\S]*className="task-group-title upcoming"[\s\S]*className="task-group-title done"/);assert.match(tasks,/completedList\.map\(renderTask\)/);assert.match(tasks,/aria-expanded=\{!collapsedGroups\.has\("overdue"\)\}/);assert.match(tasks,/aria-expanded=\{!collapsedGroups\.has\("upcoming"\)\}/);assert.match(tasks,/aria-expanded=\{!collapsedGroups\.has\("done"\)\}/);assert.match(css,/\.home-task-toolbar\{display:none\}/);assert.match(css,/\.task-group-title\.overdue\{color:var\(--error\)\}/);assert.match(css,/\.task-group-title\.today\{color:var\(--primary\)\}/);assert.match(css,/\.task-group-title\.upcoming\{color:var\(--warning\)\}/);assert.match(css,/\.task-group-title\.done\{color:var\(--success\)\}/)});
 test("mobile task due metadata sits beneath its Edit action",()=>{const css=read("app/globals.css");assert.match(css,/\.task-list article time\{grid-column:3;grid-row:2;justify-self:end;align-self:center;white-space:nowrap\}/)});
@@ -147,7 +147,7 @@ test("full and mixed note editors provide canonical wikilink completion",()=>{co
 test("note attachments use canonical assets and insert Markdown at the caret",()=>{const attachment=read("app/components/NoteAttachmentButton.tsx"),vault=read("app/vault/page.tsx");assert.match(attachment,/\/api\/v1\/assets/);assert.match(attachment,/setRangeText/);assert.match(attachment,/image\//);assert.match(vault,/NoteAttachmentButton/)});
 test("notes default to preview while tutor and vault panes remain adjustable",()=>{const tutor=read("app/components/TutorPanel.tsx"),mixed=read("app/components/MixedNoteEditor.tsx"),vault=read("app/vault/page.tsx"),organizer=read("app/components/VaultOrganizer.tsx");assert.match(tutor,/MarkdownContent text=\{message\.text\}/);assert.match(tutor,/resizeWidth/);for(const mode of ["minimized","sheet","full"])assert.match(tutor,new RegExp(`"${mode}"`));assert.match(mixed,/viewMode/);assert.match(vault,/\("read"\)/);assert.match(organizer,/noema-vault-drawer/);assert.match(organizer,/aria-expanded=\{drawer\}/)});
 test("Vault routes only synced vault entries to the mixed block editor",()=>{const ts=require("typescript"),compiled=ts.transpileModule(read("app/lib/noteKind.ts"),{compilerOptions:{module:ts.ModuleKind.CommonJS}}).outputText,mod={exports:{}};new Function("exports","module",compiled)(mod.exports,mod);const {isVaultBackedNote}=mod.exports,vault=read("app/vault/page.tsx");assert.equal(isVaultBackedNote({sourceId:"source",relativePath:"folder/note.md"}),true);for(const note of [{id:"local",source:"Created in Noema"},{sourceId:"source",relativePath:null},{sourceId:null,relativePath:"note.md"},null])assert.equal(isVaultBackedNote(note),false);assert.match(vault,/const isVaultNote=isVaultBackedNote\(draft\)/);assert.match(vault,/if\(isVaultNote&&draft\)/)});
-test("mobile knowledge workspaces keep primary actions and editing controls thumb-safe",()=>{const css=read("app/globals.css"),tutor=read("app/components/TutorPanel.tsx"),compiler=read("app/coding/compiler/page.tsx"),mixed=read("app/components/MixedNoteEditor.tsx"),organizer=read("app/components/VaultOrganizer.tsx");assert.match(css,/\.module-shell:has\(\.note-workspace\) \.top-primary,\.compiler-container \.code-run\{position:fixed/);assert.match(css,/\.top-primary\{bottom:calc\(16px \+ env\(safe-area-inset-bottom\)\)/);assert.match(css,/\.compiler-container \.code-run\{bottom:calc\(80px \+ env\(safe-area-inset-bottom\)\)/);assert.match(css,/integrated-doc-container\{padding-bottom:88px!important/);assert.match(css,/\.markdown-toolbar button[^}]*min-width:44px/);assert.match(css,/\.code-editor textarea\.code-body[^}]*font-size:16px!important/);assert.match(tutor,/returnFocus/);assert.match(tutor,/aria-modal="false"/);assert.match(compiler,/Create first file/);assert.match(compiler,/aria-modal="false"/);assert.match(mixed,/aria-modal="false"/);assert.match(mixed,/closePenOptions/);assert.match(organizer,/initialLoading/);assert.match(organizer,/Create note/)});
+test("mobile knowledge workspaces keep primary actions and editing controls thumb-safe",()=>{const css=read("app/globals.css"),tutor=read("app/components/TutorPanel.tsx"),compiler=read("app/coding/compiler/page.tsx"),mixed=read("app/components/MixedNoteEditor.tsx"),organizer=read("app/components/VaultOrganizer.tsx");assert.match(css,/\.module-shell:has\(\.note-workspace\) \.top-primary\{position:fixed/);assert.match(css,/\.top-primary\{bottom:calc\(16px \+ env\(safe-area-inset-bottom\)\)/);assert.match(css,/integrated-doc-container\{padding-bottom:88px!important/);assert.match(css,/\.markdown-toolbar button[^}]*min-width:44px/);assert.match(css,/\.code-editor textarea\.code-body[^}]*font-size:16px!important/);assert.match(tutor,/returnFocus/);assert.match(tutor,/aria-modal="false"/);assert.match(compiler,/Create first file/);assert.match(compiler,/aria-modal="false"/);assert.match(mixed,/aria-modal="false"/);assert.match(mixed,/closePenOptions/);assert.match(organizer,/initialLoading/);assert.match(organizer,/Create note/)});
 test("Vault exposes a full-width mobile New note action above navigation",()=>{const organizer=read("app/components/VaultOrganizer.tsx"),css=read("app/globals.css");assert.match(organizer,/className="vault-mobile-action"/);assert.match(organizer,/<span>New note<\/span>/);assert.match(css,/\.vault-mobile-action\{position:fixed[^}]*bottom:calc\(80px \+ env\(safe-area-inset-bottom\)\)/);assert.match(css,/\.vault-mobile-action \.primary\{[^}]*width:100%[^}]*min-height:48px/)});
 test("Obsidian sync is stable and read-only",()=>{const sync=read("scripts/sync-obsidian.mjs");assert.match(sync,/createHash/);assert.match(sync,/Obsidian ·/);assert.match(sync,/readFileSync/);assert.doesNotMatch(sync,/writeFile|unlink|rename|rmSync/)});
 test("vault tasks expose live counts, source links, Jakarta scheduling, and discriminated calendar items",()=>{const tasks=read("app/page.tsx"),calendar=read("app/calendar/page.tsx"),state=read("app/components/AppState.tsx");assert.doesNotMatch(tasks,/Four tasks are ready/);assert.match(tasks,/counts=Object\.fromEntries/);assert.match(tasks,/Asia\/Jakarta/);assert.match(tasks,/vaultSource\.relativePath/);assert.match(tasks,/Open source note/);assert.match(state,/kind:"event"/);assert.match(state,/kind:"task"/);assert.match(calendar,/calendarItems\s*\.map\(item => \(item\.kind === "task"/)});
@@ -168,7 +168,7 @@ test("Vault folder drawer restores its last saved state",()=>{const organizer=re
 test("Vault starts with folders collapsed and discloses their notes",()=>{const organizer=read("app/components/VaultOrganizer.tsx");assert.match(organizer,/localStorage\.getItem\("noema-vault-drawer"\)==="open"/);assert.match(organizer,/const \[open,setOpen\]=useState\(false\)/);assert.match(organizer,/node\.notes\.map\(note/);assert.match(organizer,/aria-label=\{`\$\{open\?"Collapse":"Expand"\} \$\{node\.name\}`\}/)});
 test("Vault scrollbar uses subdued semantic theme colors",()=>{const css=read("app/globals.css");assert.match(css,/\.obsidian-tree,\.obsidian-vault-body>main\{[^}]*scrollbar-color:color-mix\(in oklch,var\(--muted\) 68%,var\(--sidebar\)\)/);assert.match(css,/\.obsidian-vault-body>main::-webkit-scrollbar-button\{display:none\}/);assert.match(css,/\.obsidian-vault-body>main::-webkit-scrollbar-thumb\{[^}]*background:color-mix\(in oklch,var\(--muted\) 68%,var\(--sidebar\)\)/);assert.match(css,/\.obsidian-vault-body>main::-webkit-scrollbar-thumb:hover\{[^}]*background:var\(--muted\)/)});
 test("Rich note editing uses Noema theme tokens",()=>{const css=read("app/globals.css");for(const token of ["--crepe-color-background:var(--surface)!important","--crepe-color-on-background:var(--ink)!important","--crepe-color-primary:var(--primary)!important","--crepe-color-surface-low:var(--raised)!important"])assert.match(css,new RegExp(token.replace(/[()]/g,"\\$&")))});
-test("Rich note editing is a single layered reading surface",()=>{const css=read("app/globals.css");for(const token of ["--crepe-base-font-size:14px!important","background:transparent!important;border:0!important","z-index:30!important",".ProseMirror h2{font-size:1.25rem!important",".integrated-doc-container:has(.live-markdown-editor) .integrated-doc-page{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important",".live-markdown-editor .ProseMirror{padding-inline:clamp(20px,3vw,48px)!important"])assert.match(css,new RegExp(token.replace(/[()]/g,"\\$&")))});
+test("Rich note editing is a single layered reading surface",()=>{const css=read("app/globals.css");for(const token of ["--crepe-base-font-size:14px!important","background:transparent!important;border:0!important","z-index:100!important",".ProseMirror h2{font-size:1.25rem!important",".integrated-doc-container:has(.live-markdown-editor) .integrated-doc-page{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important",".live-markdown-editor .ProseMirror{padding-inline:clamp(20px,3vw,48px)!important"])assert.match(css,new RegExp(token.replace(/[()]/g,"\\$&")))});
 test("PDF annotation workspace persists page coordinates, comments, links, and exports",()=>{const page=read("app/assets/[id]/annotate/page.tsx");assert.match(page,/\/annotations/);assert.match(page,/geometry/);assert.match(page,/Link type/);assert.match(page,/Export/)});
 test("job streams resume by event ID and emit heartbeats",()=>{const stream=read("app/api/v1/jobs/[id]/events/route.ts"),retry=read("app/api/v1/jobs/[id]/retry/route.ts");assert.match(stream,/last-event-id/);assert.match(stream,/id: \$\{id\}/);assert.match(stream,/: heartbeat/);assert.match(retry,/retryJob/)});
 test("notification deliveries expose durable status and retry controls",()=>{const route=read("app/api/v1/notification-deliveries/[id]/route.ts"),push=read("server/push.mjs");assert.match(route,/retryDelivery/);assert.match(route,/resolveDelivery/);assert.match(push,/permanent-failure/);assert.match(push,/status===404\|\|status===410/)});
@@ -306,3 +306,54 @@ test("Home centers attention and capture while task creation floats",()=>{
   assert.match(calendar,/userSelectedView/);assert.match(calendar,/media\.addEventListener\("change"/);assert.match(calendar,/chooseView/);
 });
 test("Canvas persists versioned workspace objects with pointer, keyboard, and accessible list controls",()=>{const page=read("app/canvas/page.tsx"),engine=read("app/components/InfiniteCanvas.tsx"),routes=[read("app/api/v1/canvases/route.ts"),read("app/api/v1/canvases/[id]/route.ts")].join("\n");assert.match(page,/dynamic\(/);assert.match(engine,/onWheel/);assert.match(engine,/onPointerDown/);assert.match(engine,/ArrowLeft/);assert.match(engine,/longPress/);assert.match(engine,/Undo/);assert.match(engine,/Redo/);assert.match(engine,/Accessible object list/);assert.match(engine,/useAppState/);assert.match(engine,/refId/);assert.match(engine,/version/);assert.match(routes,/requireWorkspace/);assert.match(routes,/saveCanvas/)});
+
+test("Markdown toolbar and LiveMarkdownEditor use compact labels (H1, H2, H3, P) and horizontal expand toggle",()=>{
+  const toolbar=read("app/components/MarkdownToolbar.tsx"),live=read("app/components/LiveMarkdownEditor.tsx"),css=read("app/globals.css");
+  for(const label of ["H1","H2","H3"])assert.match(toolbar,new RegExp(`label: "${label}"`));
+  assert.match(toolbar,/markdown-toolbar-more-btn/);
+  assert.match(toolbar,/DotsThree/);
+  for(const option of ['{ label: "P", level: null }','{ label: "H1", level: 1 }','{ label: "H2", level: 2 }','{ label: "H3", level: 3 }'])assert.match(live,new RegExp(option.replace(/[{}[\]()]/g,"\\$&")));
+  assert.match(live,/top-bar-more-btn/);
+  assert.match(css,/\.live-markdown-editor \.top-bar-heading-label\{min-width:auto/);
+  assert.match(css,/\.markdown-toolbar-more-btn,\.top-bar-more-btn/);
+  assert.match(css,/\.markdown-toolbar\.expanded/);
+});
+
+test("Heading 1 edits in note content sync with note title and file name",()=>{
+  const core=read("server/core.mjs"),vault=read("server/vault.mjs"),page=read("app/vault/page.tsx");
+  assert.match(core,/const h1Match=content\.match\(\/\^#\\s\+\(\.\+\)\$\/m\)/);
+  assert.match(core,/derivedTitle/);
+  assert.match(vault,/writeBlockProjection/);
+  assert.match(vault,/const h1Match=content\.match\(\/\^#\\s\+\(\.\+\)\$\/m\)/);
+  assert.match(vault,/moveVaultEntry/);
+  assert.match(page,/handleTitleChange/);
+});
+
+test("Vault breadcrumbs display only the tail segment of the directory path",()=>{
+  const organizer=read("app/components/VaultOrganizer.tsx");
+  assert.match(organizer,/const parentPath = parts\.slice\(0, -1\)\.join\("\/"\)/);
+  assert.match(organizer,/const tailPart = parts\[parts\.length - 1\]/);
+  assert.match(organizer,/>\.\.\.<\/button>/);
+});
+
+test("Raw tag text is converted to a collapsible structured tag widget with clickable pills",()=>{
+  const content=read("app/components/MarkdownContent.tsx"),css=read("app/globals.css");
+  assert.match(content,/export function extractTagsAndCleanText/);
+  assert.match(content,/export function StructuredTags/);
+  assert.match(content,/className="note-structured-tags"/);
+  assert.match(content,/className="tag-pill"/);
+  assert.match(css,/\.note-structured-tags/);
+  assert.match(css,/\.tag-pill/);
+});
+
+test("extractTagsAndCleanText parses heading tags with escaped backslash brackets",()=>{
+  const content=read("app/components/MarkdownContent.tsx");
+  assert.match(content,/tags\?/);
+  assert.match(content,/standaloneHashtagLineRegex/);
+});
+
+
+
+
+
+
