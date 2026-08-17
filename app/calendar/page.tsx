@@ -48,7 +48,7 @@ const blankEvent = (): Event => {
 
 const positionFor = (time: string) => 76 + (Number(time.slice(0, 2)) - 9) * 60 + Number(time.slice(3));
 const dayPositionFor = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
-const dayTimes = Array.from({length:24},(_,hour)=>`${String(hour).padStart(2,"0")}:00`);
+const dayTimes = Array.from({length:25},(_,hour)=>`${String(hour).padStart(2,"0")}:00`);
 const eventTime = (value?: string | null) => value ? new Date(value).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", hour12: false}) : "";
 const formatTimeRange = (start?: string | null,end?: string | null,fallback="") => start&&end?`${eventTime(start)}–${eventTime(end)}`:start?eventTime(start):fallback;
 const durationHeight = (start?: string | null, end?: string | null, fallback = 45) => start && end ? Math.max(30, Math.min(240, (new Date(end).getTime() - new Date(start).getTime()) / 60000)) : fallback;
@@ -324,6 +324,13 @@ export default function CalendarPage() {
           <button className="icon-button" aria-label="Previous period" onClick={() => movePeriod(-1)}>
             <CaretLeft />
           </button>
+          <h2>
+            {view === "Month"
+              ? viewMonthDate.toLocaleDateString(undefined, {month: "long", year: "numeric"})
+              : view === "Day" || view === "Agenda"
+              ? activeSelectedDate.toLocaleDateString(undefined, {weekday: "long", month: "long", day: "numeric"})
+              : period}
+          </h2>
           <button className="icon-button" aria-label="Next period" onClick={() => movePeriod(1)}>
             <CaretRight />
           </button>
@@ -335,13 +342,14 @@ export default function CalendarPage() {
           >
             Today
           </button>
-          <h2>
-            {view === "Month"
-              ? viewMonthDate.toLocaleDateString(undefined, {month: "long", year: "numeric"})
-              : view === "Day" || view === "Agenda"
-              ? activeSelectedDate.toLocaleDateString(undefined, {weekday: "long", month: "long", day: "numeric"})
-              : period}
-          </h2>
+          <button
+            className="secondary icon-button calendar-mobile-sync"
+            aria-label={syncing ? "Syncing calendar" : "Sync calendar"}
+            onClick={() => void triggerSync()}
+            disabled={syncing}
+          >
+            <ArrowsClockwise className={syncing ? "spin-icon" : ""} />
+          </button>
         </div>
         <div className="view-switch" role="group" aria-label="Calendar view">
           {(["Day", "Week", "Month", "Agenda"] as const).map(item => (

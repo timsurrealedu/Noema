@@ -31,8 +31,6 @@ const jakartaIso=(value:string)=>new Date(`${value}:00+07:00`).toISOString();
 const mobileTaskDue=(task:Task)=>{const due=taskDue(task),comma=due.indexOf(", ");return comma<0?due:`${due.slice(0,3)}, ${due.slice(comma+2)}`};
 const overdueDays=(task:Task,today:string)=>task.dueAt?Math.max(1,Math.round((new Date(`${today}T00:00:00Z`).valueOf()-new Date(`${dateValue(task.dueAt)}T00:00:00Z`).valueOf())/86_400_000)):0;
 
-const LABELS = ["All", "Inbox", "Today", "Upcoming", "Overdue", "Completed"] as const;
-
 export default function Home() {
   const {addAndInterpretCapture,addFileCapture,captures,confirmCapture,events,tasks,projects,toggleTask,saveTask,archiveTask,updateCapture}=useAppState();
   const [theme,setTheme] = useState<"dark"|"light">("dark");
@@ -42,7 +40,7 @@ export default function Home() {
   const [palette,setPalette] = useState(false);
   const [assistant,setAssistant] = useState(false);
   const [handwriting,setHandwriting] = useState(false);
-  const [filter,setFilter] = useState<string>("All");
+  const [collapsedGroups,setCollapsedGroups] = useState<Set<string>>(new Set());
   const [draft,setDraft] = useState<Task|null>(null);
   const [taskTitleError,setTaskTitleError] = useState("");
 
@@ -71,7 +69,7 @@ export default function Home() {
   useEffect(() => {
     const id=new URLSearchParams(location.search).get("open");
     if(id==="new") { setDraft(blankTask()); }
-    else if(id) { const task=tasks.find(item=>item.id===id); if(task){setFilter("All");setDraft({...task})} }
+    else if(id) { const task=tasks.find(item=>item.id===id); if(task)setDraft({...task}) }
   },[tasks]);
 
   const now=new Date(),todayLabel=new Intl.DateTimeFormat(undefined,{weekday:"long",month:"long",day:"numeric"}).format(now);
@@ -110,9 +108,8 @@ export default function Home() {
     return false;
   };
 
-  const counts=Object.fromEntries(LABELS.map(label => [label, tasks.filter(task => matches(task, label)).length]));
-  const visibleTasks = tasks.filter(task => matches(task, filter));
   const readyTasks = tasks.filter(task => !task.completed && !task.archived).length;
+  const toggleGroup=(group:string)=>setCollapsedGroups(current=>{const next=new Set(current);next.has(group)?next.delete(group):next.add(group);return next});
 
   const renderTask = (task: Task) => {
     const isOverdue = matches(task, "Overdue");
@@ -134,6 +131,7 @@ export default function Home() {
   const overdueList = tasks.filter(t => matches(t, "Overdue"));
   const todayList = tasks.filter(t => matches(t, "Today"));
   const upcomingList = tasks.filter(t => matches(t, "Upcoming") || matches(t, "Inbox"));
+  const completedList = tasks.filter(t => matches(t, "Completed"));
 
 
   return <div className="app-shell">
@@ -171,7 +169,7 @@ export default function Home() {
         <input ref={input} id="capture" name="quick-capture" type="text" inputMode="text" autoComplete="off" autoCapitalize="sentences" spellCheck value={capture} onChange={e=>setCapture(e.target.value)} placeholder="Capture anything…"/>
         <input ref={fileInput} type="file" hidden aria-hidden="true" tabIndex={-1} onChange={e=>{const file=e.target.files?.[0];if(file)addFileCapture(file);e.target.value=""}}/>
         <button type="button" className="capture-tool capture-handwriting" aria-label="Write a handwritten note" onClick={()=>setHandwriting(true)}><PenNib/></button>
-        <button type="button" className="capture-tool" aria-label={recording?"Stop recording":"Record voice"} aria-pressed={recording} onClick={()=>void toggleRecording()}><Microphone/></button>
+        <button type="button" className="capture-tool capture-voice" aria-label={recording?"Stop recording":"Record voice"} aria-pressed={recording} onClick={()=>void toggleRecording()}><Microphone/></button>
         <button className="send" disabled={!capture.trim()} aria-label="Process capture"><PaperPlaneTilt/></button>
       </form>
 
@@ -184,26 +182,11 @@ export default function Home() {
       <section className="tasks-section home-tasks" aria-label="Tasks">
         <div className={`task-layout no-subnav${draft ? " editing" : " no-inspector"}`}>
           <section className="task-list" aria-label="Task list">
-            <div className="list-title home-task-toolbar">
-              <div>
-                <label className="task-view-select">
-                  <CalendarBlank />
-                  <span className="sr-only">Task view</span>
-                  <select aria-label="Task view" value={filter} onChange={event=>setFilter(event.target.value)}>
-                    {LABELS.map(label => <option key={label}>{label}</option>)}
-                  </select>
-                </label>
-                <h3 id="task-list-title" style={{display:"none"}}>{filter}</h3>
-              </div>
-              <button className="secondary top-primary home-new-task" onClick={() => {setTaskTitleError("");setDraft(blankTask())}}><Plus />New task</button>
-            </div>
-
-            {filter === "All" ? (
-              <div className="task-grouped-sections">
+            <div className="task-grouped-sections">
                 {overdueList.length > 0 && (
                   <div className="task-group">
-                    <h4 className="task-group-title overdue">Overdue ({overdueList.length})</h4>
-                    {overdueList.map(renderTask)}
+                    <button className="task-group-title overdue" aria-expanded={!collapsedGroups.has("overdue")} onClick={()=>toggleGroup("overdue")}><span>Overdue ({overdueList.length})</span><CaretRight/></button>
+                    {!collapsedGroups.has("overdue")&&overdueList.map(renderTask)}
                   </div>
                 )}
                 {todayList.length > 0 && (
@@ -214,11 +197,17 @@ export default function Home() {
                 )}
                 {upcomingList.length > 0 && (
                   <div className="task-group">
-                    <h4 className="task-group-title upcoming">Upcoming ({upcomingList.length})</h4>
-                    {upcomingList.map(renderTask)}
+                    <button className="task-group-title upcoming" aria-expanded={!collapsedGroups.has("upcoming")} onClick={()=>toggleGroup("upcoming")}><span>Upcoming ({upcomingList.length})</span><CaretRight/></button>
+                    {!collapsedGroups.has("upcoming")&&upcomingList.map(renderTask)}
                   </div>
                 )}
-                {!visibleTasks.length && (
+                {completedList.length > 0 && (
+                  <div className="task-group">
+                    <button className="task-group-title done" aria-expanded={!collapsedGroups.has("done")} onClick={()=>toggleGroup("done")}><span>Done ({completedList.length})</span><CaretRight/></button>
+                    {!collapsedGroups.has("done")&&completedList.map(renderTask)}
+                  </div>
+                )}
+                {!overdueList.length && !todayList.length && !upcomingList.length && !completedList.length && (
                   <div className="empty-state">
                     <Check />
                     <h3>Nothing here</h3>
@@ -226,20 +215,7 @@ export default function Home() {
                     <button className="primary mobile-primary-action" onClick={()=>{setTaskTitleError("");setDraft(blankTask())}}>Create task</button>
                   </div>
                 )}
-              </div>
-            ) : (
-              <>
-                {visibleTasks.map(renderTask)}
-                {!visibleTasks.length && (
-                  <div className="empty-state">
-                    <Check />
-                    <h3>Nothing here</h3>
-                    <p>This view is clear. Add the next thing that needs your attention.</p>
-                    <button className="primary mobile-primary-action" onClick={()=>{setTaskTitleError("");setDraft(blankTask())}}>Create task</button>
-                  </div>
-                )}
-              </>
-            )}
+            </div>
           </section>
 
           {draft && (
@@ -318,7 +294,7 @@ export default function Home() {
     {!draft&&<button className="home-task-fab" aria-label="New task" onClick={()=>{setTaskTitleError("");setDraft(blankTask())}}><Plus/><span>New task</span></button>}
 
     <nav className="mobile-nav" aria-label="Mobile navigation">
-      {([["Home","/",House],["Capture","/capture",Plus],["Calendar","/calendar",CalendarBlank],["Vault","/vault",Folder],["Coding","/coding",Code]] as const).map(([label,href,Icon],i)=><Link className={`${i===0?"active":""} ${i===1?"capture-nav":""}`} href={href} key={label}><Icon/><span>{label}</span></Link>)}
+      {([["Home","/",House],["Capture","/capture",Tray],["Vault","/vault",Folder],["Calendar","/calendar",CalendarBlank],["Coding","/coding",Code]] as const).map(([label,href,Icon])=><Link className={label==="Home"?"active":""} href={href} key={label}><Icon/><span>{label}</span></Link>)}
     </nav>
 
     {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus aria-label="Search commands" placeholder="Search Noema or run a command…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><p>Quick actions</p>{([["New capture","#capture",Plus,""],["Add task","/?open=new",CheckSquare,"⌘ ⇧ T"],["Open calendar","/calendar",CalendarBlank,"G C"],["Search vault","/vault",Folder,"G V"]] as const).map(([label,href,Icon,key])=><Link href={href} onClick={()=>{setPalette(false);if(href==="/?open=new")setDraft(blankTask())}} key={label}><Icon/><span>{label}</span>{key&&<kbd>{key}</kbd>}</Link>)}</ModalDialog>}
