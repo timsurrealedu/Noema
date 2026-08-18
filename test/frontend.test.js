@@ -287,7 +287,7 @@ test("Home Capture and Calendar expose mobile thumb-zone actions and inline vali
   const home=read("app/page.tsx"),capture=read("app/capture/page.tsx"),calendar=read("app/calendar/page.tsx"),css=read("app/globals.css");
   assert.match(home,/taskTitleError/);assert.match(home,/aria-invalid=\{!!taskTitleError\}/);assert.match(home,/task-title-error/);assert.match(home,/mobile-primary-action/);
   assert.match(capture,/capture-empty[^]*Quick capture/);assert.match(capture,/capture-primary-action/);
-  assert.match(calendar,/eventTitleError/);assert.match(calendar,/aria-invalid=\{!!eventTitleError\}/);assert.match(calendar,/event-title-error/);assert.match(calendar,/matchMedia\("\(max-width: 820px\)"\)/);assert.match(calendar,/setView\("Agenda"\)/);
+  assert.match(calendar,/eventTitleError/);assert.match(calendar,/aria-invalid=\{!!eventTitleError\}/);assert.match(calendar,/event-title-error/);assert.match(calendar,/matchMedia\("\(max-width: 820px\)"\)/);assert.match(calendar,/setView\("Day"\)/);
   for(const selector of ["mobile-primary-action","capture-primary-action","calendar-primary-action"])assert.match(css,new RegExp(`[^}]*\\.${selector}[^}]*\\{[^}]*min-height:48px`));
   assert.match(css,/@media\(max-width:820px\)\{[^]*\.calendar-inspector,\.calendar-popover,\.calendar-scope>div\{[^}]*position:fixed[^}]*bottom:calc\(72px \+ env\(safe-area-inset-bottom\)\)/);
   assert.match(css,/\.module-main :is\(input:not\(\[type="checkbox"\]\):not\(\[type="radio"\]\),textarea,select\)\{font-size:16px/);
