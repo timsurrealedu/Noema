@@ -164,7 +164,7 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
   const noteCount=visible.length;
 
   const recentNotes=useMemo(()=>{
-    return notes.filter(n=>!n.trashed).slice(0,4);
+    return notes.filter(n=>!n.trashed).slice(0,6);
   },[notes]);
 
   const draftNotes=useMemo(()=>{
@@ -309,30 +309,37 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
                     </div>
                     <div className="vault-recent-grid">
                       {recentNotes.map(n=>(
-                        <button className="vault-recent-card" onClick={()=>onOpen(n)} key={n.id}>
+                        <div className="vault-recent-card" onClick={()=>onOpen(n)} key={n.id}>
                           <div className="recent-card-head">
                             <FileText/>
                             <strong>{n.title}</strong>
+                            <div className="vault-card-actions" onClick={e=>e.stopPropagation()}>
+                              <button aria-label={`Draw in ${n.title}`} onClick={e=>{e.stopPropagation();onOpen(n)}}><PencilSimple/></button>
+                              {n.relativePath&&!folder.startsWith("@")&&<>
+                                <button aria-label={`Move ${n.title}`} onClick={e=>{e.stopPropagation();void move({path:n.relativePath,name:n.title} as any)}}><Folder/></button>
+                                <button aria-label={`Trash ${n.title}`} onClick={e=>{e.stopPropagation();void trash({path:n.relativePath,name:n.title} as any)}}><Trash/></button>
+                              </>}
+                            </div>
                           </div>
                           {cleanExcerpt(n.excerpt,n.title)&&<p>{cleanExcerpt(n.excerpt,n.title)}</p>}
                           <div className="recent-card-meta">
                             <span>{n.tags?.slice(0,2).map(t=><span className="recent-tag" key={t}>#{t} </span>)}</span>
                             {n.time&&<time>Updated {formatShortDate(n.time)}</time>}
                           </div>
-                        </button>
+                        </div>
                       ))}
                     </div>
                   </section>
                 )}
 
-                {(activeTab==="folders"||!isRootView||activeTab==="favorites"||folder==="@favorites")&&(
+                {(activeTab==="folders"||activeTab==="recent"||!isRootView||activeTab==="favorites"||folder==="@favorites")&&(
                   <>
-                    {isRootView&&activeTab==="folders"&&<div className="vault-section-title"><h3>Folders & Files</h3></div>}
+                    {isRootView&&(activeTab==="folders"||activeTab==="recent")&&<div className="vault-section-title"><h3>Folders & Files</h3></div>}
                     <div className="vault-folder-grid">
                       {current?.folders.map(item=>{
                         const count=item.folders.length+item.notes.length;
                         return (
-                          <button
+                          <div
                             className={`vault-folder-card ${dragTarget===item.path?"drag-over":""} ${dragItem?.path===item.path?"dragging":""}`}
                             draggable={!folder.startsWith("@")}
                             onDragStart={e=>handleDragStart(e,{type:"folder",path:item.path,name:item.name})}
@@ -345,7 +352,13 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
                             <Folder/>
                             <span><strong>{item.name}</strong><small>{count===1?"1 item":`${count} items`}</small></span>
                             <CaretRight className="folder-chevron"/>
-                          </button>
+                            {!folder.startsWith("@")&&(
+                              <div className="vault-card-actions" onClick={e=>e.stopPropagation()}>
+                                <button aria-label={`Move folder ${item.name}`} onClick={e=>{e.stopPropagation();void move({path:item.path,name:item.name} as any)}}><Folder/></button>
+                                <button aria-label={`Trash folder ${item.name}`} onClick={e=>{e.stopPropagation();void trash({path:item.path,name:item.name} as any)}}><Trash/></button>
+                              </div>
+                            )}
+                          </div>
                         );
                       })}
                       {visible.map(item=>{
@@ -355,8 +368,10 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
                           <article className={`vault-file-card ${isDraggingThis?"dragging":""}`} draggable={!folder.startsWith("@")} onDragStart={e=>handleDragStart(e,{type:"note",path:item.path,name:item.name,noteId:item.noteId})} key={item.noteId}>
                             <button onClick={()=>note&&onOpen(note)}><FileText/><span><strong>{item.name.replace(/\.md$/i,"")}</strong><small>{item.path}</small></span></button>
                             <span className={`sync-dot ${item.syncState}`} title={item.syncState}/>
-                            <button aria-label={`Draw in ${item.name}`} disabled={Boolean(!note?.sourceId)} suppressHydrationWarning onClick={()=>note&&onOpen(note)}><PencilSimple/></button>
-                            {!folder.startsWith("@")&&<><button aria-label={`Move ${item.name}`} onClick={()=>move(item)}><Folder/></button><button aria-label={`Trash ${item.name}`} onClick={()=>trash(item)}><Trash/></button></>}
+                            <div className="vault-card-actions">
+                              <button aria-label={`Draw in ${item.name}`} disabled={Boolean(!note?.sourceId)} suppressHydrationWarning onClick={()=>note&&onOpen(note)}><PencilSimple/></button>
+                              {!folder.startsWith("@")&&<><button aria-label={`Move ${item.name}`} onClick={()=>move(item)}><Folder/></button><button aria-label={`Trash ${item.name}`} onClick={()=>trash(item)}><Trash/></button></>}
+                            </div>
                           </article>
                         );
                       })}

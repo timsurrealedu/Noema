@@ -17,8 +17,8 @@ import { NoemaLogo } from "./components/NoemaLogo";
 import { createId } from "./lib/id";
 
 const nav = [
-  ["Home",House],["Capture",Plus],["Calendar",CalendarBlank],
-  ["Vault",Folder],["Coding",Code]
+  ["Home","/",House],["Capture","/capture",Plus],["Vault","/vault",Folder],
+  ["Calendar","/calendar",CalendarBlank],["Coding","/coding",Code]
 ] as const;
 
 const blankTask=():Task=>({id:createId(),title:"",project:"Inbox",due:"",dueAt:new Date().toISOString(),priority:"Medium",completed:false,status:"open"});
@@ -34,6 +34,7 @@ const overdueDays=(task:Task,today:string)=>task.dueAt?Math.max(1,Math.round((ne
 export default function Home() {
   const {addAndInterpretCapture,addFileCapture,captures,confirmCapture,events,tasks,projects,toggleTask,saveTask,archiveTask,updateCapture}=useAppState();
   const [theme,setTheme] = useState<"dark"|"light">("dark");
+  const ThemeIcon = theme === "dark" ? Sun : Moon;
   const [capture,setCapture] = useState("");
   const [reviewId,setReviewId] = useState<string|null>(null);
   const [recording,setRecording] = useState(false);
@@ -140,8 +141,11 @@ export default function Home() {
     <a className="skip" href="#main">Skip to main content</a>
     <aside className="sidebar" aria-label="Primary navigation">
       <Link className="brand" href="/"><NoemaLogo /><span>Noema</span></Link>
-      <nav>{nav.map(([label,Icon])=><Link className={label==="Home"?"active":""} href={({Home:"/",Capture:"/capture",Calendar:"/calendar",Vault:"/vault",Coding:"/coding"} as Record<string,string>)[label]||"#"} key={label}><Icon/><span>{label}</span></Link>)}</nav>
-      <Link className="settings" href="/settings"><Gear/><span>Settings</span></Link>
+      <nav>{nav.map(([label,href,Icon])=><Link className={label==="Home"?"active":""} href={href} key={label}><Icon/><span>{label}</span></Link>)}</nav>
+      <div className="sidebar-footer">
+        <Link className="settings" href="/settings"><Gear/><span>Settings</span></Link>
+        <button className="icon-button theme-toggle" aria-label={`Use ${theme === "dark" ? "light" : "dark"} theme`} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}><ThemeIcon /></button>
+      </div>
     </aside>
 
     <header className="topbar">
@@ -149,7 +153,6 @@ export default function Home() {
       <div className="top-actions">
         <button className="search" onClick={()=>setPalette(true)}><MagnifyingGlass/><span>Search</span><kbd>⌘ K</kbd></button>
         <button className="icon-button" aria-label="Open contextual assistant" onClick={()=>setAssistant(true)}><Sparkle/></button>
-        <button className="icon-button" aria-label={`Use ${theme==="dark"?"light":"dark"} theme`} onClick={()=>setTheme(theme==="dark"?"light":"dark")}>{theme==="dark"?<Sun/>:<Moon/>}</button>
         <button className="icon-button unread" aria-label="Notifications" data-unavailable="Live notifications require the backend connection. Sample activity remains available from Activity."><Bell/></button>
       </div>
     </header>
