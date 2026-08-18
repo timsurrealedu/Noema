@@ -171,7 +171,22 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
     return notes.filter(n=>!n.trashed&&(n.tags?.includes("draft")||n.excerpt?.toLowerCase().includes("draft")||(n as any).status==="review"));
   },[notes]);
 
-  const [activeTab,setActiveTab]=useState<"recent"|"drafts"|"favorites"|"folders">("recent");
+  const [activeTab, setActiveTabState] = useState<"recent" | "drafts" | "favorites" | "folders">(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("noema-vault-active-tab");
+      if (saved === "recent" || saved === "drafts" || saved === "favorites" || saved === "folders") {
+        return saved;
+      }
+    }
+    return "folders";
+  });
+
+  const setActiveTab = (tab: "recent" | "drafts" | "favorites" | "folders") => {
+    setActiveTabState(tab);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("noema-vault-active-tab", tab);
+    }
+  };
 
   const formatShortDate=(timeStr?:string)=>{
     if(!timeStr)return "";
@@ -259,15 +274,17 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
                   })()}
                 </nav>
 
-                <div className="vault-folder-heading">
-                  <div>
-                    <h2>{isVaultNameHeading?"Knowledge Vault":title}</h2>
-                    <p>
-                      {folderCount===1?"1 folder":`${folderCount} folders`} · {noteCount===1?"1 note":`${noteCount} notes`}
-                      {draftNotes.length>0?` · ${draftNotes.length===1?"1 draft":`${draftNotes.length} drafts`} ready to review`:""}
-                    </p>
+                {!isVaultNameHeading && (
+                  <div className="vault-folder-heading">
+                    <div>
+                      <h2>{title}</h2>
+                      <p>
+                        {folderCount===1?"1 folder":`${folderCount} folders`} · {noteCount===1?"1 note":`${noteCount} notes`}
+                        {draftNotes.length>0?` · ${draftNotes.length===1?"1 draft":`${draftNotes.length} drafts`} ready to review`:""}
+                      </p>
+                    </div>
                   </div>
-                </div>
+                )}
 
                 {showSubnavTabs&&(
                   <div className="vault-subnav-tabs" role="tablist" aria-label="Vault quick views">

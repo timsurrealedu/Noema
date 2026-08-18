@@ -303,11 +303,65 @@ export default function CaptureInbox() {
     setToast(null);
   }
 
+  const touchStartRef = useRef<{x: number; y: number; time: number} | null>(null);
+
+  function handleTouchStart(e: TouchEvent<HTMLDivElement>) {
+    if (e.touches.length === 1) {
+      touchStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        time: Date.now(),
+      };
+    }
+  }
+
+  function handleTouchEnd(e: TouchEvent<HTMLDivElement>) {
+    if (!touchStartRef.current || e.changedTouches.length === 0) return;
+    const start = touchStartRef.current;
+    touchStartRef.current = null;
+    const endX = e.changedTouches[0].clientX;
+    const endY = e.changedTouches[0].clientY;
+    const deltaX = endX - start.x;
+    const deltaY = endY - start.y;
+    const deltaTime = Date.now() - start.time;
+
+    if (deltaTime < 500 && Math.abs(deltaX) > 40 && Math.abs(deltaX) > Math.abs(deltaY) * 1.5) {
+      const currentIndex = filters.indexOf(filter);
+      if (deltaX < 0 && currentIndex < filters.length - 1) {
+        setFilter(filters[currentIndex + 1]);
+        setSelectedId(null);
+      } else if (deltaX > 0 && currentIndex > 0) {
+        setFilter(filters[currentIndex - 1]);
+        setSelectedId(null);
+      }
+    }
+  }
+
   return (
     <ModuleShell active="Capture" title="Capture inbox" action={<a className="primary top-primary" href="/#capture"><Plus/>Quick capture</a>}>
       <div className={`capture-inbox ${detailOpen ? "detail-open" : ""}`}>
-        <section className="capture-list-pane" aria-label="Capture inbox">
+        <section
+          className="capture-list-pane"
+          aria-label="Capture inbox"
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
           <div className="capture-queue-toolbar">
+            <div className="capture-search-wrap">
+              <MagnifyingGlass />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search text, files, status..."
+                aria-label="Search captures"
+              />
+              {searchQuery && (
+                <button className="clear-search-btn" onClick={() => setSearchQuery("")} aria-label="Clear search">
+                  <X />
+                </button>
+              )}
+            </div>
             <div className="capture-filters" role="tablist" aria-label="Capture status">
               {filters.map(item => {
                 const count = item === "All"
@@ -339,26 +393,10 @@ export default function CaptureInbox() {
                 );
               })}
             </div>
-            <div className="capture-search-wrap">
-              <MagnifyingGlass />
-              <input
-                type="search"
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search text, files, status..."
-                aria-label="Search captures"
-              />
-              {searchQuery && (
-                <button className="clear-search-btn" onClick={() => setSearchQuery("")} aria-label="Clear search">
-                  <X />
-                </button>
-              )}
-            </div>
           </div>
 
           {visible.length ? (
             <div className="capture-groups">
-              <h3>Recent</h3>
               <div className="capture-rows">
                 {visible.map(capture => (
                   <CaptureRow
