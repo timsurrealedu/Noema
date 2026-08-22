@@ -107,9 +107,9 @@ export function AppStateProvider({children}:{children:ReactNode}) {
     updateCapture:(id,status)=>{const capture=data.captures.find(item=>item.id===id);if(!capture)return;setData(current=>({...current,captures:current.captures.map(item=>item.id===id?{...item,status,version:(item.version||0)+1}:item)}));persist(`/captures/${id}`,"PATCH",{status,version:capture.version})},
     confirmCapture:id=>{const capture=data.captures.find(item=>item.id===id);if(!capture||capture.status==="confirmed")return;
       patchCapture(id,{status:"confirmed"});
-      api(`/captures/${id}/apply`,"POST",{}).then(result=>applyObjects(result.created||[])).catch(error=>{
-        showUnavailable(`${error.message} Interpreted objects were created in this browser only.`);
-        applyObjects(capture.objects.map(object=>({type:object.type,object:object.type==="task"?{id:createId(),title:object.title,project:"Inbox",due:"No date",priority:"Medium",completed:false,version:1}:object.type==="event"?{id:createId(),title:object.title,day:new Date().getDay(),time:"09:00",top:0,height:58,location:undefined,active:false,version:1}:{id:createId(),title:object.title,excerpt:object.detail.slice(0,140),content:object.detail||object.title,tags_json:"[]",updated_at:new Date().toISOString(),ai:true,version:1}})));
+      api(`/captures/${id}/apply`,"POST",{},`apply-${id}`).then(result=>applyObjects(result.created||[])).catch(error=>{
+        setData(current=>({...current,captures:current.captures.map(item=>item.id===id?{...item,status:"review",version:(item.version||0)+1}:item)}));
+        showUnavailable(`${error.message} Nothing was created — the proposal stays open so you can retry.`);
       });
     },
     cancelInterpretation:id=>{const capture=data.captures.find(item=>item.id===id);if(!capture?.jobId)return;void api(`/jobs/${capture.jobId}/cancel`,"POST",{}).catch(error=>showUnavailable(error.message))},

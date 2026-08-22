@@ -152,7 +152,7 @@ function formatProposalSummary(capture: Capture): string {
   }
   if (!capture.objects || capture.objects.length === 0) {
     if (capture.status === "processing" || capture.status === "queued") {
-      return `Processing... ${capture.progress ?? (capture.status === "queued" ? 8 : 28)}%`;
+      return capture.status === "queued" ? "Queued for interpretation…" : "Interpreting…";
     }
     if (capture.status === "failed") {
       const errInfo = formatErrorInfo(capture.error);
@@ -474,9 +474,8 @@ export default function CaptureInbox() {
                   <div>
                     <strong>{selected.status === "queued" ? "Queued for processing" : "Interpreting this capture"}</strong>
                     <span>{selected.status === "queued" ? "The original ink is safely stored and waiting for Process Inbox." : "Reading the source and identifying useful objects."}</span>
-                    <i><b style={{width: `${selected.progress ?? (selected.status === "queued" ? 8 : 28)}%`}} /></i>
+                    <i aria-hidden="true"><b /></i>
                   </div>
-                  <em>{selected.progress ?? (selected.status === "queued" ? 8 : 28)}%</em>
                   {selected.jobId && (
                     <button className="secondary" onClick={() => cancelInterpretation(selected.id)}>Cancel</button>
                   )}
@@ -802,10 +801,10 @@ function CaptureRow({
       {(capture.status === "queued" || capture.status === "processing") && (
         <div className="card-body card-body-processing">
           <span className="status-label">
-            <CircleNotch className="spin" /> Processing... {capture.progress ?? (capture.status === "queued" ? 8 : 28)}%
+            <CircleNotch className="spin" /> {capture.status === "queued" ? "Queued…" : "Interpreting…"}
           </span>
-          <i className="progress-bar">
-            <b style={{width: `${capture.progress ?? (capture.status === "queued" ? 8 : 28)}%`}} />
+          <i className="progress-bar" aria-hidden="true">
+            <b />
           </i>
         </div>
       )}
@@ -849,12 +848,13 @@ function CaptureRow({
           <div className="done-actions">
             <button
               className="undo-btn"
+              title="Reopen this capture for review — already created items are kept and must be removed manually"
               onClick={e => {
                 e.stopPropagation();
                 onUndo();
               }}
             >
-              Undo
+              Reopen review
             </button>
           </div>
         </div>

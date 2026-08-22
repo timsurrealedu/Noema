@@ -251,9 +251,9 @@ export default function CalendarPage() {
     });
   const hasSelectedItems = selectedTasks.length + selectedEvents.length > 0;
 
-  const agenda = displayEvents.filter(event => (event.startAt ? isSameDate(event.startAt, realToday) : event.day === today));
+  const agenda = displayEvents.filter(event => (event.startAt ? isSameDate(event.startAt, activeSelectedDate) : event.day === selectedDay));
   const taskAgenda = allTasks
-    .filter(task => isSameDate(task.scheduledStartAt || task.dueAt, realToday))
+    .filter(task => isSameDate(task.scheduledStartAt || task.dueAt, activeSelectedDate))
     .map(task => {
       const date = new Date(task.scheduledStartAt || task.dueAt!);
       const timed = !!task.scheduledStartAt;
@@ -554,6 +554,9 @@ export default function CalendarPage() {
                 <CaretRight />
               </button>
             ))}
+            {!agenda.length && !taskAgenda.length && (
+              <p className="agenda-empty">Nothing scheduled for this day.</p>
+            )}
           </section>
         )}
 

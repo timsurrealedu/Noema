@@ -864,3 +864,11 @@ html[data-nav-dir="back"] .module-main{animation:noema-enter-back .28s var(--eas
   .calendar-event:active,.calendar-all-day:active,
   .send:active,.capture-tool:active{transform:none}
 }
+
+/* Indeterminate interpretation progress: honest shimmer, no fake percentages */
+.processing-panel i b,.progress-bar b{width:34%;border-radius:2px;animation:progress-slide 1.4s var(--ease) infinite}
+@keyframes progress-slide{0%{transform:translateX(-110%)}100%{transform:translateX(320%)}}
+@media(prefers-reduced-motion:reduce){
+  .processing-panel i,.progress-bar{display:none}
+  .processing-panel i b,.progress-bar b{animation:none}
+}
