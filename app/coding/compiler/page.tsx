@@ -1102,6 +1102,7 @@ export default function CompilerPage() {
           </aside>
         )}
 
+        <p className="sr-only" role="status" aria-live="polite">{running ? "Running code" : error ? `Compilation error: ${error}` : result ? `Process exited with code ${result.code}` : "Editor ready"}</p>
         {/* Code Editor Stack with Line Numbers Gutter */}
         <div className="code-editor" onClick={() => textareaRef.current?.focus()}>
           <div className="code-gutter" ref={gutterRef} onClick={() => textareaRef.current?.focus()}>

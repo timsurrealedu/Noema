@@ -54,4 +54,4 @@ export default function SettingsPage(){
     {error&&<p className="auth-error" role="alert">{error}</p>}{message&&<p role="status">{message}</p>}<footer><button className="primary" onClick={()=>void save()}>{message==="Saved"?<><Check/>Saved</>:"Save changes"}</button></footer></section></div></ModuleShell>
 }
 
-function Toggle({label,detail,checked,onChange}:{label:string;detail:string;checked:boolean;onChange:(value:boolean)=>void}){return <div className="setting-row"><span><strong>{label}</strong><small>{detail}</small></span><input type="checkbox" checked={checked} onChange={event=>onChange(event.target.checked)}/></div>}
+function Toggle({label,detail,checked,onChange}:{label:string;detail:string;checked:boolean;onChange:(value:boolean)=>void}){return <div className="setting-row"><span><strong>{label}</strong><small>{detail}</small></span><input type="checkbox" aria-label={label} checked={checked} onChange={event=>onChange(event.target.checked)}/></div>}

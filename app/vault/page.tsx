@@ -73,6 +73,7 @@ export default function VaultPage(){
   },[notes]);
 
   useEffect(()=>{if(draft?.id)loadOptimizations(draft.id).catch(()=>{})},[draft?.id]);
+  useEffect(()=>{const params=new URLSearchParams(location.search);if(folder)params.set("folder",folder);else params.delete("folder");history.replaceState(null,"",`${location.pathname}${params.size?`?${params}`:""}`)},[folder]);
   useEffect(()=>{draftRef.current=draft},[draft]);
   useEffect(()=>{
     const warn=(event:BeforeUnloadEvent)=>{if(mixedDirty||titleDirty){event.preventDefault();event.returnValue="";}};

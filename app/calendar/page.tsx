@@ -49,8 +49,9 @@ const blankEvent = (): Event => {
 const positionFor = (time: string) => 76 + (Number(time.slice(0, 2)) - 9) * 60 + Number(time.slice(3));
 const dayPositionFor = (time: string) => Number(time.slice(0, 2)) * 60 + Number(time.slice(3));
 const dayTimes = Array.from({length:25},(_,hour)=>`${String(hour).padStart(2,"0")}:00`);
-const eventTime = (value?: string | null) => value ? new Date(value).toLocaleTimeString([], {hour: "2-digit", minute: "2-digit", hour12: false}) : "";
-const formatTimeRange = (start?: string | null,end?: string | null,fallback="") => start&&end?`${eventTime(start)}–${eventTime(end)}`:start?eventTime(start):fallback;
+const deviceTimeZone = () => Intl.DateTimeFormat().resolvedOptions().timeZone;
+const eventTime = (value?: string | null, timeZone?: string) => value ? new Intl.DateTimeFormat(undefined, {hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: timeZone || deviceTimeZone()}).format(new Date(value)) : "";
+const formatTimeRange = (start?: string | null,end?: string | null,fallback="",timeZone?:string) => start&&end?`${eventTime(start,timeZone)}–${eventTime(end,timeZone)}`:start?eventTime(start,timeZone):fallback;
 const durationHeight = (start?: string | null, end?: string | null, fallback = 45) => start && end ? Math.max(30, Math.min(240, (new Date(end).getTime() - new Date(start).getTime()) / 60000)) : fallback;
 const reminderValue = (value?: string | null) =>
   value ? new Date(new Date(value).getTime() - new Date(value).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
@@ -85,13 +86,17 @@ export default function CalendarPage() {
   const {events, calendarItems, saveEvent, saveTask, toggleTask} = useAppState();
   const [draft, setDraft] = useState<Event | null>(null);
   const [sync, setSync] = useState<SyncStatus>({calendars: [], writes: [], conflicts: []});
-  const [view, setView] = useState<"Day" | "Week" | "Month" | "Agenda">(
-    () => readStoredView() || "Day"
-  );
+  const [view, setView] = useState<"Day" | "Week" | "Month" | "Agenda">(() => {
+    if (typeof window === "undefined") return "Day";
+    const saved = new URLSearchParams(location.search).get("view");
+    return saved && calendarViews.includes(saved as CalendarView) ? saved as CalendarView : readStoredView() || "Day";
+  });
   const today = (new Date().getDay() + 6) % 7;
   const realToday = new Date();
   const [selectedDay, setSelectedDay] = useState<number>(today);
   const [selectedDate, setSelectedDate] = useState(() => {
+    const saved = typeof window === "undefined" ? null : new URLSearchParams(location.search).get("date");
+    if (saved && /^\d{4}-\d{2}-\d{2}$/.test(saved)) return new Date(`${saved}T00:00:00`);
     const date = new Date();
     date.setHours(0, 0, 0, 0);
     return date;
@@ -135,6 +140,12 @@ export default function CalendarPage() {
     if (typeof window !== "undefined")
       localStorage.setItem(CALENDAR_VIEW_KEY, next);
   };
+
+  useEffect(()=>{
+    const params=new URLSearchParams(location.search),date=selectedDate.toISOString().slice(0,10);
+    params.set("view",view);params.set("date",date);
+    history.replaceState(null,"",`${location.pathname}?${params}`);
+  },[view,selectedDate]);
 
   const timeAt = (date:Date,y:number) => withMinutes(date,snapMinutes(y));
   const beginSlot = (event:PointerEvent<HTMLDivElement>,day:number) => {const rect=event.currentTarget.getBoundingClientRect();pointerStart.current={x:event.clientX,y:event.clientY-rect.top,day};setDragging(false);if(event.currentTarget instanceof Element)event.currentTarget.setPointerCapture(event.pointerId)};
@@ -438,8 +449,8 @@ export default function CalendarPage() {
                 <div>{dates.map((date,index)=><div key={date.toISOString()} onDragOver={event=>event.preventDefault()} onDrop={event=>toAllDay(event,index)}>{allDayEvents.filter(event=>event.weekDay===index).map(event=><button draggable className="calendar-all-day" key={event.id} onDragStart={drag=>dragEvent(drag,event)} onClick={()=>setDraft({...event})}>{event.title}</button>)}{allDayTasks.filter(task=>task.day===index).map(task=><button className="calendar-all-day calendar-task" key={`task-${task.id}`} onClick={()=>openTask(task.id)}>{task.title}</button>)}</div>)}</div>
               </div>
               <div className="week-body">
-                <div className="times">{dayTimes.map(t => <time key={t}>{t}</time>)}</div>
-                <div className="week-grid">{dates.map((date,index)=><div className="week-day-column" key={date.toISOString()} style={{touchAction:'pan-y'}} onDragOver={event=>event.preventDefault()} onDrop={event=>toTimed(event,index)} onPointerDown={event=>beginSlot(event,index)} onPointerUp={event=>finishSlot(event,index)} onClick={()=>!dragging&&selectDate(date)} onDoubleClick={()=>{selectDate(date);setView("Day")}}>{index===todayColumn&&<span className="calendar-now" style={{top:nowTop}} aria-label="Current time"/>}{overlapLayout(timedEvents.filter(event=>event.weekDay===index).map(event=>({...event,start:minutesAt(event.startAt!),end:minutesAt(event.endAt!)}))).map(event=><button draggable className={`calendar-event ${event.active?"active":""} ${draft?.id===event.id?"selected":""}`} style={{top:event.start,height:Math.max(15,event.end-event.start),left:`calc(${event.lane/event.lanes*100}% + 4px)`,right:`calc(${(event.lanes-event.lane-1)/event.lanes*100}% + 4px)`}} key={`${event.id}-${event.originalStartAt||event.startAt}`} onDragStart={drag=>dragEvent(drag,event)} onPointerDown={click=>{if(click.pointerType==="touch"){const t=setTimeout(()=>{moveItem(click,event,"event",index);navigator.vibrate?.(10)},250);longPressTimer.current=t;const clear=()=>{clearTimeout(t);removeEventListener("pointerup",clear);removeEventListener("pointermove",clear)};addEventListener("pointerup",clear);addEventListener("pointermove",clear)}else moveItem(click,event,"event",index)}} onKeyDown={key=>keyMove(key,event)}><time>{formatTimeRange(event.startAt,event.endAt,event.time)}</time><strong>{event.title}</strong><span className="calendar-resize" aria-label={`Resize ${event.title}`} role="separator" onPointerDown={click=>resizeEvent(click,event,index)} /></button>)}{timedTaskItems.filter(task=>task.day===index).map(task=><button className="calendar-event calendar-task" style={{top:task.top,height:task.height}} key={`task-${task.id}`} onPointerDown={click=>{if(click.pointerType==="touch"){const t=setTimeout(()=>{moveItem(click,task,"task",index);navigator.vibrate?.(10)},250);longPressTimer.current=t;const clear=()=>{clearTimeout(t);removeEventListener("pointerup",clear);removeEventListener("pointermove",clear)};addEventListener("pointerup",clear);addEventListener("pointermove",clear)}else moveItem(click,task,"task",index)}}><time>{formatTimeRange(task.scheduledStartAt,task.scheduledEndAt,task.time)}</time><strong>{task.title}</strong><small>Task</small></button>)}</div>)}</div>
+                <div className="times">{dayTimes.map(t => <time dateTime={t} key={t}>{t}</time>)}</div>
+                <div className="week-grid">{dates.map((date,index)=><div className="week-day-column" key={date.toISOString()} style={{touchAction:'pan-y'}} onDragOver={event=>event.preventDefault()} onDrop={event=>toTimed(event,index)} onPointerDown={event=>beginSlot(event,index)} onPointerUp={event=>finishSlot(event,index)} onClick={()=>!dragging&&selectDate(date)} onDoubleClick={()=>{selectDate(date);setView("Day")}}>{index===todayColumn&&<span className="calendar-now" style={{top:nowTop}} aria-label="Current time"/>}{overlapLayout(timedEvents.filter(event=>event.weekDay===index).map(event=>({...event,start:minutesAt(event.startAt!),end:minutesAt(event.endAt!)}))).map(event=><button draggable className={`calendar-event ${event.active?"active":""} ${draft?.id===event.id?"selected":""}`} style={{top:event.start,height:Math.max(15,event.end-event.start),left:`calc(${event.lane/event.lanes*100}% + 4px)`,right:`calc(${(event.lanes-event.lane-1)/event.lanes*100}% + 4px)`}} key={`${event.id}-${event.originalStartAt||event.startAt}`} onDragStart={drag=>dragEvent(drag,event)} onPointerDown={click=>{if(click.pointerType==="touch"){const t=setTimeout(()=>{moveItem(click,event,"event",index);navigator.vibrate?.(10)},250);longPressTimer.current=t;const clear=()=>{clearTimeout(t);removeEventListener("pointerup",clear);removeEventListener("pointermove",clear)};addEventListener("pointerup",clear);addEventListener("pointermove",clear)}else moveItem(click,event,"event",index)}} onKeyDown={key=>keyMove(key,event)}><time>{formatTimeRange(event.startAt,event.endAt,event.time,event.timezone)}</time><strong>{event.title}</strong><span className="calendar-resize" aria-label={`Resize ${event.title}`} role="separator" onPointerDown={click=>resizeEvent(click,event,index)} /></button>)}{timedTaskItems.filter(task=>task.day===index).map(task=><button className="calendar-event calendar-task" style={{top:task.top,height:task.height}} key={`task-${task.id}`} onPointerDown={click=>{if(click.pointerType==="touch"){const t=setTimeout(()=>{moveItem(click,task,"task",index);navigator.vibrate?.(10)},250);longPressTimer.current=t;const clear=()=>{clearTimeout(t);removeEventListener("pointerup",clear);removeEventListener("pointermove",clear)};addEventListener("pointerup",clear);addEventListener("pointermove",clear)}else moveItem(click,task,"task",index)}}><time>{formatTimeRange(task.scheduledStartAt,task.scheduledEndAt,task.time)}</time><strong>{task.title}</strong><small>Task</small></button>)}</div>)}</div>
               </div>
             </div>
           </section>
@@ -455,7 +466,7 @@ export default function CalendarPage() {
             <div>
               {selectedEvents.map(event => (
                 <button style={{top: dayPositionFor(event.time), height: event.height}} key={event.id} onClick={() => setDraft({...event})}>
-                  <time>{event.time}</time>
+                  <time dateTime={event.startAt || undefined}>{event.time}</time>
                   <strong>{event.title}</strong>
                   <small>{event.location}</small>
                 </button>
@@ -467,7 +478,7 @@ export default function CalendarPage() {
                   key={`task-${task.id}`}
                   onClick={() => openTask(task.id)}
                 >
-                  <time>{task.time}</time>
+                  <time dateTime={task.scheduledStartAt || task.dueAt || undefined}>{task.time}</time>
                   <strong>{task.title}</strong>
                   <small>Task · {task.project}</small>
                 </button>
@@ -539,7 +550,7 @@ export default function CalendarPage() {
           <section className="mobile-agenda-view">
             {agenda.map(event => (
               <button key={event.id} onClick={() => setDraft({...event})}>
-                <time>{event.time}</time>
+                <time dateTime={event.startAt || undefined}>{event.time}</time>
                 <span>
                   <strong>{event.title}</strong>
                   <small>{event.location || "No location"}</small>
@@ -549,7 +560,7 @@ export default function CalendarPage() {
             ))}
             {taskAgenda.map(task => (
               <button key={`task-${task.id}`} onClick={() => openTask(task.id)}>
-                <time>{task.time}</time>
+                <time dateTime={task.scheduledStartAt || task.dueAt || undefined}>{task.time}</time>
                 <span>
                   <strong>{task.title}</strong>
                   <small>Task · {task.project}</small>

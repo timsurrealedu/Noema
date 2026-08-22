@@ -45,7 +45,6 @@ function timeFor(value: string) {
     hour: "2-digit",
     minute: "2-digit",
     hourCycle: "h23",
-    timeZone: "Asia/Jakarta",
   };
   if (date.getFullYear() !== new Date().getFullYear()) options.year = "numeric";
   return new Intl.DateTimeFormat("en-US", options).format(date);
@@ -225,6 +224,7 @@ export default function CaptureInbox() {
   const {addCapture, cancelInterpretation, captures, confirmCapture, requestInterpretation, updateCapture} = useAppState();
   const [filter, setFilter] = useState<Filter>("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const didReadParams = useRef(false);
   const visible = useMemo(() => {
     return captures.filter(item => {
       if (item.status === "dismissed") return false;
@@ -246,7 +246,12 @@ export default function CaptureInbox() {
   const selected = visible.find(item => item.id === selectedId) ?? visible[0];
 
   useEffect(() => {
+    if (didReadParams.current) return;
+    didReadParams.current = true;
     const params = new URLSearchParams(location.search);
+    const savedFilter = params.get("filter");
+    if (savedFilter && filters.includes(savedFilter as Filter)) setFilter(savedFilter as Filter);
+    setSearchQuery(params.get("q") || "");
     const open = params.get("open");
     const shared = [params.get("title"), params.get("text"), params.get("url")].filter(Boolean).join("\n");
     if (open && captures.some(item => item.id === open)) {
@@ -258,6 +263,13 @@ export default function CaptureInbox() {
       history.replaceState(null, "", "/capture");
     }
   }, [captures]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    if (filter === "All") params.delete("filter"); else params.set("filter", filter);
+    if (searchQuery) params.set("q", searchQuery); else params.delete("q");
+    history.replaceState(null, "", `${location.pathname}${params.size ? `?${params}` : ""}`);
+  }, [filter, searchQuery]);
 
   useEffect(() => {
     if (toast) {
@@ -782,12 +794,17 @@ function CaptureRow({
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
       onClick={onSelect}
+      onKeyDown={event=>{if(event.key==="Enter"||event.key===" "){event.preventDefault();onSelect()}}}
+      tabIndex={0}
+      role="button"
+      aria-pressed={selected}
+      aria-label={`${capture.text}. ${statusMeta[capture.status].label}. Open capture details`}
     >
       <div className="card-top">
         <strong className="card-title">{capture.text}</strong>
         <span className="card-meta">
           <SourceIcon source={capture.source} />
-          {sourceMeta[capture.source].label} · {shortTime(capture.createdAt)}
+          {sourceMeta[capture.source].label} · <time dateTime={capture.createdAt}>{shortTime(capture.createdAt)}</time>
         </span>
       </div>
 

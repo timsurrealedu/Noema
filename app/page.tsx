@@ -22,12 +22,12 @@ const nav = [
 ] as const;
 
 const blankTask=():Task=>({id:createId(),title:"",project:"Inbox",due:"",dueAt:new Date().toISOString(),priority:"Medium",completed:false,status:"open"});
-const jakartaParts=(value:string)=>Object.fromEntries(new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(value)).map(part=>[part.type,part.value]));
-const dateValue=(value?:string|null)=>{if(!value)return "";const part=jakartaParts(value);return `${part.year}-${part.month}-${part.day}`};
-const dateTimeValue=(value?:string|null)=>{if(!value)return "";const part=jakartaParts(value);return `${part.year}-${part.month}-${part.day}T${part.hour}:${part.minute}`};
-const taskStartTime=(value?:string|null)=>value?new Intl.DateTimeFormat("en-GB",{timeZone:"Asia/Jakarta",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date(value)):"Any time";
-const taskDue=(task:Task)=>{const value=task.dueAt||task.due;if(!value||value==="No date")return "No date";const date=new Date(value);if(Number.isNaN(date.valueOf()))return task.due;const options:Intl.DateTimeFormatOptions={weekday:"long",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",hourCycle:"h23",timeZone:"Asia/Jakarta"};if(date.getFullYear()!==new Date().getFullYear())options.year="numeric";return new Intl.DateTimeFormat("en-US",options).format(date)};
-const jakartaIso=(value:string)=>new Date(`${value}:00+07:00`).toISOString();
+const localParts=(value:string)=>Object.fromEntries(new Intl.DateTimeFormat("en-GB",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(value)).map(part=>[part.type,part.value]));
+const dateValue=(value?:string|null)=>{if(!value)return "";const part=localParts(value);return `${part.year}-${part.month}-${part.day}`};
+const dateTimeValue=(value?:string|null)=>{if(!value)return "";const part=localParts(value);return `${part.year}-${part.month}-${part.day}T${part.hour}:${part.minute}`};
+const taskStartTime=(value?:string|null)=>value?new Intl.DateTimeFormat("en-GB",{hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).format(new Date(value)):"Any time";
+const taskDue=(task:Task)=>{const value=task.dueAt||task.due;if(!value||value==="No date")return "No date";const date=new Date(value);if(Number.isNaN(date.valueOf()))return task.due;const options:Intl.DateTimeFormatOptions={weekday:"long",month:"short",day:"numeric",hour:"2-digit",minute:"2-digit",hourCycle:"h23"};if(date.getFullYear()!==new Date().getFullYear())options.year="numeric";return new Intl.DateTimeFormat("en-US",options).format(date)};
+const localIso=(value:string)=>new Date(value).toISOString();
 const mobileTaskDue=(task:Task)=>{const due=taskDue(task),comma=due.indexOf(", ");return comma<0?due:`${due.slice(0,3)}, ${due.slice(comma+2)}`};
 const overdueDays=(task:Task,today:string)=>task.dueAt?Math.max(1,Math.round((new Date(`${today}T00:00:00Z`).valueOf()-new Date(`${dateValue(task.dueAt)}T00:00:00Z`).valueOf())/86_400_000)):0;
 
@@ -39,6 +39,7 @@ export default function Home() {
   const [reviewId,setReviewId] = useState<string|null>(null);
   const [recording,setRecording] = useState(false);
   const [palette,setPalette] = useState(false);
+  const [paletteQuery,setPaletteQuery] = useState("");
   const [assistant,setAssistant] = useState(false);
   const [handwriting,setHandwriting] = useState(false);
   const [collapsedGroups,setCollapsedGroups] = useState<Set<string>>(new Set());
@@ -278,8 +279,8 @@ export default function Home() {
                     </select>
                   </label>
                 </div>
-                <label>Scheduled time<input type="datetime-local" value={dateTimeValue(draft.scheduledStartAt)} onChange={e => setDraft({ ...draft, scheduledStartAt: e.target.value ? jakartaIso(e.target.value) : null, dueAt: e.target.value ? jakartaIso(e.target.value) : draft.dueAt })} /></label>
-                <label>Reminder<input type="datetime-local" value={dateTimeValue(draft.reminderAt)} onChange={e => setDraft({ ...draft, reminderAt: e.target.value ? jakartaIso(e.target.value) : null })} /></label>
+                <label>Scheduled time<input type="datetime-local" value={dateTimeValue(draft.scheduledStartAt)} onChange={e => setDraft({ ...draft, scheduledStartAt: e.target.value ? localIso(e.target.value) : null, dueAt: e.target.value ? localIso(e.target.value) : draft.dueAt })} /></label>
+                <label>Reminder<input type="datetime-local" value={dateTimeValue(draft.reminderAt)} onChange={e => setDraft({ ...draft, reminderAt: e.target.value ? localIso(e.target.value) : null })} /></label>
                 <label>Repeat
                   <select value={draft.recurrence || "Never"} onChange={e => setDraft({ ...draft, recurrence: e.target.value })}>
                     <option>Never</option>
@@ -329,7 +330,7 @@ export default function Home() {
       {([["Home","/",House],["Capture","/capture",Tray],["Vault","/vault",Folder],["Calendar","/calendar",CalendarBlank],["Coding","/coding",Code]] as const).map(([label,href,Icon])=><Link className={label==="Home"?"active":""} href={href} key={label}><Icon/><span>{label}</span></Link>)}
     </nav>
 
-    {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus aria-label="Search commands" placeholder="Search Noema or run a command…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><p>Quick actions</p>{([["New capture","#capture",Plus,""],["Add task","/?open=new",CheckSquare,"⌘ ⇧ T"],["Open calendar","/calendar",CalendarBlank,"G C"],["Search vault","/vault",Folder,"G V"]] as const).map(([label,href,Icon,key])=><Link href={href} onClick={()=>{setPalette(false);if(href==="/?open=new")setDraft(blankTask())}} key={label}><Icon/><span>{label}</span>{key&&<kbd>{key}</kbd>}</Link>)}</ModalDialog>}
+    {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus value={paletteQuery} onChange={event=>setPaletteQuery(event.target.value)} aria-label="Search commands" placeholder="Search Noema or run a command…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><p aria-live="polite">Quick actions</p>{([["New capture","#capture",Plus,""],["Add task","/?open=new",CheckSquare,"⌘ ⇧ T"],["Open calendar","/calendar",CalendarBlank,"G C"],["Search vault","/vault",Folder,"G V"]] as const).filter(([label])=>label.toLowerCase().includes(paletteQuery.toLowerCase())).map(([label,href,Icon,key])=><Link href={href} onClick={()=>{setPalette(false);setPaletteQuery("");if(href==="/?open=new")setDraft(blankTask())}} key={label}><Icon/><span>{label}</span>{key&&<kbd>{key}</kbd>}</Link>)}</ModalDialog>}
     {handwriting&&<HandwritingCapture onClose={()=>setHandwriting(false)}/>}
     <ContextualAssistant
       isOpen={assistant}
