@@ -32,6 +32,11 @@ export default function VaultPage(){
   const [tutorOpen,setTutorOpen]=useState(false);
   const [fullscreen,setFullscreen]=useState(false);
   const [showProperties,setShowProperties]=useState(true);
+  const [mixedDirty,setMixedDirty]=useState(false);
+  const [titleDirty,setTitleDirty]=useState(false);
+  const titleTimer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined);
+  const titleDirtyRef=useRef(false);
+  const draftRef=useRef<Note|null>(null);
   const [optimizations,setOptimizations]=useState<Optimization[]>([]),[optimizing,setOptimizing]=useState(false),[optimizationError,setOptimizationError]=useState(""),[openError,setOpenError]=useState("");
   
   function findNoteByNameOrId(target:string):Note|undefined{
@@ -68,6 +73,17 @@ export default function VaultPage(){
   },[notes]);
 
   useEffect(()=>{if(draft?.id)loadOptimizations(draft.id).catch(()=>{})},[draft?.id]);
+  useEffect(()=>{draftRef.current=draft},[draft]);
+  useEffect(()=>{
+    const warn=(event:BeforeUnloadEvent)=>{if(mixedDirty||titleDirty){event.preventDefault();event.returnValue="";}};
+    addEventListener("beforeunload",warn);
+    return()=>removeEventListener("beforeunload",warn);
+  },[mixedDirty,titleDirty]);
+  function flushTitleSave(){
+    if(titleTimer.current)clearTimeout(titleTimer.current);
+    if(titleDirtyRef.current&&draftRef.current){saveNote(draftRef.current);titleDirtyRef.current=false;setTitleDirty(false)}
+  }
+  useEffect(()=>()=>flushTitleSave(),[draft?.id]);
   const filtered=notes.filter(note=>view==="Trash"?note.trashed:!note.trashed).filter(note=>view==="Favorites"?note.favorite:view==="Courses"?note.tags.some(tag=>["course","networking","database","study","operating-systems"].includes(tag)):view==="Projects"?note.tags.some(tag=>["revou","partnership","project"].includes(tag)):true).filter(note=>`${note.title} ${note.excerpt} ${note.tags}`.toLowerCase().includes(query.toLowerCase()));
   function extractTagsFromContent(content:string):string[]{
     if(!content||typeof content!=="string")return[];
@@ -104,6 +120,7 @@ export default function VaultPage(){
   }
 
   function closeNote(){
+    flushTitleSave();
     if(draft?.relativePath&&draft.relativePath.includes("/")){
       const parent=draft.relativePath.split("/").slice(0,-1).join("/");
       setFolder(parent);
@@ -151,7 +168,9 @@ export default function VaultPage(){
       relativePath: newRelativePath
     };
     setDraft(updated);
-    saveNote(updated);
+    titleDirtyRef.current=true;setTitleDirty(true);
+    if(titleTimer.current)clearTimeout(titleTimer.current);
+    titleTimer.current=setTimeout(()=>{saveNote(updated);titleDirtyRef.current=false;setTitleDirty(false)},800);
   }
 
   function update(content:string){
@@ -202,7 +221,7 @@ export default function VaultPage(){
             <button className="secondary note-secondary-action" onClick={exportNote}><DownloadSimple /><span>Export</span></button>
             <button className="icon-button secondary fullscreen-toggle" title={fullscreen ? "Exit fullscreen" : "Fullscreen"} aria-label={fullscreen ? "Exit fullscreen" : "Open note fullscreen"} onClick={toggleFullscreen}>{fullscreen ? <ArrowsIn /> : <ArrowsOut />}</button>
           </header>
-          <MixedNoteEditor noteId={draft.id} initialContent={draft.content} initialInk={new URLSearchParams(location.search).get("ink") === "1"} onNavigateNote={navigateToNote} fullscreen={fullscreen} onToggleFullscreen={toggleFullscreen} />
+          <MixedNoteEditor noteId={draft.id} initialContent={draft.content} initialInk={new URLSearchParams(location.search).get("ink") === "1"} onNavigateNote={navigateToNote} onDirtyChange={setMixedDirty} fullscreen={fullscreen} onToggleFullscreen={toggleFullscreen} />
           <aside className="note-inspector">
             <div className="object-inspector-head"><div><span>Properties</span></div><button className="icon-button" aria-label="Collapse properties panel" title="Collapse properties panel" onClick={() => setShowProperties(false)}><X /></button></div>
             <label>Title<input value={draft.title} onChange={e => handleTitleChange(e.target.value)} /></label>
@@ -261,4 +280,3 @@ export default function VaultPage(){
     );
   }
 }
-

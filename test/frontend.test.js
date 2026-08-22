@@ -153,6 +153,7 @@ test("Obsidian sync is stable and read-only",()=>{const sync=read("scripts/sync-
 test("vault tasks expose live counts, source links, Jakarta scheduling, and discriminated calendar items",()=>{const tasks=read("app/page.tsx"),calendar=read("app/calendar/page.tsx"),state=read("app/components/AppState.tsx");assert.doesNotMatch(tasks,/Four tasks are ready/);assert.match(tasks,/counts=Object\.fromEntries/);assert.match(tasks,/Asia\/Jakarta/);assert.match(tasks,/vaultSource\.relativePath/);assert.match(tasks,/Open source note/);assert.match(state,/kind:"event"/);assert.match(state,/kind:"task"/);assert.match(calendar,/calendarItems\s*\.map\(item => \(item\.kind === "task"/)});
 test("mixed handwriting editor preserves offline strokes and pen-first input",()=>{const editor=read("app/components/InkEditor.tsx"),mixed=read("app/components/MixedNoteEditor.tsx"),ink=read("app/lib/ink.ts"),queue=read("app/lib/offlineQueue.ts"),worker=read("server/worker/handlers/handwriting-ocr.mjs");assert.match(editor,/getCoalescedEvents/);assert.match(editor,/pointerType==="pen"/);assert.match(editor,/saveInkDraft/);for(const tool of ["pen","highlighter","eraser","lasso"])assert.match(editor,new RegExp(`"${tool}"`));assert.match(mixed,/blocks/);assert.match(queue,/ink-drafts/);assert.match(ink,/pressure:event\.pressure>0/);assert.match(worker,/strokesToPng/);assert.match(worker,/mimeType:"image\/png"/);assert.doesNotMatch(worker,/mimeType:"image\/svg\+xml"/)});
 test("mixed note editor inserts an ink block at the active Markdown caret",()=>{const mixed=read("app/components/MixedNoteEditor.tsx");assert.match(mixed,/insertInk/);assert.match(mixed,/value\.slice\(0,caret\)/);assert.match(mixed,/ids\.splice\(index\+1,0,inkId,afterId\)/)});
+test("mixed notes debounce serialized block saves and protect dirty drafts",()=>{const mixed=read("app/components/MixedNoteEditor.tsx"),live=read("app/components/LiveMarkdownEditor.tsx"),vault=read("app/vault/page.tsx");assert.match(mixed,/setTimeout\(\(\) => void flushMarkdown\(block\.id\), 800\)/);assert.match(mixed,/saveChains\.current/);assert.match(mixed,/onDirtyChange/);assert.match(live,/replaceAll/);assert.match(vault,/beforeunload/)});
 test("ink exposes world-edit transforms and geometric tool types",()=>{const editor=read("app/components/InkEditor.tsx"),ink=read("app/lib/ink.ts");for(const tool of ["rectangle","ellipse","arrow","rotateStroke","scaleStroke","formatVersion:2","coordinateSpace:\"world\"","Ruler snap"])assert.match(`${editor}\n${ink}`,new RegExp(tool))});
 test("ink replay drops malformed strokes before rendering or transforms",()=>{const ink=read("app/lib/ink.ts"),editor=read("app/components/InkEditor.tsx");assert.match(ink,/sanitizeStrokes/);assert.match(ink,/if\(!a\|\|!b\)return ""/);assert.match(editor,/sanitizeStrokes\(initial\)/);assert.match(editor,/sanitizeStrokes\(draft\?\.strokes\)/)});
 test("ink touch gestures pan, pinch, and support two-finger double-tap undo",()=>{const editor=read("app/components/InkEditor.tsx");for(const token of ["touches","pinchDistance","lastTwoTap","pointerType===\"touch\"","viewBox","undo\(\)"])assert.match(editor,new RegExp(token))});
@@ -353,9 +354,6 @@ test("extractTagsAndCleanText parses heading tags with escaped backslash bracket
   assert.match(content,/tags\?/);
   assert.match(content,/standaloneHashtagLineRegex/);
 });
-
-
-
 
 
 

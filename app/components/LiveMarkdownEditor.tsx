@@ -2,6 +2,7 @@
 
 import {useEffect, useRef} from "react";
 import {Crepe} from "@milkdown/crepe";
+import {replaceAll} from "@milkdown/utils";
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/frame.css";
 
@@ -10,6 +11,7 @@ export function LiveMarkdownEditor({value, onChange, onBlur}: {value: string; on
   const latest = useRef(value);
   const change = useRef(onChange);
   const blur = useRef(onBlur);
+  const crepe = useRef<Crepe | null>(null);
   change.current = onChange;
   blur.current = onBlur;
 
@@ -41,6 +43,7 @@ export function LiveMarkdownEditor({value, onChange, onBlur}: {value: string; on
       listener.blur(() => blur.current());
     });
     void editor.create().then(() => {
+      crepe.current = editor;
       const topBar = root.current?.querySelector(".milkdown-top-bar") as HTMLElement | null;
       if (topBar) {
         const docContainer = root.current?.closest(".integrated-doc-container") || root.current?.closest(".integrated-note-editor");
@@ -64,8 +67,14 @@ export function LiveMarkdownEditor({value, onChange, onBlur}: {value: string; on
         }
       }
     });
-    return () => { void editor.destroy(); };
+    return () => { crepe.current = null; void editor.destroy(); };
   }, []);
+
+  useEffect(() => {
+    if (!crepe.current || latest.current === value) return;
+    latest.current = value;
+    crepe.current.editor.action(replaceAll(value));
+  }, [value]);
 
   return <div className="live-markdown-editor" ref={root} />;
 }

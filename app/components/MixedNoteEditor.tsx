@@ -74,8 +74,8 @@ function MarkdownBlock({
       {!preview ? (
         <LiveMarkdownEditor
           value={value}
-          onChange={(val) => setValue(val)}
-          onBlur={() => value !== block.markdown && onSave(block, value)}
+          onChange={(val) => { setValue(val); onSave(block, val); }}
+          onBlur={() => {}}
         />
       ) : (
         <article className="markdown-preview block-preview">
@@ -240,6 +240,7 @@ export function MixedNoteEditor({
   initialContent = "",
   initialInk = false,
   onNavigateNote,
+  onDirtyChange,
   fullscreen,
   onToggleFullscreen
 }: {
@@ -247,6 +248,7 @@ export function MixedNoteEditor({
   initialContent?: string;
   initialInk?: boolean;
   onNavigateNote?: (target: string) => void;
+  onDirtyChange?: (dirty: boolean) => void;
   fullscreen?: boolean;
   onToggleFullscreen?: () => void;
 }) {
@@ -255,6 +257,54 @@ export function MixedNoteEditor({
   const [loading, setLoading] = useState(true);
   const startedInk = useRef(false);
   const docRef = useRef<HTMLDivElement>(null);
+  const markdownPending = useRef(new Map<string, {value: string; version: number}>());
+  const markdownTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
+  const saveChains = useRef(new Map<string, Promise<void>>());
+  const markdownSaving = useRef(new Set<string>());
+
+  function updateDirty() {
+    onDirtyChange?.(markdownPending.current.size > 0 || markdownTimers.current.size > 0 || markdownSaving.current.size > 0);
+  }
+
+  async function flushMarkdown(id: string) {
+    const timer = markdownTimers.current.get(id);
+    if (timer) clearTimeout(timer);
+    markdownTimers.current.delete(id);
+    const pending = markdownPending.current.get(id);
+    if (!pending) return;
+    markdownPending.current.delete(id);
+    const previous = saveChains.current.get(id) || Promise.resolve();
+    const next = previous.then(async () => {
+      markdownSaving.current.add(id);
+      updateDirty();
+      const response = await fetch(`/api/v1/notes/${noteId}/blocks/${id}`, {
+        method: "PATCH",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({markdown: pending.value, version: pending.version})
+      });
+      if (!response.ok) throw new Error((await response.json()).error?.message || "Save failed");
+      const saved = await response.json();
+      setBlocks(items => items.map(item => item.id === id ? {...item, version: saved.version, markdown: item.markdown === pending.value ? saved.markdown : item.markdown} : item));
+      setError("");
+    }).catch(reason => {
+      markdownPending.current.set(id, pending);
+      setError(reason.message || "Save failed");
+    }).finally(() => { markdownSaving.current.delete(id); updateDirty(); });
+    saveChains.current.set(id, next);
+    await next;
+  }
+
+  function queueMarkdown(block: Block, value: string) {
+    markdownPending.current.set(block.id, {value, version: block.version});
+    const existing = markdownTimers.current.get(block.id);
+    if (existing) clearTimeout(existing);
+    markdownTimers.current.set(block.id, setTimeout(() => void flushMarkdown(block.id), 800));
+    updateDirty();
+  }
+
+  async function flushMarkdownSaves() {
+    await Promise.all([...markdownPending.current.keys()].map(id => flushMarkdown(id)));
+  }
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -337,6 +387,7 @@ export function MixedNoteEditor({
   const overlayStrokes = useMemo(() => sanitizeStrokes(inkBlock?.strokes || []), [inkBlock?.strokes]);
 
   async function load() {
+    if (markdownPending.current.size || markdownSaving.current.size) return;
     try {
       const response = await fetch(`/api/v1/notes/${noteId}/blocks`);
       const contentType = response.headers.get("content-type") || "";
@@ -364,10 +415,12 @@ export function MixedNoteEditor({
   }
 
   useEffect(() => {
+    setLoading(true);
     load().catch(reason => {
       setError(reason.message);
       setLoading(false);
     });
+    return () => { void flushMarkdownSaves(); };
   }, [noteId]);
 
   useEffect(() => {
@@ -487,13 +540,7 @@ export function MixedNoteEditor({
 
   async function markdown(block: Block, value: string) {
     setBlocks(items => items.map(item => (item.id === block.id ? {...item, markdown: value} : item)));
-    const response = await fetch(`/api/v1/notes/${noteId}/blocks/${block.id}`, {
-      method: "PATCH",
-      headers: {"Content-Type": "application/json"},
-      body: JSON.stringify({markdown: value, version: block.version})
-    });
-    if (response.ok) await load();
-    else setError((await response.json()).error?.message || "Save failed");
+    queueMarkdown(block, value);
   }
 
   async function add(kind: "markdown" | "ink", source?: Block) {
