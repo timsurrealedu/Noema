@@ -275,6 +275,7 @@ body:has(.obsidian-vault),html:has(.obsidian-vault){background:var(--surface)!im
 .code-action-buttons,.code-file-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
 .code-action-buttons .icon-btn,.code-file-actions .icon-btn{width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;border-radius:12px!important}
 .code-subbar .spacer{flex:1;min-width:4px}
+.dirty-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warning,#fabd2f);flex-shrink:0;margin-left:2px}
 .icon-btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid #1c282b;background:#11181a;color:#8fa0a6;cursor:pointer;flex-shrink:0;transition:all .15s ease}
 .icon-btn:hover{background:#162225;color:#f1f5f9}
 .icon-btn.active{background:#0b2223;color:#3dbb9e;border-color:#3dbb9e}

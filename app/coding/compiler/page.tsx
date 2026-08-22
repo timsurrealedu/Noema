@@ -401,6 +401,9 @@ export default function CompilerPage() {
   const [redoStack, setRedoStack] = useState<string[]>([]);
   const [caretPos, setCaretPos] = useState({ line: 1, col: 1 });
   const [mounted, setMounted] = useState(false);
+  const abortRef = useRef<AbortController | null>(null);
+  const [stopping, setStopping] = useState(false);
+  const dirtyRef = useRef(false);
 
   // Mobile UX Enhancements State
   const [isEditing, setIsEditing] = useState(false);
@@ -448,6 +451,17 @@ export default function CompilerPage() {
       filesButtonRef.current?.focus();
     }
   }, [drawerOpen]);
+
+  useEffect(() => { dirtyRef.current = !!(mode === "saved" && filePath && code !== originalContent); });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const handler = (e: BeforeUnloadEvent) => {
+      if (dirtyRef.current) e.preventDefault();
+    };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, []);
 
   const KEYWORDS = new Set([
     "async", "await", "break", "case", "catch", "class", "const", "continue", "debugger", "default", "delete", "do", "else", "enum", "export", "extends", "false", "finally", "for", "function", "if", "import", "in", "instanceof", "interface", "let", "new", "null", "of", "package", "private", "protected", "public", "return", "static", "super", "switch", "this", "throw", "true", "try", "typeof", "var", "void", "while", "with", "yield",
@@ -704,6 +718,7 @@ export default function CompilerPage() {
   }
 
   async function openFile(path: string) {
+    if (isDirty && !confirmDiscard()) return;
     setError("");
     try {
       const response = await fetch(`/api/v1/compiler/files/content?path=${encodeURIComponent(path)}`);
@@ -742,6 +757,7 @@ export default function CompilerPage() {
 
   function selectMode(next: "scratch" | "saved") {
     if (next === mode) return;
+    if (mode === "saved" && isDirty && !confirmDiscard()) return;
     setMode(next);
     setResult(null);
     setError("");
@@ -755,9 +771,16 @@ export default function CompilerPage() {
     }
   }
 
+  function confirmDiscard(): boolean {
+    return window.confirm("You have unsaved changes. Discard them?");
+  }
+
   async function run(event?: React.SyntheticEvent) {
     if (event) event.preventDefault();
+    const controller = new AbortController();
+    abortRef.current = controller;
     setRunning(true);
+    setStopping(false);
     setError("");
     setResult(null);
     setPanelOpen(true);
@@ -766,7 +789,8 @@ export default function CompilerPage() {
       const response = await fetch("/api/v1/compiler/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ language, code, stdin })
+        body: JSON.stringify({ language, code, stdin }),
+        signal: controller.signal
       });
       const body = await response.json();
       if (!response.ok) {
@@ -779,11 +803,22 @@ export default function CompilerPage() {
         setActiveTab("problems");
       }
     } catch (reason) {
+      if (reason instanceof DOMException && reason.name === "AbortError") {
+        setError("Run cancelled");
+        return;
+      }
       setError(reason instanceof Error ? reason.message : "Compilation failed");
       setActiveTab("problems");
     } finally {
       setRunning(false);
+      setStopping(false);
+      abortRef.current = null;
     }
+  }
+
+  function stopRun() {
+    abortRef.current?.abort();
+    setStopping(true);
   }
 
   const isDirty = mode === "saved" && filePath && code !== originalContent;
@@ -844,13 +879,13 @@ export default function CompilerPage() {
             <button
               type="button"
               className="btn primary code-run"
-              disabled={running || !code.trim()}
+              disabled={running ? false : (!code.trim())}
               suppressHydrationWarning
-              onClick={(e) => void run(e)}
-              title="Run code (⌘ Enter)"
+              onClick={(e) => running ? stopRun() : void run(e)}
+              title={running ? "Stop execution" : "Run code (⌘ Enter)"}
             >
-              <Play size={14} weight="fill" />
-              <span>{running ? "Running…" : "Run"}</span>
+              {running ? <X size={14} weight="bold" /> : <Play size={14} weight="fill" />}
+              <span>{stopping ? "Stopping…" : running ? "Stop" : "Run"}</span>
             </button>
           </div>
         </div>
@@ -900,6 +935,7 @@ export default function CompilerPage() {
                 type="button"
                 className="icon-btn"
                 onClick={() => {
+                  if (isDirty && !confirmDiscard()) return;
                   setFilePath("");
                   setCode(starters[language]);
                   setOriginalContent(starters[language]);
@@ -920,6 +956,7 @@ export default function CompilerPage() {
               >
                 <FloppyDisk size={16} />
               </button>
+              {isDirty && <span className="dirty-dot" title="Unsaved changes" aria-label="Unsaved changes" />}
             </div>
           )}
 
