@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useRef, useState } from "react";
 import {
   ArrowDown, ArrowLeft, ArrowRight, ArrowUp, ArrowCounterClockwise, ArrowClockwise,
-  CaretDown, CaretRight, CheckCircle, Eye, EyeSlash, FileCode, FloppyDisk, Folder, FolderOpen, FolderSimple,
+  CaretDown, CaretRight, CheckCircle, DotsThree, Eye, EyeSlash, FileCode, FloppyDisk, Folder, FolderOpen, FolderSimple,
   MagnifyingGlass, Play, Plus, Sparkle, Terminal, TextIndent, TextOutdent, WarningCircle, X
 } from "@phosphor-icons/react";
 import { ModuleShell } from "../../components/ModuleShell";
@@ -16,12 +17,12 @@ const LazySyntaxPreview = dynamic(() => import("../../components/LazySyntaxPrevi
 const starters = {
   javascript: "console.log(6 * 7);",
   python: "print(6 * 7)",
-  c: '#include <stdio.h>\nint main(void) { printf("%d\\n", 6 * 7); }',
-  cpp: '#include <iostream>\nint main() { std::cout << 6 * 7 << "\\n"; }',
-  go: 'package main\nimport "fmt"\nfunc main() { fmt.Println(6 * 7) }',
-  rust: 'fn main() { println!("{}", 6 * 7); }',
-  java: 'public class Main { public static void main(String[] args) { System.out.println(6 * 7); } }',
-  bash: 'printf "Hello from Bash\\n"'
+  c: '#include <stdio.h>\nint main(){\n    printf("hi there");\n}',
+  cpp: '#include <iostream>\nint main() { std::cout << "hi there\\n"; }',
+  go: 'package main\nimport "fmt"\nfunc main() { fmt.Println("hi there") }',
+  rust: 'fn main() { println!("hi there"); }',
+  java: 'public class Main { public static void main(String[] args) { System.out.println("hi there"); } }',
+  bash: 'printf "hi there\\n"'
 };
 type Language = keyof typeof starters;
 type Result = { code: number; output: string; truncated: boolean; stage: string; durationMs: number };
@@ -57,12 +58,116 @@ const CODE_KEYS = [
   { t: "Tab", v: "    ", wide: true }
 ] as const;
 
+type KeyDef = { t: string; v: string; close?: string; wide?: boolean };
+
+const LANG_KEYS: Record<Language, readonly KeyDef[]> = {
+  c: [
+    { t: "{ }", v: "{", close: "}" },
+    { t: "( )", v: "(", close: ")" },
+    { t: "[ ]", v: "[", close: "]" },
+    { t: ";", v: ";" },
+    { t: '"', v: '"', close: '"' },
+    { t: "&", v: "&" },
+    { t: "*", v: "*" },
+    { t: "->", v: "->" },
+    { t: "=", v: "=" },
+    { t: "+", v: "+" },
+    { t: "-", v: "-" },
+    { t: ",", v: "," }
+  ],
+  cpp: [
+    { t: "{ }", v: "{", close: "}" },
+    { t: "( )", v: "(", close: ")" },
+    { t: "[ ]", v: "[", close: "]" },
+    { t: ";", v: ";" },
+    { t: '"', v: '"', close: '"' },
+    { t: "<<", v: "<<" },
+    { t: ">>", v: ">>" },
+    { t: "::", v: "::" },
+    { t: "->", v: "->" },
+    { t: "&", v: "&" },
+    { t: "*", v: "*" },
+    { t: "=", v: "=" }
+  ],
+  python: [
+    { t: ":", v: ":" },
+    { t: "( )", v: "(", close: ")" },
+    { t: "[ ]", v: "[", close: "]" },
+    { t: "{ }", v: "{", close: "}" },
+    { t: '"', v: '"', close: '"' },
+    { t: "'", v: "'", close: "'" },
+    { t: "#", v: "#" },
+    { t: "=", v: "=" },
+    { t: "def", v: "def " },
+    { t: "in", v: " in " },
+    { t: "->", v: "->" }
+  ],
+  javascript: [
+    { t: "{ }", v: "{", close: "}" },
+    { t: "( )", v: "(", close: ")" },
+    { t: "[ ]", v: "[", close: "]" },
+    { t: "=>", v: "=> " },
+    { t: ";", v: ";" },
+    { t: '"', v: '"', close: '"' },
+    { t: "`", v: "`", close: "`" },
+    { t: "const", v: "const " },
+    { t: "let", v: "let " },
+    { t: "===", v: "===" }
+  ],
+  go: [
+    { t: "{ }", v: "{", close: "}" },
+    { t: "( )", v: "(", close: ")" },
+    { t: ":=", v: ":= " },
+    { t: ";", v: ";" },
+    { t: '"', v: '"', close: '"' },
+    { t: "&", v: "&" },
+    { t: "*", v: "*" },
+    { t: "struct", v: "struct " },
+    { t: "func", v: "func " },
+    { t: "if", v: "if " }
+  ],
+  rust: [
+    { t: "{ }", v: "{", close: "}" },
+    { t: "( )", v: "(", close: ")" },
+    { t: "->", v: "->" },
+    { t: ";", v: ";" },
+    { t: '"', v: '"', close: '"' },
+    { t: "&", v: "&" },
+    { t: "mut", v: "mut " },
+    { t: "fn", v: "fn " },
+    { t: "let", v: "let " },
+    { t: "match", v: "match " }
+  ],
+  java: [
+    { t: "{ }", v: "{", close: "}" },
+    { t: "( )", v: "(", close: ")" },
+    { t: "[ ]", v: "[", close: "]" },
+    { t: ";", v: ";" },
+    { t: '"', v: '"', close: '"' },
+    { t: "=", v: "=" },
+    { t: "public", v: "public " },
+    { t: "class", v: "class " },
+    { t: "new", v: "new " }
+  ],
+  bash: [
+    { t: '"', v: '"', close: '"' },
+    { t: "'", v: "'", close: "'" },
+    { t: "$", v: "$" },
+    { t: "|", v: "|" },
+    { t: ">", v: ">" },
+    { t: ";", v: ";" },
+    { t: "&&", v: "&&" },
+    { t: "#", v: "#" },
+    { t: "echo", v: "echo " }
+  ]
+};
+
 function SymbolButton({
   k,
   onInsert,
   onInsertPair
 }: {
-  k: (typeof CODE_KEYS)[number];
+  k: KeyDef;
   onInsert: (text: string) => void;
   onInsertPair: (open: string, close: string) => void;
 }) {
@@ -82,18 +187,18 @@ function SymbolButton({
   return (
     <button
       type="button"
-      className={`sym${"wide" in k && k.wide ? " sym-wide" : ""}${"close" in k && k.close ? " sym-pair" : ""}`}
-      data-close={"close" in k ? (k as { close?: string }).close : undefined}
+      className={`sym${"wide" in k && k.wide ? " sym-wide" : ""}${k.close ? " sym-pair" : ""}`}
+      data-close={k.close}
       onPointerDown={(ev) => {
         ev.preventDefault();
         sx.current = ev.clientX;
         sy.current = ev.clientY;
         moved.current = false;
         held.current = false;
-        if ("close" in k && (k as { close?: string }).close) {
+        if (k.close) {
           timer.current = setTimeout(() => {
             held.current = true;
-            onInsert((k as { close: string }).close);
+            onInsert(k.close!);
           }, 340);
         }
       }}
@@ -107,8 +212,8 @@ function SymbolButton({
         clear();
         if (moved.current || held.current) return;
         ev.preventDefault();
-        if ("close" in k && (k as { close?: string }).close) {
-          onInsertPair(k.v, (k as { close: string }).close);
+        if (k.close) {
+          onInsertPair(k.v, k.close);
         } else {
           onInsert(k.v);
         }
@@ -282,6 +387,7 @@ export default function CompilerPage() {
   const [error, setError] = useState("");
   const [running, setRunning] = useState(false);
   const [tutorOpen, setTutorOpen] = useState(false);
+  const [tutorPrompt, setTutorPrompt] = useState<string | undefined>(undefined);
   const [highlight,setHighlight]=useState(true);
 
   const [mode, setMode] = useState<"scratch" | "saved">("scratch");
@@ -295,6 +401,33 @@ export default function CompilerPage() {
   const [redoStack, setRedoStack] = useState<string[]>([]);
   const [caretPos, setCaretPos] = useState({ line: 1, col: 1 });
   const [mounted, setMounted] = useState(false);
+
+  // Mobile UX Enhancements State
+  const [isEditing, setIsEditing] = useState(false);
+  const [overflowOpen, setOverflowOpen] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"output" | "terminal" | "problems">("output");
+  const [selectedText, setSelectedText] = useState("");
+
+  const router = useRouter();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const isMobile = window.innerWidth <= 820 || window.matchMedia("(max-width: 820px)").matches;
+    if (!isMobile) return;
+
+    window.history.pushState({ page: "compiler" }, "", window.location.href);
+
+    const handlePopState = (event: PopStateEvent) => {
+      event.preventDefault();
+      router.push("/");
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => {
+      window.removeEventListener("popstate", handlePopState);
+    };
+  }, [router]);
 
   useEffect(() => {
     setMounted(true);
@@ -555,8 +688,6 @@ export default function CompilerPage() {
     updateCaretPos();
   }
 
-  const mobileKeys = ["()", "{}", "[]", ";", '"', "'", "=", "=>", "  "];
-
   function changeLanguage(value: Language) {
     if (mode === "scratch") localStorage.setItem(`noema-scratch-${language}`, code);
     setLanguage(value);
@@ -629,6 +760,8 @@ export default function CompilerPage() {
     setRunning(true);
     setError("");
     setResult(null);
+    setPanelOpen(true);
+    setActiveTab("output");
     try {
       const response = await fetch("/api/v1/compiler/run", {
         method: "POST",
@@ -638,11 +771,16 @@ export default function CompilerPage() {
       const body = await response.json();
       if (!response.ok) {
         setError(body.error?.message || `Run failed (${response.status})`);
+        setActiveTab("problems");
         return;
       }
       setResult(body);
+      if (body.code !== 0) {
+        setActiveTab("problems");
+      }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : "Compilation failed");
+      setActiveTab("problems");
     } finally {
       setRunning(false);
     }
@@ -651,7 +789,6 @@ export default function CompilerPage() {
   const isDirty = mode === "saved" && filePath && code !== originalContent;
   const fileTree = buildFileTree(files);
   const gutterRef = useRef<HTMLDivElement>(null);
-  const [stdinOpen, setStdinOpen] = useState(false);
 
   function syncScroll() {
     const ta = textareaRef.current;
@@ -668,9 +805,9 @@ export default function CompilerPage() {
   }
 
   return (
-    <ModuleShell active="Coding" title="Compiler">
+    <ModuleShell active="Coding" title="">
       <div className="compiler-container">
-        {/* Top Header Bar matching lifeOS .code-top */}
+        {/* Top Header Bar */}
         <div className="code-top">
           <div className="seg code-mode">
             <button
@@ -690,36 +827,20 @@ export default function CompilerPage() {
           </div>
 
           <div className="code-top-actions">
-            {mode === "saved" && (
-              <button
-                ref={filesButtonRef}
-                type="button"
-                className={`icon-btn ${drawerOpen ? "active" : ""}`}
-                onClick={() => setDrawerOpen(!drawerOpen)}
-                title="Project files"
-                aria-label="Toggle saved files drawer"
-              >
-                <FolderOpen size={16} />
-              </button>
-            )}
             <button
               type="button"
-              className="icon-btn"
-              onClick={() => setTutorOpen(true)}
-              title="Tutor"
-              aria-label="Tutor"
+              className="icon-btn code-ask-btn"
+              onClick={() => {
+                setTutorPrompt(undefined);
+                setTutorOpen(true);
+              }}
+              title="Ask AI Tutor"
+              aria-label="Ask AI Tutor"
             >
-              <Sparkle size={16} />
+              <Sparkle size={14} />
+              <span className="code-ask-text">Ask</span>
             </button>
-            <button
-              type="button"
-              className={`icon-btn ${stdinOpen ? "active" : ""}`}
-              onClick={() => setStdinOpen(!stdinOpen)}
-              title="Toggle input (stdin)"
-              aria-label="Toggle input (stdin)"
-            >
-              <Terminal size={16} />
-            </button>
+
             <button
               type="button"
               className="btn primary code-run"
@@ -734,21 +855,38 @@ export default function CompilerPage() {
           </div>
         </div>
 
-        {/* Subbar matching lifeOS .code-subbar */}
+        {/* Subbar */}
         <div className="code-subbar">
           {mode === "scratch" ? (
-            <select
-              className="code-lang-select"
-              value={language}
-              onChange={(event) => changeLanguage(event.target.value as Language)}
-              aria-label="Select language"
-            >
-              {Object.keys(starters).map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
+            <div className="code-subbar-left">
+              <select
+                className="code-lang-select"
+                value={language}
+                onChange={(event) => changeLanguage(event.target.value as Language)}
+                aria-label="Select language"
+              >
+                {Object.keys(starters).map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+              <span className="code-buffer-label">
+                Scratch · main.{(starters as Record<string, string>)[language] && {
+                  javascript: "js",
+                  python: "py",
+                  c: "c",
+                  cpp: "cpp",
+                  go: "go",
+                  rust: "rs",
+                  java: "java",
+                  bash: "sh"
+                }[language]}
+              </span>
+              <span className="caret-pos-indicator hide-mobile">
+                Ln {caretPos.line}, Col {caretPos.col}
+              </span>
+            </div>
           ) : (
             <div className="code-file-actions">
               <input
@@ -785,101 +923,109 @@ export default function CompilerPage() {
             </div>
           )}
 
-          <small className="caret-pos-indicator">
-            Ln {caretPos.line}, Col {caretPos.col}
-          </small>
-
           <div className="spacer" />
 
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label="Undo edit"
-            title="Undo"
-            disabled={!history.length}
-            suppressHydrationWarning
-            onClick={handleUndo}
-          >
-            <ArrowCounterClockwise size={16} />
-          </button>
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label="Redo edit"
-            title="Redo"
-            disabled={!redoStack.length}
-            suppressHydrationWarning
-            onClick={handleRedo}
-          >
-            <ArrowClockwise size={16} />
-          </button>
-          <button
-            type="button"
-            className={`icon-btn ${highlight ? "active" : ""}`}
-            onClick={() => setHighlight((value) => !value)}
-            title="Show highlighting"
-            aria-label="Show highlighting"
-          >
-            {highlight ? <EyeSlash size={16} /> : <Eye size={16} />}
-          </button>
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label="Outdent selection"
-            title="Outdent selection"
-            onClick={() => indent(true)}
-          >
-            <TextOutdent size={16} />
-          </button>
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label="Indent selection"
-            title="Indent selection"
-            onClick={() => indent()}
-          >
-            <TextIndent size={16} />
-          </button>
-        </div>
-
-        {/* Collapsible Stdin Panel matching lifeOS .code-stdin-wrap */}
-        {stdinOpen && (
-          <div className="code-stdin-wrap">
-            <textarea
-              value={stdin}
-              onChange={(event) => setStdin(event.target.value)}
-              placeholder="Program input (stdin)..."
-              rows={2}
-              aria-label="Standard input"
-            />
+          <div className="code-action-buttons">
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Undo edit"
+              title="Undo"
+              disabled={!history.length}
+              suppressHydrationWarning
+              onClick={handleUndo}
+            >
+              <ArrowCounterClockwise size={16} />
+            </button>
+            <button
+              type="button"
+              className="icon-btn"
+              aria-label="Redo edit"
+              title="Redo"
+              disabled={!redoStack.length}
+              suppressHydrationWarning
+              onClick={handleRedo}
+            >
+              <ArrowClockwise size={16} />
+            </button>
+            <button
+              type="button"
+              className={`icon-btn code-overflow-trigger ${overflowOpen ? "active" : ""}`}
+              onClick={() => setOverflowOpen(!overflowOpen)}
+              title="More editor actions"
+              aria-label="More editor actions"
+            >
+              <DotsThree size={18} weight="bold" />
+            </button>
           </div>
-        )}
 
-        {/* Collapsible Output Panel matching lifeOS .code-panel */}
-        {(result || error) && (
-          <div className="code-panel">
-            <div className="code-panel-head">
-              <span className={`code-status ${error ? "err" : "ok"}`}>
-                {error ? "Compilation error" : `Output · ${result?.durationMs}ms · exit ${result?.code}`}
-              </span>
+          {overflowOpen && (
+            <div className="code-overflow-menu" onKeyDown={(e) => { if (e.key === "Escape") setOverflowOpen(false); }}>
               <button
                 type="button"
-                className="icon-btn"
+                className={highlight ? "active" : ""}
+                title="Show highlighting"
+                aria-label="Show highlighting"
                 onClick={() => {
-                  setResult(null);
-                  setError("");
+                  setHighlight((value) => !value);
+                  setOverflowOpen(false);
                 }}
-                title="Close output"
-                aria-label="Close output"
               >
-                <X size={14} />
+                {highlight ? <EyeSlash size={16} /> : <Eye size={16} />}
+                <span>{highlight ? "Hide Highlighting" : "Show Highlighting"}</span>
               </button>
+              <button
+                type="button"
+                title="Indent selection"
+                aria-label="Indent selection"
+                onClick={() => {
+                  indent(false);
+                  setOverflowOpen(false);
+                }}
+              >
+                <TextIndent size={16} />
+                <span>Indent selection</span>
+              </button>
+              <button
+                type="button"
+                title="Outdent selection"
+                aria-label="Outdent selection"
+                onClick={() => {
+                  indent(true);
+                  setOverflowOpen(false);
+                }}
+              >
+                <TextOutdent size={16} />
+                <span>Outdent selection</span>
+              </button>
+              <button
+                type="button"
+                className={panelOpen && activeTab === "terminal" ? "active" : ""}
+                onClick={() => {
+                  setPanelOpen(true);
+                  setActiveTab("terminal");
+                  setOverflowOpen(false);
+                }}
+              >
+                <Terminal size={16} />
+                <span>Terminal Input (stdin)</span>
+              </button>
+              {mode === "saved" && (
+                <button
+                  type="button"
+                  className={drawerOpen ? "active" : ""}
+                  onClick={() => {
+                    setDrawerOpen(!drawerOpen);
+                    setOverflowOpen(false);
+                  }}
+                >
+                  <FolderOpen size={16} />
+                  <span>Project Files</span>
+                </button>
+              )}
             </div>
-            <pre className={`code-out-body ${error ? "oe" : ""}`}>
-              {error || result?.output || "(No output)"}
-            </pre>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Saved Files Drawer overlay if open */}
         {mode === "saved" && drawerOpen && (
@@ -919,7 +1065,7 @@ export default function CompilerPage() {
           </aside>
         )}
 
-        {/* Code Editor Stack with Line Numbers Gutter matching lifeOS .code-editor */}
+        {/* Code Editor Stack with Line Numbers Gutter */}
         <div className="code-editor" onClick={() => textareaRef.current?.focus()}>
           <div className="code-gutter" ref={gutterRef} onClick={() => textareaRef.current?.focus()}>
             <div className="code-gutter-inner">
@@ -942,19 +1088,197 @@ export default function CompilerPage() {
               value={code}
               onChange={(event) => updateCode(event.target.value)}
               onScroll={syncScroll}
-              onClick={updateCaretPos}
-              onKeyUp={updateCaretPos}
+              onClick={() => {
+                updateCaretPos();
+                const el = textareaRef.current;
+                if (el && el.selectionStart !== el.selectionEnd) {
+                  setSelectedText(el.value.slice(el.selectionStart, el.selectionEnd));
+                } else {
+                  setSelectedText("");
+                }
+              }}
+              onKeyUp={() => {
+                updateCaretPos();
+                const el = textareaRef.current;
+                if (el && el.selectionStart !== el.selectionEnd) {
+                  setSelectedText(el.value.slice(el.selectionStart, el.selectionEnd));
+                } else {
+                  setSelectedText("");
+                }
+              }}
+              onSelect={() => {
+                const el = textareaRef.current;
+                if (el && el.selectionStart !== el.selectionEnd) {
+                  setSelectedText(el.value.slice(el.selectionStart, el.selectionEnd));
+                } else {
+                  setSelectedText("");
+                }
+              }}
+              onFocus={() => setIsEditing(true)}
+              onBlur={() => {
+                setTimeout(() => {
+                  if (document.activeElement !== textareaRef.current) {
+                    setIsEditing(false);
+                  }
+                }, 200);
+              }}
               onKeyDown={handleKeyDown}
               spellCheck={false}
               aria-label="Source code"
             />
           </div>
+
+          {/* Floating Contextual AI Bar when code is selected */}
+          {selectedText && (
+            <div className="code-selection-ai-bar">
+              <button
+                type="button"
+                className="selection-ai-btn"
+                onClick={() => {
+                  setTutorPrompt(`Explain this code snippet:\n\`\`\`${language}\n${selectedText}\n\`\`\``);
+                  setTutorOpen(true);
+                }}
+              >
+                Explain
+              </button>
+              <button
+                type="button"
+                className="selection-ai-btn"
+                onClick={() => {
+                  setTutorPrompt(`Fix bugs or issues in this code snippet:\n\`\`\`${language}\n${selectedText}\n\`\`\``);
+                  setTutorOpen(true);
+                }}
+              >
+                Fix
+              </button>
+              <button
+                type="button"
+                className="selection-ai-btn"
+                onClick={() => {
+                  setTutorPrompt(`Refactor and optimize this code snippet:\n\`\`\`${language}\n${selectedText}\n\`\`\``);
+                  setTutorOpen(true);
+                }}
+              >
+                Refactor
+              </button>
+              <button
+                type="button"
+                className="selection-ai-btn primary"
+                onClick={() => {
+                  setTutorPrompt(`I have a question about this code snippet:\n\`\`\`${language}\n${selectedText}\n\`\`\``);
+                  setTutorOpen(true);
+                }}
+              >
+                <Sparkle size={13} />
+                <span>✦ Ask</span>
+              </button>
+            </div>
+          )}
         </div>
 
-        {/* Symbol Bar & Joystick matching lifeOS .code-symbols-wrap */}
-        <div className="code-symbols-wrap">
+        {/* Bottom Sheet Output & Terminal Dock Panel */}
+        {panelOpen && (
+          <div className="code-bottom-sheet" role="region" aria-label="Output and terminal panel">
+            <div className="code-sheet-header">
+              <div className="code-sheet-tabs">
+                <button
+                  type="button"
+                  className={`code-tab ${activeTab === "output" ? "active" : ""}`}
+                  onClick={() => setActiveTab("output")}
+                >
+                  Output
+                </button>
+                <button
+                  type="button"
+                  className={`code-tab ${activeTab === "terminal" ? "active" : ""}`}
+                  onClick={() => setActiveTab("terminal")}
+                >
+                  Terminal
+                </button>
+                <button
+                  type="button"
+                  className={`code-tab ${activeTab === "problems" ? "active" : ""}`}
+                  onClick={() => setActiveTab("problems")}
+                >
+                  Problems {error || (result && result.code !== 0) ? "(1)" : ""}
+                </button>
+              </div>
+              <button
+                type="button"
+                className="icon-btn code-sheet-close"
+                onClick={() => setPanelOpen(false)}
+                title="Close panel"
+                aria-label="Close panel"
+              >
+                <X size={14} />
+              </button>
+            </div>
+
+            <div className="code-sheet-body">
+              {activeTab === "output" && (
+                <div className="code-tab-content">
+                  <pre className={`code-out-body ${error ? "oe" : ""}`}>
+                    {error || result?.output || "(No output)"}
+                  </pre>
+                  {(result || error) && (
+                    <div className="code-run-status">
+                      {error ? (
+                        <span className="err-badge">
+                          <WarningCircle size={14} />
+                          <span>Compilation error</span>
+                        </span>
+                      ) : (
+                        <span className="ok-badge">
+                          <CheckCircle size={14} />
+                          <span>Process exited with code {result?.code} · {(result?.durationMs! / 1000).toFixed(2)}s</span>
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {activeTab === "terminal" && (
+                <div className="code-tab-content terminal-mode">
+                  <label className="stdin-label">Program Input (stdin)</label>
+                  <textarea
+                    value={stdin}
+                    onChange={(event) => setStdin(event.target.value)}
+                    placeholder="Program input (stdin)..."
+                    rows={3}
+                    aria-label="Standard input"
+                  />
+                </div>
+              )}
+
+              {activeTab === "problems" && (
+                <div className="code-tab-content problems-mode">
+                  {error ? (
+                    <div className="problem-item err">
+                      <WarningCircle size={15} />
+                      <span>{error}</span>
+                    </div>
+                  ) : result && result.code !== 0 ? (
+                    <div className="problem-item err">
+                      <WarningCircle size={15} />
+                      <span>Process exited with non-zero exit code ({result.code})</span>
+                    </div>
+                  ) : (
+                    <div className="problem-item clean">
+                      <CheckCircle size={15} />
+                      <span>No errors or problems detected.</span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Symbol Bar & Joystick (Language-Aware & Focus-Gated) */}
+        <div className={`code-symbols-wrap ${isEditing ? "editing-active" : ""}`}>
           <div className="code-symbols">
-            {CODE_KEYS.map((k) => (
+            {(LANG_KEYS[language] || LANG_KEYS.javascript).map((k) => (
               <SymbolButton
                 key={k.t}
                 k={k}
@@ -986,10 +1310,16 @@ export default function CompilerPage() {
           context={{
             name: mode === "saved" && filePath ? filePath : `main.${language}`,
             language,
-            code
+            code: tutorPrompt ? `${tutorPrompt}\n\n${code}` : code
           }}
-          onApply={(value) => value && updateCode(value)}
-          onClose={() => setTutorOpen(false)}
+          onApply={(value) => {
+            if (value) updateCode(value);
+            setTutorPrompt(undefined);
+          }}
+          onClose={() => {
+            setTutorOpen(false);
+            setTutorPrompt(undefined);
+          }}
         />
       )}
     </ModuleShell>

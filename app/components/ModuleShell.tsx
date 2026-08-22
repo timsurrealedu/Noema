@@ -16,13 +16,14 @@ type SearchHit={id:string;label:string;detail:string;href:string;Icon:typeof Fil
 type Notification={id:string;title:string;body:string;kind:string;read_at:string|null;created_at:string};
 
 const nav = [
-  ["Home","/",House],["Capture","/capture",Plus],["Calendar","/calendar",CalendarBlank],
-  ["Vault","/vault",Folder],["Coding","/coding",Code]
+  ["Home","/",House],["Capture","/capture",Plus],["Vault","/vault",Folder],
+  ["Calendar","/calendar",CalendarBlank],["Coding","/coding",Code]
 ] as const;
 
 export function ModuleShell({active,title,action,assistantContext,children}:{active:string;title:string;action?:ReactNode;assistantContext?:{type:string;id:string};children:ReactNode}) {
   const router=useRouter();
   const [theme,setTheme]=useState<"dark"|"light">("dark");
+  const ThemeIcon = theme === "dark" ? Sun : Moon;
   const [palette,setPalette]=useState(false);
   const [notifications,setNotifications]=useState(false);
   const [notificationItems,setNotificationItems]=useState<Notification[]>([]);
@@ -61,11 +62,14 @@ export function ModuleShell({active,title,action,assistantContext,children}:{act
     <aside className="sidebar" aria-label="Primary navigation">
       <Link className="brand" href="/"><NoemaLogo /><span>Noema</span></Link>
       <nav>{nav.map(([label,href,Icon])=><Link className={label===active?"active":""} href={href} key={label}><Icon/><span>{label}</span></Link>)}</nav>
-      <Link className="settings" href="/settings"><Gear/><span>Settings</span></Link>
+      <div className="sidebar-footer">
+        <Link className="settings" href="/settings"><Gear/><span>Settings</span></Link>
+        <button className="icon-button theme-toggle" aria-label={`Use ${theme === "dark" ? "light" : "dark"} theme`} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}><ThemeIcon /></button>
+      </div>
     </aside>
-    <header className="module-topbar"><h1>{title}</h1><div className="top-actions"><button className="search" aria-label="Search workspace" onClick={()=>setPalette(true)}><MagnifyingGlass/><span>Search</span><kbd>⌘ K</kbd></button><button className="icon-button" aria-label="Open contextual assistant" onClick={()=>setAssistant(true)}><Sparkle/></button><button className="icon-button" aria-label={`Use ${theme==="dark"?"light":"dark"} theme`} onClick={()=>setTheme(theme==="dark"?"light":"dark")}>{theme==="dark"?<Sun/>:<Moon/>}</button><button className={`icon-button ${notificationItems.some(item=>!item.read_at)?"unread":""}`} aria-label="Notifications" aria-expanded={notifications} onClick={()=>setNotifications(!notifications)}><Bell/></button>{action}</div></header>
+    <header className="module-topbar">{title ? <h1>{title}</h1> : null}<div className="top-actions"><button className="search" aria-label="Search workspace" onClick={()=>setPalette(true)}><MagnifyingGlass/><span>Search</span><kbd>⌘ K</kbd></button><button className="icon-button" aria-label="Open contextual assistant" onClick={()=>setAssistant(true)}><Sparkle/></button><button className={`icon-button ${notificationItems.some(item=>!item.read_at)?"unread":""}`} aria-label="Notifications" aria-expanded={notifications} onClick={()=>setNotifications(!notifications)}><Bell/></button>{action}</div></header>
     <main id="module-main" className="module-main">{children}</main>
-    <nav className="mobile-nav" aria-label="Mobile navigation">{([["Home","/",House],["Capture","/capture",Tray],["Vault","/vault",Folder],["Calendar","/calendar",CalendarBlank],["Coding","/coding",Code]] as const).map(([label,href,Icon])=><Link className={label===active?"active":""} href={href} key={label}><Icon/><span>{label}</span></Link>)}</nav>
+    <nav className="mobile-nav" aria-label="Mobile navigation">{nav.map(([label,href,Icon])=><Link className={label===active?"active":""} href={href} key={label}><Icon/><span>{label}</span></Link>)}</nav>
     {notifications&&<ModalDialog className="notification-dialog" ariaLabel="Notifications" onClose={()=>setNotifications(false)}><header><strong>Notifications</strong><button className="icon-button" aria-label="Close notifications" onClick={()=>setNotifications(false)}><X/></button></header><div className="notification-list">{notificationError?<p role="alert">{notificationError}</p>:notificationItems.length?notificationItems.slice(0,8).map(item=><button className={item.read_at?"":"unread-item"} key={item.id} onClick={()=>markRead(item)}><strong>{item.title}</strong><small>{item.body||item.kind} · {new Date(item.created_at).toLocaleString()}</small></button>):<p>No notifications yet.</p>}</div><footer><Link className="secondary" href="/activity" onClick={()=>setNotifications(false)}>View activity</Link></footer></ModalDialog>}
     {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus value={query} onChange={event=>setQuery(event.target.value)} aria-label="Search workspace" placeholder="Search notes, tasks, events, captures…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><label className="semantic-search-toggle"><input type="checkbox" checked={semanticSearch} onChange={event=>setSemanticSearch(event.target.checked)}/><span>Semantic ranking</span><small>Sends result titles and excerpts to the configured OpenAI embedding model</small></label><p aria-live="polite">{searching?"Searching…":searchError||`${results.length} results${rankingSource?` · ${rankingSource}`:""}`}</p>{results.map(({id,label,detail,href,Icon})=><button key={id} onClick={()=>go(href)}><Icon/><span><strong>{label}</strong><small>{detail}</small></span><kbd>↵</kbd></button>)}{!searching&&!searchError&&!results.length&&<div className="palette-empty">No workspace results match “{query}”.</div>}</ModalDialog>}
     <ContextualAssistant

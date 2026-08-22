@@ -132,7 +132,49 @@ export default function VaultPage(){
     }
     setDraft({...loaded,tags:mergedTags});
   }
-  function update(content:string){if(!draft)return;const title=content.match(/^# (.+)$/m)?.[1]||draft.title;setDraft({...draft,title,content,excerpt:content.replace(/[#*_>-]/g,"").trim().slice(0,140)})}
+  function handleTitleChange(newTitle: string) {
+    if (!draft) return;
+    let newContent = draft.content || "";
+    if (newContent && /^#\s+.*/.test(newContent)) {
+      newContent = newContent.replace(/^#\s+.*/, `# ${newTitle}`);
+    }
+    let newRelativePath = draft.relativePath;
+    if (newRelativePath) {
+      const parentDir = newRelativePath.includes("/") ? newRelativePath.slice(0, newRelativePath.lastIndexOf("/") + 1) : "";
+      const cleanName = newTitle.trim().replace(/[\/\\?%*:|"<>]/g, "-").replace(/\s+/g, " ").trim() || "Untitled";
+      newRelativePath = `${parentDir}${cleanName}.md`;
+    }
+    const updated = {
+      ...draft,
+      title: newTitle,
+      content: newContent,
+      relativePath: newRelativePath
+    };
+    setDraft(updated);
+    saveNote(updated);
+  }
+
+  function update(content:string){
+    if(!draft)return;
+    const title=content.match(/^# (.+)$/m)?.[1]||draft.title;
+    let relativePath = draft.relativePath;
+    if (relativePath && title !== draft.title) {
+      const parentDir = relativePath.includes("/") ? relativePath.slice(0, relativePath.lastIndexOf("/") + 1) : "";
+      const cleanName = title.trim().replace(/[\/\\?%*:|"<>]/g, "-").replace(/\s+/g, " ").trim() || "Untitled";
+      relativePath = `${parentDir}${cleanName}.md`;
+    }
+    const updated = {
+      ...draft,
+      title,
+      content,
+      relativePath,
+      excerpt:content.replace(/[#*_>-]/g,"").trim().slice(0,140)
+    };
+    setDraft(updated);
+    if (title !== draft.title) {
+      saveNote(updated);
+    }
+  }
   function save(){if(draft){if(!draft.sourceId)saveNote({...draft,time:"Now"});closeNote()}}
   function exportNote(){if(!draft)return;const link=document.createElement("a");link.href=URL.createObjectURL(new Blob([draft.content],{type:"text/markdown"}));link.download=`${draft.title.toLowerCase().replace(/[^a-z0-9]+/g,"-")}.md`;link.click();URL.revokeObjectURL(link.href)}
   function importNote(event:ChangeEvent<HTMLInputElement>){const file=event.target.files?.[0];if(!file)return;file.text().then(content=>setDraft({...blankNote(),title:file.name.replace(/\.md$/i,""),content,source:`Imported Markdown · ${file.name}`}))}
@@ -148,8 +190,75 @@ export default function VaultPage(){
       return next;
     });
   };
+  if(isVaultNote&&draft) {
+    return (
+      <ModuleShell active="Vault" title="Vault">
+        <section className={`note-workspace mixed-workspace ${fullscreen ? "fullscreen" : ""} ${!showProperties ? "hide-inspector" : ""}`}>
+          <header className="note-toolbar">
+            <button className="icon-button" aria-label="Back to notes" onClick={closeNote}><ArrowLeft /></button>
+            <span className="mixed-note-path">{draft.relativePath || draft.title}</span>
+            <button className={`secondary note-secondary-action ${showProperties ? "active" : ""}`} title={showProperties ? "Hide properties" : "Show properties"} aria-label="Toggle properties panel" onClick={() => setShowProperties(v => !v)}><SidebarSimple /><span>Properties</span></button>
+            <button className="secondary note-secondary-action tutor-action" onClick={() => setTutorOpen(true)}><Sparkle />Tutor</button>
+            <button className="secondary note-secondary-action" onClick={exportNote}><DownloadSimple /><span>Export</span></button>
+            <button className="icon-button secondary fullscreen-toggle" title={fullscreen ? "Exit fullscreen" : "Fullscreen"} aria-label={fullscreen ? "Exit fullscreen" : "Open note fullscreen"} onClick={toggleFullscreen}>{fullscreen ? <ArrowsIn /> : <ArrowsOut />}</button>
+          </header>
+          <MixedNoteEditor noteId={draft.id} initialContent={draft.content} initialInk={new URLSearchParams(location.search).get("ink") === "1"} onNavigateNote={navigateToNote} fullscreen={fullscreen} onToggleFullscreen={toggleFullscreen} />
+          <aside className="note-inspector">
+            <div className="object-inspector-head"><div><span>Properties</span></div><button className="icon-button" aria-label="Collapse properties panel" title="Collapse properties panel" onClick={() => setShowProperties(false)}><X /></button></div>
+            <label>Title<input value={draft.title} onChange={e => handleTitleChange(e.target.value)} /></label>
+            <label>Tags<input value={draft.tags.join(", ")} onChange={e => setDraft({ ...draft, tags: e.target.value.split(",").map(tag => tag.trim()).filter(Boolean) })} placeholder="e.g. course, binus, bncc" /></label>
+            {draft.tags.length > 0 && <div className="tag-pills">{draft.tags.map(tag => <span className="tag-pill" key={tag}>#{tag}</span>)}</div>}
+            <div><small>Source</small><strong>{draft.source}</strong></div>
+            <div><small>Sync</small><strong>{draft.syncState || "synced"}</strong></div>
+            <div><small>Blocks</small><strong>{draft.blocks?.length || 1} ordered blocks</strong></div>
+          </aside>
+        </section>
+        {tutorOpen && <TutorPanel kind="note" context={{ id: draft.id, title: draft.title, content: draft.content }} onApply={() => { }} onClose={() => setTutorOpen(false)} />}
+      </ModuleShell>
+    );
+  }
 
-  if(isVaultNote&&draft)return <ModuleShell active="Vault" title="Note editor" action={<button className="primary top-primary" onClick={closeNote}>Done</button>}><section className={`note-workspace mixed-workspace ${fullscreen?"fullscreen":""} ${!showProperties?"hide-inspector":""}`}><header className="note-toolbar"><button className="icon-button" aria-label="Back to notes" onClick={closeNote}><ArrowLeft/></button><span className="mixed-note-path">{draft.relativePath||draft.title}</span><button className={`secondary note-secondary-action ${showProperties?"active":""}`} title={showProperties?"Hide properties":"Show properties"} aria-label="Toggle properties panel" onClick={()=>setShowProperties(v=>!v)}><SidebarSimple/><span>Properties</span></button><button className="secondary note-secondary-action tutor-action" onClick={()=>setTutorOpen(true)}><Sparkle/>Tutor</button><button className="secondary note-secondary-action" onClick={exportNote}><DownloadSimple/><span>Export</span></button><button className="icon-button secondary fullscreen-toggle" title={fullscreen ? "Exit fullscreen" : "Fullscreen"} aria-label={fullscreen ? "Exit fullscreen" : "Open note fullscreen"} onClick={toggleFullscreen}>{fullscreen ? <ArrowsIn /> : <ArrowsOut />}</button></header><MixedNoteEditor noteId={draft.id} initialContent={draft.content} initialInk={new URLSearchParams(location.search).get("ink")==="1"} onNavigateNote={navigateToNote} fullscreen={fullscreen} onToggleFullscreen={toggleFullscreen}/><aside className="note-inspector"><div className="object-inspector-head"><div><span>Properties</span></div><button className="icon-button" aria-label="Collapse properties panel" title="Collapse properties panel" onClick={()=>setShowProperties(false)}><X/></button></div><label>Title<input value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/></label><label>Tags<input value={draft.tags.join(", ")} onChange={e=>setDraft({...draft,tags:e.target.value.split(",").map(tag=>tag.trim()).filter(Boolean)})} placeholder="e.g. course, binus, bncc"/></label>{draft.tags.length>0&&<div className="tag-pills">{draft.tags.map(tag=><span className="tag-pill" key={tag}>#{tag}</span>)}</div>}<div><small>Source</small><strong>{draft.source}</strong></div><div><small>Sync</small><strong>{draft.syncState||"synced"}</strong></div><div><small>Blocks</small><strong>{draft.blocks?.length||1} ordered blocks</strong></div></aside></section>{tutorOpen&&<TutorPanel kind="note" context={{id:draft.id,title:draft.title,content:draft.content}} onApply={()=>{}} onClose={()=>setTutorOpen(false)}/>}</ModuleShell>
-  if(draft){const proposal=optimizations.find(item=>item.state==="ready");return <ModuleShell active="Vault" title="Note editor" action={<button className="primary top-primary" onClick={save}>Save note</button>}><section className={`note-workspace ${fullscreen?"fullscreen":""} ${!showProperties?"hide-inspector":""}`}><header className="note-toolbar"><button className="icon-button" aria-label="Back to notes" onClick={closeNote}><ArrowLeft/></button><div className="mode-switch" role="group" aria-label="Editor view">{(["write","split","read"] as const).map(item=><button className={mode===item?"active":""} onClick={()=>setMode(item)} key={item}>{item}</button>)}</div><button className={`secondary note-secondary-action ${showProperties?"active":""}`} title={showProperties?"Hide properties":"Show properties"} aria-label="Toggle properties panel" onClick={()=>setShowProperties(v=>!v)}><SidebarSimple/><span>Properties</span></button><button className="secondary note-secondary-action" onClick={()=>setTutorOpen(true)}><Sparkle/>Tutor</button>{draft.draft&&<button className="secondary note-secondary-action" disabled={optimizing} onClick={optimize}><Sparkle/><span>{optimizing?"Optimizing…":"Optimize draft"}</span></button>}<button className="secondary note-secondary-action" onClick={exportNote}><DownloadSimple/><span>Export</span></button><button className="icon-button secondary fullscreen-toggle" title={fullscreen ? "Exit fullscreen" : "Fullscreen"} aria-label={fullscreen ? "Exit fullscreen" : "Open note fullscreen"} onClick={()=>setFullscreen(value=>!value)}>{fullscreen ? <ArrowsIn /> : <ArrowsOut />}</button><button className="icon-button danger note-secondary-action" aria-label="Move note to trash" onClick={()=>{trashNote(draft.id);closeNote()}}><Trash/></button></header><div className={`note-editor ${mode}`}><div className="markdown-write"><MarkdownToolbar textarea={textarea} onChange={update}/><NoteAttachmentButton textarea={textarea} onChange={update}/><textarea ref={textarea} aria-label="Markdown note" value={draft.content} onChange={e=>update(e.target.value)} onKeyDown={event=>markdownKey(event,update)} spellCheck/><WikilinkCompletion textarea={textarea} value={draft.content} onChange={update}/></div>{mode!=="write"&&<article className="markdown-preview">{renderMarkdown(draft.content,navigateToNote)}</article>}</div><aside className="note-inspector"><div className="object-inspector-head"><div><span>Note details</span><small>Portable Markdown with its source intact.</small></div><button className="icon-button" aria-label="Collapse properties panel" title="Collapse properties panel" onClick={()=>setShowProperties(false)}><X/></button></div><label>Title<input value={draft.title} onChange={e=>setDraft({...draft,title:e.target.value})}/></label><label>Tags<input value={draft.tags.join(", ")} onChange={e=>setDraft({...draft,tags:e.target.value.split(",").map(tag=>tag.trim()).filter(Boolean)})} placeholder="e.g. course, binus, bncc"/></label>{draft.tags.length>0&&<div className="tag-pills">{draft.tags.map(tag=><span className="tag-pill" key={tag}>#{tag}</span>)}</div>}<label className="check-field"><input type="checkbox" checked={!!draft.draft} onChange={e=>setDraft({...draft,draft:e.target.checked})}/> Draft note</label><div><small>Source</small><strong>{draft.source}</strong></div><div><small>Relationships</small><strong>{draft.tags.length||0} related topics</strong></div>{draft.ai&&<div className="ai-provenance"><Sparkle/><span><strong>AI-assisted</strong><small>Generated content remains identified.</small></span></div>}</aside></section>{optimizationError&&<div className="tutor-error" role="alert">{optimizationError}</div>}{proposal&&<section className="optimization-review"><header><div><h2>Optimization review</h2><p>{proposal.summary}</p></div><small>{proposal.provider} · {proposal.mode}</small></header><div><article><h3>Original</h3><pre>{proposal.before_content}</pre></article><article><h3>Proposed</h3><pre>{proposal.after_content}</pre></article></div><footer><button className="secondary" onClick={()=>decide(proposal,"reject")}>Reject</button><button className="primary" onClick={()=>decide(proposal,"apply")}>Apply proposal</button></footer></section>}{tutorOpen&&<TutorPanel kind="note" context={{id:draft.id,title:draft.title,content:draft.content}} onApply={value=>update(`${draft.content.trim()}\n\n${value.trim()}\n`)} onClose={()=>setTutorOpen(false)}/>}</ModuleShell>}
+  if (draft) {
+    const proposal = optimizations.find(item => item.state === "ready");
+    return (
+      <ModuleShell active="Vault" title="Vault">
+        <section className={`note-workspace ${fullscreen ? "fullscreen" : ""} ${!showProperties ? "hide-inspector" : ""}`}>
+          <header className="note-toolbar">
+            <button className="icon-button" aria-label="Back to notes" onClick={closeNote}><ArrowLeft /></button>
+            <div className="mode-switch" role="group" aria-label="Editor view">{(["write", "split", "read"] as const).map(item => <button className={mode === item ? "active" : ""} onClick={() => setMode(item)} key={item}>{item}</button>)}</div>
+            <button className={`secondary note-secondary-action ${showProperties ? "active" : ""}`} title={showProperties ? "Hide properties" : "Show properties"} aria-label="Toggle properties panel" onClick={() => setShowProperties(v => !v)}><SidebarSimple /><span>Properties</span></button>
+            <button className="secondary note-secondary-action" onClick={() => setTutorOpen(true)}><Sparkle />Tutor</button>
+            {draft.draft && <button className="secondary note-secondary-action" disabled={optimizing} onClick={optimize}><Sparkle /><span>{optimizing ? "Optimizing…" : "Optimize draft"}</span></button>}
+            <button className="secondary note-secondary-action" onClick={exportNote}><DownloadSimple /><span>Export</span></button>
+            <button className="icon-button secondary fullscreen-toggle" title={fullscreen ? "Exit fullscreen" : "Fullscreen"} aria-label={fullscreen ? "Exit fullscreen" : "Open note fullscreen"} onClick={() => setFullscreen(value => !value)}>{fullscreen ? <ArrowsIn /> : <ArrowsOut />}</button>
+            <button className="icon-button danger note-secondary-action" aria-label="Move note to trash" onClick={() => { trashNote(draft.id); closeNote() }}><Trash /></button>
+          </header>
+          <div className={`note-editor ${mode}`}>
+            <div className="markdown-write">
+              <MarkdownToolbar textarea={textarea} onChange={update} />
+              <NoteAttachmentButton textarea={textarea} onChange={update} />
+              <textarea ref={textarea} aria-label="Markdown note" value={draft.content} onChange={e => update(e.target.value)} onKeyDown={event => markdownKey(event, update)} spellCheck />
+              <WikilinkCompletion textarea={textarea} value={draft.content} onChange={update} />
+            </div>
+            {mode !== "write" && <article className="markdown-preview">{renderMarkdown(draft.content, navigateToNote)}</article>}
+          </div>
+          <aside className="note-inspector">
+            <div className="object-inspector-head"><div><span>Note details</span><small>Portable Markdown with its source intact.</small></div><button className="icon-button" aria-label="Collapse properties panel" title="Collapse properties panel" onClick={() => setShowProperties(false)}><X /></button></div>
+            <label>Title<input value={draft.title} onChange={e => handleTitleChange(e.target.value)} /></label>
 
+            <label>Tags<input value={draft.tags.join(", ")} onChange={e => setDraft({ ...draft, tags: e.target.value.split(",").map(tag => tag.trim()).filter(Boolean) })} placeholder="e.g. course, binus, bncc" /></label>
+            {draft.tags.length > 0 && <div className="tag-pills">{draft.tags.map(tag => <span className="tag-pill" key={tag}>#{tag}</span>)}</div>}
+            <label className="check-field"><input type="checkbox" checked={!!draft.draft} onChange={e => setDraft({ ...draft, draft: e.target.checked })} /> Draft note</label>
+            <div><small>Source</small><strong>{draft.source}</strong></div>
+            <div><small>Relationships</small><strong>{draft.tags.length || 0} related topics</strong></div>
+            {draft.ai && <div className="ai-provenance"><Sparkle /><span><strong>AI-assisted</strong><small>Generated content remains identified.</small></span></div>}
+          </aside>
+        </section>
+        {optimizationError && <div className="tutor-error" role="alert">{optimizationError}</div>}
+        {proposal && <section className="optimization-review"><header><div><h2>Optimization review</h2><p>{proposal.summary}</p></div><small>{proposal.provider} · {proposal.mode}</small></header><div><article><h3>Original</h3><pre>{proposal.before_content}</pre></article><article><h3>Proposed</h3><pre>{proposal.after_content}</pre></article></div><footer><button className="secondary" onClick={() => decide(proposal, "reject")}>Reject</button><button className="primary" onClick={() => decide(proposal, "apply")}>Apply proposal</button></footer></section>}
+        {tutorOpen && <TutorPanel kind="note" context={{ id: draft.id, title: draft.title, content: draft.content }} onApply={value => update(`${draft.content.trim()}\n\n${value.trim()}\n`)} onClose={() => setTutorOpen(false)} />}
+      </ModuleShell>
+    );
+  }
 }
+

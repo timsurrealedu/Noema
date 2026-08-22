@@ -55,6 +55,15 @@ const durationHeight = (start?: string | null, end?: string | null, fallback = 4
 const reminderValue = (value?: string | null) =>
   value ? new Date(new Date(value).getTime() - new Date(value).getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "";
 
+const CALENDAR_VIEW_KEY = "noema-calendar-view";
+const calendarViews = ["Day", "Week", "Month", "Agenda"] as const;
+type CalendarView = (typeof calendarViews)[number];
+const readStoredView = (): CalendarView | null => {
+  if (typeof window === "undefined") return null;
+  const stored = localStorage.getItem(CALENDAR_VIEW_KEY);
+  return stored && (calendarViews as readonly string[]).includes(stored) ? (stored as CalendarView) : null;
+};
+
 type SyncStatus = {
   calendars: {id: string; name: string}[];
   writes: {id: string; state: string}[];
@@ -76,7 +85,9 @@ export default function CalendarPage() {
   const {events, calendarItems, saveEvent, saveTask, toggleTask} = useAppState();
   const [draft, setDraft] = useState<Event | null>(null);
   const [sync, setSync] = useState<SyncStatus>({calendars: [], writes: [], conflicts: []});
-  const [view, setView] = useState<"Day" | "Week" | "Month" | "Agenda">("Week");
+  const [view, setView] = useState<"Day" | "Week" | "Month" | "Agenda">(
+    () => readStoredView() || "Day"
+  );
   const today = (new Date().getDay() + 6) % 7;
   const realToday = new Date();
   const [selectedDay, setSelectedDay] = useState<number>(today);
@@ -88,17 +99,39 @@ export default function CalendarPage() {
   const [weekOffset, setWeekOffset] = useState<number>(0);
   const [syncing, setSyncing] = useState(false);
   const [syncMessage, setSyncMessage] = useState<string | null>(null);
-  const [instances,setInstances]=useState<CalendarEvent[]>([]);
-  const [scopeDraft,setScopeDraft]=useState<CalendarEvent|null>(null);
-  const [saveMessage,setSaveMessage]=useState<string|null>(null);
-  const [eventTitleError,setEventTitleError]=useState("");
-  const [now,setNow]=useState(()=>new Date());
-  const pointerStart = useRef<{x:number;y:number;day:number}|null>(null);
-  const [dragging,setDragging]=useState(false);
-  const userSelectedView=useRef(false);
-  useEffect(()=>{const timer=setInterval(()=>setNow(new Date()),60000);return()=>clearInterval(timer)},[]);
-  useEffect(()=>{const media=matchMedia("(max-width: 820px)"),adapt=()=>{if(userSelectedView.current)return;if(media.matches)setView("Agenda");else setView("Week")};adapt();media.addEventListener("change",adapt);return()=>media.removeEventListener("change",adapt)},[]);
-  const chooseView=(next:"Day"|"Week"|"Month"|"Agenda")=>{userSelectedView.current=true;setView(next)};
+  const [instances, setInstances] = useState<CalendarEvent[]>([]);
+  const [scopeDraft, setScopeDraft] = useState<CalendarEvent | null>(null);
+  const [saveMessage, setSaveMessage] = useState<string | null>(null);
+  const [eventTitleError, setEventTitleError] = useState("");
+  const [now, setNow] = useState(() => new Date());
+  const pointerStart = useRef<{x: number; y: number; day: number} | null>(null);
+  const [dragging, setDragging] = useState(false);
+  const userSelectedView = useRef(false);
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+  useEffect(() => {
+    const media = matchMedia("(max-width: 820px)"),
+      adapt = () => {
+        if (userSelectedView.current) return;
+        const stored = readStoredView();
+        if (stored) {
+          setView(stored);
+          return;
+        }
+        setView("Day");
+      };
+    adapt();
+    media.addEventListener("change", adapt);
+    return () => media.removeEventListener("change", adapt);
+  }, []);
+  const chooseView = (next: "Day" | "Week" | "Month" | "Agenda") => {
+    userSelectedView.current = true;
+    setView(next);
+    if (typeof window !== "undefined")
+      localStorage.setItem(CALENDAR_VIEW_KEY, next);
+  };
 
   const timeAt = (date:Date,y:number) => withMinutes(date,snapMinutes(y));
   const beginSlot = (event:PointerEvent<HTMLDivElement>,day:number) => {if(matchMedia("(pointer: coarse)").matches)return;const rect=event.currentTarget.getBoundingClientRect();pointerStart.current={x:event.clientX,y:event.clientY-rect.top,day};setDragging(false)};
@@ -764,7 +797,7 @@ export default function CalendarPage() {
           </aside>
         ) : null}
       </div>
-      {!draft&&<div className="mobile-action-dock calendar-mobile-dock"><button className="primary" onClick={()=>{setEventTitleError("");setDraft({...blankEvent(),day:selectedDay})}}><Plus/><span>New event</span></button></div>}
+      {!draft&&<div className="mobile-action-dock calendar-mobile-dock"><button className="primary" onClick={()=>{setEventTitleError("");setDraft({...blankEvent(),day:selectedDay})}} aria-label="New event"><Plus/></button></div>}
       {scopeDraft&&<div className="calendar-scope" role="dialog" aria-modal="true" aria-labelledby="recurring-scope-title" onKeyDown={event=>event.key==="Escape"&&setScopeDraft(null)}><div><h2 id="recurring-scope-title">Update recurring event</h2><p>Which events should change?</p><button className="primary" autoFocus onClick={()=>void saveOccurrence(scopeDraft,"this")}>This event</button><button className="secondary" onClick={()=>void saveOccurrence(scopeDraft,"following")}>This and following</button><button className="secondary" onClick={()=>void saveOccurrence(scopeDraft,"all")}>All events</button><button className="secondary" onClick={()=>setScopeDraft(null)}>Cancel</button></div></div>}
       {saveMessage&&<p className="calendar-live" role="status">{saveMessage}</p>}
     </ModuleShell>

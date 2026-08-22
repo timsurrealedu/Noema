@@ -32,7 +32,7 @@ import {
   sanitizeStrokes,
   strokePath
 } from "../lib/ink";
-import {MarkdownContent} from "./MarkdownContent";
+import {MarkdownContent, extractTagsAndCleanText, StructuredTags} from "./MarkdownContent";
 import {LiveMarkdownEditor} from "./LiveMarkdownEditor";
 
 type Block = {
@@ -71,7 +71,17 @@ function MarkdownBlock({
 
   return (
     <div className="markdown-block-editor">
-      {!preview ? <LiveMarkdownEditor value={value} onChange={setValue} onBlur={() => value !== block.markdown && onSave(block, value)} /> : <article className="markdown-preview block-preview"><MarkdownContent text={value} onNavigateNote={onNavigateNote} /></article>}
+      {!preview ? (
+        <LiveMarkdownEditor
+          value={value}
+          onChange={(val) => setValue(val)}
+          onBlur={() => value !== block.markdown && onSave(block, value)}
+        />
+      ) : (
+        <article className="markdown-preview block-preview">
+          <MarkdownContent text={value} onNavigateNote={onNavigateNote} />
+        </article>
+      )}
     </div>
   );
 }
@@ -600,7 +610,7 @@ export function MixedNoteEditor({
       )}
 
       <div className={`integrated-floating-palette ${paletteCollapsed ? "collapsed" : ""}`} role="toolbar" aria-label="Note controls">
-        {paletteCollapsed ? <button className="palette-expand-btn" onClick={() => setPaletteCollapsed(false)} aria-label="Expand note controls" title="Expand note controls"><PencilLine size={18} /><CaretDown size={14} /></button> : <>
+        {paletteCollapsed ? <button className="palette-expand-btn" onClick={() => setPaletteCollapsed(false)} aria-label="Expand note controls" title="Expand note controls"><PencilLine size={18} /><CaretDown size={14} /></button> : <div className="palette-rows-container">
         <div className="palette-row">
           <div className="palette-group" aria-label="Document view">
             <button className={viewMode === "write" ? "active" : ""} onClick={() => setViewMode("write")} aria-pressed={viewMode === "write"}>Edit</button>
@@ -733,10 +743,30 @@ export function MixedNoteEditor({
                   <button onClick={handleClearInk} disabled={!overlayStrokes.length} title="Clear Ink" aria-label="Clear Ink">
                     <Trash size={16} />
                   </button>
+                  <button
+                    className="primary ink-done-btn"
+                    onClick={() => {
+                      saveInkStrokes(overlayStrokes);
+                      setEditorMode("text");
+                    }}
+                    title="Done saving handwriting"
+                    aria-label="Done saving handwriting"
+                    style={{
+                      background: "var(--primary)",
+                      color: "#ffffff",
+                      fontWeight: 600,
+                      padding: "0 14px",
+                      borderRadius: "9999px",
+                      height: "32px",
+                      marginLeft: "4px"
+                    }}
+                  >
+                    Done
+                  </button>
                 </div>
               </div>
             )}
-        </>}
+        </div>}
       </div>
 
       {/* Dual-Layer Viewport Bounded Sheet */}
