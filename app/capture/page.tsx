@@ -317,6 +317,8 @@ export default function CaptureInbox() {
 
   function handleTouchEnd(e: TouchEvent<HTMLDivElement>) {
     if (!touchStartRef.current || e.changedTouches.length === 0) return;
+    // Ignore swipes that started inside a capture card
+    if (e.target instanceof Element && e.target.closest(".capture-card")) return;
     const start = touchStartRef.current;
     touchStartRef.current = null;
     const endX = e.changedTouches[0].clientX;
@@ -686,7 +688,9 @@ export default function CaptureInbox() {
         </aside>
       </div>
 
-      <div style={{display:"none"}} className="mobile-action-dock capture-mobile-dock">Quick capture</div>
+      <Link href="/#capture" className="mobile-action-dock capture-mobile-dock primary" aria-label="Quick capture">
+        <Plus weight="bold" /> Quick capture
+      </Link>
 
       {toast && (
         <div className="undo-toast" role="status">
@@ -737,22 +741,28 @@ function CaptureRow({
   const [isSwiping, setIsSwiping] = useState(false);
 
   function handleTouchStart(e: TouchEvent) {
+    e.stopPropagation();
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     setIsSwiping(false);
   }
 
   function handleTouchMove(e: TouchEvent) {
+    e.stopPropagation();
     if (touchStartX.current === null || touchStartY.current === null) return;
     const deltaX = e.touches[0].clientX - touchStartX.current;
     const deltaY = e.touches[0].clientY - touchStartY.current;
     if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 10) {
       setIsSwiping(true);
-      setSwipeOffset(deltaX);
+      // Clamp to ±96px with rubber band
+      const clamped = Math.max(-96, Math.min(96, deltaX));
+      const rubberBand = deltaX - clamped;
+      setSwipeOffset(clamped + rubberBand * 0.15);
     }
   }
 
-  function handleTouchEnd() {
+  function handleTouchEnd(e: TouchEvent) {
+    e.stopPropagation();
     if (swipeOffset > 80 && capture.status === "review") {
       onConfirm();
     } else if (swipeOffset < -80 && capture.status === "review") {
