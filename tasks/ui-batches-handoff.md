@@ -110,6 +110,13 @@ Acceptance: axe/browser pass shows no sub-44 interactive targets on capture page
 ## Completed
 
 - `cb52f17` **T1 mixed-editor persistence:** 800ms markdown/title autosave; one save chain per block; flush-on-leave; external editor updates apply safely; dirty-page warning. `test:frontend` and `tsc` pass. Full backend/browser gates remain environment-blocked here (sandbox denies child-process `zip`/`git` and Bubblewrap; the configured AI fixture also returns invalid structured output).
+- `3ec1443` **T2 ink command-stack undo:** InkEditor snapshot-based command stack (add/erase/clear/transform/delete), gesture-batched entries, Ctrl/Cmd+Z/Y keyboard shortcuts, redo via cmdRedoStack. MixedNoteEditor overlay onChange only on pointerUp, pushUndo flag prevents double-push on undo/redo. 138/138 tests, tsc clean.
+- `f0fc49c` **T3 compiler dirty guards + stop:** AbortController for run cancellation, Run→Stop button, dirty indicator dot in subbar, confirm on selectMode/openFile/new-file switches, beforeunload warning. 138/138 tests, tsc clean.
+- `ec330b2` **T4 home effect scoping + capture draft:** ?open= parse runs once via openTargetRef guard; ?open=new guards dirty draft; task id waits for tasks to load. Unsent capture text persisted to sessionStorage. 138/138 tests, tsc clean.
+- `fd71e5d` **T5 calendar touch gestures + delete + undo:** Removed coarse-pointer bails from beginSlot/moveItem, setPointerCapture, long-press (250ms) for touch drag, touch-action:pan-y on columns. Delete button in event editor with undo toast (re-creates via POST). Week-day headers as <button>s. 138/138 tests, tsc clean.
+- `3b37b4f` **T6 capture mobile FAB + swipe isolation:** Dead dock replaced with working Link to /#capture. e.stopPropagation on card swipes, parent filter-swipe ignores .capture-card gestures. Swipe clamped ±96px with rubber band. touch-action:pan-y on cards. 138/138 tests, tsc clean.
+- `694d229` **T7 mixed-editor ink pen gating:** Ported acceptInkPointer pen-priority logic from InkEditor to IntegratedOverlayCanvas. Touch rejected when pen recently active (150ms guard). Two-finger passes through for scroll. 138/138 tests, tsc clean.
+- `8b74194` **T8 44px sweep:** .clear-search-btn ::after pseudo-element extending hit area; .capture-filters buttons min-height:44px on pointer:coarse; ink toolbar buttons at ≤600px bumped to 44px. 138/138 tests, tsc clean.
 
 ---
 
