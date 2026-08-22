@@ -59,6 +59,7 @@ test("shared shell exposes keyboard search and accessible navigation",()=>{
   assert.match(shell,/Skip to main content/);
 });
 test("root layout eagerly warms daily navigation routes",()=>{const layout=read("app/layout.tsx"),warmup=read("app/components/NavigationWarmup.tsx");assert.match(layout,/NavigationWarmup/);for(const route of ["capture","calendar","vault","settings"])assert.match(warmup,new RegExp(`/${route}`));assert.doesNotMatch(warmup,/requestIdleCallback/)});
+test("root layout applies the saved Gruvbox theme before hydration",()=>{const layout=read("app/layout.tsx");assert.match(layout,/beforeInteractive/);assert.match(layout,/noema-theme/);assert.match(layout,/dataset\.theme/);assert.match(layout,/theme-color/)});
 test("mobile viewport enables safe-area insets",()=>assert.match(read("app/layout.tsx"),/viewportFit:"cover"/));
 
 test("mobile navigation exposes core navigation items",()=>{for(const file of ["app/components/ModuleShell.tsx","app/page.tsx"]){const page=read(file);assert.match(page,/\["Home"/);assert.match(page,/\["Vault"/);}});
@@ -354,6 +355,5 @@ test("extractTagsAndCleanText parses heading tags with escaped backslash bracket
   assert.match(content,/tags\?/);
   assert.match(content,/standaloneHashtagLineRegex/);
 });
-
 
 
