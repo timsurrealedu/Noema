@@ -386,6 +386,7 @@ body:has(.obsidian-vault),html:has(.obsidian-vault){background:var(--surface)!im
 :root{--space-1:4px;--space-2:8px;--space-3:12px;--space-4:16px;--space-5:24px;--space-6:32px;--focus-ring:var(--focus)}
 html{scroll-behavior:smooth;text-rendering:optimizeLegibility}
 body{line-height:1.45;background-color:var(--bg);background-image:radial-gradient(color-mix(in oklch,var(--ink) 8%,transparent) .5px,transparent .5px);background-size:4px 4px}
+.canvas-save-status{color:var(--muted);font-size:.75rem}.canvas-save-status.is-saved{color:var(--success);animation:canvas-save-pulse .6s var(--ease) both}@keyframes canvas-save-pulse{50%{transform:scale(1.04)}}@media(prefers-reduced-motion:reduce){.canvas-save-status.is-saved{animation:none}}
 :is(a,button,input,select,textarea){transition:border-color .18s var(--ease),background-color .18s var(--ease),color .18s var(--ease),opacity .18s var(--ease),transform .18s var(--ease)}
 :is(a,button,input,select,textarea):focus-visible{outline:2px solid var(--focus-ring);outline-offset:3px}
 button:active:not(:disabled),.primary:active{transform:translateY(1px)}
