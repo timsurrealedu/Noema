@@ -170,7 +170,6 @@ function IntegratedOverlayCanvas({
       const erased = eraseAt(liveStrokes.current, pt, size * 4);
       liveStrokes.current = erased;
       setCurrentStrokes(erased);
-      onChange(erased);
       return;
     }
 
@@ -188,6 +187,12 @@ function IntegratedOverlayCanvas({
   function handlePointerUp(event: React.PointerEvent<SVGSVGElement>) {
     if (!drawing.current) return;
     drawing.current = false;
+
+    if (activeTool === "eraser") {
+      onChange(liveStrokes.current);
+      activeStroke.current = null;
+      return;
+    }
 
     if (activeStroke.current) {
       const finalStroke = activeStroke.current;
@@ -451,6 +456,8 @@ export function MixedNoteEditor({
   const currentInkVersion = useRef<number>(inkBlock?.inkVersion || 0);
   const savingInkRef = useRef<boolean>(false);
   const pendingStrokesRef = useRef<InkStroke[] | null>(null);
+  const gestureUndoPushed = useRef(false);
+  const gestureBeforeRef = useRef<InkStroke[] | null>(null);
 
   useEffect(() => {
     if (inkBlock?.inkVersion !== undefined) {
@@ -458,9 +465,11 @@ export function MixedNoteEditor({
     }
   }, [inkBlock?.inkVersion]);
 
-  async function saveInkStrokes(nextStrokes: InkStroke[]) {
-    setUndoStack(prev => [...prev, overlayStrokes]);
-    setRedoStack([]);
+  async function saveInkStrokes(nextStrokes: InkStroke[], pushUndo = true) {
+    if (pushUndo) {
+      setUndoStack(prev => [...prev, overlayStrokes]);
+      setRedoStack([]);
+    }
     const targetInkId = inkBlock?.id || createId();
     setBlocks(items => {
       const existing = items.find(item => item.id === targetInkId);
@@ -522,7 +531,7 @@ export function MixedNoteEditor({
     const previous = undoStack[undoStack.length - 1];
     setRedoStack(prev => [...prev, overlayStrokes]);
     setUndoStack(prev => prev.slice(0, -1));
-    void saveInkStrokes(previous);
+    void saveInkStrokes(previous, false);
   }
 
   function handleRedo() {
@@ -530,12 +539,12 @@ export function MixedNoteEditor({
     const next = redoStack[redoStack.length - 1];
     setUndoStack(prev => [...prev, overlayStrokes]);
     setRedoStack(prev => prev.slice(0, -1));
-    void saveInkStrokes(next);
+    void saveInkStrokes(next, false);
   }
 
   function handleClearInk() {
     if (!overlayStrokes.length) return;
-    void saveInkStrokes([]);
+    void saveInkStrokes([], true);
   }
 
   async function markdown(block: Block, value: string) {

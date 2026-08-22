@@ -93,8 +93,10 @@ export function InkEditor({
   const [fullScreen, setFullScreen] = useState(false);
   const [view, setView] = useState({x: 0, y: 0, zoom: 1});
   const [strokes, setStrokes] = useState(() => sanitizeStrokes(initial));
-  const [redo, setRedo] = useState<InkStroke[][]>([]);
   const [selected, setSelected] = useState<string[]>([]);
+  const cmdStack = useRef<{type:"add"|"erase"|"clear"|"transform"|"delete"; before:InkStroke[]; after:InkStroke[]}[]>([]);
+  const cmdRedoStack = useRef<{type:"add"|"erase"|"clear"|"transform"|"delete"; before:InkStroke[]; after:InkStroke[]}[]>([]);
+  const beforeSnapshot = useRef<InkStroke[] | null>(null);
   const [theme, setTheme] = useState<string>(() => {
     if (typeof window !== "undefined") {
       return document.documentElement.dataset.theme || localStorage.getItem("noema-theme") || "dark";
@@ -127,6 +129,25 @@ export function InkEditor({
 
   useEffect(() => () => {
     if (drawFrame.current !== null) cancelAnimationFrame(drawFrame.current);
+  }, []);
+
+  const undoRef = useRef(undo);
+  const redoStrokeRef = useRef(redoStroke);
+  undoRef.current = undo;
+  redoStrokeRef.current = redoStroke;
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "z") {
+        e.preventDefault();
+        if (e.shiftKey) redoStrokeRef.current(); else undoRef.current();
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "y") { e.preventDefault(); redoStrokeRef.current(); }
+    };
+    el.addEventListener("keydown", handler);
+    return () => el.removeEventListener("keydown", handler);
   }, []);
 
   useEffect(() => {
@@ -244,6 +265,14 @@ export function InkEditor({
     };
   }
 
+  function cmdSnapshot() { return liveStrokes.current.map(s => ({...s, points: [...s.points]})); }
+
+  function cmdPush(type:"add"|"erase"|"clear"|"transform"|"delete", before:InkStroke[], after:InkStroke[]) {
+    cmdStack.current.push({type, before, after});
+    if (cmdStack.current.length > 50) cmdStack.current.shift();
+    cmdRedoStack.current = [];
+  }
+
   function down(event: React.PointerEvent<SVGSVGElement>) {
     if (event.pointerType==="touch") {
       if (penActive.current || performance.now() - penUpAt.current < 150) return;
@@ -275,9 +304,9 @@ export function InkEditor({
       return;
     }
     if (tool === "eraser") {
+      beforeSnapshot.current = cmdSnapshot();
       isErasing.current = true;
       persist(eraseAt(strokes, first, Math.max(12, size * 5) / view.zoom));
-      setRedo([]);
       return;
     }
     if (tool === "lasso") {
@@ -289,6 +318,7 @@ export function InkEditor({
             stroke.points.some(item => Math.hypot(item.x - first.x, item.y - first.y) < 12 / view.zoom)
         );
       if (hit) {
+        beforeSnapshot.current = cmdSnapshot();
         drag.current = {mode: "move", start: first, original: strokes, next: strokes};
         return;
       }
@@ -296,6 +326,7 @@ export function InkEditor({
       return;
     }
     userInteracted.current = true;
+    beforeSnapshot.current = cmdSnapshot();
     active.current = {id: createId(), tool, color, width: size, points: [first]};
     liveStrokes.current = [...strokes, active.current];
     setStrokes(liveStrokes.current);
@@ -396,18 +427,20 @@ export function InkEditor({
     }
     if (isErasing.current) {
       isErasing.current = false;
+      if (beforeSnapshot.current) { cmdPush("erase", beforeSnapshot.current, cmdSnapshot()); beforeSnapshot.current = null; }
     }
     if (active.current) {
       active.current = null;
       const nextStrokes = liveStrokes.current;
       persist(nextStrokes);
-      setRedo([]);
+      if (beforeSnapshot.current) { cmdPush("add", beforeSnapshot.current, cmdSnapshot()); beforeSnapshot.current = null; }
 
     }
     if (drag.current) {
-      persist(drag.current.next);
+      const after = drag.current.next;
+      persist(after);
+      if (beforeSnapshot.current) { cmdPush("transform", beforeSnapshot.current, cmdSnapshot()); beforeSnapshot.current = null; }
       drag.current = null;
-      setRedo([]);
     }
     if (lasso.current) {
       const end = point(event);
@@ -455,21 +488,23 @@ export function InkEditor({
   }
 
   function undo() {
-    if (!strokes.length) return;
-    setRedo(items => [...items, strokes]);
-    persist(strokes.slice(0, -1));
+    const cmd = cmdStack.current.pop();
+    if (!cmd) return;
+    cmdRedoStack.current.push(cmd);
+    persist(cmd.before);
   }
 
   function redoStroke() {
-    const next = redo.at(-1);
-    if (!next) return;
-    persist(next);
-    setRedo(items => items.slice(0, -1));
+    const cmd = cmdRedoStack.current.pop();
+    if (!cmd) return;
+    cmdStack.current.push(cmd);
+    persist(cmd.after);
   }
 
   function clearCanvas() {
     if (!strokes.length) return;
-    setRedo(items => [...items, strokes]);
+    const before = cmdSnapshot();
+    cmdPush("clear", before, []);
     persist([]);
     setSelected([]);
   }
@@ -660,31 +695,36 @@ export function InkEditor({
             <button
               type="button"
               aria-label="Scale selection"
-              onClick={() =>
+              onClick={() => {
+                const before = cmdSnapshot();
                 persist(
                   strokes.map(stroke => (selected.includes(stroke.id) ? scaleStroke(stroke, 1.1) : stroke))
-                )
-              }
+                );
+                cmdPush("transform", before, cmdSnapshot());
+              }}
             >
               Scale
             </button>
             <button
               type="button"
               aria-label="Rotate selection"
-              onClick={() =>
+              onClick={() => {
+                const before = cmdSnapshot();
                 persist(
                   strokes.map(stroke =>
                     selected.includes(stroke.id) ? rotateStroke(stroke, Math.PI / 12) : stroke
                   )
-                )
-              }
+                );
+                cmdPush("transform", before, cmdSnapshot());
+              }}
             >
               Rotate
             </button>
             <button
               type="button"
               aria-label="Ruler snap"
-              onClick={() =>
+              onClick={() => {
+                const before = cmdSnapshot();
                 persist(
                   strokes.map(stroke =>
                     selected.includes(stroke.id)
@@ -696,8 +736,9 @@ export function InkEditor({
                         }
                       : stroke
                   )
-                )
-              }
+                );
+                cmdPush("transform", before, cmdSnapshot());
+              }}
             >
               Ruler snap
             </button>
@@ -705,18 +746,20 @@ export function InkEditor({
               type="button"
               aria-label="Delete selection"
               onClick={() => {
+                const before = cmdSnapshot();
                 persist(strokes.filter(stroke => !selected.includes(stroke.id)));
                 setSelected([]);
+                cmdPush("delete", before, cmdSnapshot());
               }}
             >
               <Trash />
             </button>
           </>
         )}
-        <button type="button" aria-label="Undo" disabled={!strokes.length} onClick={undo}>
+        <button type="button" aria-label="Undo" disabled={!cmdStack.current.length} onClick={undo}>
           <ArrowCounterClockwise />
         </button>
-        <button type="button" aria-label="Redo" disabled={!redo.length} onClick={redoStroke}>
+        <button type="button" aria-label="Redo" disabled={!cmdRedoStack.current.length} onClick={redoStroke}>
           <ArrowClockwise />
         </button>
         <button
