@@ -48,6 +48,8 @@ export default function Home() {
   const input = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
   const recorder = useRef<MediaRecorder|null>(null);
+  const openTargetRef = useRef<string|null>(null);
+  const openResolvedRef = useRef(false);
 
   useEffect(() => {
     const saved=localStorage.getItem("noema-theme") as "dark"|"light"|null;
@@ -67,11 +69,36 @@ export default function Home() {
   },[theme]);
   useEffect(()=>()=>{if(recorder.current?.state==="recording")recorder.current.stop();recorder.current?.stream.getTracks().forEach(track=>track.stop())},[]);
 
+  // Restore unsent capture draft from sessionStorage
   useEffect(() => {
-    const id=new URLSearchParams(location.search).get("open");
-    if(id==="new") { setDraft(blankTask()); }
-    else if(id) { const task=tasks.find(item=>item.id===id); if(task)setDraft({...task}) }
-  },[tasks]);
+    try {
+      const saved = sessionStorage.getItem("noema-capture-draft");
+      if (saved) setCapture(saved);
+    } catch {}
+  }, []);
+  // Persist capture draft to sessionStorage
+  useEffect(() => {
+    try {
+      if (capture) sessionStorage.setItem("noema-capture-draft", capture);
+      else sessionStorage.removeItem("noema-capture-draft");
+    } catch {}
+  }, [capture]);
+
+  useEffect(() => {
+    const id = new URLSearchParams(location.search).get("open");
+    if (!id) return;
+    openTargetRef.current = id;
+    if (id === "new") {
+      if (!draft?.title) setDraft(blankTask());
+      openResolvedRef.current = true;
+    }
+  }, []);
+  useEffect(() => {
+    if (openResolvedRef.current || !openTargetRef.current) return;
+    const id = openTargetRef.current;
+    const task = tasks.find(item => item.id === id);
+    if (task) { setDraft({...task}); openResolvedRef.current = true; }
+  }, [tasks]);
 
   const now=new Date(),todayLabel=new Intl.DateTimeFormat(undefined,{weekday:"long",month:"long",day:"numeric"}).format(now);
   const greeting=now.getHours()<12?"Good morning":now.getHours()<18?"Good afternoon":"Good evening";
@@ -79,7 +106,7 @@ export default function Home() {
   const pendingCaptures=captures.filter(item=>item.status==="review").length;
   const review=captures.find(item=>item.id===reviewId);
 
-  function submitCapture(e:FormEvent) {e.preventDefault();if(capture.trim())setReviewId(addAndInterpretCapture(capture.trim()))}
+  function submitCapture(e:FormEvent) {e.preventDefault();if(capture.trim()){setReviewId(addAndInterpretCapture(capture.trim()));try{sessionStorage.removeItem("noema-capture-draft")}catch{}}}
   function closeReview(status:"confirmed"|"dismissed") {if(reviewId){if(status==="confirmed")confirmCapture(reviewId);else updateCapture(reviewId,status)}setReviewId(null);if(status==="confirmed")setCapture("")}
   async function toggleRecording(){
     if(recorder.current?.state==="recording"){recorder.current.stop();return}
