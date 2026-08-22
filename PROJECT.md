@@ -23,6 +23,7 @@
 - Workspace canvases persist bounded, version-checked viewport and object state in SQLite. Canvas objects link canonical notes, tasks, events, projects, assets, and ink by ID instead of copying their content; the browser lazy-loads and viewport-culls the editor.
 - Dark is the default; light mode uses the same semantic roles. Teal is limited to primary actions, selection, and active processing; amber/red remain semantic.
 - Graphify is maintained in `graphify-out/`; current extraction is code-only because semantic document extraction needs an external LLM backend.
+- Mixed vault-note Markdown saves are debounced for 800ms, serialized per block, flushed when leaving the note, and protected by a dirty-page warning; title changes use the same debounce/flush behavior.
 - The Oracle host has 2 ARM cores and 7.7 GiB RAM. State hydration is optimized for low RAM and fast page switches: `listState` batches vault/blocks/assets lookups (8 queries, not N+1), `loadConfig` is memoized, note `content` is excluded from the bulk `/state` payload and lazy-fetched by the Vault editor on open, and the service units cap V8 heap (`--max-old-space-size=512`) and cgroup memory (web 512 M, worker 384 M). The worker polls every 1000 ms (was 250 ms). `next.config.ts` enables `optimizePackageImports` for Phosphor icons and the markdown/rehype/remark packages; `reactStrictMode` and browser source maps are off in production.
 
 ## Commands and gotchas

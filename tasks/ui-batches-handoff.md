@@ -107,6 +107,12 @@ Acceptance: axe/browser pass shows no sub-44 interactive targets on capture page
 
 ---
 
+## Completed
+
+- `cb52f17` **T1 mixed-editor persistence:** 800ms markdown/title autosave; one save chain per block; flush-on-leave; external editor updates apply safely; dirty-page warning. `test:frontend` and `tsc` pass. Full backend/browser gates remain environment-blocked here (sandbox denies child-process `zip`/`git` and Bubblewrap; the configured AI fixture also returns invalid structured output).
+
+---
+
 ## Final gate
 
 1. `npm run test:unit` (≥137 pass, 0 fail) · `npx tsc --noEmit` clean
