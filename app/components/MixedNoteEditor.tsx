@@ -30,7 +30,8 @@ import {
   InkStroke,
   InkTool,
   sanitizeStrokes,
-  strokePath
+  strokePath,
+  acceptInkPointer
 } from "../lib/ink";
 import {MarkdownContent, extractTagsAndCleanText, StructuredTags} from "./MarkdownContent";
 import {LiveMarkdownEditor} from "./LiveMarkdownEditor";
@@ -112,6 +113,9 @@ function IntegratedOverlayCanvas({
   const activeStroke = useRef<InkStroke | null>(null);
   const [currentStrokes, setCurrentStrokes] = useState<InkStroke[]>(strokes);
   const liveStrokes = useRef<InkStroke[]>(strokes);
+  const penActive = useRef(false);
+  const penUpAt = useRef(0);
+  const touchCount = useRef(0);
 
   useEffect(() => {
     setCurrentStrokes(strokes);
@@ -135,6 +139,16 @@ function IntegratedOverlayCanvas({
 
   function handlePointerDown(event: React.PointerEvent<SVGSVGElement>) {
     if (!interactive) return;
+
+    // Pen gate: reject touch if pen was recently active
+    if (event.pointerType === "touch") {
+      if (penActive.current || performance.now() - penUpAt.current < 150) return;
+      touchCount.current++;
+      return;
+    }
+    if (!acceptInkPointer(event.pointerType, penActive.current)) return;
+    if (event.pointerType === "pen") penActive.current = true;
+
     const pt = getPoint(event);
     if (!pt) return;
     drawing.current = true;
@@ -163,6 +177,13 @@ function IntegratedOverlayCanvas({
 
   function handlePointerMove(event: React.PointerEvent<SVGSVGElement>) {
     if (!drawing.current || !interactive) return;
+
+    // Two-finger scroll: pass through
+    if (event.pointerType === "touch") {
+      touchCount.current = Math.max(touchCount.current, event.isPrimary ? 1 : 2);
+      return;
+    }
+
     const pt = getPoint(event);
     if (!pt) return;
 
@@ -185,12 +206,17 @@ function IntegratedOverlayCanvas({
   }
 
   function handlePointerUp(event: React.PointerEvent<SVGSVGElement>) {
+    if (event.pointerType === "touch") {
+      touchCount.current = Math.max(0, touchCount.current - 1);
+      return;
+    }
     if (!drawing.current) return;
     drawing.current = false;
 
     if (activeTool === "eraser") {
       onChange(liveStrokes.current);
       activeStroke.current = null;
+      if (event.pointerType === "pen") { penActive.current = false; penUpAt.current = performance.now(); }
       return;
     }
 
@@ -201,6 +227,7 @@ function IntegratedOverlayCanvas({
       liveStrokes.current = next;
       onChange(next);
     }
+    if (event.pointerType === "pen") { penActive.current = false; penUpAt.current = performance.now(); }
   }
 
   return (
