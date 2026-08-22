@@ -259,7 +259,7 @@ body:has(.obsidian-vault),html:has(.obsidian-vault){background:var(--surface)!im
 .code-top{flex:none;display:flex;align-items:center;justify-content:space-between;gap:6px;padding:5px 10px;border-bottom:1px solid var(--border);background:var(--raised);height:40px;box-sizing:border-box;max-width:100%}
 .code-top .seg{display:inline-flex!important;align-items:center!important;gap:2px!important;border:1px solid var(--border)!important;border-radius:12px!important;padding:2px!important;background:var(--code)!important;flex-shrink:0!important;height:30px!important;max-height:30px!important;box-sizing:border-box!important}
 .code-top .seg button,.code-top .seg button:is(:hover,:focus,:active,.active){display:inline-flex!important;align-items:center!important;justify-content:center!important;padding:0 10px!important;border:0!important;background:transparent;color:var(--muted);font-size:.76rem!important;font-weight:500!important;height:24px!important;max-height:24px!important;min-height:24px!important;min-width:0!important;line-height:24px!important;border-radius:10px!important;cursor:pointer;white-space:nowrap!important;box-sizing:border-box!important;transform:none!important}
-.code-top .seg button.active{background:#164e43!important;color:var(--primary-ink)!important;font-weight:600!important}
+.code-top .seg button.active{background:var(--primary-soft)!important;color:var(--primary)!important;font-weight:600!important}
 .code-top-actions{display:flex;align-items:center;gap:10px!important;flex-shrink:0}
 .code-top-actions .icon-btn{width:30px!important;height:30px!important;min-width:30px!important;min-height:30px!important;border-radius:12px!important}
 .code-ask-btn{display:inline-flex!important;align-items:center!important;gap:5px!important;height:30px!important;min-height:30px!important;padding:0 10px!important;border-radius:12px!important;background:var(--surface)!important;border:1px solid var(--border)!important;color:var(--primary)!important;font-size:.78rem!important;font-weight:600!important}
@@ -276,7 +276,7 @@ body:has(.obsidian-vault),html:has(.obsidian-vault){background:var(--surface)!im
 .code-action-buttons,.code-file-actions{display:flex;align-items:center;gap:4px;flex-shrink:0}
 .code-action-buttons .icon-btn,.code-file-actions .icon-btn{width:28px!important;height:28px!important;min-width:28px!important;min-height:28px!important;border-radius:12px!important}
 .code-subbar .spacer{flex:1;min-width:4px}
-.dirty-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warning,#fabd2f);flex-shrink:0;margin-left:2px}
+.dirty-dot{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--warning);flex-shrink:0;margin-left:2px}
 .icon-btn{display:inline-flex;align-items:center;justify-content:center;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;flex-shrink:0;transition:background-color .15s ease,border-color .15s ease,color .15s ease,opacity .15s ease,transform .15s ease}
 .icon-btn:hover{background:var(--raised);color:var(--ink)}
 .icon-btn.active{background:var(--primary-soft);color:var(--primary);border-color:var(--primary)}
@@ -302,7 +302,7 @@ body:has(.obsidian-vault),html:has(.obsidian-vault){background:var(--surface)!im
 /* Contextual Selection AI Bar */
 .code-selection-ai-bar{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);z-index:50;display:flex;align-items:center;gap:4px;padding:4px 6px;background:var(--raised);border:1px solid var(--border);border-radius:12px;box-shadow:0 6px 20px rgba(0,0,0,0.5)}
 .selection-ai-btn{padding:4px 10px;border:0;background:var(--raised);color:var(--ink);font-size:.76rem;font-weight:500;border-radius:8px;cursor:pointer;display:flex;align-items:center;gap:4px;transition:background .15s ease}
-.selection-ai-btn:hover{background:#1c2c30}
+.selection-ai-btn:hover{background:var(--surface)}
 .selection-ai-btn.primary{background:var(--primary);color:var(--code);font-weight:650}
 
 /* Bottom Sheet Output Dock */
@@ -319,8 +319,8 @@ body:has(.obsidian-vault),html:has(.obsidian-vault){background:var(--surface)!im
 .terminal-mode .stdin-label{font-size:.76rem;color:var(--muted);margin-bottom:4px;display:block}
 .terminal-mode textarea{width:100%;background:var(--raised);border:1px solid var(--border);border-radius:8px;padding:8px;color:var(--ink);font-family:inherit;font-size:13px;resize:vertical;box-sizing:border-box}
 .problem-item{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;font-size:.8rem}
-.problem-item.err{background:rgba(244,63,94,0.1);color:var(--error);border:1px solid rgba(244,63,94,0.2)}
-.problem-item.clean{background:rgba(61,187,158,0.1);color:var(--primary);border:1px solid rgba(61,187,158,0.2)}
+.problem-item.err{background:color-mix(in oklch,var(--error) 10%,transparent);color:var(--error);border:1px solid color-mix(in oklch,var(--error) 20%,transparent)}
+.problem-item.clean{background:color-mix(in oklch,var(--success) 10%,transparent);color:var(--success);border:1px solid color-mix(in oklch,var(--success) 20%,transparent)}
 
 /* Syntax Highlighting */
 .syntax-keyword{color:var(--syntax-keyword)!important;font-weight:600}
