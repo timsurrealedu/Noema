@@ -815,11 +815,11 @@ dialog::backdrop{background:color-mix(in oklch,var(--bg) 62%,transparent)}
 @keyframes noema-enter-rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 
 /* Home (.app-shell) — always a rise, it is the spatial root of the nav order. */
-.app-shell>main{animation:noema-enter-rise .26s var(--ease) both}
+.app-shell>main{animation:noema-enter-rise .18s var(--ease) both}
 /* Module pages — direction follows nav order. Default (no dir / same level) is a rise. */
-.module-main{animation:noema-enter-rise .26s var(--ease) both}
-html[data-nav-dir="forward"] .module-main{animation:noema-enter-forward .28s var(--ease) both}
-html[data-nav-dir="back"] .module-main{animation:noema-enter-back .28s var(--ease) both}
+.module-main{animation:noema-enter-rise .18s var(--ease) both}
+html[data-nav-dir="forward"] .module-main{animation:noema-enter-forward .18s var(--ease) both}
+html[data-nav-dir="back"] .module-main{animation:noema-enter-back .18s var(--ease) both}
 
 /* Note: note-workspace / mixed-workspace / compiler layouts opt out — they pin
    heights and scroll internally, so a translate on their container would shift
