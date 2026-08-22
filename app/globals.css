@@ -575,6 +575,7 @@ html,body{max-width:100%;overflow-x:hidden}
 *::-webkit-scrollbar-thumb{min-height:44px;border:3px solid transparent;border-radius:999px;background:color-mix(in oklch,var(--muted) 72%,var(--sidebar));background-clip:padding-box}
 *::-webkit-scrollbar-thumb:hover{background:var(--muted);background-clip:padding-box}
 dialog{max-height:min(760px,calc(100dvh - 32px));overflow:auto;overscroll-behavior:contain;box-shadow:0 8px 24px color-mix(in oklch,var(--bg) 76%,transparent)}
+.more-dialog{width:min(440px,calc(100vw - 32px));padding:0}.more-dialog>header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid var(--border)}.more-dialog>nav{display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:10px}.more-dialog>nav a{display:flex;align-items:center;gap:9px;min-height:44px;padding:0 10px;border-radius:var(--r-sm);color:var(--muted);text-decoration:none}.more-dialog>nav a:hover,.more-dialog>nav a.active{background:var(--raised);color:var(--ink)}.more-dialog>nav a.active{color:var(--primary)}@media(max-width:480px){.more-dialog>nav{grid-template-columns:1fr}}
 dialog::backdrop{background:color-mix(in oklch,var(--bg) 62%,transparent)}
 .notification-dialog{width:min(440px,calc(100vw - 32px));padding:0}
 .notification-dialog>header{display:flex;min-height:60px;align-items:center;justify-content:space-between;padding:8px 12px 8px 20px;border-bottom:1px solid var(--border)}
