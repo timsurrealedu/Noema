@@ -60,6 +60,7 @@ test("shared shell exposes keyboard search and accessible navigation",()=>{
 });
 test("root layout eagerly warms daily navigation routes",()=>{const layout=read("app/layout.tsx"),warmup=read("app/components/NavigationWarmup.tsx");assert.match(layout,/NavigationWarmup/);for(const route of ["capture","calendar","vault","settings"])assert.match(warmup,new RegExp(`/${route}`));assert.doesNotMatch(warmup,/requestIdleCallback/)});
 test("root layout applies the saved Gruvbox theme before hydration",()=>{const layout=read("app/layout.tsx");assert.match(layout,/beforeInteractive/);assert.match(layout,/noema-theme/);assert.match(layout,/dataset\.theme/);assert.match(layout,/theme-color/)});
+test("global motion only transitions explicit visual properties",()=>{const css=read("app/globals.css");assert.doesNotMatch(css,/transition:\s*all/);assert.doesNotMatch(css,/transition:(?:max-width|max-height)/)});
 test("mobile viewport enables safe-area insets",()=>assert.match(read("app/layout.tsx"),/viewportFit:"cover"/));
 
 test("mobile navigation exposes core navigation items",()=>{for(const file of ["app/components/ModuleShell.tsx","app/page.tsx"]){const page=read(file);assert.match(page,/\["Home"/);assert.match(page,/\["Vault"/);}});
@@ -103,6 +104,7 @@ test("reduced motion and responsive breakpoints remain enforced",()=>{
   assert.match(css,/@media\(max-width:820px\)/);
   assert.match(css,/focus-visible/);
 });
+
 
 test("remote actions disclose missing AI and persistence",()=>{
   const notice=read("app/components/ServiceNotice.tsx");
@@ -355,5 +357,3 @@ test("extractTagsAndCleanText parses heading tags with escaped backslash bracket
   assert.match(content,/tags\?/);
   assert.match(content,/standaloneHashtagLineRegex/);
 });
-
-
