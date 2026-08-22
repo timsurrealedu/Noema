@@ -59,7 +59,7 @@ test("shared shell exposes keyboard search and accessible navigation",()=>{
   assert.match(shell,/Skip to main content/);
 });
 test("root layout eagerly warms daily navigation routes",()=>{const layout=read("app/layout.tsx"),warmup=read("app/components/NavigationWarmup.tsx");assert.match(layout,/NavigationWarmup/);for(const route of ["capture","calendar","vault","settings"])assert.match(warmup,new RegExp(`/${route}`));assert.doesNotMatch(warmup,/requestIdleCallback/)});
-test("root layout applies the saved Gruvbox theme before hydration",()=>{const layout=read("app/layout.tsx");assert.match(layout,/beforeInteractive/);assert.match(layout,/noema-theme/);assert.match(layout,/dataset\.theme/);assert.match(layout,/theme-color/)});
+test("root layout applies the saved Gruvbox theme before hydration",()=>{const layout=read("app/layout.tsx");assert.match(layout,/beforeInteractive/);assert.match(layout,/noema-theme/);assert.match(layout,/dataset\.theme/);assert.match(layout,/theme-color/);assert.match(layout,/<html lang="en" suppressHydrationWarning>/)});
 test("global motion only transitions explicit visual properties",()=>{const css=read("app/globals.css");assert.doesNotMatch(css,/transition:\s*all/);assert.doesNotMatch(css,/transition:(?:max-width|max-height)/)});
 test("mobile viewport enables safe-area insets",()=>assert.match(read("app/layout.tsx"),/viewportFit:"cover"/));
 
