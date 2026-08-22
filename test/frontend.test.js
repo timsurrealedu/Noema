@@ -112,6 +112,7 @@ test("PWA only announces an actual waiting update",()=>{const pwa=read("app/comp
 test("reduced motion and responsive breakpoints remain enforced",()=>{
   const css=read("app/globals.css");
   assert.match(css,/prefers-reduced-motion:reduce/);
+  assert.match(css,/@media\(prefers-reduced-motion:reduce\)\{\s*\.app-shell>main,\.module-main\{animation:none;opacity:1\}/);
   assert.match(css,/@media\(max-width:820px\)/);
   assert.match(css,/focus-visible/);
 });

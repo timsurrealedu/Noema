@@ -851,7 +851,7 @@ html[data-nav-dir="back"] .module-main{animation:noema-enter-back .28s var(--eas
    Entrances become an instant opacity settle (no spatial movement); press-scale and
    color feedback remain so actions stay legible. */
 @media(prefers-reduced-motion:reduce){
-  .app-shell>main,.module-main{animation:noema-enter-rise .18s var(--ease) both}
+  .app-shell>main,.module-main{animation:none;opacity:1}
   html[data-nav-dir="forward"] .module-main,
   html[data-nav-dir="back"] .module-main{animation:none;opacity:1}
   .primary,.secondary,.icon-button,
