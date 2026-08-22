@@ -106,6 +106,9 @@ export default function CalendarPage() {
   const [now, setNow] = useState(() => new Date());
   const pointerStart = useRef<{x: number; y: number; day: number} | null>(null);
   const [dragging, setDragging] = useState(false);
+  const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const ghostRef = useRef<HTMLDivElement | null>(null);
+  const [undoToast, setUndoToast] = useState<{message: string; onUndo: () => void} | null>(null);
   const userSelectedView = useRef(false);
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
@@ -134,11 +137,11 @@ export default function CalendarPage() {
   };
 
   const timeAt = (date:Date,y:number) => withMinutes(date,snapMinutes(y));
-  const beginSlot = (event:PointerEvent<HTMLDivElement>,day:number) => {if(matchMedia("(pointer: coarse)").matches)return;const rect=event.currentTarget.getBoundingClientRect();pointerStart.current={x:event.clientX,y:event.clientY-rect.top,day};setDragging(false)};
+  const beginSlot = (event:PointerEvent<HTMLDivElement>,day:number) => {const rect=event.currentTarget.getBoundingClientRect();pointerStart.current={x:event.clientX,y:event.clientY-rect.top,day};setDragging(false);if(event.currentTarget instanceof Element)event.currentTarget.setPointerCapture(event.pointerId)};
   const finishSlot = (event:PointerEvent<HTMLDivElement>,day:number) => {const start=pointerStart.current;if(!start)return;pointerStart.current=null;const rect=event.currentTarget.getBoundingClientRect(),endY=event.clientY-rect.top,moved=Math.abs(endY-start.y)>5||Math.abs(event.clientX-start.x)>5;if(!moved)return;const setAt=timeAt(dates[start.day],start.y),endAt=timeAt(dates[day],endY);if(endAt<=setAt)endAt.setTime(setAt.getTime()+900000);setDragging(false);setDraft({...blankEvent(),day:start.day,time:eventTime(setAt.toISOString()),startAt:setAt.toISOString(),endAt:endAt.toISOString()})};
   const saveOccurrence=async(item:CalendarEvent,scope:"this"|"following"|"all")=>{const body={scope,startAt:item.startAt,endAt:item.endAt,allDay:!!item.allDay,version:item.version};const {originalStartAt,...event}=item;if(!originalStartAt||scope==="all"){saveEvent(event);return}const response=await fetch(`/api/v1/events/${item.id}/occurrences/${encodeURIComponent(originalStartAt)}`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});if(!response.ok)throw new Error((await response.json()).error?.message||"Could not save occurrence");setSaveMessage("Recurring event saved");setScopeDraft(null)};
   const persistEvent=(item:CalendarEvent)=>item.recurrence&&item.originalStartAt?setScopeDraft(item):saveEvent(item);
-  const moveItem = (event:PointerEvent<HTMLButtonElement>,item:CalendarEvent|typeof timedTaskItems[number],kind:"event"|"task",day:number) => {event.preventDefault();event.stopPropagation();if(matchMedia("(pointer: coarse)").matches)return;const rect=event.currentTarget.parentElement!.getBoundingClientRect(),duration=kind==="event"?new Date((item as CalendarEvent).endAt!).getTime()-new Date((item as CalendarEvent).startAt!).getTime():((item as typeof timedTaskItems[number]).estimatedMinutes||45)*60000;const onUp=(up:globalThis.PointerEvent)=>{const next=timeAt(dates[day],up.clientY-rect.top),end=new Date(next.getTime()+duration),moved=Math.abs(up.clientY-event.clientY)>=5;setDragging(moved);setTimeout(()=>setDragging(false),0);if(!moved){if(kind==="event")setDraft({...item as CalendarEvent});else openTask(item.id);return}if(kind==="event")persistEvent({...item as CalendarEvent,startAt:next.toISOString(),endAt:end.toISOString(),time:eventTime(next.toISOString())});else saveTask({...item as typeof timedTaskItems[number],scheduledStartAt:next.toISOString(),scheduledEndAt:end.toISOString(),estimatedMinutes:Math.round(duration/60000),dueAt:next.toISOString()})};window.addEventListener("pointerup",onUp,{once:true})};
+  const moveItem = (event:PointerEvent<HTMLButtonElement>,item:CalendarEvent|typeof timedTaskItems[number],kind:"event"|"task",day:number) => {event.preventDefault();event.stopPropagation();const rect=event.currentTarget.parentElement!.getBoundingClientRect(),duration=kind==="event"?new Date((item as CalendarEvent).endAt!).getTime()-new Date((item as CalendarEvent).startAt!).getTime():((item as typeof timedTaskItems[number]).estimatedMinutes||45)*60000;const onUp=(up:globalThis.PointerEvent)=>{const next=timeAt(dates[day],up.clientY-rect.top),end=new Date(next.getTime()+duration),moved=Math.abs(up.clientY-event.clientY)>=5;setDragging(moved);setTimeout(()=>setDragging(false),0);if(!moved){if(kind==="event")setDraft({...item as CalendarEvent});else openTask(item.id);return}if(kind==="event")persistEvent({...item as CalendarEvent,startAt:next.toISOString(),endAt:end.toISOString(),time:eventTime(next.toISOString())});else saveTask({...item as typeof timedTaskItems[number],scheduledStartAt:next.toISOString(),scheduledEndAt:end.toISOString(),estimatedMinutes:Math.round(duration/60000),dueAt:next.toISOString()})};window.addEventListener("pointerup",onUp,{once:true})};
   const keyMove=(event:KeyboardEvent<HTMLButtonElement>,item:CalendarEvent)=>{if(!["ArrowUp","ArrowDown"].includes(event.key))return;event.preventDefault();const minutes=minutesAt(item.startAt!)+(event.key==="ArrowUp"?-15:15),duration=new Date(item.endAt!).getTime()-new Date(item.startAt!).getTime(),start=withMinutes(new Date(item.startAt!),snapMinutes(minutes));persistEvent({...item,startAt:start.toISOString(),endAt:new Date(start.getTime()+duration).toISOString()})};
   const resizeEvent=(event:PointerEvent<HTMLSpanElement>,item:CalendarEvent,day:number)=>{event.preventDefault();event.stopPropagation();const rect=event.currentTarget.parentElement!.parentElement!.getBoundingClientRect();const onUp=(up:globalThis.PointerEvent)=>{const end=timeAt(dates[day],up.clientY-rect.top),start=new Date(item.startAt!);persistEvent({...item,endAt:new Date(Math.max(end.getTime(),start.getTime()+900000)).toISOString()})};window.addEventListener("pointerup",onUp,{once:true})};
   const dragEvent=(event:DragEvent,item:CalendarEvent)=>event.dataTransfer.setData("application/noema-event",JSON.stringify(item));
@@ -428,7 +431,7 @@ export default function CalendarPage() {
             <div className="week-scroll">
               <div className="week-head">
                 <span />
-                <>{dates.map((date, index) => <strong className={`${isSameDate(date,realToday) ? "active" : ""} ${index === selectedDay ? "selected-day" : ""}`} key={date.toISOString()} style={{cursor: "pointer"}} title={`Click to view tasks for ${days[index]}`} onClick={() => selectDate(date)} onDoubleClick={() => { selectDate(date); setView("Day"); }}><span>{date.toLocaleDateString(undefined,{weekday:"short"})}</span><b>{date.getDate()}</b></strong>)}</>
+                <>{dates.map((date, index) => <button className={`week-day-header ${isSameDate(date,realToday) ? "active" : ""} ${index === selectedDay ? "selected-day" : ""}`} key={date.toISOString()} onClick={() => selectDate(date)} onDoubleClick={() => { selectDate(date); setView("Day"); }} aria-label={`${days[index]}: select day`}><span>{date.toLocaleDateString(undefined,{weekday:"short"})}</span><b>{date.getDate()}</b></button>)}</>
               </div>
               <div className="week-all-day">
                 <span>All day</span>
@@ -436,7 +439,7 @@ export default function CalendarPage() {
               </div>
               <div className="week-body">
                 <div className="times">{dayTimes.map(t => <time key={t}>{t}</time>)}</div>
-                <div className="week-grid">{dates.map((date,index)=><div className="week-day-column" key={date.toISOString()} onDragOver={event=>event.preventDefault()} onDrop={event=>toTimed(event,index)} onPointerDown={event=>beginSlot(event,index)} onPointerUp={event=>finishSlot(event,index)} onClick={()=>!dragging&&selectDate(date)} onDoubleClick={()=>{selectDate(date);setView("Day")}}>{index===todayColumn&&<span className="calendar-now" style={{top:nowTop}} aria-label="Current time"/>}{overlapLayout(timedEvents.filter(event=>event.weekDay===index).map(event=>({...event,start:minutesAt(event.startAt!),end:minutesAt(event.endAt!)}))).map(event=><button draggable className={`calendar-event ${event.active?"active":""} ${draft?.id===event.id?"selected":""}`} style={{top:event.start,height:Math.max(15,event.end-event.start),left:`calc(${event.lane/event.lanes*100}% + 4px)`,right:`calc(${(event.lanes-event.lane-1)/event.lanes*100}% + 4px)`}} key={`${event.id}-${event.originalStartAt||event.startAt}`} onDragStart={drag=>dragEvent(drag,event)} onPointerDown={click=>moveItem(click,event,"event",index)} onKeyDown={key=>keyMove(key,event)}><time>{formatTimeRange(event.startAt,event.endAt,event.time)}</time><strong>{event.title}</strong><span className="calendar-resize" aria-label={`Resize ${event.title}`} role="separator" onPointerDown={click=>resizeEvent(click,event,index)} /></button>)}{timedTaskItems.filter(task=>task.day===index).map(task=><button className="calendar-event calendar-task" style={{top:task.top,height:task.height}} key={`task-${task.id}`} onPointerDown={click=>moveItem(click,task,"task",index)}><time>{formatTimeRange(task.scheduledStartAt,task.scheduledEndAt,task.time)}</time><strong>{task.title}</strong><small>Task</small></button>)}</div>)}</div>
+                <div className="week-grid">{dates.map((date,index)=><div className="week-day-column" key={date.toISOString()} style={{touchAction:'pan-y'}} onDragOver={event=>event.preventDefault()} onDrop={event=>toTimed(event,index)} onPointerDown={event=>beginSlot(event,index)} onPointerUp={event=>finishSlot(event,index)} onClick={()=>!dragging&&selectDate(date)} onDoubleClick={()=>{selectDate(date);setView("Day")}}>{index===todayColumn&&<span className="calendar-now" style={{top:nowTop}} aria-label="Current time"/>}{overlapLayout(timedEvents.filter(event=>event.weekDay===index).map(event=>({...event,start:minutesAt(event.startAt!),end:minutesAt(event.endAt!)}))).map(event=><button draggable className={`calendar-event ${event.active?"active":""} ${draft?.id===event.id?"selected":""}`} style={{top:event.start,height:Math.max(15,event.end-event.start),left:`calc(${event.lane/event.lanes*100}% + 4px)`,right:`calc(${(event.lanes-event.lane-1)/event.lanes*100}% + 4px)`}} key={`${event.id}-${event.originalStartAt||event.startAt}`} onDragStart={drag=>dragEvent(drag,event)} onPointerDown={click=>{if(click.pointerType==="touch"){const t=setTimeout(()=>{moveItem(click,event,"event",index);navigator.vibrate?.(10)},250);longPressTimer.current=t;const clear=()=>{clearTimeout(t);removeEventListener("pointerup",clear);removeEventListener("pointermove",clear)};addEventListener("pointerup",clear);addEventListener("pointermove",clear)}else moveItem(click,event,"event",index)}} onKeyDown={key=>keyMove(key,event)}><time>{formatTimeRange(event.startAt,event.endAt,event.time)}</time><strong>{event.title}</strong><span className="calendar-resize" aria-label={`Resize ${event.title}`} role="separator" onPointerDown={click=>resizeEvent(click,event,index)} /></button>)}{timedTaskItems.filter(task=>task.day===index).map(task=><button className="calendar-event calendar-task" style={{top:task.top,height:task.height}} key={`task-${task.id}`} onPointerDown={click=>{if(click.pointerType==="touch"){const t=setTimeout(()=>{moveItem(click,task,"task",index);navigator.vibrate?.(10)},250);longPressTimer.current=t;const clear=()=>{clearTimeout(t);removeEventListener("pointerup",clear);removeEventListener("pointermove",clear)};addEventListener("pointerup",clear);addEventListener("pointermove",clear)}else moveItem(click,task,"task",index)}}><time>{formatTimeRange(task.scheduledStartAt,task.scheduledEndAt,task.time)}</time><strong>{task.title}</strong><small>Task</small></button>)}</div>)}</div>
               </div>
             </div>
           </section>
@@ -560,6 +563,15 @@ export default function CalendarPage() {
           </section>
         )}
 
+        {undoToast && (
+          <div className="undo-toast" role="status" aria-live="polite">
+            <Check weight="bold" />
+            <span>{undoToast.message}</span>
+            <button type="button" onClick={undoToast.onUndo}>Undo</button>
+            <button type="button" aria-label="Dismiss" onClick={() => setUndoToast(null)}><X /></button>
+          </div>
+        )}
+
         {draft ? (
           <aside className="object-inspector calendar-inspector" role="dialog" aria-labelledby="event-editor-title">
             <div className="object-inspector-head">
@@ -675,6 +687,34 @@ export default function CalendarPage() {
                 />
               </label>
               <div className="inspector-actions">
+                {events.some(event => event.id === draft.id) && (
+                  <button type="button" className="danger-button" onClick={async () => {
+                    try {
+                      const response = await fetch(`/api/v1/events/${draft.id}`, {
+                        method: "DELETE",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({version: (draft as any).version})
+                      });
+                      if (!response.ok) throw new Error((await response.json()).error?.message || "Delete failed");
+                      const deleted = {...draft};
+                      setDraft(null);
+                      setUndoToast({
+                        message: `"${deleted.title}" deleted`,
+                        onUndo: async () => {
+                          try {
+                            const resp = await fetch("/api/v1/events", {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify({title: deleted.title, day: deleted.day, time: deleted.time, startAt: deleted.startAt, endAt: deleted.endAt, allDay: deleted.allDay, timezone: deleted.timezone, location: deleted.location})});
+                            if (resp.ok) setUndoToast(null);
+                            else throw new Error("Restore failed");
+                          } catch { setUndoToast({message: "Could not restore", onUndo: () => setUndoToast(null)}); }
+                        }
+                      });
+                    } catch (reason) {
+                      setSaveMessage((reason as Error).message);
+                    }
+                  }}>
+                    Delete
+                  </button>
+                )}
                 <button type="button" className="secondary" onClick={() => setDraft(null)}>
                   Cancel
                 </button>
