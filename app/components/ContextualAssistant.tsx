@@ -97,10 +97,10 @@ export function ContextualAssistant({
           void (async () => {
             try {
               setLoadingAssistant(true);
-              const res = await fetch("/api/v1/capture", {
+              const res = await fetch("/api/v1/captures", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ input: `Plan request: ${planPrompt}` })
+                body: JSON.stringify({ text: `Plan request: ${planPrompt}`, source: "typed" })
               });
               if (!res.ok) throw new Error("Could not submit plan request");
               setPlanPrompt("");

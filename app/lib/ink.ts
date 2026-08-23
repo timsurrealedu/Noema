@@ -9,7 +9,27 @@ export function eraseAt(strokes:InkStroke[],point:InkPoint,radius:number){const 
 export function scaleStroke(stroke:InkStroke,sx:number,sy=sx,origin=stroke.points[0]){if(!origin)return stroke;return {...stroke,points:stroke.points.map(point=>({...point,x:origin.x+(point.x-origin.x)*sx,y:origin.y+(point.y-origin.y)*sy}))}}
 export function rotateStroke(stroke:InkStroke,radians:number,origin=stroke.points[0]){if(!origin)return stroke;const cos=Math.cos(radians),sin=Math.sin(radians);return {...stroke,points:stroke.points.map(point=>{const x=point.x-origin.x,y=point.y-origin.y;return {...point,x:origin.x+x*cos-y*sin,y:origin.y+x*sin+y*cos}})}}
 export type InkView={x:number;y:number;zoom:number};
+export type ScreenPoint={x:number;y:number};
+export const ZOOM_MIN=.25,ZOOM_MAX=4;
+export function clampZoom(zoom:number,min=ZOOM_MIN,max=ZOOM_MAX){return Math.max(min,Math.min(max,zoom))}
 export function screenToWorld(clientX:number,clientY:number,rect:DOMRect,view:InkView,width:number,height:number):InkPoint{return{x:view.x+(clientX-rect.left)/rect.width*width/view.zoom,y:view.y+(clientY-rect.top)/rect.height*height/view.zoom,pressure:1,time:performance.now(),tiltX:0,tiltY:0}}
+function screenToCanvas(point:ScreenPoint,rect:DOMRect|Pick<DOMRect,"left"|"top"|"width"|"height">,width:number,height:number):ScreenPoint{return{x:(point.x-rect.left)/rect.width*width,y:(point.y-rect.top)/rect.height*height}}
+function viewAnchor(view:InkView,canvas:ScreenPoint):ScreenPoint{return{x:view.x+canvas.x/view.zoom,y:view.y+canvas.y/view.zoom}}
+function anchorToView(anchor:ScreenPoint,canvas:ScreenPoint,zoom:number):InkView{return{x:anchor.x-canvas.x/zoom,y:anchor.y-canvas.y/zoom,zoom}}
+export function applyPinch(view:InkView,rect:DOMRect,width:number,height:number,previousCenter:ScreenPoint,nextCenter:ScreenPoint,distRatio:number,min=ZOOM_MIN,max=ZOOM_MAX):InkView{
+  const zoom=clampZoom(view.zoom*Math.max(.01,distRatio),min,max);
+  if(zoom===view.zoom)return view;
+  const previousCanvas=screenToCanvas(previousCenter,rect,width,height);
+  return anchorToView(viewAnchor(view,previousCanvas),screenToCanvas(nextCenter,rect,width,height),zoom);
+}
+export function zoomAtPoint(view:InkView,rect:DOMRect,width:number,height:number,clientX:number,clientY:number,factor:number,min=ZOOM_MIN,max=ZOOM_MAX):InkView{
+  const zoom=clampZoom(view.zoom*factor,min,max);
+  if(zoom===view.zoom)return view;
+  const canvas=screenToCanvas({x:clientX,y:clientY},rect,width,height);
+  return anchorToView(viewAnchor(view,canvas),canvas,zoom);
+}
+export function panBy(view:InkView,dx:number,dy:number):InkView{return{...view,x:view.x-dx/view.zoom,y:view.y-dy/view.zoom}}
+export function penRecentlyUp(pointerType:string,penActive:boolean,penUpAt:number,now:number=performance.now(),cooldown=150){return pointerType==="touch"&&(penActive||now-penUpAt<cooldown)}
 export function translateStroke(stroke:InkStroke,dx:number,dy:number){return{...stroke,points:stroke.points.map(point=>({...point,x:point.x+dx,y:point.y+dy}))}}
 export function snapInkPoint(start:InkPoint,end:InkPoint){const distance=Math.hypot(end.x-start.x,end.y-start.y),angle=Math.round(Math.atan2(end.y-start.y,end.x-start.x)/(Math.PI/4))*(Math.PI/4);return{...end,x:start.x+Math.cos(angle)*distance,y:start.y+Math.sin(angle)*distance}}
 export function fitInkView(strokes:InkStroke[],width:number,height:number):InkView{const points=strokes.flatMap(stroke=>stroke.points);if(!points.length)return{x:0,y:0,zoom:1};const left=Math.min(...points.map(point=>point.x)),right=Math.max(...points.map(point=>point.x)),top=Math.min(...points.map(point=>point.y)),bottom=Math.max(...points.map(point=>point.y)),boundingW=Math.max(1,right-left),boundingH=Math.max(1,bottom-top),zoom=Math.max(.01,Math.min(2,.9*Math.min(width/boundingW,height/boundingH)));return{x:(left+right)/2-width/(2*zoom),y:(top+bottom)/2-height/(2*zoom),zoom}}

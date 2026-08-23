@@ -1,10 +1,33 @@
+const temp=()=>mkdtempSync(join(tmpdir(),"noema-backend-"));
+
 const test=require("node:test");
 const assert=require("node:assert/strict");
 const {existsSync,mkdirSync,mkdtempSync,readFileSync,rmSync,statSync,symlinkSync,writeFileSync}=require("node:fs");
 const {tmpdir}=require("node:os");
 const {join}=require("node:path");
 
-const temp=()=>mkdtempSync(join(tmpdir(),"noema-backend-"));
+test("math continuations queue once per ink block and resolve without inserting on dismiss",async()=>{
+  const dir=temp(),{openDatabase}=await import("../server/db.mjs"),math=await import("../server/math.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const time=new Date().toISOString(),actor={id:"u1",workspaceId:"w1"};
+    db.prepare("INSERT INTO users(id,email,password_hash,created_at,updated_at) VALUES('u1','t@x.io','x',?,?)").run(time,time);
+    db.prepare("INSERT INTO workspaces(id,name,created_by,created_at,updated_at) VALUES('w1','W','u1',?,?)").run(time,time);
+    db.prepare("INSERT INTO notes(id,title,content,excerpt,created_at,updated_at,workspace_id) VALUES('n1','Math','# Math','',?,?, 'w1')").run(time,time);
+    db.prepare("INSERT INTO note_blocks(id,note_id,position,kind,markdown,created_at,updated_at) VALUES('blk','n1',0,'ink','',?,?)").run(time,time);
+    db.prepare("INSERT INTO note_ink_blocks(block_id,width,height,strokes_json,stroke_hash,ocr_status,updated_at) VALUES('blk',100,100,'[]','h','complete',?)").run(time);
+    const first=math.requestMathContinuation("n1",{blockId:"blk"},actor,db);
+    assert.equal(first.state,"queued");assert.ok(first.jobId);
+    const duplicate=math.requestMathContinuation("n1",{blockId:"blk"},actor,db);
+    assert.deepEqual(duplicate,{state:"queued"});
+    assert.throws(()=>math.requestMathContinuation("n1",{blockId:"missing"},actor,db),/Ink block not found/);
+    db.prepare("INSERT INTO math_continuations(id,note_id,block_id,workspace_id,analysis,continuation,confidence,assumptions_json,state,provider,created_at,updated_at) VALUES('mc1','n1','blk','w1','a','$x$','low','[]','proposed','gemini',?,?)").run(time,time);
+    const dismissed=math.resolveMathContinuation("mc1","dismiss","w1",db);
+    assert.equal(dismissed.state,"dismissed");
+    assert.equal(db.prepare("SELECT COUNT(*) count FROM note_blocks WHERE note_id='n1'").get().count,1);
+    assert.throws(()=>math.resolveMathContinuation("mc1","accept","w1",db),/Proposed math continuation not found/);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
 
 test("SQLite core objects persist and remain searchable",async()=>{
   const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
@@ -417,6 +440,8 @@ test("captures link uploaded assets and expose them in state",async()=>{
 
 test("PDF annotations validate coordinates, link objects, and export",async()=>{const dir=temp();const {openDatabase}=await import("../server/db.mjs"),annotations=await import("../server/annotations.mjs"),db=openDatabase(join(dir,"test.sqlite"));try{const time=new Date().toISOString();db.prepare("INSERT INTO assets(id,sha256,name,mime,size,created_at) VALUES(?,?,?,?,?,?)").run("pdf","a".repeat(64),"source.pdf","application/pdf",10,time);db.prepare("INSERT INTO notes(id,title,excerpt,content,created_at,updated_at) VALUES(?,?,?,?,?,?)").run("note","Linked","","",time,time);const saved=annotations.saveAnnotation("pdf",{page:2,kind:"highlight",geometry:{x:.1,y:.2,width:.3,height:.1},comment:"Important",linkType:"note",linkId:"note"},db,"owner");assert.equal(saved.page,2);assert.throws(()=>annotations.saveAnnotation("pdf",{page:1,kind:"text",geometry:{x:.9,y:.1,width:.2,height:.1}},db),/normalized/);assert.equal(annotations.exportAnnotations("pdf",db).annotations.length,1);annotations.deleteAnnotation(saved.id,"pdf",db,"owner");assert.equal(annotations.listAnnotations("pdf",db).length,0)}finally{db.close();rmSync(dir,{recursive:true,force:true})}});
 
+test("PDF export skips poisoned rows and reports unsupported text as 422",async()=>{const dir=temp(),config={dataDir:dir,objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs")};mkdirSync(config.objectsDir,{recursive:true});mkdirSync(config.jobsDir,{recursive:true});const {openDatabase}=await import("../server/db.mjs"),{storeAsset}=await import("../server/objects.mjs"),annotations=await import("../server/annotations.mjs"),{flattenedPdf}=await import("../server/pdf-export.mjs"),{PDFDocument}=await import("pdf-lib"),db=openDatabase(join(dir,"test.sqlite"));try{const source=await PDFDocument.create();source.addPage();const asset=await storeAsset({stream:require("node:stream").Readable.from([await source.save()]),name:"source.pdf",mime:"application/pdf"},config,db),time=new Date().toISOString();annotations.saveAnnotation(asset.id,{page:99,kind:"highlight",geometry:{x:.1,y:.1,width:.2,height:.2}},db);db.prepare("INSERT INTO pdf_annotations(id,asset_id,page,kind,geometry_json,content,color,comment,created_at,updated_at) VALUES('poison',?,1,'ink','not-json','','#000000','',?,?)").run(asset.id,time,time);assert.ok((await flattenedPdf(asset,config,db)).bytes.length);annotations.saveAnnotation(asset.id,{page:1,kind:"text",geometry:{x:.1,y:.1,width:.2,height:.1},content:"你好"},db);await assert.rejects(()=>flattenedPdf(asset,config,db),error=>error.status===422)}finally{db.close();rmSync(dir,{recursive:true,force:true})}});
+
 test("file capture creates a capture with a stored asset",async()=>{
   const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
   const config={dataDir:dir,objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs")};require("node:fs").mkdirSync(config.objectsDir,{recursive:true});require("node:fs").mkdirSync(config.jobsDir,{recursive:true});
@@ -480,6 +505,7 @@ test("project workspaces derive linked objects, milestones, blockers, and activi
 test("contextual recommendations persist sources and require review before mutation",async()=>{
   const dir=temp();const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),core=await import("../server/core.mjs"),projects=await import("../server/projects.mjs"),recommend=await import("../server/recommendations.mjs"),db=openDatabase(join(dir,"test.sqlite"));try{const owner=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),project=core.saveProject({name:"Launch",summary:"Ship"},db,owner.id);projects.saveBlocker(project.id,{title:"Approve scope"},db,owner.id);const items=recommend.buildRecommendations(owner.id,"project",project.id,db);assert.equal(items[0].sources[0].title,"Approve scope");assert.equal(core.listState(db).tasks.length,0);const applied=recommend.decideRecommendation(items[0].id,owner.id,"accepted","useful",db);assert.equal(applied.object.project,"Launch");assert.equal(applied.recommendation.disposition,"accepted");assert.throws(()=>recommend.decideRecommendation(items[0].id,owner.id,"accepted","",db),error=>error.status===404)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
+test("recommendation generation ignores unsupported contexts",async()=>{const {buildRecommendations}=await import("../server/recommendations.mjs");assert.deepEqual(buildRecommendations("owner","",null),[]);assert.deepEqual(buildRecommendations("owner","course","course-1"),[])});
 
 test("task dependencies block self- and circular references and undo",async()=>{
   const dir=temp();const {openDatabase}=await import("../server/db.mjs");const core=await import("../server/core.mjs");const db=openDatabase(join(dir,"test.sqlite"));
@@ -552,6 +578,12 @@ test("task and event reminders deliver once across restarts",async()=>{
   const dir=temp(),path=join(dir,"test.sqlite"),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),modules=await import("../server/modules.mjs");let db=openDatabase(path);
   try{const reminderAt=new Date(Date.now()-1000).toISOString();core.saveTask({title:"Submit report",project:"Work",due:"Today",reminderAt},db);core.saveEvent({title:"Standup",day:1,time:"09:00",reminderAt},db);assert.equal(modules.deliverDueReminders(new Date(),db).length,2);db.close();db=openDatabase(path);assert.equal(modules.deliverDueReminders(new Date(),db).length,0);assert.equal(modules.listNotifications(db).filter(item=>item.kind.endsWith("-reminder")).length,2)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
+test("task completion toggles preserve reminder state",async()=>{const dir=temp(),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));try{const reminderAt="2026-08-24T08:00:00.000Z",task=core.saveTask({title:"Review",dueAt:"2026-08-24T09:00:00.000Z",reminderAt},db),completed=core.saveTask({...core.listState(db).tasks[0],completed:true,version:task.version},db),reopened=core.saveTask({...core.listState(db).tasks[0],completed:false,status:"open",version:completed.version},db);assert.equal(reopened.reminder_at,reminderAt)}finally{db.close();rmSync(dir,{recursive:true,force:true})}});
+
+test("event reminder offsets deliver once and record sent timestamps",async()=>{
+  const dir=temp(),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),modules=await import("../server/modules.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{const event=core.saveEvent({title:"Exam",startAt:"2026-08-23T12:30:00.000Z",endAt:"2026-08-23T13:30:00.000Z",timezone:"UTC",reminderAt:"2026-08-23T11:30:00.000Z",reminders:[{offsetMinutes:60},{offsetMinutes:30}]},db);assert.equal(modules.deliverDueReminders(new Date("2026-08-23T12:00:00.000Z"),db).length,2);assert.equal(modules.deliverDueReminders(new Date("2026-08-23T12:00:00.000Z"),db).length,0);assert.equal(db.prepare("SELECT COUNT(*) count FROM event_reminders WHERE event_id=? AND sent_at IS NOT NULL").get(event.id).count,2);assert.equal(modules.listNotifications(db).filter(item=>item.kind==="event-reminder"&&item.related_id===event.id).length,2)}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
 
 test("Draft optimization remains a reviewable and reversible proposal",async()=>{
   const dir=temp(),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),jobs=await import("../server/jobs.mjs"),db=openDatabase(join(dir,"test.sqlite"));
@@ -603,3 +635,54 @@ test("Project relationships, milestones, blockers, and activity are workspace is
 test("Search and recommendations stay inside the active workspace",async()=>{const dir=temp(),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),projects=await import("../server/projects.mjs"),search=await import("../server/search.mjs"),recommendations=await import("../server/recommendations.mjs"),db=openDatabase(join(dir,"test.sqlite"));try{db.prepare("INSERT INTO users(id,email,password_hash,created_at,updated_at) VALUES('u','search@example.com','x','t','t')").run();db.prepare("INSERT INTO workspaces(id,name,created_by,created_at,updated_at) VALUES('w1','One','u','t','t'),('w2','Two','u','t','t')").run();const a1={id:"u",workspaceId:"w1"},a2={id:"u",workspaceId:"w2"},one=core.saveProject({name:"Search one"},db,a1),two=core.saveProject({name:"Search two"},db,a2);core.saveNote({title:"Shared term one",content:"needle private one"},db,a1);core.saveNote({title:"Shared term two",content:"needle private two"},db,a2);projects.saveBlocker(one.id,{title:"One blocker"},db,a1);projects.saveBlocker(two.id,{title:"Two blocker"},db,a2);const found=await search.searchWorkspace("needle",{db,workspaceId:"w1"});assert.deepEqual(found.notes.map(row=>row.title),["Shared term one"]);const generated=recommendations.buildRecommendations("u","project",one.id,db,"w1");assert.equal(generated.length,1);assert.throws(()=>recommendations.buildRecommendations("u","project",one.id,db,"w2"),error=>error.status===404);assert.throws(()=>recommendations.decideRecommendation(generated[0].id,"u","accepted","",db,"w2"),error=>error.status===404);const accepted=recommendations.decideRecommendation(generated[0].id,"u","accepted","",db,"w1");assert.equal(accepted.object.workspace_id,"w1");assert.equal(core.listState(db,"w2").tasks.length,0)}finally{db.close();rmSync(dir,{recursive:true,force:true})}});
 
 test("Tutor sessions, messages, context, and note insertion are workspace isolated",async()=>{const dir=temp(),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),skills=await import("../server/skills.mjs"),db=openDatabase(join(dir,"test.sqlite"));try{db.prepare("INSERT INTO users(id,email,password_hash,created_at,updated_at) VALUES('u','tutor@example.com','x','t','t')").run();db.prepare("INSERT INTO workspaces(id,name,created_by,created_at,updated_at) VALUES('w1','One','u','t','t'),('w2','Two','u','t','t')").run();const note=core.saveNote({title:"Tutor note",content:"Original"},db,{id:"u",workspaceId:"w1"}),foreign=core.saveNote({title:"Foreign",content:"Secret"},db,{id:"u",workspaceId:"w2"}),time=new Date().toISOString();db.prepare("INSERT INTO tutor_sessions(id,kind,subject_id,subject_title,created_at,updated_at,workspace_id) VALUES('s1','note',?,?,?,?,'w1')").run(note.id,note.title,time,time);db.prepare("INSERT INTO tutor_messages(id,session_id,role,content,citations_json,provider,created_at) VALUES('m1','s1','assistant','Added section','[]','test',?)").run(time);assert.equal(skills.loadTutorSession("note",note.id,db,"w1").messages.length,1);assert.throws(()=>skills.loadTutorSession("note",note.id,db,"w2"),error=>error.status===404);assert.throws(()=>skills.insertTutorMessage("m1",foreign.id,db,{id:"u",workspaceId:"w2"}),error=>error.status===404);const inserted=skills.insertTutorMessage("m1",note.id,db,{id:"u",workspaceId:"w1"});assert.match(inserted.content,/Added section/);assert.equal(db.prepare("SELECT workspace_id FROM notes WHERE id=?").get(note.id).workspace_id,"w1")}finally{db.close();rmSync(dir,{recursive:true,force:true})}});
+
+test("magic-byte sniffing rejects mismatched uploads and accepts octet-stream PDFs",async()=>{
+  const objects=await import("../server/objects.mjs");
+  assert.equal(objects.sniffMime(Buffer.from("%PDF-1.7 trailing")),"application/pdf");
+  assert.equal(objects.sniffMime(Buffer.from([0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a,0,0])),"image/png");
+  assert.equal(objects.sniffMime(Buffer.from("GIF89awhatever")),"image/gif");
+  assert.equal(objects.sniffMime(Buffer.from([0xff,0xfb,0x90,0x00])),"audio/mpeg");
+  assert.equal(objects.sniffMime(Buffer.from("hello world")),null);
+});
+test("annotation sidecars re-import idempotently",async()=>{
+  const dir=temp(),{openDatabase}=await import("../server/db.mjs"),annotations=await import("../server/annotations.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const time=new Date().toISOString();
+    db.prepare("INSERT INTO assets(id,sha256,name,mime,size,created_at) VALUES('a1','deadbeef','doc.pdf','application/pdf',10,?)").run(time);
+    const sidecar={format:"noema-pdf-annotations",version:1,asset:{id:"a1"},annotations:[
+      {id:"an1",page:1,kind:"highlight",geometry:{x:.1,y:.1,width:.3,height:.05},content:"",comment:"review this",color:"#f5d90a"},
+      {id:"bad",page:99,kind:"ink",geometry:{},content:"",comment:"",color:"#f5d90a"}
+    ]};
+    const first=annotations.importAnnotationsSidecar("a1",sidecar,db,null);
+    assert.deepEqual({imported:first.imported}, {imported:1});
+    assert.equal(first.skipped,1);
+    const again=annotations.importAnnotationsSidecar("a1",{...sidecar,annotations:[sidecar.annotations[0]]},db,null);
+    assert.equal(again.imported,1);assert.equal(again.skipped,0);
+    assert.throws(()=>annotations.importAnnotationsSidecar("a1",{format:"other"},db,null),/noema-pdf-annotations/);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("audio transcripts queue once per capture and complete with timestamped segments",async()=>{
+  const dir=temp(),{openDatabase}=await import("../server/db.mjs"),transcribe=await import("../server/transcribe.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const time=new Date().toISOString(),actor={id:"u1",workspaceId:"w1"};
+    db.prepare("INSERT INTO users(id,email,password_hash,created_at,updated_at) VALUES('u1','t@x.io','x',?,?)").run(time,time);
+    db.prepare("INSERT INTO workspaces(id,name,created_by,created_at,updated_at) VALUES('w1','W','u1',?,?)").run(time,time);
+    db.prepare("INSERT INTO captures(id,text,source,status,source_label,created_at,updated_at,workspace_id) VALUES('c1','Lecture','voice','review','Voice',?,?, 'w1')").run(time,time);
+    db.prepare("INSERT INTO assets(id,sha256,name,mime,size,created_at) VALUES('au1','abc','lecture.webm','audio/webm',1000,?)").run(time);
+    db.prepare("INSERT INTO workspace_assets(workspace_id,asset_id,created_at) VALUES(?,?,?)").run("w1","au1",time);
+    db.prepare("INSERT INTO capture_assets(capture_id,asset_id) VALUES(?,?)").run("c1","au1");
+    const first=transcribe.requestTranscription("c1",actor,db);
+    assert.equal(first.state,"queued");assert.ok(first.jobId);
+    const duplicate=transcribe.requestTranscription("c1",actor,db);
+    assert.deepEqual(duplicate,{state:"queued"});
+    assert.throws(()=>transcribe.requestTranscription("missing",actor,db),/Capture not found/);
+    transcribe.finishTranscription("c1",{assetId:"au1",text:"Welcome to the lecture",provider:"groq",model:"whisper-large-v3",durationSeconds:42,segments:[{start:0,end:4,text:"Welcome to the lecture",label:"00:00"}]},db);
+    const stored=transcribe.transcriptForCapture("c1","w1",db);
+    assert.equal(stored.state,"complete");assert.equal(stored.provider,"groq");
+    assert.equal(stored.segments[0].label,"00:00");assert.equal(stored.content,"Welcome to the lecture");
+    assert.equal(transcribe.transcriptForCapture("missing","w1",db),null);
+    const stamp=(seconds=>`${String(Math.floor(seconds/60)).padStart(2,"0")}:${String(Math.floor(seconds%60)).padStart(2,"0")}`);
+    assert.equal(stamp(75),"01:15");
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});

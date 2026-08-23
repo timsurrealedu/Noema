@@ -6,6 +6,8 @@ import {replaceAll} from "@milkdown/utils";
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/frame.css";
 
+async function uploadImage(file:File){const form=new FormData();form.append("file",file);const response=await fetch("/api/v1/assets",{method:"POST",body:form}),body=await response.json();if(!response.ok)throw new Error(body.error?.message||"Image upload failed");const asset=body.assets?.[0];if(!asset?.id)throw new Error("Image upload returned no asset");return `/api/v1/assets/${asset.id}`}
+
 export function LiveMarkdownEditor({value, onChange, onBlur}: {value: string; onChange: (value: string) => void; onBlur: () => void}) {
   const root = useRef<HTMLDivElement>(null);
   const latest = useRef(value);
@@ -22,6 +24,7 @@ export function LiveMarkdownEditor({value, onChange, onBlur}: {value: string; on
       defaultValue: latest.current,
       features: {[Crepe.Feature.TopBar]: true},
       featureConfigs: {
+        [Crepe.Feature.ImageBlock]: {onUpload: uploadImage},
         [Crepe.Feature.TopBar]: {
           headingOptions: [
             { label: "P", level: null },

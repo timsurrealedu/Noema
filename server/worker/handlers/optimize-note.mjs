@@ -9,9 +9,9 @@ const instructions={light:"Fix grammar and formatting only.",organize:"Improve h
 
 export async function handleOptimizeNote({job,config,db}){
   try{
-    const note=db.prepare("SELECT title,content,version FROM notes WHERE id=? AND draft=1 AND trashed=0").get(job.input.noteId);
-    if(!note)throw new Error("Draft note not found");
-    const output=await runAI({prompt:`Propose non-overlapping edits to this Draft note. ${instructions[job.input.mode]} Preserve facts, formulas, code, and meaning. Offsets are zero-based JavaScript string offsets into Content. Return only replace_range operations; unchanged text must not be repeated.\n\nBase version: ${note.version}\nTitle: ${note.title}\nContent:\n${note.content}`,cwd:resolve(config.jobsDir,job.id),schema,config,workload:"note",onEvent:aiEventHandler(job.id,db)});
+    const note=db.prepare("SELECT title,content,version FROM notes WHERE id=? AND trashed=0").get(job.input.noteId);
+    if(!note)throw new Error("Note not found");
+    const output=await runAI({prompt:`Propose non-overlapping edits to this note. ${instructions[job.input.mode]} Preserve facts, formulas, code, and meaning. Offsets are zero-based JavaScript string offsets into Content. Return only replace_range operations; unchanged text must not be repeated.\n\nBase version: ${note.version}\nTitle: ${note.title}\nContent:\n${note.content}`,cwd:resolve(config.jobsDir,job.id),schema,config,workload:"note",onEvent:aiEventHandler(job.id,db)});
     assertNotCancelled(job.id,db);
     if(output.result.baseVersion!==note.version)throw new Error("Optimization base version does not match the note");
     finishNoteOptimization(job.input.optimizationId,output.result,output.provider,db);

@@ -29,10 +29,14 @@ export function deliverDueReminders(date=new Date(),db=getDatabase()){
   const due=date.toISOString(),sent=[];
   db.exec("BEGIN IMMEDIATE");
   try{
+    for(const row of db.prepare(`SELECT r.event_id,r.offset_minutes,e.title,e.workspace_id FROM event_reminders r JOIN events e ON e.id=r.event_id WHERE r.reminder_at<=? AND r.sent_at IS NULL AND e.deleted_at IS NULL ORDER BY r.reminder_at LIMIT 100`).all(due)){
+      if(!db.prepare("UPDATE event_reminders SET sent_at=? WHERE event_id=? AND offset_minutes=? AND sent_at IS NULL").run(due,row.event_id,row.offset_minutes).changes)continue;
+      sent.push(createNotification({kind:"event-reminder",title:row.title,body:row.offset_minutes?`Starting in ${row.offset_minutes} minute${row.offset_minutes===1?"":"s"}: ${row.title}`:`Starting now: ${row.title}`,relatedType:"event",relatedId:row.event_id},db,row.workspace_id));
+    }
     for(const [table,kind] of [["tasks","task"],["events","event"]]){
       const query = table === "tasks"
         ? `SELECT id,title,reminder_at,scheduled_start_at,due_at,workspace_id FROM tasks WHERE reminder_at<=? AND reminder_sent_at IS NULL AND completed=0 AND archived=0 ORDER BY reminder_at LIMIT 100`
-        : `SELECT id,title,reminder_at,start_at,workspace_id FROM events WHERE reminder_at<=? AND reminder_sent_at IS NULL AND deleted_at IS NULL ORDER BY reminder_at LIMIT 100`;
+        : `SELECT id,title,reminder_at,start_at,workspace_id FROM events WHERE reminder_at<=? AND reminder_sent_at IS NULL AND deleted_at IS NULL AND NOT EXISTS (SELECT 1 FROM event_reminders r WHERE r.event_id=events.id) ORDER BY reminder_at LIMIT 100`;
 
       for(const row of db.prepare(query).all(due)){
         const targetIso = table === "tasks" ? (row.scheduled_start_at || row.due_at) : row.start_at;

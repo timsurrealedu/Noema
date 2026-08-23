@@ -18,7 +18,10 @@ const MarkdownContent=dynamic(()=>import("../components/MarkdownContent").then(m
 const MixedNoteEditor=dynamic(()=>import("../components/MixedNoteEditor").then(module=>module.MixedNoteEditor));
 
 const blankNote=():Note=>({id:createId(),title:"Untitled note",excerpt:"",content:"# Untitled note\n\n",tags:[],time:"Now",ai:false,source:"Created in Noema"});
-type Optimization={id:string;mode:string;state:string;before_content:string;after_content:string|null;summary:string|null;provider:string|null;error:string|null};
+type Optimization={id:string;mode:string;state:string;before_content:string;after_content:string|null;summary:string|null;provider:string|null;error:string|null;operations?:{type:string;start:number;end:number;replacement:string;reason:string}[]};
+const optimizeModes=["light","organize","study","technical","voice"] as const;
+type OptimizeMode=(typeof optimizeModes)[number];
+const optimizeModeLabels:Record<OptimizeMode,string>={light:"Light polish",organize:"Organize",study:"Study notes",technical:"Technical",voice:"Keep my voice"};
 const renderMarkdown=(text:string,onNavigateNote?:(target:string)=>void)=><MarkdownContent text={text} onNavigateNote={onNavigateNote}/>;
 
 export default function VaultPage(){
@@ -38,6 +41,7 @@ export default function VaultPage(){
   const titleDirtyRef=useRef(false);
   const draftRef=useRef<Note|null>(null);
   const [optimizations,setOptimizations]=useState<Optimization[]>([]),[optimizing,setOptimizing]=useState(false),[optimizationError,setOptimizationError]=useState(""),[openError,setOpenError]=useState("");
+  const [optimizeMode,setOptimizeMode]=useState<OptimizeMode>("organize");
   
   function findNoteByNameOrId(target:string):Note|undefined{
     const norm=decodeURIComponent(target).trim().toLowerCase();
@@ -200,7 +204,7 @@ export default function VaultPage(){
   function exportPdf(){if(draft)location.assign(`/api/v1/notes/${draft.id}/export?format=pdf`)}
   function importNote(event:ChangeEvent<HTMLInputElement>){const file=event.target.files?.[0];if(!file)return;file.text().then(content=>setDraft({...blankNote(),title:file.name.replace(/\.md$/i,""),content,source:`Imported Markdown · ${file.name}`}))}
   async function loadOptimizations(noteId:string){const response=await fetch(`/api/v1/notes/${noteId}/optimizations`),data=await response.json();if(!response.ok)throw new Error(data.error?.message||"Could not load optimization");setOptimizations(data.optimizations)}
-  async function optimize(){if(!draft)return;setOptimizing(true);setOptimizationError("");try{const saved=await fetch("/api/v1/notes",{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":createId()},body:JSON.stringify({...draft,draft:true})}),savedNote=await saved.json();if(!saved.ok)throw new Error(savedNote.error?.message||"Save failed");setDraft({...draft,draft:true,version:savedNote.version});const response=await fetch(`/api/v1/notes/${draft.id}/optimizations`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode:"organize"})}),result=await response.json();if(!response.ok)throw new Error(result.error?.message||"Optimization failed");for(let attempt=0;attempt<120;attempt++){await new Promise(resolve=>setTimeout(resolve,1000));const job=await (await fetch(`/api/v1/jobs/${result.jobId}`)).json();if(job.state==="completed"){await loadOptimizations(draft.id);return}if(["failed","cancelled"].includes(job.state))throw new Error(job.error||"Optimization failed")}throw new Error("Optimization is still running. Check again later.")}catch(reason){setOptimizationError((reason as Error).message)}finally{setOptimizing(false)}}
+  async function optimize(mode:OptimizeMode=optimizeMode){if(!draft)return;setOptimizing(true);setOptimizationError("");try{saveNote({...draft,time:"Now"});const response=await fetch(`/api/v1/notes/${draft.id}/optimizations`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({mode})}),result=await response.json();if(!response.ok)throw new Error(result.error?.message||"Optimization failed");for(let attempt=0;attempt<120;attempt++){await new Promise(resolve=>setTimeout(resolve,1000));const job=await (await fetch(`/api/v1/jobs/${result.jobId}`)).json();if(job.state==="completed"){await loadOptimizations(draft.id);return}if(["failed","cancelled"].includes(job.state))throw new Error(job.error||"Optimization failed")}throw new Error("Optimization is still running. Check again later.")}catch(reason){setOptimizationError((reason as Error).message)}finally{setOptimizing(false)}}
   async function decide(item:Optimization,action:"apply"|"reject"){const response=await fetch(`/api/v1/notes/optimizations/${item.id}/${action}`,{method:"POST",headers:action==="apply"?{"Idempotency-Key":createId()}:undefined});const data=await response.json();if(!response.ok){setOptimizationError(data.error?.message||"Action failed");return}if(action==="apply")location.reload();else loadOptimizations(draft!.id)}
   if(!draft)return <ModuleShell active="Vault" title="Vault">{openError&&<div className="tutor-error" role="alert">{openError}</div>}<VaultOrganizer notes={notes} onOpen={openNote} initialFolder={folder} onFolderChange={setFolder}/></ModuleShell>
   const isVaultNote=isVaultBackedNote(draft);
@@ -249,7 +253,13 @@ export default function VaultPage(){
             <div className="mode-switch" role="group" aria-label="Editor view">{(["write", "split", "read"] as const).map(item => <button className={mode === item ? "active" : ""} onClick={() => setMode(item)} key={item}>{item}</button>)}</div>
             <button className={`secondary note-secondary-action ${showProperties ? "active" : ""}`} title={showProperties ? "Hide properties" : "Show properties"} aria-label="Toggle properties panel" onClick={() => setShowProperties(v => !v)}><SidebarSimple /><span>Properties</span></button>
             <button className="secondary note-secondary-action" onClick={() => setTutorOpen(true)}><Sparkle />Tutor</button>
-            {draft.draft && <button className="secondary note-secondary-action" disabled={optimizing} onClick={optimize}><Sparkle /><span>{optimizing ? "Optimizing…" : "Optimize draft"}</span></button>}
+            <details className="optimize-mode-picker">
+              <summary className="secondary note-secondary-action" aria-label="Choose optimization mode"><Sparkle /><span>{optimizing ? "Optimizing…" : optimizeModeLabels[optimizeMode]}</span></summary>
+              <div role="radiogroup" aria-label="Optimization mode">
+                {optimizeModes.map(item => <button type="button" key={item} role="radio" aria-checked={optimizeMode===item} className={optimizeMode===item?"active":""} onClick={() => setOptimizeMode(item)}>{optimizeModeLabels[item]}</button>)}
+                <button type="button" className="primary" disabled={optimizing} onClick={() => void optimize()}><Sparkle />Optimize</button>
+              </div>
+            </details>
             <button className="secondary note-secondary-action" onClick={exportNote}><DownloadSimple /><span>Markdown</span></button><button className="secondary note-secondary-action" onClick={exportPdf}><DownloadSimple /><span>PDF</span></button>
             <button className="icon-button secondary fullscreen-toggle" title={fullscreen ? "Exit fullscreen" : "Fullscreen"} aria-label={fullscreen ? "Exit fullscreen" : "Open note fullscreen"} onClick={() => setFullscreen(value => !value)}>{fullscreen ? <ArrowsIn /> : <ArrowsOut />}</button>
             <button className="icon-button danger note-secondary-action" aria-label="Move note to trash" onClick={() => { trashNote(draft.id); closeNote() }}><Trash /></button>
@@ -276,7 +286,18 @@ export default function VaultPage(){
           </aside>
         </section>
         {optimizationError && <div className="tutor-error" role="alert">{optimizationError}</div>}
-        {proposal && <section className="optimization-review"><header><div><h2>Optimization review</h2><p>{proposal.summary}</p></div><small>{proposal.provider} · {proposal.mode}</small></header><div><article><h3>Original</h3><pre>{proposal.before_content}</pre></article><article><h3>Proposed</h3><pre>{proposal.after_content}</pre></article></div><footer><button className="secondary" onClick={() => decide(proposal, "reject")}>Reject</button><button className="primary" onClick={() => decide(proposal, "apply")}>Apply proposal</button></footer></section>}
+        {proposal && <section className="optimization-review"><header><div><h2>Optimization review</h2><p>{proposal.summary}</p></div><small>{proposal.provider} · {proposal.mode}</small></header><div>
+          {(proposal.operations||[]).length>0 ? (
+            <ol className="optimization-operations">
+              {proposal.operations!.map((operation,index)=>{
+                const context=proposal.before_content.slice(Math.max(0,operation.start-40),operation.start);
+                return <li key={index}><small className="op-reason">{operation.reason}</small><del>{context.trim()||"(start of note)"}</del><ins>{operation.replacement.slice(0,400)}</ins></li>;
+              })}
+            </ol>
+          ) : null}
+          <details><summary>Full original</summary><pre>{proposal.before_content}</pre></details>
+          <details open={!proposal.operations?.length}><summary>Full proposal</summary><pre>{proposal.after_content}</pre></details>
+        </div><footer><button className="secondary" onClick={() => decide(proposal, "reject")}>Reject</button><button className="primary" onClick={() => decide(proposal, "apply")}>Apply proposal</button></footer></section>}
         {tutorOpen && <TutorPanel kind="note" context={{ id: draft.id, title: draft.title, content: draft.content }} onApply={value => update(`${draft.content.trim()}\n\n${value.trim()}\n`)} onClose={() => setTutorOpen(false)} />}
       </ModuleShell>
     );

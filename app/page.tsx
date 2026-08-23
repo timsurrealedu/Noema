@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Archive, Bell, BookOpen, CalendarBlank, CaretRight, Check, CheckSquare, CircleNotch, Clock,
+  Archive, BookOpen, CalendarBlank, Camera, CaretRight, Check, CheckSquare, CircleNotch, Clock,
   Code, Command, FileText, Folder, Gear, House, Lightning, ListChecks,
   MagnifyingGlass, Microphone, Moon, Paperclip, PaperPlaneTilt, PenNib, Plus, Sparkle,
   Sun, Tray, UploadSimple, Warning, X, Circle, DotsThree
@@ -10,10 +10,12 @@ import Link from "next/link";
 import {FormEvent, useEffect, useRef, useState} from "react";
 import { Task, useAppState } from "./components/AppState";
 import { ModalDialog } from "./components/ModalDialog";
+import {DurableRecorder} from "./components/DurableRecorder";
 import { HandwritingCapture } from "./components/HandwritingCapture";
 import { ContextualAssistant } from "./components/ContextualAssistant";
 import { showUnavailable } from "./components/ServiceNotice";
 import { NoemaLogo } from "./components/NoemaLogo";
+import { NotificationButton } from "./components/NotificationButton";
 import { createId } from "./lib/id";
 
 const nav = [
@@ -32,29 +34,31 @@ const mobileTaskDue=(task:Task)=>{const due=taskDue(task),comma=due.indexOf(", "
 const overdueDays=(task:Task,today:string)=>task.dueAt?Math.max(1,Math.round((new Date(`${today}T00:00:00Z`).valueOf()-new Date(`${dateValue(task.dueAt)}T00:00:00Z`).valueOf())/86_400_000)):0;
 
 export default function Home() {
-  const {addAndInterpretCapture,addFileCapture,captures,confirmCapture,events,tasks,projects,toggleTask,saveTask,archiveTask,updateCapture}=useAppState();
+  const {addAndInterpretCapture,addCapture,addFileCapture,addFileCaptures,addVoiceCapture,captures,confirmCapture,events,tasks,projects,toggleTask,saveTask,archiveTask,updateCapture}=useAppState();
   const [theme,setTheme] = useState<"dark"|"light">("dark");
   const ThemeIcon = theme === "dark" ? Sun : Moon;
   const [capture,setCapture] = useState("");
   const [reviewId,setReviewId] = useState<string|null>(null);
-  const [recording,setRecording] = useState(false);
   const [palette,setPalette] = useState(false);
   const [paletteQuery,setPaletteQuery] = useState("");
   const [assistant,setAssistant] = useState(false);
   const [handwriting,setHandwriting] = useState(false);
+  const [autoInterpret,setAutoInterpret] = useState(true);
+  const cameraBatch = useRef<File[]>([]);
   const [collapsedGroups,setCollapsedGroups] = useState<Set<string>>(new Set());
   const [draft,setDraft] = useState<Task|null>(null);
   const [taskTitleError,setTaskTitleError] = useState("");
 
   const input = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
-  const recorder = useRef<MediaRecorder|null>(null);
+  const cameraInput = useRef<HTMLInputElement>(null);
   const openTargetRef = useRef<string|null>(null);
   const openResolvedRef = useRef(false);
 
   useEffect(() => {
     const saved=localStorage.getItem("noema-theme") as "dark"|"light"|null;
     if(saved)setTheme(saved);
+    setAutoInterpret(localStorage.getItem("noema-auto-interpret")!=="off");
   },[]);
   useEffect(() => {
     document.documentElement.dataset.theme=theme;
@@ -68,7 +72,6 @@ export default function Home() {
     };
     addEventListener("keydown",onKey); return()=>removeEventListener("keydown",onKey);
   },[theme]);
-  useEffect(()=>()=>{if(recorder.current?.state==="recording")recorder.current.stop();recorder.current?.stream.getTracks().forEach(track=>track.stop())},[]);
 
   // Restore unsent capture draft from sessionStorage
   useEffect(() => {
@@ -107,12 +110,11 @@ export default function Home() {
   const pendingCaptures=captures.filter(item=>item.status==="review").length;
   const review=captures.find(item=>item.id===reviewId);
 
-  function submitCapture(e:FormEvent) {e.preventDefault();if(capture.trim()){setReviewId(addAndInterpretCapture(capture.trim()));try{sessionStorage.removeItem("noema-capture-draft")}catch{}}}
+  function submitCapture(e:FormEvent) {e.preventDefault();if(capture.trim()){setReviewId(autoInterpret?addAndInterpretCapture(capture.trim()):addCapture(capture.trim()));try{sessionStorage.removeItem("noema-capture-draft")}catch{}}}
+  function toggleAutoInterpret(){setAutoInterpret(value=>{const next=!value;localStorage.setItem("noema-auto-interpret",next?"on":"off");return next})}
+  function handleCameraSelection(files:FileList|null){if(!files?.length)return;cameraBatch.current=Array.from(files).filter(file=>file.type.startsWith("image/"));if(cameraBatch.current.length)setReviewId(addFileCaptures(cameraBatch.current));cameraBatch.current=[]}
   function closeReview(status:"confirmed"|"dismissed") {if(reviewId){if(status==="confirmed")confirmCapture(reviewId);else updateCapture(reviewId,status)}setReviewId(null);if(status==="confirmed")setCapture("")}
-  async function toggleRecording(){
-    if(recorder.current?.state==="recording"){recorder.current.stop();return}
-    try{const stream=await navigator.mediaDevices.getUserMedia({audio:true}),chunks:Blob[]=[];const active=new MediaRecorder(stream);recorder.current=active;active.ondataavailable=event=>{if(event.data.size)chunks.push(event.data)};active.onstop=()=>{const type=active.mimeType||"audio/webm",extension=type.includes("ogg")?"ogg":"webm";addFileCapture(new File(chunks,`voice-${Date.now()}.${extension}`,{type}));stream.getTracks().forEach(track=>track.stop());recorder.current=null;setRecording(false)};active.start();setRecording(true)}catch(error){setRecording(false);showUnavailable(error instanceof Error?error.message:"Microphone access failed")}
-  }
+  function handleVoiceFinished(file:File){setReviewId(addVoiceCapture(file))}
 
   function submitTask(event:FormEvent){
     event.preventDefault();
@@ -181,7 +183,7 @@ export default function Home() {
       <div className="top-actions">
         <button className="search" onClick={()=>setPalette(true)}><MagnifyingGlass/><span>Search</span><kbd>⌘ K</kbd></button>
         <button className="icon-button" aria-label="Open contextual assistant" onClick={()=>setAssistant(true)}><Sparkle/></button>
-        <button className="icon-button unread" aria-label="Notifications" data-unavailable="Live notifications require the backend connection. Sample activity remains available from Activity."><Bell/></button>
+        <NotificationButton/>
       </div>
     </header>
 
@@ -200,9 +202,12 @@ export default function Home() {
         <label htmlFor="capture">Quick capture</label>
         <button type="button" className="capture-add" aria-label="Attach a file" onClick={()=>fileInput.current?.click()}><Plus/></button>
         <input ref={input} id="capture" name="quick-capture" type="text" inputMode="text" autoComplete="off" autoCapitalize="sentences" spellCheck value={capture} onChange={e=>setCapture(e.target.value)} placeholder="Capture anything…"/>
+        <button type="button" className="capture-tool capture-camera" aria-label="Take photos to capture" onClick={()=>cameraInput.current?.click()}><Camera/></button>
+        <input ref={cameraInput} type="file" accept="image/*" capture="environment" multiple hidden aria-hidden="true" tabIndex={-1} onChange={e=>{handleCameraSelection(e.target.files);e.target.value=""}}/>
         <input ref={fileInput} type="file" hidden aria-hidden="true" tabIndex={-1} onChange={e=>{const file=e.target.files?.[0];if(file)addFileCapture(file);e.target.value=""}}/>
+        <button type="button" className={`capture-tool capture-auto-interpret ${autoInterpret?"active":""}`} aria-label={autoInterpret?"AI interpretation on":"AI interpretation off"} aria-pressed={autoInterpret} title={autoInterpret?"AI will propose actions from captures. Tap to keep them raw.":"Captures stay raw inbox items. Tap to enable AI."} onClick={toggleAutoInterpret}><Sparkle weight={autoInterpret?"fill":"regular"}/></button>
         <button type="button" className="capture-tool capture-handwriting" aria-label="Write a handwritten note" onClick={()=>setHandwriting(true)}><PenNib/></button>
-        <button type="button" className="capture-tool capture-voice" aria-label={recording?"Stop recording":"Record voice"} aria-pressed={recording} onClick={()=>void toggleRecording()}><Microphone/></button>
+        <DurableRecorder onFinished={handleVoiceFinished} label="Record voice"/>
         <button className="send" disabled={!capture.trim()} aria-label="Process capture"><PaperPlaneTilt/></button>
       </form>
 

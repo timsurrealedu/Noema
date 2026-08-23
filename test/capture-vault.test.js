@@ -31,7 +31,10 @@ test("Gemini receives a supported capture proposal schema",async()=>{
 
 test("capture prompts state the exact action JSON contract",async()=>{
   const {captureProposalInstructions}=await import("../server/worker/handlers/interpret-capture.mjs");
-  for(const type of ["task.create","event.create","note.create","vault.note.create"])assert.match(captureProposalInstructions,new RegExp(type.replace(".","\\.")));assert.match(captureProposalInstructions,/sourceReferences/);assert.match(captureProposalInstructions,/arguments/);
+  const instructions=captureProposalInstructions();
+  for(const type of ["task.create","event.create","note.create","vault.note.create"])assert.match(instructions,new RegExp(type.replace(".","\\.")));assert.match(instructions,/sourceReferences/);assert.match(instructions,/arguments/);
+  assert.match(instructions,/linkedActionId/);
+  assert.match(captureProposalInstructions([60,30]),/\[60,30\]/);
 });
 
 test("capture action parsing keeps the first complete Gemini array",async()=>{
@@ -44,7 +47,8 @@ test("capture tasks create linked timed or all-day calendar events",async()=>{
   try{
     core.createCapture({id:"timed",text:"Study",source:"typed"},db);
     core.saveInterpretation("timed",{schemaVersion:1,summary:"Study",clarifications:[],actions:[{id:"t",type:"task.create",confidence:.9,sourceReferences:["capture:timed"],arguments:{title:"Study",dueAt:"2026-08-13T10:00:00+07:00",project:"Inbox",linkedActionId:null}}]},db);
-    core.applyCaptureInterpretation("timed",db);const timed=core.listState(db);assert.equal(timed.tasks[0].reminderAt,null);assert.equal(timed.events[0].endAt,"2026-08-13T04:00:00.000Z");assert.equal(timed.events[0].taskId,timed.tasks[0].id);assert.equal(db.prepare("SELECT COUNT(*) count FROM event_reminders WHERE event_id=?").get(timed.events[0].id).count,3);
+    core.applyCaptureInterpretation("timed",db);const timed=core.listState(db);assert.equal(timed.tasks[0].reminderAt,null);assert.equal(timed.events[0].endAt,"2026-08-13T04:00:00.000Z");assert.equal(timed.events[0].taskId,timed.tasks[0].id);
+    const expectedReminders=(await import("../server/settings.mjs")).reminderOffsets().length;assert.equal(db.prepare("SELECT COUNT(*) count FROM event_reminders WHERE event_id=?").get(timed.events[0].id).count,expectedReminders);
     core.createCapture({id:"day",text:"Submit",source:"typed"},db);
     core.saveInterpretation("day",{schemaVersion:1,summary:"Submit",clarifications:[],actions:[{id:"d",type:"task.create",confidence:.9,sourceReferences:["capture:day"],arguments:{title:"Submit",dueAt:"2026-08-14",project:"Inbox",linkedActionId:null}}]},db);
     core.applyCaptureInterpretation("day",db);const event=core.listState(db).events.find(item=>item.title==="Submit");assert.equal(event.allDay,true);assert.equal(event.reminders.length,0);
@@ -61,5 +65,66 @@ test("AI capture processing proposes a connected vault note",async()=>{
     await handleInterpretCapture({job,config:{dataDir:dir,dbPath:join(dir,"test.sqlite"),objectsDir:join(dir,"objects"),backupsDir:join(dir,"backups"),pluginsDir:join(dir,"plugins"),codexEnabled:true,codexPath:resolve("test/fixtures/fake-codex.mjs"),jobsDir,timezone:"Asia/Jakarta"},db});
     const capture=db.prepare("SELECT status,error,objects_json FROM captures WHERE id='c1'").get();assert.equal(capture.status,"review",capture.error);const proposal=JSON.parse(capture.objects_json);assert.equal(proposal.actions[0].type,"vault.note.create");
     core.applyCaptureInterpretation("c1",db,actor);assert.equal(existsSync(join(vaultDir,"Ideas/Project Idea.md")),true);const completed=jobs.getJob(id,db);assert.equal(completed.state,"completed");assert.equal(completed.result.captureVersion,2);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("dual-created task and event actions link symmetrically",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-dual-")),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    core.createCapture({id:"dual",text:"Meeting with prep",source:"typed"},db);
+    core.saveInterpretation("dual",{schemaVersion:1,summary:"Dual",clarifications:[],actions:[
+      {id:"e",type:"event.create",confidence:.9,sourceReferences:["capture:dual"],arguments:{title:"Prep meeting",startAt:"2026-09-01T02:00:00.000Z",endAt:"2026-09-01T03:00:00.000Z",timezone:"UTC",location:null,reminders:[{offsetMinutes:60}]}},
+      {id:"t",type:"task.create",confidence:.9,sourceReferences:["capture:dual"],arguments:{title:"Prepare slides",dueAt:null,project:"Inbox",linkedActionId:"e"}}
+    ]},db);
+    const result=core.applyCaptureInterpretation("dual",db),state=core.listState(db),task=state.tasks.find(item=>item.title==="Prepare slides"),event=state.events.find(item=>item.title==="Prep meeting");
+    assert.ok(task&&event);assert.equal(task.event_id,event.id);assert.equal(event.taskId,task.id);
+    assert.equal(result.created.filter(item=>item.type==="event").length,1); // no duplicate auto-event
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+test("completing a recurring task regenerates its next occurrence",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-recur-")),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    core.saveTask({id:"chore",title:"Take out trash",dueAt:"2026-08-25T00:00:00.000Z",recurrence:"weekly",completed:false},db);
+    const done=core.listState(db).tasks.find(item=>item.id==="chore");
+    core.saveTask({...done,id:"chore",title:"Take out trash",dueAt:done.due_at||done.dueAt,recurrence:"weekly",completed:true},db);
+    const tasks=core.listState(db).tasks;
+    assert.equal(tasks.length,2);
+    const next=tasks.find(item=>item.id!=="chore"&&!item.completed);
+    assert.ok(next);assert.equal(next.recurrence,"weekly");
+    assert.equal(new Date(next.due_at||next.dueAt).getUTCDay(),new Date("2026-09-01T00:00:00.000Z").getUTCDay());
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("tutor inserts carry provenance and vault notes go through the block API",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-tutor-insert-")),vaultDir=join(dir,"vault");mkdirSync(vaultDir);
+  const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),core=await import("../server/core.mjs"),vault=await import("../server/vault.mjs"),skills=await import("../server/skills.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),workspace=collaboration.ensureDefaultWorkspace(user.id,db),actor={id:user.id,workspaceId:workspace.id};
+    const connected=vault.connectVault({rootPath:vaultDir},workspace.id,db),created=vault.createVaultNote(connected.id||connected.sourceId,{relativePath:"Notes/Tutor.md",content:"# Tutor\n\nBody"},actor,db);
+    const time=new Date().toISOString();
+    db.prepare("INSERT INTO tutor_sessions(id,kind,subject_id,subject_title,created_at,updated_at,workspace_id) VALUES('ts','note',?,?,?,?,?)").run(created.noteId,"Tutor.md",time,time,workspace.id);
+    db.prepare("INSERT INTO tutor_messages(id,session_id,role,content,provider,created_at) VALUES('q1','ts','user','Why does X hold?','user',?)").run(time);
+    db.prepare("INSERT INTO tutor_messages(id,session_id,role,content,citations_json,provider,created_at) VALUES('a1','ts','assistant','Because of Y.','[]','groq-test',?)").run(time);
+    const inserted=skills.insertTutorMessage("a1",created.noteId,db,actor);
+    assert.equal(inserted.vault,true);
+    const blocks=vault.listNoteBlocks(created.noteId,actor,db);
+    const insertedBlock=blocks.map(block=>block.markdown).find(markdown=>markdown&&markdown.includes("Because of Y."));
+    assert.ok(insertedBlock);
+    assert.match(insertedBlock,/\*\*AI answer\*\* · groq-test · \d{4}-\d{2}-\d{2}/);
+    assert.match(insertedBlock,/Question: "Why does X hold\?"/);
+    assert.throws(()=>skills.insertTutorMessage("a1",created.noteId,db,actor),error=>error.status===409);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+test("parallel tutor answers require at least two distinct providers",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-tutor-parallel-")),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),skills=await import("../server/skills.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const time=new Date().toISOString();
+    db.prepare("INSERT INTO users(id,email,password_hash,created_at,updated_at) VALUES('u','p@example.com','x',?,?)").run(time,time);
+    db.prepare("INSERT INTO workspaces(id,name,created_by,created_at,updated_at) VALUES('w','W','u',?,?)").run(time,time);
+    const note=core.saveNote({title:"Parallel note",content:"# Parallel"},db,{id:"u",workspaceId:"w"});
+    await assert.rejects(
+      ()=>skills.runTutorParallel({kind:"note",id:note.id,question:"hi"},{dataDir:dir,jobsDir:dir,databasePath:join(dir,"t.sqlite"),geminiApiKey:"only-gemini",appEncryptionKey:"x".repeat(40)},db,"w"),
+      error=>error.status===409&&/at least two/i.test(error.message)
+    );
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });

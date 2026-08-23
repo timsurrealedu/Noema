@@ -22,6 +22,7 @@ Capture uses direct model APIs for low latency; Codex remains available for agen
 | Google Calendar sync | Experimental |
 | C/Python/JavaScript runner | Experimental; Linux only |
 | Canvas, Tutor | Prototype |
+| PDF annotations and flattened export | Beta |
 | Plugins, collaboration, dashboards | Post-v1; frozen |
 | Trading integration | Planned |
 
@@ -49,5 +50,7 @@ Set `GEMINI_API_KEY`, `GROQ_API_KEY`, `OPENAI_API_KEY`, `OPENROUTER_API_KEY`, `D
 npm test
 npm run build
 ```
+
+PDF assets open at `/assets/:id/annotate`. Annotations are normalized page coordinates; export downloads a flattened copy and never changes the source PDF. Vault notes offer Markdown (portable source) and presentation-PDF downloads.
 
 See [BACKEND_DESIGN.md](BACKEND_DESIGN.md), [BACKEND_ROADMAP.md](BACKEND_ROADMAP.md), and [FRONTEND_ROADMAP.md](FRONTEND_ROADMAP.md).

@@ -115,6 +115,8 @@ export default function CalendarPage() {
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const [undoToast, setUndoToast] = useState<{message: string; onUndo: () => void} | null>(null);
   const userSelectedView = useRef(false);
+  const [hydrated,setHydrated]=useState(false);
+  useEffect(()=>setHydrated(true),[]);
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date()), 60000);
     return () => clearInterval(timer);
@@ -209,7 +211,7 @@ export default function CalendarPage() {
 
   const dates = weekDays(weekOffset);
   const todayColumn=dates.findIndex(date=>isSameDate(now,date)),nowTop=now.getHours()*60+now.getMinutes();
-  const days = dates.map(date => date.toLocaleDateString(undefined, {weekday: "short", day: "numeric"}));
+  const days = dates.map(date => date.toLocaleDateString(undefined, {weekday: "long", day: "numeric"}));
 
   const viewMonthDate = view === "Month" ? selectedDate : dates[0] || new Date();
   const currentYear = viewMonthDate.getFullYear();
@@ -333,6 +335,7 @@ export default function CalendarPage() {
     setDraft(null);
   }
 
+  if(!hydrated)return <ModuleShell active="Calendar" title="Calendar"><p role="status">Loading calendar…</p></ModuleShell>;
   return (
     <ModuleShell
       active="Calendar"
@@ -650,13 +653,31 @@ export default function CalendarPage() {
                 Repeat
                 <select
                   value={draft.recurrence?.frequency || ""}
-                  onChange={e => setDraft({...draft, recurrence: e.target.value ? {frequency: e.target.value} : null})}
+                  onChange={e => {
+                    const value=e.target.value;
+                    if(!value)return setDraft({...draft, recurrence: null});
+                    if(value==="weekdays")return setDraft({...draft, recurrence:{frequency:"weekly",rules:["RRULE:FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR"]}});
+                    setDraft({...draft, recurrence:{frequency:value}});
+                  }}
                 >
                   <option value="">Does not repeat</option>
                   <option value="daily">Daily</option>
-                  <option value="weekly">Weekly</option>
+                  <option value="weekly">Weekly on {draft.startAt?new Date(draft.startAt).toLocaleDateString(undefined,{weekday:"long"}):"…"}</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="weekdays">Every weekday (Mon–Fri)</option>
                 </select>
               </label>
+              {draft.recurrence?.frequency==="weekly"&&!draft.recurrence.rules&&(
+                <label>
+                  Repeat every
+                  <select
+                    value={draft.recurrence.interval||1}
+                    onChange={e=>setDraft({...draft,recurrence:{...draft.recurrence,interval:Number(e.target.value)}})}
+                  >
+                    {[1,2,3,4].map(weeks=><option key={weeks} value={weeks}>{weeks===1?"Week":"Weeks"}{weeks>1?` (every ${weeks})`:""}</option>)}
+                  </select>
+                </label>
+              )}
               {!events.some(event => event.id === draft.id) && sync.calendars.length > 0 && (
                 <label>
                   Google calendar
@@ -676,10 +697,15 @@ export default function CalendarPage() {
               <label>
                 Time zone
                 <input
+                  list="timezone-options"
                   value={draft.timezone || ""}
                   onChange={e => setDraft({...draft, timezone: e.target.value})}
                   required
+                  aria-label="Time zone"
                 />
+                <datalist id="timezone-options">
+                  {Intl.supportedValuesOf("timeZone").map(zone => <option key={zone} value={zone}/>)}
+                </datalist>
               </label>
               <label>
                 Location or link
@@ -691,11 +717,24 @@ export default function CalendarPage() {
               </label>
               <label>
                 Reminder
-                <input
-                  type="datetime-local"
-                  value={reminderValue(draft.reminderAt)}
-                  onChange={e => setDraft({...draft, reminderAt: e.target.value ? new Date(e.target.value).toISOString() : null})}
-                />
+                <div className="reminder-row">
+                  <select
+                    value=""
+                    aria-label="Reminder offset preset"
+                    onChange={e => {
+                      if(!e.target.value||!draft.startAt)return;
+                      setDraft({...draft, reminderAt: new Date(new Date(draft.startAt).getTime()-Number(e.target.value)*60000).toISOString()});
+                    }}
+                  >
+                    <option value="">Minutes before…</option>
+                    {[5,10,15,30,60,120,1440].map(minutes=><option key={minutes} value={minutes}>{minutes>=1440?"1 day before":`${minutes} minutes before`}</option>)}
+                  </select>
+                  <input
+                    type="datetime-local"
+                    value={reminderValue(draft.reminderAt)}
+                    onChange={e => setDraft({...draft, reminderAt: e.target.value ? new Date(e.target.value).toISOString() : null})}
+                  />
+                </div>
               </label>
               <div className="inspector-actions">
                 {events.some(event => event.id === draft.id) && (

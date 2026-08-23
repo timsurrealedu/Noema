@@ -22,8 +22,12 @@ import {
 } from "@phosphor-icons/react";
 import {
   acceptInkPointer,
+  applyPinch,
   eraseAt,
   fitInkView,
+  panBy,
+  penRecentlyUp,
+  zoomAtPoint,
   InkPoint,
   InkStroke,
   InkTool,
@@ -275,7 +279,7 @@ export function InkEditor({
 
   function down(event: React.PointerEvent<SVGSVGElement>) {
     if (event.pointerType==="touch") {
-      if (penActive.current || performance.now() - penUpAt.current < 150) return;
+      if (penRecentlyUp(event.pointerType, penActive.current, penUpAt.current)) return;
       event.currentTarget.setPointerCapture(event.pointerId);
       touches.current.set(event.pointerId, {x: event.clientX, y: event.clientY});
       if (touches.current.size===2) {
@@ -348,14 +352,8 @@ export function InkEditor({
         userInteracted.current = true;
         setView(val => {
           const rect = svg.current?.getBoundingClientRect();
-          const zoom = Math.max(0.25, Math.min(4, val.zoom * distRatio));
-          if (!rect) return {...val, zoom};
-          const previousX = (previousCenter.x - rect.left) / rect.width * canvasSize.width;
-          const previousY = (previousCenter.y - rect.top) / rect.height * canvasSize.height;
-          const nextX = (center.x - rect.left) / rect.width * canvasSize.width;
-          const nextY = (center.y - rect.top) / rect.height * canvasSize.height;
-          const pinchAnchor = {x: val.x + previousX / val.zoom, y: val.y + previousY / val.zoom};
-          return {x: pinchAnchor.x - nextX / zoom, y: pinchAnchor.y - nextY / zoom, zoom};
+          if (!rect) return val;
+          return applyPinch(val, rect, canvasSize.width, canvasSize.height, previousCenter, center, distRatio);
         });
         return;
       }
@@ -366,11 +364,7 @@ export function InkEditor({
       const dy = event.clientY - pan.current.y;
       pan.current = {x: event.clientX, y: event.clientY};
       userInteracted.current = true;
-      setView(val => ({
-        ...val,
-        x: val.x - dx / val.zoom,
-        y: val.y - dy / val.zoom
-      }));
+      setView(val => panBy(val, dx, dy));
       return;
     }
     if (tool === "eraser" && isErasing.current) {
@@ -469,22 +463,17 @@ export function InkEditor({
   function wheel(event: React.WheelEvent<SVGSVGElement>) {
     event.preventDefault();
     userInteracted.current = true;
-    const rect = event.currentTarget.getBoundingClientRect();
-    const anchor = screenToWorld(
-      event.clientX,
-      event.clientY,
-      rect,
-      view,
-      canvasSize.width,
-      canvasSize.height
+    setView(val =>
+      zoomAtPoint(
+        val,
+        event.currentTarget.getBoundingClientRect(),
+        canvasSize.width,
+        canvasSize.height,
+        event.clientX,
+        event.clientY,
+        Math.exp(-event.deltaY * 0.0015)
+      )
     );
-    const zoom = Math.max(
-      0.25,
-      Math.min(4, view.zoom * Math.exp(-event.deltaY * 0.0015))
-    );
-    const sx = ((event.clientX - rect.left) / rect.width) * canvasSize.width;
-    const sy = ((event.clientY - rect.top) / rect.height) * canvasSize.height;
-    setView({x: anchor.x - sx / zoom, y: anchor.y - sy / zoom, zoom});
   }
 
   function undo() {

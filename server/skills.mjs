@@ -2,8 +2,10 @@ import {randomUUID} from "node:crypto";
 import {resolve} from "node:path";
 import {getDatabase} from "./db.mjs";
 import {ensureDataDirs,loadConfig} from "./config.mjs";
-import {runAI} from "./ai.mjs";
+import {runAI,configuredChain} from "./ai.mjs";
+import {runtimeAIAgents} from "./ai-agents.mjs";
 import {saveNote} from "./core.mjs";
+import {saveMarkdownBlock} from "./vault.mjs";
 
 const common="Preserve the user's language. Be concise, concrete, and source-grounded. Never claim an action was performed when it was only proposed.";
 const definitions={
@@ -33,9 +35,51 @@ export async function runTutor(input,config=ensureDataDirs(loadConfig()),db=getD
   const relatedNotes=kind==="note-tutor"?db.prepare(`SELECT title,excerpt FROM notes WHERE trashed=0 AND id<>?${workspaceId?" AND workspace_id=?":""} ORDER BY updated_at DESC LIMIT 8`).all(subjectId,...(workspaceId?[workspaceId]:[])):[],related=relatedNotes.map(note=>`- [[${note.title}]]: ${note.excerpt}`).join("\n");
   const question=String(input.question||"").slice(0,4000),math=/\b(math|algebra|calculus|equation|proof|derivative|integral|matrix|handwritten)\b|[∫∑√]/i.test(`${subject}\n${question}`);
   db.prepare("INSERT INTO tutor_messages(id,session_id,role,content,created_at) VALUES(?,?,?,?,?)").run(randomUUID(),session.id,"user",question,time);const messages=tutorMessages(session.id,db).slice(-8).map(({role,text})=>({role,text}));
-  const prompt=buildSkillPrompt(kind,{subject,messages,question},`${related}\n\nFor citations, return only exact related-note titles from the context above; otherwise return [].`),output=await runAI({prompt,cwd:resolve(config.jobsDir,`tutor-${randomUUID()}`),schema:tutorSchema,config,workload:math?"math":workloadForSkill(kind),validate:result=>{if(!result?.answer||!Array.isArray(result.citations))throw new Error("AI returned an invalid tutor response");return result}}),citations=output.result.citations.filter(citation=>relatedNotes.some(note=>note.title===citation)),messageId=randomUUID();db.prepare("INSERT INTO tutor_messages(id,session_id,role,content,citations_json,replacement,provider,created_at) VALUES(?,?,?,?,?,?,?,?)").run(messageId,session.id,"assistant",output.result.answer,JSON.stringify(citations),output.result.replacement||null,output.provider,new Date().toISOString());db.prepare("UPDATE tutor_sessions SET updated_at=? WHERE id=?").run(new Date().toISOString(),session.id);return {...output.result,citations,provider:output.provider,messageId,sessionId:session.id};
+  const prompt=buildSkillPrompt(kind,{subject,messages,question},`${related}\n\nFor citations, return only exact related-note titles from the context above; otherwise return [].`),output=await runAI({prompt,cwd:resolve(config.jobsDir,`tutor-${randomUUID()}`),schema:tutorSchema,config,profile:math?"quality":undefined,workload:math?"math":workloadForSkill(kind),validate:result=>{if(!result?.answer||!Array.isArray(result.citations))throw new Error("AI returned an invalid tutor response");return result}}),citations=output.result.citations.filter(citation=>relatedNotes.some(note=>note.title===citation)),messageId=randomUUID();db.prepare("INSERT INTO tutor_messages(id,session_id,role,content,citations_json,replacement,provider,created_at) VALUES(?,?,?,?,?,?,?,?)").run(messageId,session.id,"assistant",output.result.answer,JSON.stringify(citations),output.result.replacement||null,output.provider,new Date().toISOString());db.prepare("UPDATE tutor_sessions SET updated_at=? WHERE id=?").run(new Date().toISOString(),session.id);return {...output.result,citations,provider:output.provider,messageId,sessionId:session.id};
 }
 
-export function insertTutorMessage(messageId,noteId,db=getDatabase(),actor=null){const workspaceId=typeof actor==="object"&&actor?actor.workspaceId:null,message=db.prepare(`SELECT m.*,s.kind,s.subject_id FROM tutor_messages m JOIN tutor_sessions s ON s.id=m.session_id WHERE m.id=? AND m.role='assistant'${workspaceId?" AND s.workspace_id=?":""}`).get(messageId,...(workspaceId?[workspaceId]:[]));if(!message||message.kind!=="note"||message.subject_id!==noteId)throw Object.assign(new Error("Tutor message not found for this note"),{status:404});if(message.inserted_note_id)throw Object.assign(new Error("Tutor message was already inserted"),{status:409});const note=db.prepare(`SELECT * FROM notes WHERE id=? AND trashed=0${workspaceId?" AND workspace_id=?":""}`).get(noteId,...(workspaceId?[workspaceId]:[]));if(!note)throw Object.assign(new Error("Note not found"),{status:404});db.exec("BEGIN IMMEDIATE");try{const content=`${note.content.trim()}\n\n${message.content.trim()}\n`,saved=saveNote({id:note.id,title:note.title,content,tags:JSON.parse(note.tags_json),ai:true,draft:!!note.draft,source:note.source,favorite:!!note.favorite,trashed:false,version:note.version},db,actor);db.prepare("UPDATE tutor_messages SET inserted_note_id=?,inserted_note_version=? WHERE id=? AND inserted_note_id IS NULL").run(noteId,saved.version,messageId);db.exec("COMMIT");return {noteId,content:saved.content,version:saved.version,provider:message.provider}}catch(error){db.exec("ROLLBACK");throw error}}
+export function insertTutorMessage(messageId,noteId,db=getDatabase(),actor=null){const workspaceId=typeof actor==="object"&&actor?actor.workspaceId:null,message=db.prepare(`SELECT m.*,s.kind,s.subject_id FROM tutor_messages m JOIN tutor_sessions s ON s.id=m.session_id WHERE m.id=? AND m.role='assistant'${workspaceId?" AND s.workspace_id=?":""}`).get(messageId,...(workspaceId?[workspaceId]:[]));if(!message||message.kind!=="note"||message.subject_id!==noteId)throw Object.assign(new Error("Tutor message not found for this note"),{status:404});if(message.inserted_note_id)throw Object.assign(new Error("Tutor message was already inserted"),{status:409});const note=db.prepare(`SELECT * FROM notes WHERE id=? AND trashed=0${workspaceId?" AND workspace_id=?":""}`).get(noteId,...(workspaceId?[workspaceId]:[]));if(!note)throw Object.assign(new Error("Note not found"),{status:404});
+  // Provenance label (F6.2): every insert records what was asked, who answered, and when.
+  const previous=db.prepare("SELECT content FROM tutor_messages WHERE session_id=? AND role='user' ORDER BY created_at DESC LIMIT 1").get(message.session_id),questionExcerpt=String(previous?.content||"Question").slice(0,140),date=new Date().toISOString().slice(0,10);
+  const labeled=`> **AI answer** · ${message.provider||"unknown provider"} · ${date}\n> Question: "${questionExcerpt}"\n\n${message.content.trim()}\n`;
+  const entry=db.prepare("SELECT note_id FROM vault_entries WHERE note_id=?").get(noteId);
+  if(entry){
+    // Vault-safe insert (F6.3): go through the block API so the file projection stays canonical.
+    const saved=saveMarkdownBlock(noteId,{markdown:`${labeled}`},actor,db);
+    db.prepare("UPDATE tutor_messages SET inserted_note_id=?,inserted_note_version=? WHERE id=? AND inserted_note_id IS NULL").run(noteId,saved?.version||null,messageId);
+    return {noteId,content:saved?.markdown,version:saved?.version,provider:message.provider,vault:true};
+  }
+  db.exec("BEGIN IMMEDIATE");try{const content=`${note.content.trim()}\n\n${labeled}`,saved=saveNote({id:note.id,title:note.title,content,tags:JSON.parse(note.tags_json),ai:true,draft:!!note.draft,source:note.source,favorite:!!note.favorite,trashed:false,version:note.version},db,actor);db.prepare("UPDATE tutor_messages SET inserted_note_id=?,inserted_note_version=? WHERE id=? AND inserted_note_id IS NULL").run(noteId,saved.version,messageId);db.exec("COMMIT");return {noteId,content:saved.content,version:saved.version,provider:message.provider}}catch(error){db.exec("ROLLBACK");throw error}}
 
 export const skillSchema={type:"object",additionalProperties:false,required:["summary","proposals","citations"],properties:{summary:{type:"string",maxLength:4000},proposals:{type:"array",maxItems:30,items:{type:"object",additionalProperties:false,required:["type","title","content"],properties:{type:{enum:["note","task","event","move","answer"]},title:{type:"string",maxLength:500},content:{type:"string",maxLength:20000}}}},citations:{type:"array",maxItems:20,items:{type:"string",maxLength:500}}}};
+
+// F6.1: parallel multi-provider ask — up to three enabled agents answer the
+// same question side by side. Each answer is persisted as its own assistant
+// message so provenance-safe insertion works unchanged.
+export async function runTutorParallel(input,config=ensureDataDirs(loadConfig()),db=getDatabase(config),workspaceId=null){
+  const subjectKind=input.kind==="code"?"code":"note",kind=subjectKind==="code"?"code-tutor":"note-tutor",subjectId=String(input.id||input.name||"untitled").slice(0,500),note=subjectKind==="note"?db.prepare(`SELECT * FROM notes WHERE id=? AND trashed=0${workspaceId?" AND workspace_id=?":""}`).get(subjectId,...(workspaceId?[workspaceId]:[])):null;
+  if(subjectKind==="note"&&!note)throw Object.assign(new Error("Note not found"),{status:404});
+  const title=String(note?.title||input.title||input.name||"Untitled").slice(0,300),time=new Date().toISOString();
+  let session=input.sessionId&&db.prepare(`SELECT * FROM tutor_sessions WHERE id=? AND kind=? AND subject_id=?${workspaceId?" AND workspace_id=?":""}`).get(input.sessionId,subjectKind,subjectId,...(workspaceId?[workspaceId]:[]));
+  if(input.sessionId&&!session)throw Object.assign(new Error("Tutor session not found"),{status:404});
+  if(!session){const id=randomUUID();db.prepare("INSERT INTO tutor_sessions(id,kind,subject_id,subject_title,created_at,updated_at,workspace_id) VALUES(?,?,?,?,?,?,?)").run(id,subjectKind,subjectId,title,time,time,workspaceId);session={id}}
+  const subject=kind==="code-tutor"?`File: ${title}\nLanguage: ${String(input.language||"unknown").slice(0,50)}\nCode:\n${String(input.code||"").slice(0,50000)}`:`Note: ${title}\nContent:\n${String(note.content).slice(0,50000)}`;
+  const relatedNotes=kind==="note-tutor"?db.prepare(`SELECT title,excerpt FROM notes WHERE trashed=0 AND id<>?${workspaceId?" AND workspace_id=?":""} ORDER BY updated_at DESC LIMIT 8`).all(subjectId,...(workspaceId?[workspaceId]:[])):[],related=relatedNotes.map(row=>`- [[${row.title}]]: ${row.excerpt}`).join("\n");
+  const question=String(input.question||"").slice(0,4000),math=/\b(math|algebra|calculus|equation|proof|derivative|integral|matrix|handwritten)\b|[∫∑√]/i.test(`${subject}\n${question}`);
+  db.prepare("INSERT INTO tutor_messages(id,session_id,role,content,created_at) VALUES(?,?,?,?,?)").run(randomUUID(),session.id,"user",question,time);
+  const history=tutorMessages(session.id,db).slice(-8).map(({role,text})=>({role,text}));
+  const prompt=buildSkillPrompt(kind,{subject,messages:history,question},`${related}\n\nFor citations, return only exact related-note titles from the context above; otherwise return [].`);
+  const resolved={...config,aiAgents:runtimeAIAgents(config,db)},chain=configuredChain("fast",resolved);
+  const distinct=[];for(const candidate of chain){if(distinct.some(item=>item.provider===candidate.provider))continue;distinct.push(candidate);if(distinct.length===3)break}
+  if(distinct.length<2)throw Object.assign(new Error("Enable at least two AI agents in Settings to compare answers"),{status:409,code:"NOT_ENOUGH_AGENTS"});
+  const settled=await Promise.allSettled(distinct.map(candidate=>runAI({prompt,cwd:resolve(config.jobsDir,`tutor-parallel-${randomUUID()}`),schema:tutorSchema,config:{...resolved,aiAgents:[candidate]},db,profile:"fast",workload:math?"math":workloadForSkill(kind)})));
+  const answers=settled.map((result,index)=>{
+    const provider=distinct[index].provider;
+    if(result.status==="rejected")return {provider,error:String(result.reason?.message||result.reason).slice(0,300)};
+    const messageId=randomUUID();
+    db.prepare("INSERT INTO tutor_messages(id,session_id,role,content,citations_json,replacement,provider,created_at) VALUES(?,?,?,?,?,?,?,?)").run(messageId,session.id,"assistant",result.value.result.answer,JSON.stringify([]),result.value.result.replacement||null,result.value.provider,new Date().toISOString());
+    return {messageId,provider:result.value.provider,model:result.value.model,answer:result.value.result.answer,citations:(result.value.result.citations||[]).filter(citation=>relatedNotes.some(row=>row.title===citation)),replacement:result.value.result.replacement||null};
+  });
+  db.prepare("UPDATE tutor_sessions SET updated_at=? WHERE id=?").run(new Date().toISOString(),session.id);
+  return {sessionId:session.id,answers};
+}

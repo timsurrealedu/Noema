@@ -6,6 +6,7 @@ import {loadConfig} from "./config.mjs";
 import {enqueueJob} from "./jobs.mjs";
 import {recordConflict} from "./collaboration.mjs";
 import {prepareVaultTaskWriteback} from "./vault-task-writeback.mjs";
+import {reminderOffsets} from "./settings.mjs";
 import {createVaultNote,sourceRoot,trashVaultEntry} from "./vault.mjs";
 import {copyFileSync,mkdirSync} from "node:fs";
 import {dirname,extname,join} from "node:path";
@@ -84,6 +85,19 @@ function computeAutoReminder(input, before) {
   return null;
 }
 
+function nextRecurrenceDue(dueIso,recurrence){
+  const date=new Date(dueIso);
+  if(Number.isNaN(date.valueOf()))return null;
+  const rule=String(recurrence||"").toLowerCase();
+  if(rule.includes("day"))date.setUTCDate(date.getUTCDate()+1);
+  else if(rule.includes("week")&&!rule.includes("weekday"))date.setUTCDate(date.getUTCDate()+7);
+  else if(rule.includes("month"))date.setUTCMonth(date.getUTCMonth()+1);
+  else if(rule.includes("weekday")){
+    do{date.setUTCDate(date.getUTCDate()+1)}while(date.getUTCDay()===0||date.getUTCDay()===6);
+  }else return null;
+  return date.toISOString();
+}
+
 export function saveTask(input,db=getDatabase(),actor=null){
   const context=actorInfo(actor),id=input.id||randomUUID(),title=required(input.title,"title",500),priority=["High","Medium","Low"].includes(input.priority)?input.priority:"Medium",time=stamp(),before=findOwned(db,"tasks",id,context.workspaceId);
   requireVersion(input,before,{db,type:"task",actor});
@@ -95,7 +109,13 @@ export function saveTask(input,db=getDatabase(),actor=null){
   for(const [field,table,value] of [["projectId","projects",input.projectId],["courseId","courses",input.courseId],["parentTaskId","tasks",input.parentTaskId]])if(value&&!findOwned(db,table,value,context.workspaceId))throw new Error(`${field} does not reference an accessible object`);
   const project=input.projectId?findOwned(db,"projects",input.projectId,context.workspaceId).name:required(input.project||before?.project||"Inbox","project",200),due=input.due||(dueAt?dueLabel(dueAt):before?.due||"No date");
   db.prepare(`INSERT INTO tasks(id,title,project,due,priority,completed,recurrence,subtasks_json,archived,reminder_at,created_at,updated_at,workspace_id,project_id,course_id,status,due_at,scheduled_start_at,scheduled_end_at,estimated_minutes,parent_task_id,completed_at) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,project=excluded.project,due=excluded.due,priority=excluded.priority,completed=excluded.completed,recurrence=excluded.recurrence,subtasks_json=excluded.subtasks_json,archived=excluded.archived,reminder_sent_at=CASE WHEN tasks.reminder_at IS excluded.reminder_at THEN tasks.reminder_sent_at ELSE NULL END,reminder_at=excluded.reminder_at,updated_at=excluded.updated_at,project_id=excluded.project_id,course_id=excluded.course_id,status=excluded.status,due_at=excluded.due_at,scheduled_start_at=excluded.scheduled_start_at,scheduled_end_at=excluded.scheduled_end_at,estimated_minutes=excluded.estimated_minutes,parent_task_id=excluded.parent_task_id,completed_at=excluded.completed_at,version=tasks.version+1`).run(id,title,project,due,priority,completed?1:0,input.recurrence||null,JSON.stringify(input.subtasks||[]),input.archived?1:0,reminderAt,before?.created_at||time,time,context.workspaceId,input.projectId||null,input.courseId||null,status,dueAt,scheduledStart,scheduledEnd,estimate,input.parentTaskId||null,completedAt);
-  audit(db,before?"update":"create","task",id,title,before?{op:"restore",row:before}:{op:"delete"},actor);writeBack?.();return findOwned(db,"tasks",id,context.workspaceId);
+  audit(db,before?"update":"create","task",id,title,before?{op:"restore",row:before}:{op:"delete"},actor);writeBack?.();
+  // Recurring task regeneration (F5.7): completing a recurring task spawns its next occurrence.
+  if(completed&&before&&!before.completed&&input.recurrence&&dueAt){
+    const nextDue=nextRecurrenceDue(dueAt,input.recurrence);
+    if(nextDue)try{saveTask({id:randomUUID(),title,priority,project,dueAt:nextDue,recurrence:input.recurrence,parentTaskId:before.parent_task_id||null,courseId:before.course_id||null},db,{...actor,skipVaultWriteback:true})}catch{/* regeneration is best-effort */}
+  }
+  return findOwned(db,"tasks",id,context.workspaceId);
 }
 
 export function saveEvent(input,db=getDatabase(),actor=null,options={}){
@@ -192,9 +212,10 @@ export function saveInterpretation(id,proposal,db=getDatabase()){
 
 function applyCaptureAction(action,captureId,db,actor){
   const id=randomUUID(),args=action.arguments||action;let type=action.type.split(".")[0],object;
+  const presets=reminderOffsets(actor?.id,db);
   if(type==="task"){
     object=saveTask({id,title:args.title,project:args.project||"Inbox",due:args.dueAt||"No date",dueAt:args.dueAt||null,reminderAt:null,priority:"Medium"},db,actor);
-    if(args.dueAt&&!args.linkedActionId){const allDay=/^\d{4}-\d{2}-\d{2}$/.test(args.dueAt),start=allDay?`${args.dueAt}T00:00:00.000Z`:args.dueAt,end=new Date(new Date(start).getTime()+(allDay?86400000:3600000)).toISOString(),event=saveEvent({title:args.title,startAt:start,endAt:end,timezone:loadConfig().timezone||"UTC",allDay,reminders:allDay?[]:[{offsetMinutes:30},{offsetMinutes:10},{offsetMinutes:0}]},db,actor);db.prepare("UPDATE tasks SET event_id=? WHERE id=?").run(event.id,object.id);db.prepare("UPDATE events SET task_id=? WHERE id=?").run(object.id,event.id);object=findOwned(db,"tasks",object.id,actorInfo(actor).workspaceId)}
+    if(args.dueAt&&!args.linkedActionId){const allDay=/^\d{4}-\d{2}-\d{2}$/.test(args.dueAt),start=allDay?`${args.dueAt}T00:00:00.000Z`:args.dueAt,end=new Date(new Date(start).getTime()+(allDay?86400000:3600000)).toISOString(),event=saveEvent({title:args.title,startAt:start,endAt:end,timezone:loadConfig().timezone||"UTC",allDay,reminders:allDay?[]:presets.map(offsetMinutes=>({offsetMinutes}))},db,actor);db.prepare("UPDATE tasks SET event_id=? WHERE id=?").run(event.id,object.id);db.prepare("UPDATE events SET task_id=? WHERE id=?").run(object.id,event.id);object=findOwned(db,"tasks",object.id,actorInfo(actor).workspaceId)}
   }
   else if(type==="event"){const reminder=action.arguments?.reminders?.[0],reminderAt=reminder?new Date(new Date(args.startAt).getTime()-reminder.offsetMinutes*60000).toISOString():null;object=saveEvent(action.arguments?{id,title:args.title,startAt:args.startAt,endAt:args.endAt,timezone:args.timezone,location:args.location,reminderAt}:{id,title:args.title,day:new Date().getDay(),time:"09:00",top:0,height:58},db,actor)}
   else if(action.type==="vault.note.create"){
@@ -212,6 +233,17 @@ export function applyCaptureInterpretation(id,db=getDatabase(),actor=null){
   const created=[];db.exec("BEGIN IMMEDIATE");
   try{
     for(const action of actions)created.push(applyCaptureAction(action,id,db,actor));
+    // Symmetric task<->event linking for explicitly dual-created proposals.
+    for(const action of actions){
+      const linkId=action.arguments?.linkedActionId;
+      if(!linkId)continue;
+      const self=created.find(item=>item.actionId===action.id),other=created.find(item=>item.actionId===linkId);
+      if(!self||!other)continue;
+      const eventCreated=[self,other].find(item=>item.type==="event"),taskCreated=[self,other].find(item=>item.type==="task");
+      if(!eventCreated||!taskCreated||!eventCreated.object?.id||!taskCreated.object?.id)continue;
+      db.prepare("UPDATE tasks SET event_id=? WHERE id=?").run(eventCreated.object.id,taskCreated.object.id);
+      db.prepare("UPDATE events SET task_id=? WHERE id=?").run(taskCreated.object.id,eventCreated.object.id);
+    }
     db.prepare(`UPDATE captures SET status='confirmed',updated_at=?,version=version+1 WHERE id=?${context.workspaceId?" AND workspace_id=?":""}`).run(stamp(),id,...(context.workspaceId?[context.workspaceId]:[]));
     const objects=created.filter(({type})=>type!=="vault-note").flatMap(({type,object})=>type==="task"&&object.event_id?[{type,id:object.id},{type:"event",id:object.event_id}]:[{type,id:object.id}]);
     audit(db,"apply","capture",id,`Applied ${created.length} object(s) from capture`,{op:"delete-many",objects,vaultNotes:created.filter(({type})=>type==="vault-note").map(({object})=>({sourceId:object.sourceId,relativePath:object.relativePath})),captureStatus:"review"},actor);
@@ -256,7 +288,7 @@ export function importMarkdown(markdown,db=getDatabase(),actor=null){const conte
 
 export function exportMarkdown(noteId,db=getDatabase(),workspaceId=null){const note=findOwned(db,"notes",noteId,workspaceId);if(!note)throw Object.assign(new Error("Note not found"),{status:404});return note.content.startsWith("# ")?note.content:`# ${note.title}\n\n${note.content}`}
 
-export function requestNoteOptimization(noteId,mode="organize",db=getDatabase(),workspaceId=null){const note=findOwned(db,"notes",noteId,workspaceId,"AND trashed=0");if(!note)throw Object.assign(new Error("Note not found"),{status:404});if(!note.draft)throw new Error("Only Draft notes can be optimized");if(!["light","organize","study","technical","voice"].includes(mode))throw new Error("Unknown optimization mode");const id=randomUUID(),jobId=enqueueJob("note-optimize",{optimizationId:id,noteId,mode},db,workspaceId),time=stamp();db.prepare("INSERT INTO note_optimizations(id,note_id,job_id,mode,state,before_content,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)").run(id,noteId,jobId,mode,"queued",note.content,time,time);return {id,jobId,state:"queued"}}
+export function requestNoteOptimization(noteId,mode="organize",db=getDatabase(),workspaceId=null){const note=findOwned(db,"notes",noteId,workspaceId,"AND trashed=0");if(!note)throw Object.assign(new Error("Note not found"),{status:404});if(!["light","organize","study","technical","voice"].includes(mode))throw new Error("Unknown optimization mode");const id=randomUUID(),jobId=enqueueJob("note-optimize",{optimizationId:id,noteId,mode},db,workspaceId),time=stamp();db.prepare("INSERT INTO note_optimizations(id,note_id,job_id,mode,state,before_content,created_at,updated_at) VALUES(?,?,?,?,?,?,?,?)").run(id,noteId,jobId,mode,"queued",note.content,time,time);return {id,jobId,state:"queued"}}
 export const noteOptimizations=(noteId,db=getDatabase(),workspaceId=null)=>{if(!findOwned(db,"notes",noteId,workspaceId))throw Object.assign(new Error("Note not found"),{status:404});return db.prepare("SELECT * FROM note_optimizations WHERE note_id=? ORDER BY created_at DESC LIMIT 20").all(noteId).map(row=>({...row,operations:parse(row.changes_json)}))};
 export function finishNoteOptimization(id,result,provider,db=getDatabase()){
   const proposal=db.prepare("SELECT o.before_content,n.version FROM note_optimizations o JOIN notes n ON n.id=o.note_id WHERE o.id=? AND o.state='queued'").get(id);

@@ -1,0 +1,10 @@
+"use client";
+
+import Link from "next/link";
+import {Bell,X} from "@phosphor-icons/react";
+import {useEffect,useState} from "react";
+import {ModalDialog} from "./ModalDialog";
+
+type Notification={id:string;title:string;body:string;kind:string;read_at:string|null;created_at:string};
+
+export function NotificationButton(){const [open,setOpen]=useState(false),[items,setItems]=useState<Notification[]>([]),[error,setError]=useState(""),[loading,setLoading]=useState(false);useEffect(()=>{if(!open)return;setLoading(true);setError("");fetch("/api/v1/notifications").then(async response=>{if(!response.ok)throw new Error(response.status===401?"Sign in to view notifications.":"Notifications are unavailable.");return response.json()}).then(data=>setItems(data.notifications||[])).catch(reason=>setError(reason.message)).finally(()=>setLoading(false))},[open]);async function read(item:Notification){if(item.read_at)return;const response=await fetch(`/api/v1/notifications/${item.id}/read`,{method:"POST"});if(response.ok)setItems(current=>current.map(value=>value.id===item.id?{...value,read_at:new Date().toISOString()}:value))}return <><button className={`icon-button ${items.some(item=>!item.read_at)?"unread":""}`} aria-label="Notifications" aria-expanded={open} aria-haspopup="dialog" onClick={()=>setOpen(true)}><Bell/></button>{open&&<ModalDialog className="notification-dialog" ariaLabel="Notifications" onClose={()=>setOpen(false)}><header><strong>Notifications</strong><button className="icon-button" aria-label="Close notifications" onClick={()=>setOpen(false)}><X/></button></header><div className="notification-list" aria-busy={loading}>{loading?<p>Loading notifications…</p>:error?<p role="alert">{error}</p>:items.length?items.slice(0,8).map(item=><button className={item.read_at?"":"unread-item"} key={item.id} onClick={()=>void read(item)}><strong>{item.title}</strong><small>{item.body||item.kind} · {new Date(item.created_at).toLocaleString()}</small></button>):<p>No notifications yet.</p>}</div><footer><Link className="secondary" href="/notifications" onClick={()=>setOpen(false)}>View all notifications</Link></footer></ModalDialog>}</>}

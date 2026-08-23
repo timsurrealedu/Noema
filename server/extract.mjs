@@ -45,6 +45,30 @@ export async function extractText(asset,config=loadConfig(),fetcher=fetch){
 }
 
 /**
+ * Structured image extraction: visible text plus LaTeX equations and tables
+ * rendered as Markdown. Requires a Gemini API key (the model sees pixels).
+ */
+export async function extractStructuredImage(asset,config=loadConfig(),fetcher=fetch){
+  if(!asset.mime.startsWith("image/"))throw Object.assign(new Error("Structured extraction requires an image"),{status:400});
+  if(!config.geminiApiKey)throw new Error("Structured image extraction requires GEMINI_API_KEY");
+  if(asset.size>maxMultimodalBytes)throw Object.assign(new Error("Image exceeds the multimodal size limit"),{status:413});
+  const base64=await readFile(assetPath(asset.sha256,config),"base64");
+  const schema={type:"object",properties:{text:{type:"string"},equations:{type:"array",items:{type:"object",properties:{latex:{type:"string"},confidence:{type:"string",enum:["high","medium","low"]}},required:["latex","confidence"]}},tables:{type:"array",items:{type:"object",properties:{markdown:{type:"string"}},required:["markdown"]}}},required:["text","equations","tables"]};
+  const {result}=await runGeminiMultimodal({prompt:"Read this image. Return every visible text fragment, each mathematical expression as LaTeX with a confidence rating, and every table as GitHub-flavored Markdown.",base64,mimeType:asset.mime,schema,config,fetcher});
+  const text=String(result.text||"").trim();
+  const equations=(result.equations||[]).map(e=>({latex:String(e.latex||""),confidence:["high","medium","low"].includes(e.confidence)?e.confidence:"low"})).filter(e=>e.latex);
+  const tables=(result.tables||[]).map(t=>({markdown:String(t.markdown||"").trim()})).filter(t=>t.markdown);
+  return {text,equations,tables};
+}
+
+export function structuredImageToMarkdown(extraction,name="Image"){
+  const parts=[`### ${name}`,extraction.text];
+  if(extraction.equations?.length)parts.push(...extraction.equations.map(e=>`$$${e.latex}$$${e.confidence&&e.confidence!=="high"?` <!-- confidence: ${e.confidence} -->`:""}`));
+  if(extraction.tables?.length)parts.push(...extraction.tables.map(t=>t.markdown));
+  return parts.filter(Boolean).join("\n\n");
+}
+
+/**
  * Extract handwritten text and math from an image, returning plain text and
  * LaTeX equations. Requires a Gemini API key.
  */

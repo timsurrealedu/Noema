@@ -2,11 +2,11 @@
 
 ## Direction
 
-Dark-first, restrained, and information-led. A near-black workspace uses teal only for primary action, selection, and active processing. Amber and red remain semantic.
+Gruvbox dark-first, warm, and information-led. Paper grain is static and subtle; amber, red, and green remain semantic. Gruvbox light is the only alternate theme.
 
 ## Color
 
-All implementation colors use OKLCH. Core roles: near-black background, charcoal surfaces, high-contrast ink, teal primary (`188°`), amber warning, red error, green success. Light mode preserves the same roles.
+All implementation colors use semantic tokens. Core roles: warm background, raised surfaces, high-contrast ink, amber action, warning, error, success, code, paper, and focus. Light mode preserves the same roles.
 
 ## Typography
 

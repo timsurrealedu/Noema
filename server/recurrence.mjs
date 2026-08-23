@@ -1,7 +1,7 @@
 import {createRequire} from "node:module";
 const {rrulestr}=createRequire(import.meta.url)("rrule");
 
-const asRules=value=>Array.isArray(value?.rules)?value.rules:value?.frequency?[`RRULE:FREQ=${value.frequency.toUpperCase()}`]:[];
+const asRules=value=>Array.isArray(value?.rules)?value.rules:value?.frequency?[`RRULE:FREQ=${value.frequency.toUpperCase()}${Number(value.interval)>1?`;INTERVAL=${Number(value.interval)}`:""}`]:[];
 export function occurrences(event,rangeStart,rangeEnd,overrides=[]){
   const rules=asRules(event.recurrence);if(!rules.length)return [];
   const start=new Date(event.startAt),duration=new Date(event.endAt)-start;

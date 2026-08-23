@@ -31,7 +31,8 @@ import {
   InkTool,
   sanitizeStrokes,
   strokePath,
-  acceptInkPointer
+  acceptInkPointer,
+  penRecentlyUp
 } from "../lib/ink";
 import {MarkdownContent, extractTagsAndCleanText, StructuredTags} from "./MarkdownContent";
 import {LiveMarkdownEditor} from "./LiveMarkdownEditor";
@@ -48,8 +49,95 @@ type Block = {
   strokes?: InkStroke[];
   transcript?: string;
   ocrStatus?: string;
+  equations?: {latex: string; confidence: string}[];
   taskProposals?: {id: string; text: string; state: string}[];
 };
+
+type MathContinuation = {
+  id: string;
+  block_id: string;
+  analysis: string;
+  continuation: string;
+  confidence: string | null;
+  state: string;
+  assumptions: string[];
+};
+
+async function requestMathContinuation(noteId: string, blockId: string, signal?: AbortSignal) {
+  const response = await fetch(`/api/v1/notes/${noteId}/continue-math`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({blockId}),
+    signal
+  });
+  if (!response.ok && response.status !== 202) throw new Error((await response.json()).error?.message || "Could not queue math continuation");
+}
+
+export function MathContinuationCard({
+  continuation,
+  onDecide,
+  busy
+}: {
+  continuation: MathContinuation;
+  onDecide: (action: "accept" | "dismiss") => void;
+  busy?: boolean;
+}) {
+  return (
+    <section className="math-continuation-card" aria-label="Proposed math continuation">
+      <header>
+        <span><strong>AI proposed continuation</strong>{continuation.confidence && <small> · confidence {continuation.confidence}</small>}</span>
+      </header>
+      {continuation.analysis && <p className="math-continuation-analysis">{continuation.analysis}</p>}
+      {continuation.assumptions.length > 0 && (
+        <ul className="math-continuation-assumptions">
+          {continuation.assumptions.map((item, index) => <li key={index}>{item}</li>)}
+        </ul>
+      )}
+      <pre className="math-continuation-proposal">{continuation.continuation}</pre>
+      <footer>
+        <button type="button" className="secondary" disabled={busy} onClick={() => onDecide("dismiss")}>Dismiss</button>
+        <button type="button" className="primary" disabled={busy} onClick={() => onDecide("accept")}>Insert as block</button>
+      </footer>
+    </section>
+  );
+}
+
+function useMathContinuationFlow(noteId: string, blockId: string) {
+  const [proposal, setProposal] = useState<MathContinuation | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => () => {}, []);
+  async function request() {
+    setBusy(true);
+    try {
+      await requestMathContinuation(noteId, blockId);
+      for (let attempt = 0; attempt < 90; attempt++) {
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        const response = await fetch(`/api/v1/notes/${noteId}/continue-math`);
+        if (!response.ok) continue;
+        const data = await response.json();
+        const found = (data.continuations || []).find((item: MathContinuation) => item.block_id === blockId && item.state === "proposed");
+        if (found) { setProposal(found); return; }
+      }
+    } finally {
+      setBusy(false);
+    }
+  }
+  async function decide(action: "accept" | "dismiss") {
+    if (!proposal) return;
+    setBusy(true);
+    try {
+      await fetch(`/api/v1/notes/${noteId}/continue-math`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({continuationId: proposal.id, action})
+      });
+      setProposal(null);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return {proposal, busy, request, decide};
+}
 
 function MarkdownBlock({
   block,
@@ -87,6 +175,43 @@ function MarkdownBlock({
   );
 }
 
+function InkBlockView({
+  noteId,
+  block,
+  onMove,
+  onDelete,
+  onSaved
+}: {
+  noteId: string;
+  block: Block;
+  onMove: (block: Block, delta: number) => void;
+  onDelete: (block: Block) => void;
+  onSaved: () => void;
+}) {
+  const {proposal, busy, request, decide} = useMathContinuationFlow(noteId, block.id);
+  return (
+    <section className="note-block ink-note-block">
+      <nav>
+        <span>Ink</span>
+        <button type="button" disabled={busy} onClick={() => void request()} aria-label="Continue math with AI">Continue math</button>
+        <button type="button" onClick={() => onMove(block, -1)} aria-label="Move ink block up"><ArrowUp size={14} /></button>
+        <button type="button" onClick={() => onMove(block, 1)} aria-label="Move ink block down"><ArrowDown size={14} /></button>
+        <button type="button" onClick={() => onDelete(block)} aria-label="Delete ink block"><Trash size={14} /></button>
+      </nav>
+      {proposal && <MathContinuationCard continuation={proposal} busy={busy} onDecide={action => { void decide(action).then(() => { if (action === "accept") onSaved(); }); }} />}
+      <InkEditor
+        id={block.id}
+        noteId={noteId}
+        strokes={sanitizeStrokes(block.strokes)}
+        version={block.inkVersion || 0}
+        transcript={block.transcript || ""}
+        ocrStatus={block.ocrStatus || "pending"}
+        onSaved={onSaved}
+      />
+    </section>
+  );
+}
+
 function IntegratedOverlayCanvas({
   width,
   height,
@@ -112,6 +237,7 @@ function IntegratedOverlayCanvas({
   const drawing = useRef(false);
   const activeStroke = useRef<InkStroke | null>(null);
   const [currentStrokes, setCurrentStrokes] = useState<InkStroke[]>(strokes);
+  const [penDrawing, setPenDrawing] = useState(false);
   const liveStrokes = useRef<InkStroke[]>(strokes);
   const penActive = useRef(false);
   const penUpAt = useRef(0);
@@ -124,13 +250,13 @@ function IntegratedOverlayCanvas({
 
   if (!visible) return null;
 
-  function getPoint(event: React.PointerEvent<SVGSVGElement>): InkPoint | null {
+  function getPoint(event: {clientX:number;clientY:number;pressure:number;pointerType:string;timeStamp:number;tiltX:number;tiltY:number}): InkPoint | null {
     if (!svgRef.current) return null;
     const rect = svgRef.current.getBoundingClientRect();
     return {
       x: Math.max(0, Math.min(rect.width, event.clientX - rect.left)),
       y: Math.max(0, Math.min(rect.height, event.clientY - rect.top)),
-      pressure: event.pressure > 0 ? event.pressure : 0.5,
+      pressure: event.pressure > 0 ? event.pressure : event.pointerType === "pen" ? 0.5 : 1,
       time: event.timeStamp,
       tiltX: Number(event.tiltX) || 0,
       tiltY: Number(event.tiltY) || 0
@@ -140,9 +266,9 @@ function IntegratedOverlayCanvas({
   function handlePointerDown(event: React.PointerEvent<SVGSVGElement>) {
     if (!interactive) return;
 
-    // Pen gate: reject touch if pen was recently active
+    // Pen gate: reject touch if pen was recently active (palm rejection)
     if (event.pointerType === "touch") {
-      if (penActive.current || performance.now() - penUpAt.current < 150) return;
+      if (penRecentlyUp(event.pointerType, penActive.current, penUpAt.current)) return;
       touchCount.current++;
       return;
     }
@@ -152,6 +278,7 @@ function IntegratedOverlayCanvas({
     const pt = getPoint(event);
     if (!pt) return;
     drawing.current = true;
+    if (event.pointerType === "pen") setPenDrawing(true);
     (event.target as HTMLElement).setPointerCapture?.(event.pointerId);
 
     if (activeTool === "eraser") {
@@ -195,9 +322,11 @@ function IntegratedOverlayCanvas({
     }
 
     if (activeStroke.current) {
+      const points = (event.nativeEvent.getCoalescedEvents?.() || [event.nativeEvent]).map(item => getPoint(item));
+      const valid = points.filter((pt): pt is InkPoint => !!pt);
       const updated = {
         ...activeStroke.current,
-        points: [...activeStroke.current.points, pt]
+        points: [...activeStroke.current.points, ...(valid.length ? valid : [getPoint(event)].filter((pt): pt is InkPoint => !!pt))]
       };
       activeStroke.current = updated;
       liveStrokes.current = liveStrokes.current.map(stroke => stroke.id === updated.id ? updated : stroke);
@@ -212,6 +341,7 @@ function IntegratedOverlayCanvas({
     }
     if (!drawing.current) return;
     drawing.current = false;
+    setPenDrawing(false);
 
     if (activeTool === "eraser") {
       onChange(liveStrokes.current);
@@ -233,7 +363,7 @@ function IntegratedOverlayCanvas({
   return (
     <svg
       ref={svgRef}
-      className={`integrated-ink-overlay ${interactive ? "mode-ink" : "mode-text"}`}
+      className={`integrated-ink-overlay ${interactive ? "mode-ink" : "mode-text"} ${penDrawing ? "pen-drawing" : ""}`}
       viewBox={`0 0 ${width} ${height}`}
       style={{width: "100%", height: `${height}px`}}
       onPointerDown={handlePointerDown}
@@ -350,12 +480,15 @@ export function MixedNoteEditor({
 
   // Integrated Editor State
   const [viewMode, setViewMode] = useState<"write" | "preview">(() => {
-    if (typeof window !== "undefined" && window.innerWidth <= 600) {
-      return "preview";
-    }
-    return "preview";
+    if (typeof window === "undefined") return "preview";
+    if (window.innerWidth > 600) return "write";
+    return localStorage.getItem("noema-note-view-mode") === "write" ? "write" : "preview";
   });
-  const [editorMode, setEditorMode] = useState<"text" | "ink">(initialInk ? "ink" : "text");
+  const [editorMode, setEditorMode] = useState<"text" | "ink">(initialInk ? "ink" : () => {
+    if (typeof window === "undefined") return "text";
+    if (window.innerWidth > 600) return "text";
+    return localStorage.getItem("noema-note-ink-mode") === "ink" ? "ink" : "text";
+  });
   const [paletteCollapsed, setPaletteCollapsed] = useState(false);
   const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait");
   const [showAnnotations, setShowAnnotations] = useState(true);
@@ -410,6 +543,10 @@ export function MixedNoteEditor({
     return () => observer.disconnect();
   }, []);
   const [size, setSize] = useState(3);
+  const [ocrPanelOpen, setOcrPanelOpen] = useState(false);
+  const [dismissedOcr, setDismissedOcr] = useState(false);
+  const [transcriptDraft, setTranscriptDraft] = useState<string | null>(null);
+  const [ocrBusy, setOcrBusy] = useState(false);
   const [viewportHeight, setViewportHeight] = useState(600);
   const [viewportWidth, setViewportWidth] = useState(800);
   const [undoStack, setUndoStack] = useState<InkStroke[][]>([]);
@@ -417,6 +554,11 @@ export function MixedNoteEditor({
 
   const inkBlock = blocks.find(b => b.kind === "ink");
   const overlayStrokes = useMemo(() => sanitizeStrokes(inkBlock?.strokes || []), [inkBlock?.strokes]);
+
+  function moveInk(block: Block, delta: number) {
+    const index = blocks.findIndex(item => item.id === block.id);
+    void move(index, delta);
+  }
 
   async function load() {
     if (markdownPending.current.size || markdownSaving.current.size) return;
@@ -461,6 +603,13 @@ export function MixedNoteEditor({
       setEditorMode("ink");
     }
   }, [initialInk, loading]);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth <= 600) {
+      localStorage.setItem("noema-note-view-mode", viewMode);
+      localStorage.setItem("noema-note-ink-mode", editorMode);
+    }
+  }, [viewMode, editorMode]);
 
   const pageRef = useRef<HTMLDivElement>(null);
 
@@ -606,6 +755,56 @@ export function MixedNoteEditor({
     else setError((await response.json()).error?.message || "Delete failed");
   }
 
+  async function retryOcr(){if(!inkBlock)return;const response=await fetch(`/api/v1/ink/${inkBlock.id}/ocr`,{method:"POST"});if(!response.ok){setError((await response.json()).error?.message||"OCR retry failed");return}setBlocks(items=>items.map(item=>item.id===inkBlock.id?{...item,ocrStatus:"queued"}:item));setError("")}
+
+  async function saveTranscript(){
+    if(!inkBlock)return;
+    setOcrBusy(true);
+    try{
+      const value=transcriptDraft??inkBlock.transcript??"";
+      const response=await fetch(`/api/v1/ink/${inkBlock.id}/transcript`,{
+        method:"PATCH",
+        headers:{"Content-Type":"application/json"},
+        body:JSON.stringify({transcript:value,equations:inkBlock.equations||[],version:currentInkVersion.current})
+      });
+      if(!response.ok)throw new Error((await response.json()).error?.message||"Transcript save failed");
+      setTranscriptDraft(null);
+      setError("");
+      await load();
+    }catch(reason){setError((reason as Error).message)}
+    finally{setOcrBusy(false)}
+  }
+
+  async function insertOcrAsMarkdown(){
+    if(!inkBlock)return;
+    const transcript=(transcriptDraft??inkBlock.transcript??"").trim();
+    const equations=(inkBlock.equations||[]).map(e=>`$$${e.latex}$$`);
+    const markdown=[transcript,...equations].filter(Boolean).join("\n\n");
+    if(!markdown){setError("Nothing to insert yet — OCR has not produced text.");return}
+    setOcrBusy(true);
+    try{
+      const created=await fetch(`/api/v1/notes/${noteId}/blocks`,{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":createId()},body:JSON.stringify({markdown})});
+      if(!created.ok)throw new Error((await created.json()).error?.message||"Could not create block");
+      const block=await created.json();
+      const ids=blocks.map(item=>item.id),index=ids.indexOf(inkBlock.id);
+      if(index>=0){
+        ids.splice(index+1,0,block.id);
+        const reordered=await fetch(`/api/v1/notes/${noteId}/blocks`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({ids})});
+        if(!reordered.ok)throw new Error((await reordered.json()).error?.message||"Could not place block");
+      }
+      await load();
+    }catch(reason){setError((reason as Error).message)}
+    finally{setOcrBusy(false)}
+  }
+
+  // Poll OCR jobs while any ink block is still being processed.
+  useEffect(()=>{
+    const active=blocks.some(block=>block.kind==="ink"&&["queued","pending","running","claimed"].includes(block.ocrStatus||""));
+    if(!active)return;
+    const timer=setInterval(()=>void load(),3000);
+    return()=>clearInterval(timer);
+  },[blocks]);
+
   async function move(index: number, delta: number) {
     const ids = blocks.map(block => block.id);
     const next = index + delta;
@@ -682,8 +881,6 @@ export function MixedNoteEditor({
     </div>
   );
 
-  const markdownBlocks = blocks.filter(b => b.kind === "markdown");
-
   return (
     <div className="integrated-note-editor mixed-note-editor">
       {error && (
@@ -702,6 +899,7 @@ export function MixedNoteEditor({
           <button className={`ink-mode-toggle ${editorMode === "ink" ? "active" : ""}`} onClick={() => setEditorMode(mode => mode === "ink" ? "text" : "ink")} aria-pressed={editorMode === "ink"} title="Toggle ink layer">
             <PencilLine size={18} /><span>Ink</span>
           </button>
+          {inkBlock&&<span className="status-label" role="status">OCR · {inkBlock.ocrStatus||"pending"}{inkBlock.ocrStatus==="failed"&&<button type="button" onClick={()=>void retryOcr()}>Retry</button>}<button type="button" aria-expanded={ocrPanelOpen} aria-label="Toggle OCR review panel" onClick={()=>{setOcrPanelOpen(open=>!open);setDismissedOcr(false)}}>{ocrPanelOpen?"Hide":"Review"}</button></span>}
           <details className="note-toolbar-menu">
             <summary aria-label="More note options" title="More note options"><DotsThree size={20} /></summary>
             <div>
@@ -852,6 +1050,36 @@ export function MixedNoteEditor({
         </div>}
       </div>
 
+      {/* OCR surfacing panel */}
+      {ocrPanelOpen && !dismissedOcr && inkBlock && (
+        <section className="ocr-review-panel" aria-label="OCR review">
+          <header>
+            <strong>Handwriting recognition</strong>
+            <span className="status-label">{inkBlock.ocrStatus||"pending"}</span>
+            <button type="button" className="secondary" disabled={ocrBusy} onClick={()=>setDismissedOcr(true)}>Dismiss</button>
+          </header>
+          <label>
+            Transcript
+            <textarea
+              value={transcriptDraft??inkBlock.transcript??""}
+              onChange={event=>setTranscriptDraft(event.target.value)}
+              placeholder="Recognized text appears here; strokes remain authoritative."
+            />
+          </label>
+          {(inkBlock.equations?.length||0) > 0 && (
+            <ul className="ocr-equations" aria-label="Recognized equations">
+              {inkBlock.equations!.map((equation,index)=>(
+                <li key={index}><code>{equation.latex}</code><small>confidence: {equation.confidence}</small></li>
+              ))}
+            </ul>
+          )}
+          <footer>
+            <button type="button" className="secondary" disabled={ocrBusy} onClick={()=>void saveTranscript()}>Save correction</button>
+            <button type="button" className="primary" disabled={ocrBusy} onClick={()=>void insertOcrAsMarkdown()}>Insert as markdown</button>
+          </footer>
+        </section>
+      )}
+
       {/* Dual-Layer Viewport Bounded Sheet */}
       <div className="integrated-doc-container" ref={docRef}>
         <div className={`integrated-doc-page ${orientation}`} ref={pageRef}>
@@ -868,19 +1096,30 @@ export function MixedNoteEditor({
             onChange={saveInkStrokes}
           />
 
-          {/* Background Layer 1: Rendered Markdown Document */}
+          {/* Background Layer 1: Rendered Document Blocks */}
           <div className="integrated-doc-content" style={{position: "relative", zIndex: 1}}>
-            {markdownBlocks.map((block) => (
-              <article className="note-block" key={block.id}>
-                <MarkdownBlock
+            {blocks.map((block) =>
+              block.kind === "markdown" ? (
+                <article className="note-block" key={block.id}>
+                  <MarkdownBlock
+                    block={block}
+                    preview={viewMode === "preview"}
+                    onSave={markdown}
+                    onInsertInk={insertInk}
+                    onNavigateNote={onNavigateNote}
+                  />
+                </article>
+              ) : block.id === inkBlock?.id ? null : (
+                <InkBlockView
+                  key={block.id}
+                  noteId={noteId}
                   block={block}
-                  preview={viewMode === "preview"}
-                  onSave={markdown}
-                  onInsertInk={insertInk}
-                  onNavigateNote={onNavigateNote}
+                  onMove={moveInk}
+                  onDelete={remove}
+                  onSaved={load}
                 />
-              </article>
-            ))}
+              )
+            )}
           </div>
         </div>
       </div>

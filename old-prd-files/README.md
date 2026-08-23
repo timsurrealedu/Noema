@@ -9,7 +9,8 @@ Current sources of truth, in reading order:
 3. `../PRODUCT.md` / `../DESIGN.md` — product principles and design system
 4. `../ISSUE_RESOLUTION_PLAN.md` — current product-gap plan
 5. `../UI_AUDIT_FINDINGS.md` — current UI/UX audit
-6. `../tasks/ui-batches-handoff.md` — active implementation handoff
+6. `../tasks/ui-coherence-pdf-plan.md` — active UI coherence and PDF delivery plan
+7. `../tasks/ui-batches-handoff.md` — completed trust/data-loss/touch handoff
 
 | File | Superseded by |
 |---|---|

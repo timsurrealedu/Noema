@@ -8,6 +8,7 @@ import {
 } from "@phosphor-icons/react";
 import {Capture, CaptureSource, useAppState} from "../components/AppState";
 import {ModuleShell} from "../components/ModuleShell";
+import {DurableRecorder} from "../components/DurableRecorder";
 
 const filters = ["All", "Review", "Processing", "Done"] as const;
 type Filter = (typeof filters)[number];
@@ -220,8 +221,123 @@ function getAmbiguities(capture: Capture): string[] {
   return list;
 }
 
+type TranscriptSegment={start:number;end:number;text:string;label?:string};
+type AudioTranscript={state:string;content:string;segments:TranscriptSegment[];provider:string|null;model:string|null;error:string|null}|null;
+
+function TranscriptPanel({capture}: {capture: Capture}) {
+  const {saveNote} = useAppState();
+  const [transcript, setTranscript] = useState<AudioTranscript>(null);
+  const [loaded, setLoaded] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
+  const assetId = capture.assets?.find(asset => asset.mime.startsWith("audio/"))?.id;
+  const hasAudio = capture.source === "voice" || !!assetId;
+
+  useEffect(() => {
+    setLoaded(false);
+    setTranscript(null);
+    if (!capture.id || !hasAudio) return;
+    let cancelled = false, attempts = 0;
+    const poll = async () => {
+      try {
+        const response = await fetch(`/api/v1/captures/${capture.id}/transcribe`);
+        if (!response.ok) return;
+        const data = await response.json();
+        if (cancelled) return;
+        setTranscript(data.transcript);
+        setLoaded(true);
+        if (data.transcript?.state === "queued" && attempts++ < 120) setTimeout(poll, 3000);
+      } catch {}
+    };
+    void poll();
+    return () => { cancelled = true; };
+  }, [capture.id, hasAudio]);
+
+  async function request() {
+    if (!hasAudio) return;
+    setBusy(true);
+    try {
+      await fetch(`/api/v1/captures/${capture.id}/transcribe`, {method: "POST"});
+      setLoaded(false);
+    } finally { setBusy(false); }
+  }
+
+  function seek(segment: TranscriptSegment) {
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = segment.start;
+    void audio.play();
+  }
+
+  async function summarizeIntoNote() {
+    if (!transcript?.content) return;
+    setBusy(true);
+    try {
+      const note = {
+        id: `${Date.now()}-voice`,
+        title: `Lecture notes · ${new Date(capture.createdAt).toLocaleDateString()}`,
+        content: `# Lecture notes\n\n${transcript.content}`,
+        tags: ["lecture", "study"],
+        time: "Now",
+        ai: true,
+        source: "Voice transcript",
+        excerpt: transcript.content.slice(0, 140)
+      };
+      saveNote(note);
+      await fetch(`/api/v1/notes/${note.id}/optimizations`, {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({mode: "study"})
+      });
+      location.assign(`/vault?open=${encodeURIComponent(note.id)}`);
+    } finally { setBusy(false); }
+  }
+
+  if (!hasAudio) return null;
+  return (
+    <section className="transcript-panel" aria-label="Audio transcription">
+      <h3>Transcript</h3>
+      {assetId && <audio ref={audioRef} controls preload="metadata" src={`/api/v1/assets/${assetId}`} aria-label="Recording playback"/>}
+      {!loaded && !busy && <p className="status-label">Checking transcription…</p>}
+      {loaded && !transcript && (
+        <button className="secondary" disabled={busy} onClick={() => void request()}>
+          <Microphone />{busy ? "Queued…" : "Transcribe recording"}
+        </button>
+      )}
+      {loaded && transcript?.state === "queued" && (
+        <p className="status-label"><CircleNotch className="spin" /> Transcribing the lecture…</p>
+      )}
+      {loaded && transcript?.state === "failed" && (
+        <div>
+          <p className="status-label error">{transcript.error || "Transcription failed."}</p>
+          <button className="secondary" onClick={() => void request()}><ArrowClockwise /> Retry</button>
+        </div>
+      )}
+      {loaded && transcript?.state === "complete" && (
+        <>
+          {transcript.segments.length > 0 ? (
+            <ol className="transcript-segments">
+              {transcript.segments.map((segment, index) => (
+                <li key={index}>
+                  <button type="button" className="transcript-segment" onClick={() => seek(segment)}>
+                    <time>{segment.label}</time><span>{segment.text}</span>
+                  </button>
+                </li>
+              ))}
+            </ol>
+          ) : <p className="transcript-text">{transcript.content}</p>}
+          <button className="primary" disabled={busy} onClick={() => void summarizeIntoNote()}>
+            <Sparkle />Summarize into study note
+          </button>
+          <small>{transcript.provider}{transcript.model ? ` · ${transcript.model}` : ""}</small>
+        </>
+      )}
+    </section>
+  );
+}
+
 export default function CaptureInbox() {
-  const {addCapture, cancelInterpretation, captures, confirmCapture, requestInterpretation, updateCapture} = useAppState();
+  const {addCapture, addVoiceCapture, cancelInterpretation, captures, confirmCapture, requestInterpretation, updateCapture} = useAppState();
   const [filter, setFilter] = useState<Filter>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const didReadParams = useRef(false);
@@ -243,7 +359,25 @@ export default function CaptureInbox() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [toast, setToast] = useState<{id: string; message: string; previous: Capture["status"]} | null>(null);
+  const [processingInbox, setProcessingInbox] = useState(false);
+  const didAutoProcess = useRef(false);
+  const hasPending = captures.some(item => item.status === "queued");
   const selected = visible.find(item => item.id === selectedId) ?? visible[0];
+
+  async function runProcessPending() {
+    setProcessingInbox(true);
+    try {
+      await fetch("/api/v1/captures/process-pending", {method: "POST"});
+    } catch {}
+    finally { setProcessingInbox(false); }
+  }
+
+  useEffect(() => {
+    if (didAutoProcess.current) return;
+    if (!hasPending) return;
+    didAutoProcess.current = true;
+    void runProcessPending();
+  }, [hasPending]);
 
   useEffect(() => {
     if (didReadParams.current) return;
@@ -376,6 +510,12 @@ export default function CaptureInbox() {
                 </button>
               )}
             </div>
+            {hasPending && (
+              <button className="secondary process-inbox-btn" disabled={processingInbox} onClick={() => void runProcessPending()} aria-label="Process pending handwriting">
+                <Sparkle />{processingInbox ? "Processing…" : "Process inbox"}
+              </button>
+            )}
+            <DurableRecorder onFinished={file => {const id = addVoiceCapture(file); choose(id);}} label="Record lecture or voice memo"/>
             <div className="capture-filters" role="tablist" aria-label="Capture status">
               {filters.map(item => {
                 const count = item === "All"
@@ -657,6 +797,8 @@ export default function CaptureInbox() {
                       </div>
                     ))}
                   </section>
+
+                  <TranscriptPanel capture={selected}/>
                 </>
               )}
 
@@ -798,7 +940,7 @@ function CaptureRow({
       tabIndex={0}
       role="button"
       aria-pressed={selected}
-      aria-label={`${capture.text}. ${statusMeta[capture.status].label}. Open capture details`}
+      aria-label={`${capture.text}. ${statusMeta[capture.status].label}. Open capture`}
     >
       <div className="card-top">
         <strong className="card-title">{capture.text}</strong>
