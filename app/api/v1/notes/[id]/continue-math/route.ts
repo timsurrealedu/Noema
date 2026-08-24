@@ -1,6 +1,6 @@
-import {listMathContinuations,requestMathContinuation,resolveMathContinuation} from "../../../../../server/math.mjs";
-import {insertMarkdownBlockAfter} from "../../../../../server/vault.mjs";
-import {body,handle,json,requireWorkspace} from "../../../../../server/http.mjs";
+import {listMathContinuations,requestMathContinuation,resolveMathContinuation} from "../../../../../../server/math.mjs";
+import {insertMarkdownBlockAfter} from "../../../../../../server/vault.mjs";
+import {body,handle,json,requireWorkspace} from "../../../../../../server/http.mjs";
 
 export const runtime="nodejs";
 
