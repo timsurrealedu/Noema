@@ -4,6 +4,14 @@
 - **Sources:** `AUDIT_REPORT.md`, `COMPARISON_WITH_DEEPSEEK_AUDIT.md`, `../deepseek-audit/*`
 - **Owner model:** Solo developer (assumed). Effort sizes: **S** <0.5d · **M** 0.5–2d · **L** 2–5d · **XL** 5–10d. Add 20–30% buffer.
 - **Method:** Phased/milestone hybrid — each phase ends in a demo-able gate tied to one of Timmy's real scenarios. Dependencies explicit; Phases 0→1→3 are the critical path.
+- **Progress (2026-08-24, PM session — see STATUS_2026-08-24-pm.md):**
+  - ✅ P1 leftovers closed: note-overlay pinch-zoom + ctrl-wheel (CSS zoom w/ anchor-corrected scroll), ink insert handle wired into MarkdownBlock, PDF annotator pinch gestures, stroke coords verified layout-normalized while zoomed (e2e `03-note-zoom.spec.ts`). F1.3 content-anchoring remains deferred by mitigation plan
+  - ✅ F3.4 core: note→PDF now renders display/inline math as Unicode equation cards, embeds asset images (PNG/JPG), vector-draws ink blocks from vault sidecars
+  - ✅ F4.1 remainder: recorder recovery offers Recover (finalize path) not just Discard
+  - ✅ F5.5 done: multi-day spanning (Month/Day/Agenda), Month "+N more" popover, per-cell quick-add "+", Day click-slot create
+  - ✅ F6.2/F6.3/F6.4 closed: insert-after-active-block targeting via `afterBlockId`, tutor insert refreshes open editor (ref handle), plain-note double-insert fixed, parallel math uses quality profile
+  - ⚠️ Pre-existing flake: `02-handwriting.spec.ts` fails on clean HEAD sometimes
+  - Next: Phase 7 (Binusmaya import-first), then P8/P9; P2 minor leftovers listed in status doc
 - **Progress (2026-08-24):**
   - ✅ Phase 0 complete — all behavioral P0s green (G0)
   - ✅ Phase 1 complete — shared ink viewport helpers (`lib/ink.ts`), dynamic touch-action, in-flow ink blocks w/ handles, mode ergonomics, PDF annotator pointer grammar (F1.3 shipped as block-level flow anchoring per mitigation plan; pixel-level stroke anchoring deferred)

@@ -16,6 +16,7 @@ import {isVaultBackedNote} from "../lib/noteKind";
 
 const MarkdownContent=dynamic(()=>import("../components/MarkdownContent").then(module=>module.MarkdownContent));
 const MixedNoteEditor=dynamic(()=>import("../components/MixedNoteEditor").then(module=>module.MixedNoteEditor));
+type MixedEditorHandle=import("../components/MixedNoteEditor").MixedEditorHandle;
 
 const blankNote=():Note=>({id:createId(),title:"Untitled note",excerpt:"",content:"# Untitled note\n\n",tags:[],time:"Now",ai:false,source:"Created in Noema"});
 type Optimization={id:string;mode:string;state:string;before_content:string;after_content:string|null;summary:string|null;provider:string|null;error:string|null;operations?:{type:string;start:number;end:number;replacement:string;reason:string}[]};
@@ -37,9 +38,10 @@ export default function VaultPage(){
   const [showProperties,setShowProperties]=useState(true);
   const [mixedDirty,setMixedDirty]=useState(false);
   const [titleDirty,setTitleDirty]=useState(false);
-  const titleTimer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined);
-  const titleDirtyRef=useRef(false);
-  const draftRef=useRef<Note|null>(null);
+   const titleTimer=useRef<ReturnType<typeof setTimeout>|undefined>(undefined);
+   const titleDirtyRef=useRef(false);
+   const draftRef=useRef<Note|null>(null);
+   const mixedRef=useRef<MixedEditorHandle|null>(null);
   const [optimizations,setOptimizations]=useState<Optimization[]>([]),[optimizing,setOptimizing]=useState(false),[optimizationError,setOptimizationError]=useState(""),[openError,setOpenError]=useState("");
   const [optimizeMode,setOptimizeMode]=useState<OptimizeMode>("organize");
   
@@ -227,7 +229,7 @@ export default function VaultPage(){
             <button className="secondary note-secondary-action" onClick={exportNote}><DownloadSimple /><span>Markdown</span></button><button className="secondary note-secondary-action" onClick={exportPdf}><DownloadSimple /><span>PDF</span></button>
             <button className="icon-button secondary fullscreen-toggle" title={fullscreen ? "Exit fullscreen" : "Fullscreen"} aria-label={fullscreen ? "Exit fullscreen" : "Open note fullscreen"} onClick={toggleFullscreen}>{fullscreen ? <ArrowsIn /> : <ArrowsOut />}</button>
           </header>
-          <MixedNoteEditor noteId={draft.id} initialContent={draft.content} initialInk={new URLSearchParams(location.search).get("ink") === "1"} onNavigateNote={navigateToNote} onDirtyChange={setMixedDirty} fullscreen={fullscreen} onToggleFullscreen={toggleFullscreen} />
+          <MixedNoteEditor ref={mixedRef} noteId={draft.id} initialContent={draft.content} initialInk={new URLSearchParams(location.search).get("ink") === "1"} onNavigateNote={navigateToNote} onDirtyChange={setMixedDirty} fullscreen={fullscreen} onToggleFullscreen={toggleFullscreen} />
           <aside className="note-inspector">
             <div className="object-inspector-head"><div><span>Properties</span></div><button className="icon-button" aria-label="Collapse properties panel" title="Collapse properties panel" onClick={() => setShowProperties(false)}><X /></button></div>
             <label>Title<input value={draft.title} onChange={e => handleTitleChange(e.target.value)} /></label>
@@ -238,7 +240,7 @@ export default function VaultPage(){
             <div><small>Blocks</small><strong>{draft.blocks?.length || 1} ordered blocks</strong></div>
           </aside>
         </section>
-        {tutorOpen && <TutorPanel kind="note" context={{ id: draft.id, title: draft.title, content: draft.content }} onApply={() => { }} onClose={() => setTutorOpen(false)} />}
+        {tutorOpen && <TutorPanel kind="note" context={{ id: draft.id, title: draft.title, content: draft.content }} onApply={() => mixedRef.current?.refresh()} getInsertAfter={() => mixedRef.current?.getActiveBlock()} onClose={() => setTutorOpen(false)} />}
       </ModuleShell>
     );
   }
@@ -298,7 +300,7 @@ export default function VaultPage(){
           <details><summary>Full original</summary><pre>{proposal.before_content}</pre></details>
           <details open={!proposal.operations?.length}><summary>Full proposal</summary><pre>{proposal.after_content}</pre></details>
         </div><footer><button className="secondary" onClick={() => decide(proposal, "reject")}>Reject</button><button className="primary" onClick={() => decide(proposal, "apply")}>Apply proposal</button></footer></section>}
-        {tutorOpen && <TutorPanel kind="note" context={{ id: draft.id, title: draft.title, content: draft.content }} onApply={value => update(`${draft.content.trim()}\n\n${value.trim()}\n`)} onClose={() => setTutorOpen(false)} />}
+        {tutorOpen && <TutorPanel kind="note" context={{ id: draft.id, title: draft.title, content: draft.content }} onApply={value => setDraft(current => current ? {...current, content: value} : current)} onClose={() => setTutorOpen(false)} />}
       </ModuleShell>
     );
   }

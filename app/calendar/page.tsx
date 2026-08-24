@@ -82,6 +82,16 @@ const isSameDate = (d1: Date | string | null | undefined, d2: Date) => {
   );
 };
 
+const coversDate = (startAt: string | null | undefined, endAt: string | null | undefined, date: Date, legacyDay?: number) => {
+  if (!startAt) return typeof legacyDay === "number" && legacyDay === (date.getDay() + 6) % 7;
+  const start = new Date(startAt);
+  const end = endAt ? new Date(endAt) : new Date(start.getTime() + 7200000);
+  const dayStart = new Date(date);
+  dayStart.setHours(0, 0, 0, 0);
+  const dayEnd = new Date(dayStart.getTime() + 86400000);
+  return start < dayEnd && end > dayStart;
+};
+
 export default function CalendarPage() {
   const {events, calendarItems, saveEvent, saveTask, toggleTask} = useAppState();
   const [draft, setDraft] = useState<Event | null>(null);
@@ -114,6 +124,7 @@ export default function CalendarPage() {
   const longPressTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const ghostRef = useRef<HTMLDivElement | null>(null);
   const [undoToast, setUndoToast] = useState<{message: string; onUndo: () => void} | null>(null);
+  const [moreDay, setMoreDay] = useState<Date | null>(null);
   const userSelectedView = useRef(false);
   const [hydrated,setHydrated]=useState(false);
   useEffect(()=>setHydrated(true),[]);
@@ -256,7 +267,7 @@ export default function CalendarPage() {
   const allDayEvents=weekEvents.filter(event=>event.allDay),timedEvents=weekEvents.filter(event=>!event.allDay);
   const allDayTasks=taskItems.filter(task=>!task.scheduledStartAt),timedTaskItems=taskItems.filter(task=>!!task.scheduledStartAt);
 
-  const selectedEvents = displayEvents.filter(event => (event.startAt ? isSameDate(event.startAt, activeSelectedDate) : event.day === selectedDay));
+  const selectedEvents = displayEvents.filter(event => coversDate(event.startAt, event.endAt, activeSelectedDate, event.day));
   const selectedTasks = allTasks
     .filter(task => isSameDate(task.scheduledStartAt || task.dueAt, activeSelectedDate))
     .map(task => {
@@ -267,7 +278,7 @@ export default function CalendarPage() {
     });
   const hasSelectedItems = selectedTasks.length + selectedEvents.length > 0;
 
-  const agenda = displayEvents.filter(event => (event.startAt ? isSameDate(event.startAt, activeSelectedDate) : event.day === selectedDay));
+  const agenda = displayEvents.filter(event => coversDate(event.startAt, event.endAt, activeSelectedDate, event.day));
   const taskAgenda = allTasks
     .filter(task => isSameDate(task.scheduledStartAt || task.dueAt, activeSelectedDate))
     .map(task => {
@@ -291,6 +302,13 @@ export default function CalendarPage() {
     const event = events.find(item => item.id === id);
     if (event) setDraft({...event});
   }, [events]);
+
+  useEffect(() => {
+    if (!moreDay) return;
+    const escape = (event: globalThis.KeyboardEvent) => { if (event.key === "Escape") setMoreDay(null); };
+    addEventListener("keydown", escape);
+    return () => removeEventListener("keydown", escape);
+  }, [moreDay]);
 
   useEffect(() => {
     fetch("/api/v1/calendar-sync")
@@ -466,7 +484,17 @@ export default function CalendarPage() {
                 <time key={t}>{t}</time>
               ))}
             </div>
-            <div>
+            <div
+              aria-label="Day schedule"
+              onClick={event => {
+                const target = event.target as HTMLElement;
+                if (target.closest("button")) return;
+                const rect = event.currentTarget.getBoundingClientRect();
+                const start = withMinutes(activeSelectedDate, snapMinutes(Math.max(0, event.clientY - rect.top)));
+                const end = new Date(start.getTime() + 3600000);
+                setDraft({...blankEvent(), day: selectedDay, time: eventTime(start.toISOString()), startAt: start.toISOString(), endAt: end.toISOString()});
+              }}
+            >
               {selectedEvents.map(event => (
                 <button style={{top: dayPositionFor(event.time), height: event.height}} key={event.id} onClick={() => setDraft({...event})}>
                   <time dateTime={event.startAt || undefined}>{event.time}</time>
@@ -498,7 +526,6 @@ export default function CalendarPage() {
             {Array.from({length: monthGridTotal}, (_, index) => {
               const dateNum = index - firstDayOffset + 1;
               const isValidDate = dateNum > 0 && dateNum <= daysInMonth;
-              const dayOfWeekIndex = index % 7;
               const isTodayDate = isValidDate && dateNum === todayDateNum;
 
               const cellDate = isValidDate ? new Date(currentYear, currentMonth, dateNum) : null;
@@ -507,7 +534,7 @@ export default function CalendarPage() {
                 ? allTasks.filter(task => isSameDate(task.scheduledStartAt || task.dueAt, cellDate))
                 : [];
               const cellEvents = cellDate
-                ? displayEvents.filter(event => (event.startAt ? isSameDate(event.startAt, cellDate) : event.day === dayOfWeekIndex && isTodayDate))
+                ? displayEvents.filter(event => coversDate(event.startAt, event.endAt, cellDate, event.day))
                 : [];
 
               return (
@@ -527,6 +554,7 @@ export default function CalendarPage() {
                   }}
                 >
                   <span>{isValidDate ? dateNum : ""}</span>
+                  {cellDate&&<span className="calendar-cell-add" role="button" tabIndex={0} aria-label={`Add event on ${cellDate.toLocaleDateString()}`} onClick={event=>{event.stopPropagation();setDraft({...blankEvent(),day:(cellDate.getDay()+6)%7,time:"09:00"})}}>+</span>}
                   {cellEvents.slice(0, 2).map(event => (
                     <small key={event.id}>
                       {event.title}
@@ -543,6 +571,9 @@ export default function CalendarPage() {
                       {task.title}
                     </small>
                   ))}
+                  {cellDate&&(Math.max(0,cellEvents.length-2)+Math.max(0,cellTasks.length-2))>0&&(
+                    <small className="month-more" role="button" tabIndex={0} aria-label={`${Math.max(0,cellEvents.length-2)+Math.max(0,cellTasks.length-2)} more items on ${cellDate.toLocaleDateString()}`} onClick={event=>{event.stopPropagation();selectDate(cellDate);setMoreDay(cellDate)}}>+{Math.max(0,cellEvents.length-2)+Math.max(0,cellTasks.length-2)} more</small>
+                  )}
                 </button>
               );
             })}
@@ -575,6 +606,35 @@ export default function CalendarPage() {
               <p className="agenda-empty">Nothing scheduled for this day.</p>
             )}
           </section>
+        )}
+
+        {moreDay && (
+          <div className="day-popover-backdrop" onClick={() => setMoreDay(null)}>
+            <section className="day-popover" role="dialog" aria-modal="false" aria-label={`Full schedule for ${moreDay.toLocaleDateString()}`} onClick={event => event.stopPropagation()}>
+              <header>
+                <strong>{moreDay.toLocaleDateString(undefined, {weekday: "long", month: "long", day: "numeric"})}</strong>
+                <button type="button" className="icon-button" aria-label="Close day details" onClick={() => setMoreDay(null)}><X /></button>
+              </header>
+              {displayEvents.filter(event => coversDate(event.startAt, event.endAt, moreDay, event.day)).map(event => (
+                <button key={event.id} onClick={() => { setDraft({...event}); setMoreDay(null); }}>
+                  <time>{formatTimeRange(event.startAt, event.endAt, event.time, event.timezone)}</time>
+                  <span><strong>{event.title}</strong><small>{event.location || "Event"}</small></span>
+                </button>
+              ))}
+              {allTasks.filter(task => isSameDate(task.scheduledStartAt || task.dueAt, moreDay)).map(task => (
+                <button key={`task-${task.id}`} className="calendar-task" onClick={() => { openTask(task.id); setMoreDay(null); }}>
+                  <time>{task.scheduledStartAt ? eventTime(task.scheduledStartAt) : "All day"}</time>
+                  <span><strong>{task.title}</strong><small>Task · {task.project || "No project"}</small></span>
+                </button>
+              ))}
+              {!displayEvents.some(event => coversDate(event.startAt, event.endAt, moreDay, event.day)) && !allTasks.some(task => isSameDate(task.scheduledStartAt || task.dueAt, moreDay)) && (
+                <p className="agenda-empty">Nothing scheduled.</p>
+              )}
+              <footer>
+                <button type="button" className="primary" onClick={() => { setDraft({...blankEvent(), day: (moreDay.getDay() + 6) % 7, time: "09:00"}); setMoreDay(null); }}>Add event</button>
+              </footer>
+            </section>
+          </div>
         )}
 
         {undoToast && (

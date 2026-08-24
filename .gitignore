@@ -14,3 +14,4 @@ test-results/
 
 # Claude Code harness temp files (atomic-write leftovers)
 .claude/settings.local.json.tmp.*
+zoom-vault-repo/

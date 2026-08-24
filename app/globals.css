@@ -961,3 +961,27 @@ article.task-subtask{padding-left:34px;font-size:.88rem}
 .tutor-variant-tabs button{padding:3px 10px;border:1px solid var(--border);border-radius:9999px;background:transparent;color:var(--muted);font-size:.72rem;cursor:pointer}
 .tutor-variant-tabs button[aria-selected="true"]{background:var(--primary-soft);color:var(--primary);border-color:var(--primary)}
 .tutor-variant-tabs button.failed{opacity:.5;cursor:not-allowed}
+
+/* P1: per-block ink insertion handle + note page zoom */
+.markdown-block-editor{position:relative}
+.markdown-block-editor .block-actions{display:flex;align-items:center;gap:4px;min-height:28px;margin-top:2px;opacity:0;transition:opacity .15s ease}
+.markdown-block-editor .block-actions button{min-height:30px;padding:2px 10px;border:1px solid var(--border);border-radius:9999px;background:transparent;color:var(--muted);font-size:.72rem;cursor:pointer}
+.markdown-block-editor .block-actions button:hover{background:var(--raised);color:var(--primary);border-color:var(--primary)}
+.markdown-block-editor:hover .block-actions,.markdown-block-editor:focus-within .block-actions{opacity:.85}
+@media(hover:none){.markdown-block-editor .block-actions{opacity:.7}.markdown-block-editor .block-actions button{min-height:36px}}
+
+/* F5.5: month quick-add, +N more, day popover */
+.month-view button{position:relative}
+.calendar-cell-add{position:absolute;top:2px;right:4px;width:20px;height:20px;display:none;place-items:center;border-radius:50%;background:var(--raised);color:var(--muted);font-size:.9rem;line-height:1;cursor:pointer}
+.month-view button:hover .calendar-cell-add,.month-view button:focus-within .calendar-cell-add{display:grid}
+.calendar-cell-add:hover{background:var(--primary);color:var(--primary-ink)}
+@media(hover:none){.calendar-cell-add{display:grid;opacity:.6}}
+.month-more{color:var(--primary)!important;font-weight:600;cursor:pointer}
+.month-more:hover{text-decoration:underline}
+.day-popover-backdrop{position:fixed;inset:0;z-index:80;background:color-mix(in oklch,var(--ink) 25%,transparent);display:grid;place-items:center}
+.day-popover{width:min(420px,calc(100vw - 32px));max-height:min(70vh,560px);overflow-y:auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--r-lg);padding:14px;box-shadow:0 18px 48px rgba(0,0,0,.35)}
+.day-popover header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.day-popover>button{display:flex;align-items:center;gap:10px;width:100%;padding:8px 10px;margin:2px 0;border:1px solid var(--border);border-radius:var(--r-sm);background:transparent;color:var(--ink);text-align:left;cursor:pointer}
+.day-popover>button:hover{background:var(--raised)}
+.day-popover>button time{font-size:.75rem;color:var(--muted);min-width:88px}
+.day-popover footer{margin-top:10px;display:flex;justify-content:flex-end}

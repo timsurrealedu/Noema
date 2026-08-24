@@ -25,6 +25,7 @@ import {
 } from "@phosphor-icons/react";
 import {InkEditor} from "./InkEditor";
 import {
+  clampZoom,
   eraseAt,
   InkPoint,
   InkStroke,
@@ -171,6 +172,9 @@ function MarkdownBlock({
           <MarkdownContent text={value} onNavigateNote={onNavigateNote} />
         </article>
       )}
+      <nav className="block-actions" aria-label={`Actions for block ${block.position + 1}`}>
+        <button type="button" onClick={() => onInsertInk(block, value, value.length)} title="Insert a handwriting block after this block">Insert ink</button>
+      </nav>
     </div>
   );
 }
@@ -221,6 +225,7 @@ function IntegratedOverlayCanvas({
   size,
   interactive,
   visible = true,
+  zoomRef,
   onChange
 }: {
   width: number;
@@ -231,6 +236,7 @@ function IntegratedOverlayCanvas({
   size: number;
   interactive: boolean;
   visible?: boolean;
+  zoomRef?: {current: number};
   onChange: (nextStrokes: InkStroke[]) => void;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
@@ -253,9 +259,10 @@ function IntegratedOverlayCanvas({
   function getPoint(event: {clientX:number;clientY:number;pressure:number;pointerType:string;timeStamp:number;tiltX:number;tiltY:number}): InkPoint | null {
     if (!svgRef.current) return null;
     const rect = svgRef.current.getBoundingClientRect();
+    const scale = zoomRef?.current || 1;
     return {
-      x: Math.max(0, Math.min(rect.width, event.clientX - rect.left)),
-      y: Math.max(0, Math.min(rect.height, event.clientY - rect.top)),
+      x: Math.max(0, Math.min(rect.width, event.clientX - rect.left)) / scale,
+      y: Math.max(0, Math.min(rect.height, event.clientY - rect.top)) / scale,
       pressure: event.pressure > 0 ? event.pressure : event.pointerType === "pen" ? 0.5 : 1,
       time: event.timeStamp,
       tiltX: Number(event.tiltX) || 0,
@@ -397,6 +404,8 @@ function IntegratedOverlayCanvas({
   );
 }
 
+export type MixedEditorHandle={refresh:()=>void;getActiveBlock:()=>string|null};
+
 export function MixedNoteEditor({
   noteId,
   initialContent = "",
@@ -404,7 +413,8 @@ export function MixedNoteEditor({
   onNavigateNote,
   onDirtyChange,
   fullscreen,
-  onToggleFullscreen
+  onToggleFullscreen,
+  ref
 }: {
   noteId: string;
   initialContent?: string;
@@ -413,6 +423,7 @@ export function MixedNoteEditor({
   onDirtyChange?: (dirty: boolean) => void;
   fullscreen?: boolean;
   onToggleFullscreen?: () => void;
+  ref?: {current: MixedEditorHandle | null};
 }) {
   const [blocks, setBlocks] = useState<Block[]>([]);
   const [error, setError] = useState("");
@@ -423,6 +434,7 @@ export function MixedNoteEditor({
   const markdownTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const saveChains = useRef(new Map<string, Promise<void>>());
   const markdownSaving = useRef(new Set<string>());
+  const activeBlockRef = useRef<string | null>(null);
 
   function updateDirty() {
     onDirtyChange?.(markdownPending.current.size > 0 || markdownTimers.current.size > 0 || markdownSaving.current.size > 0);
@@ -612,16 +624,98 @@ export function MixedNoteEditor({
   }, [viewMode, editorMode]);
 
   const pageRef = useRef<HTMLDivElement>(null);
+  const pageZoomRef = useRef(1);
+  const [pageZoom, setPageZoom] = useState(1);
+  const pinchGesture = useRef<{distance: number} | null>(null);
+  const wheelZoomTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  function commitPageZoom(next: number, anchor?: {x: number; y: number}) {
+    const container = docRef.current;
+    const page = pageRef.current;
+    const previous = pageZoomRef.current;
+    const zoom = clampZoom(next);
+    if (!container || !page || zoom === previous) return previous;
+    const scrollLeft = container.scrollLeft;
+    const scrollTop = container.scrollTop;
+    page.style.zoom = String(zoom);
+    pageZoomRef.current = zoom;
+    if (anchor) {
+      const ratio = zoom / previous;
+      container.scrollLeft = (scrollLeft + anchor.x) * ratio - anchor.x;
+      container.scrollTop = (scrollTop + anchor.y) * ratio - anchor.y;
+    }
+    return zoom;
+  }
+
+  useEffect(() => {
+    const container = docRef.current;
+    if (!container) return;
+    const center = (touches: TouchList) => {
+      const rect = container.getBoundingClientRect();
+      return {x: (touches[0].clientX + touches[1].clientX) / 2 - rect.left, y: (touches[0].clientY + touches[1].clientY) / 2 - rect.top};
+    };
+    const spread = (touches: TouchList) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+    const onTouchStart = (event: TouchEvent) => {
+      if (event.touches.length === 2) {
+        pinchGesture.current = {distance: spread(event.touches)};
+        event.preventDefault();
+      }
+    };
+    const onTouchMove = (event: TouchEvent) => {
+      const gesture = pinchGesture.current;
+      if (!gesture || event.touches.length !== 2) return;
+      event.preventDefault();
+      const distance = spread(event.touches);
+      const ratio = distance / Math.max(1, gesture.distance);
+      gesture.distance = distance;
+      commitPageZoom(pageZoomRef.current * ratio, center(event.touches));
+    };
+    const onTouchEnd = (event: TouchEvent) => {
+      if (pinchGesture.current && event.touches.length < 2) {
+        pinchGesture.current = null;
+        setPageZoom(pageZoomRef.current);
+      }
+    };
+    const onWheel = (event: WheelEvent) => {
+      if (!event.ctrlKey && !event.metaKey) return;
+      event.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const zoom = commitPageZoom(pageZoomRef.current * (event.deltaY < 0 ? 1.1 : 0.9), {x: event.clientX - rect.left, y: event.clientY - rect.top});
+      if (wheelZoomTimer.current) clearTimeout(wheelZoomTimer.current);
+      wheelZoomTimer.current = setTimeout(() => setPageZoom(zoom), 160);
+    };
+    container.addEventListener("touchstart", onTouchStart, {passive: false});
+    container.addEventListener("touchmove", onTouchMove, {passive: false});
+    container.addEventListener("touchend", onTouchEnd);
+    container.addEventListener("touchcancel", onTouchEnd);
+    container.addEventListener("wheel", onWheel, {passive: false});
+    return () => {
+      container.removeEventListener("touchstart", onTouchStart);
+      container.removeEventListener("touchmove", onTouchMove);
+      container.removeEventListener("touchend", onTouchEnd);
+      container.removeEventListener("touchcancel", onTouchEnd);
+      container.removeEventListener("wheel", onWheel);
+      if (wheelZoomTimer.current) clearTimeout(wheelZoomTimer.current);
+    };
+  }, [loading]);
+
+  function resetPageZoom() {
+    const anchor = docRef.current ? {x: docRef.current.clientWidth / 2, y: docRef.current.clientHeight / 2} : undefined;
+    commitPageZoom(1, anchor);
+    setPageZoom(pageZoomRef.current);
+  }
+
 
   useEffect(() => {
     if (!pageRef.current) return;
     const observer = new ResizeObserver(entries => {
       for (const entry of entries) {
         if (pageRef.current) {
+          const scale = pageZoomRef.current || 1;
           const scrollH = pageRef.current.scrollHeight || 0;
           const contentH = entry.contentRect ? Math.floor(entry.contentRect.height) : 0;
-          setViewportWidth(Math.floor(pageRef.current.getBoundingClientRect().width));
-          setViewportHeight(Math.max(500, scrollH, contentH));
+          setViewportWidth(Math.max(320, Math.floor(pageRef.current.getBoundingClientRect().width / scale)));
+          setViewportHeight(Math.max(500, Math.floor(scrollH / scale), contentH));
         }
       }
     });
@@ -724,9 +818,16 @@ export function MixedNoteEditor({
   }
 
   async function markdown(block: Block, value: string) {
+    activeBlockRef.current = block.id;
     setBlocks(items => items.map(item => (item.id === block.id ? {...item, markdown: value} : item)));
     queueMarkdown(block, value);
   }
+
+  useEffect(() => {
+    if (!ref) return;
+    ref.current = {refresh: () => void load(), getActiveBlock: () => activeBlockRef.current};
+    return () => { ref.current = null; };
+  });
 
   async function add(kind: "markdown" | "ink", source?: Block) {
     if (kind === "markdown") {
@@ -904,6 +1005,7 @@ export function MixedNoteEditor({
             <summary aria-label="More note options" title="More note options"><DotsThree size={20} /></summary>
             <div>
               <button onClick={() => setShowAnnotations(v => !v)}>{showAnnotations ? <Eye size={18} /> : <EyeSlash size={18} />}<span>{showAnnotations ? "Hide ink" : "Show ink"}</span></button>
+              {pageZoom !== 1 && <button onClick={resetPageZoom}><span>Reset zoom ({Math.round(pageZoom * 100)}%)</span></button>}
               {onToggleFullscreen && <button onClick={onToggleFullscreen}>{fullscreen ? <ArrowsIn size={18} /> : <ArrowsOut size={18} />}<span>{fullscreen ? "Exit fullscreen" : "Fullscreen"}</span></button>}
             </div>
           </details>
@@ -1093,6 +1195,7 @@ export function MixedNoteEditor({
             size={size}
             interactive={editorMode === "ink"}
             visible={showAnnotations}
+            zoomRef={pageZoomRef}
             onChange={saveInkStrokes}
           />
 

@@ -1,7 +1,7 @@
 "use client";
 
 import {useEffect,useRef,useState} from "react";
-import {Microphone,Pause,Play,Trash,Stop,CircleNotch} from "@phosphor-icons/react";
+import {Microphone,Pause,Play,Trash,Stop,CircleNotch,UploadSimple} from "@phosphor-icons/react";
 import {deleteRecording,listUnfinishedRecordings,loadRecording,saveRecordingChunk} from "../lib/offlineQueue";
 
 type Props={onFinished:(file:File)=>void;label?:string};
@@ -29,6 +29,13 @@ export function DurableRecorder({onFinished,label="Record voice"}:Props){
       recorder.current?.state==="recording"&&recorder.current.stop();
     };
   },[]);
+
+  async function refreshRecoverable(){
+    try{
+      const ids=await listUnfinishedRecordings();
+      setRecoverable(ids[0]||null);
+    }catch{setRecoverable(null)}
+  }
 
   async function persist(event:BlobEvent){
     if(!event.data.size)return;
@@ -72,7 +79,22 @@ export function DurableRecorder({onFinished,label="Record voice"}:Props){
 
   async function discard(id:string){
     await deleteRecording(id);
-    setRecoverable(null);
+    await refreshRecoverable();
+  }
+
+  async function recover(id:string){
+    setError("");
+    try{
+      const chunks=await loadRecording(id);
+      if(!chunks.length){await deleteRecording(id)}
+      else{
+        const type=chunks[0].mime||pickMime();
+        onFinished(new File(chunks.map(chunk=>chunk.blob),`lecture-${id}.webm`,{type}));
+        await deleteRecording(id);
+      }
+      setRecoverable(null);
+      await refreshRecoverable();
+    }catch(reason){setError(reason instanceof Error?reason.message:"Could not recover the recording")}
   }
 
   return (
@@ -80,6 +102,7 @@ export function DurableRecorder({onFinished,label="Record voice"}:Props){
       {recoverable&&state==="idle"&&(
         <span className="recorder-recover">
           <CircleNotch aria-hidden="true"/><span>Unfinished recording found</span>
+          <button type="button" className="primary" onClick={()=>void recover(recoverable)} aria-label="Recover unfinished recording"><UploadSimple/>Recover</button>
           <button type="button" className="secondary" onClick={()=>void discard(recoverable)} aria-label="Discard unfinished recording"><Trash/>Discard</button>
         </span>
       )}
