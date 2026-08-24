@@ -340,7 +340,7 @@ body:has(.obsidian-vault),html:has(.obsidian-vault){background:var(--surface)!im
   .code-hl,.code-editor textarea.code-body{padding-left:6px!important;padding-right:6px!important;font-size:16px!important;line-height:24px!important}
   .caret-pos-indicator.hide-mobile{display:none!important}
   .mobile-nav{position:fixed!important;z-index:1000!important}
-  .home-task-fab,.vault-mobile-action,.top-primary,.mobile-action-dock{bottom:calc(84px + env(safe-area-inset-bottom))!important}
+  .home-task-fab,.vault-mobile-action,.top-primary{bottom:calc(84px + env(safe-area-inset-bottom))!important}
 }
 .code-symbols{flex:1 1 auto;display:flex;align-items:center;gap:6px;overflow-x:auto;scrollbar-width:none;padding:4px 10px 4px 6px;touch-action:pan-x}
 .code-symbols::-webkit-scrollbar{display:none}
@@ -721,8 +721,8 @@ dialog::backdrop{background:color-mix(in oklch,var(--bg) 62%,transparent)}
 .field-error{margin:-8px 0 0;color:var(--error);font-size:.875rem;line-height:1.4}
 @media(pointer:coarse){.task-check,.row-menu,.capture-add,.capture-tool,.send,.view-switch button,.calendar-toolbar button{min-width:44px;min-height:44px}}
 @media(max-width:820px){
-  .mobile-action-dock{position:fixed;z-index:23;right:max(16px,env(safe-area-inset-right));bottom:calc(72px + env(safe-area-inset-bottom));left:auto;display:flex;width:auto;padding:0;border:0;background:transparent}
-  .mobile-action-dock .primary{width:auto;min-height:48px;padding:0 18px;border-radius:999px;text-decoration:none;white-space:nowrap;box-shadow:0 6px 18px color-mix(in oklch,var(--bg) 72%,transparent)}
+  .mobile-action-dock{position:fixed;z-index:23;right:0;bottom:calc(72px + env(safe-area-inset-bottom));left:0;display:flex;width:100%;padding:0 max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left));border:0;background:transparent}
+  .mobile-action-dock .primary{flex:1;display:flex;align-items:center;justify-content:center;width:auto;min-height:48px;padding:0 18px;border-radius:var(--r-sm);text-decoration:none;white-space:nowrap;box-shadow:0 6px 18px color-mix(in oklch,var(--bg) 72%,transparent)}
   .capture-mobile-fab{display:grid!important;position:fixed;z-index:24;right:max(16px,env(safe-area-inset-right));bottom:calc(80px + env(safe-area-inset-bottom));place-items:center;width:56px;height:56px;border-radius:50%;background:var(--primary);color:var(--bg);box-shadow:0 6px 20px rgba(0,0,0,.35)}
   .app-shell .capture input{font-size:16px}
   .app-shell .capture :is(.capture-add,.capture-tool,.send){width:44px;height:44px;min-width:44px;min-height:44px}
@@ -756,7 +756,8 @@ dialog::backdrop{background:color-mix(in oklch,var(--bg) 62%,transparent)}
   .app-shell>main{padding-top:24px;padding-bottom:calc(96px + env(safe-area-inset-bottom))}.app-shell .mobile-date{margin-bottom:10px;color:var(--muted);font-size:.8rem}.app-shell .hero h1{font-size:1.55rem;margin:0 0 16px 0;line-height:1.25}.home-attention-summary{gap:10px;margin-top:0;margin-bottom:24px;align-items:center}.attention-stat{height:32px;min-height:32px;padding-inline:12px}.app-shell .capture{min-width:0;min-height:60px;margin-top:0;margin-bottom:28px;padding:7px 6px 7px 10px;gap:2px;border-color:color-mix(in oklch,var(--primary) 38%,var(--border));box-shadow:0 0 0 1px color-mix(in oklch,var(--primary) 9%,transparent)}.app-shell .capture :is(.capture-add,.capture-tool,.send){flex:0 0 44px;width:44px!important;min-width:44px!important;height:44px!important;min-height:44px!important}.app-shell .capture :is(.capture-tool,.send){border-radius:var(--r-sm)}.app-shell .capture :is(.capture-add,.capture-tool){color:var(--muted)}.app-shell .capture .send{color:var(--primary-ink)}.home-tasks{margin-top:0}.home-task-toolbar{display:none}.app-shell .task-grouped-sections{gap:10px}.app-shell .task-group{gap:0}.app-shell .task-group-title{margin:10px 0 2px;font-size:.75rem;letter-spacing:.04em}.app-shell .task-list article{grid-template-columns:44px minmax(0,1fr) 44px;gap:4px;min-height:44px;padding:4px 0}.app-shell .task-list :is(.task-check,.row-menu){width:44px!important;min-width:44px!important;height:44px!important;min-height:44px!important}.app-shell .task-copy{min-height:0;padding:0}.home-task-fab{position:fixed;z-index:23;right:max(16px,env(safe-area-inset-right));bottom:calc(80px + env(safe-area-inset-bottom));display:flex;align-items:center;justify-content:center;gap:7px;min-width:44px;min-height:48px;padding:0 13px;border:1px solid var(--border);border-radius:999px;background:var(--raised);color:var(--ink);font-weight:650;box-shadow:0 6px 18px color-mix(in oklch,var(--bg) 72%,transparent)}.home-task-fab:hover{border-color:var(--primary);background:var(--surface)}
 }
 @media(max-width:820px){.app-shell .capture{margin-bottom:10px}.home-task-fab{right:max(16px,env(safe-area-inset-right));bottom:calc(80px + env(safe-area-inset-bottom))}}
-@media(max-width:390px){.app-shell .capture-voice{display:none}}
+@media(max-width:430px){.app-shell .capture{flex-wrap:wrap;row-gap:8px;padding-block:8px}.app-shell .capture input[type=text]{order:-1;flex:1 0 100%;min-height:44px}.app-shell .capture :is(.capture-tool,.send,.capture-add){flex:none}}
+@media(max-width:390px){.app-shell .durable-recorder{display:flex;flex:none}}
 @media(max-width:360px){.app-shell .capture-add{display:none}.app-shell .capture input{width:100%}.attention-stat{padding-inline:8px;font-size:.76rem}.home-task-fab span{display:none}.home-task-fab{width:48px;padding:0}.mobile-action-dock .primary span{display:none}.mobile-action-dock .primary{width:48px;min-width:48px;padding:0}}
 
 /* Calendar timeline endpoints need room outside the 24 hourly slots. */
@@ -830,6 +831,7 @@ html[data-nav-dir="back"] .module-main{animation:noema-enter-back .18s var(--eas
 .module-main:has(.mixed-workspace),
 .module-main:has(.compiler-container),
 .module-main:has(.capture-inbox){animation:none}
+.module-main:has(.mobile-action-dock){animation:none}
 
 /* ===== Press feedback — buttons and nav links =====
    100ms scale confirms a tap without adding latency. Exits faster than it enters. */

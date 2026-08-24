@@ -842,9 +842,11 @@ export default function CaptureInbox() {
         </aside>
       </div>
 
-      <Link href="/#capture" className="mobile-action-dock capture-mobile-dock primary" aria-label="Quick capture">
-        <Plus weight="bold" /> Quick capture
-      </Link>
+      <div className="mobile-action-dock capture-mobile-dock">
+        <Link href="/#capture" className="primary" aria-label="Quick capture">
+          <Plus weight="bold" /> Quick capture
+        </Link>
+      </div>
 
       {toast && (
         <div className="undo-toast" role="status">

@@ -19,7 +19,7 @@ export function DurableRecorder({onFinished,label="Record voice"}:Props){
   const recordingId=useRef<string>("");
   const chunkIndex=useRef(0);
   const timer=useRef<ReturnType<typeof setInterval>|null>(null);
-  const mime=MediaRecorder.isTypeSupported("audio/webm;codecs=opus")?"audio/webm;codecs=opus":MediaRecorder.isTypeSupported("audio/webm")?"audio/webm":"audio/mp4";
+  const pickMime=()=>typeof MediaRecorder==="undefined"?"audio/mp4":MediaRecorder.isTypeSupported("audio/webm;codecs=opus")?"audio/webm;codecs=opus":MediaRecorder.isTypeSupported("audio/webm")?"audio/webm":"audio/mp4";
 
   useEffect(()=>{
     listUnfinishedRecordings().then(ids=>{if(ids.length)setRecoverable(ids[0])}).catch(()=>{});
@@ -32,7 +32,7 @@ export function DurableRecorder({onFinished,label="Record voice"}:Props){
 
   async function persist(event:BlobEvent){
     if(!event.data.size)return;
-    await saveRecordingChunk(recordingId.current,chunkIndex.current++,event.data,event.data.type||mime);
+    await saveRecordingChunk(recordingId.current,chunkIndex.current++,event.data,event.data.type||pickMime());
   }
 
   async function begin(){
@@ -41,7 +41,7 @@ export function DurableRecorder({onFinished,label="Record voice"}:Props){
       recordingId.current=`rec-${Date.now()}`;
       chunkIndex.current=0;
       stream.current=await navigator.mediaDevices.getUserMedia({audio:true});
-      const active=new MediaRecorder(stream.current,{mimeType:mime});
+      const active=new MediaRecorder(stream.current,{mimeType:pickMime()});
       active.ondataavailable=event=>void persist(event);
       active.start(1000);
       recorder.current=active;
@@ -60,7 +60,7 @@ export function DurableRecorder({onFinished,label="Record voice"}:Props){
     try{
       const chunks=await loadRecording(id);
       if(!chunks.length){setState("idle");return}
-      const type=chunks[0].mime||mime;
+      const type=chunks[0].mime||pickMime();
       const file=new File(chunks.map(chunk=>chunk.blob),`lecture-${id}.webm`,{type});
       onFinished(file);
       await deleteRecording(id);

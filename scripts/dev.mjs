@@ -1,7 +1,8 @@
 import {spawn} from "node:child_process";
 
+const extraArgs=process.argv.slice(2);
 const processes=[
-  ["web",spawn("npm",["run","dev:web"],{stdio:"inherit"})],
+  ["web",spawn("npm",["run","dev:web","--",...extraArgs],{stdio:"inherit"})],
   ["worker",spawn(process.execPath,["--env-file-if-exists=.env.local","server/worker.mjs"],{stdio:"inherit"})],
 ];
 let stopping=false;

@@ -1,5 +1,5 @@
-import {pullGoogleCalendar} from "../calendar-sync.mjs";
-import {log} from "../ops.mjs";
+import {pullGoogleCalendar} from "../../calendar-sync.mjs";
+import {log} from "../../ops.mjs";
 
 const SYNC_INTERVAL_MS=15*60*1000;
 let lastGoogleSync=0;
