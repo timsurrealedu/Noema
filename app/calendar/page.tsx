@@ -147,13 +147,6 @@ export default function CalendarPage() {
     media.addEventListener("change", adapt);
     return () => media.removeEventListener("change", adapt);
   }, []);
-  const chooseView = (next: "Day" | "Week" | "Month" | "Agenda") => {
-    userSelectedView.current = true;
-    setView(next);
-    if (typeof window !== "undefined")
-      localStorage.setItem(CALENDAR_VIEW_KEY, next);
-  };
-
   useEffect(()=>{
     const params=new URLSearchParams(location.search),date=selectedDate.toISOString().slice(0,10);
     params.set("view",view);params.set("date",date);
@@ -243,13 +236,6 @@ export default function CalendarPage() {
     setSelectedDate(next);
     setSelectedDay((next.getDay() + 6) % 7);
     setWeekOffset(weekOffsetFor(next));
-  }
-
-  function movePeriod(direction: number) {
-    const next = new Date(selectedDate);
-    if (view === "Month") next.setMonth(next.getMonth() + direction);
-    else next.setDate(next.getDate() + direction * (view === "Week" ? 7 : 1));
-    selectDate(next);
   }
 
   const allTasks = calendarItems
@@ -387,48 +373,6 @@ export default function CalendarPage() {
           </button>
         </div>
       )}
-      <div className="calendar-toolbar">
-        <div>
-          <button className="icon-button" aria-label="Previous period" onClick={() => movePeriod(-1)}>
-            <CaretLeft />
-          </button>
-          <h2>
-            {view === "Month"
-              ? viewMonthDate.toLocaleDateString(undefined, {month: "long", year: "numeric"})
-              : view === "Day" || view === "Agenda"
-              ? activeSelectedDate.toLocaleDateString(undefined, {weekday: "long", month: "long", day: "numeric"})
-              : period}
-          </h2>
-          <button className="icon-button" aria-label="Next period" onClick={() => movePeriod(1)}>
-            <CaretRight />
-          </button>
-          <button
-            className="secondary"
-            onClick={() => {
-              selectDate(realToday);
-            }}
-          >
-            Today
-          </button>
-          <button
-            className="secondary icon-button calendar-mobile-sync"
-            aria-label={syncing ? "Syncing calendar" : "Sync calendar"}
-            onClick={() => void triggerSync()}
-            disabled={syncing}
-          >
-            <ArrowsClockwise className={syncing ? "spin-icon" : ""} />
-          </button>
-        </div>
-        <div className="view-switch" role="group" aria-label="Calendar view">
-          {(["Day", "Week", "Month", "Agenda"] as const).map(item => (
-            <button className={view === item ? "active" : ""} onClick={() => chooseView(item)} key={item}>
-              {item}
-            </button>
-          ))}
-        </div>
-        <button className="primary calendar-primary-action" onClick={() => {setEventTitleError("");setDraft({...blankEvent(), day: selectedDay})}}>Add event</button>
-      </div>
-
       {(sync.writes.length > 0 || sync.conflicts.length > 0) && (
         <section className="auth-result" aria-label="Calendar sync status">
           <strong>
