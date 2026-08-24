@@ -89,12 +89,11 @@ function nextRecurrenceDue(dueIso,recurrence){
   const date=new Date(dueIso);
   if(Number.isNaN(date.valueOf()))return null;
   const rule=String(recurrence||"").toLowerCase();
-  if(rule.includes("day"))date.setUTCDate(date.getUTCDate()+1);
-  else if(rule.includes("week")&&!rule.includes("weekday"))date.setUTCDate(date.getUTCDate()+7);
+  if(rule.includes("weekday")){do{date.setUTCDate(date.getUTCDate()+1)}while(date.getUTCDay()===0||date.getUTCDay()===6)}
+  else if(rule.includes("day")||rule.includes("daily"))date.setUTCDate(date.getUTCDate()+1);
+  else if(rule.includes("week"))date.setUTCDate(date.getUTCDate()+7);
   else if(rule.includes("month"))date.setUTCMonth(date.getUTCMonth()+1);
-  else if(rule.includes("weekday")){
-    do{date.setUTCDate(date.getUTCDate()+1)}while(date.getUTCDay()===0||date.getUTCDay()===6);
-  }else return null;
+  else return null;
   return date.toISOString();
 }
 

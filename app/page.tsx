@@ -7,6 +7,7 @@ import {
   Sun, Tray, UploadSimple, Warning, X, Circle, DotsThree
 } from "@phosphor-icons/react";
 import Link from "next/link";
+import {useRouter} from "next/navigation";
 import {FormEvent, useEffect, useRef, useState} from "react";
 import { Task, useAppState } from "./components/AppState";
 import { ModalDialog } from "./components/ModalDialog";
@@ -23,7 +24,7 @@ const nav = [
   ["Calendar","/calendar",CalendarBlank],["Coding","/coding",Code]
 ] as const;
 
-const blankTask=():Task=>({id:createId(),title:"",project:"Inbox",due:"",dueAt:new Date().toISOString(),priority:"Medium",completed:false,status:"open"});
+const blankTask=():Task=>({id:createId(),title:"",project:"Inbox",due:"",dueAt:new Date().toISOString(),priority:"Medium",completed:false,status:"open",reminderAt:null});
 const localParts=(value:string)=>Object.fromEntries(new Intl.DateTimeFormat("en-GB",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(value)).map(part=>[part.type,part.value]));
 const dateValue=(value?:string|null)=>{if(!value)return "";const part=localParts(value);return `${part.year}-${part.month}-${part.day}`};
 const dateTimeValue=(value?:string|null)=>{if(!value)return "";const part=localParts(value);return `${part.year}-${part.month}-${part.day}T${part.hour}:${part.minute}`};
@@ -48,6 +49,10 @@ export default function Home() {
   const [collapsedGroups,setCollapsedGroups] = useState<Set<string>>(new Set());
   const [draft,setDraft] = useState<Task|null>(null);
   const [taskTitleError,setTaskTitleError] = useState("");
+  const [mounted,setMounted] = useState(false);
+  const [modKey,setModKey] = useState("⌘");
+  const [paletteActive,setPaletteActive] = useState(0);
+  const router = useRouter();
 
   const input = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
@@ -59,6 +64,8 @@ export default function Home() {
     const saved=localStorage.getItem("noema-theme") as "dark"|"light"|null;
     if(saved)setTheme(saved);
     setAutoInterpret(localStorage.getItem("noema-auto-interpret")!=="off");
+    setMounted(true);
+    if(!/Mac|iPhone|iPad|iPod/i.test(navigator.platform||""))setModKey("Ctrl");
   },[]);
   useEffect(() => {
     document.documentElement.dataset.theme=theme;
@@ -104,16 +111,17 @@ export default function Home() {
     if (task) { setDraft({...task}); openResolvedRef.current = true; }
   }, [tasks]);
 
-  const now=new Date(),todayLabel=new Intl.DateTimeFormat(undefined,{weekday:"long",month:"long",day:"numeric"}).format(now);
-  const greeting=now.getHours()<12?"Good morning":now.getHours()<18?"Good afternoon":"Good evening";
-  const todayEvents=events.filter(event=>event.day===(now.getDay()+6)%7).toSorted((a,b)=>a.time.localeCompare(b.time));
+  const now=new Date();
+  const todayLabel=mounted?new Intl.DateTimeFormat(undefined,{weekday:"long",month:"long",day:"numeric"}).format(now):"";
+  const greeting=mounted?(now.getHours()<12?"Good morning":now.getHours()<18?"Good afternoon":"Good evening"):"";
+  const todayEvents=mounted?events.filter(event=>event.day===(now.getDay()+6)%7).toSorted((a,b)=>a.time.localeCompare(b.time)):[];
   const pendingCaptures=captures.filter(item=>item.status==="review").length;
   const review=captures.find(item=>item.id===reviewId);
 
-  function submitCapture(e:FormEvent) {e.preventDefault();if(capture.trim()){setReviewId(autoInterpret?addAndInterpretCapture(capture.trim()):addCapture(capture.trim()));try{sessionStorage.removeItem("noema-capture-draft")}catch{}}}
+  function submitCapture(e:FormEvent) {e.preventDefault();const text=capture.trim();if(!text)return;setCapture("");setReviewId(autoInterpret?addAndInterpretCapture(text):addCapture(text))}
   function toggleAutoInterpret(){setAutoInterpret(value=>{const next=!value;localStorage.setItem("noema-auto-interpret",next?"on":"off");return next})}
   function handleCameraSelection(files:FileList|null){if(!files?.length)return;cameraBatch.current=Array.from(files).filter(file=>file.type.startsWith("image/"));if(cameraBatch.current.length)setReviewId(addFileCaptures(cameraBatch.current));cameraBatch.current=[]}
-  function closeReview(status:"confirmed"|"dismissed") {if(reviewId){if(status==="confirmed")confirmCapture(reviewId);else updateCapture(reviewId,status)}setReviewId(null);if(status==="confirmed")setCapture("")}
+  function closeReview(status:"confirmed"|"dismissed") {if(reviewId){if(status==="confirmed")confirmCapture(reviewId);else updateCapture(reviewId,status)}setReviewId(null)}
   function handleVoiceFinished(file:File){setReviewId(addVoiceCapture(file))}
 
   function submitTask(event:FormEvent){
@@ -166,6 +174,16 @@ export default function Home() {
   const completedList = tasks.filter(t => matches(t, "Completed"));
   const counts=Object.fromEntries(categories.map(c=>[c,tasks.filter(t=>matches(t,c)).length]));
 
+  const closePalette=()=>{setPalette(false);setPaletteQuery("");setPaletteActive(0)};
+  const paletteQueryText=paletteQuery.trim().toLowerCase();
+  const paletteResults=[
+    {id:"capture",label:"New capture",Icon:Plus,hint:"",run:()=>{closePalette();input.current?.focus()}},
+    {id:"task",label:"Add task",Icon:CheckSquare,hint:`${modKey}\u00A0⇧\u00A0T`,run:()=>{closePalette();router.push("/?open=new");setDraft(blankTask())}},
+    {id:"calendar",label:"Open calendar",Icon:CalendarBlank,hint:"",run:()=>{closePalette();router.push("/calendar")}},
+    {id:"vault",label:"Search vault",Icon:Folder,hint:"",run:()=>{closePalette();router.push("/vault")}}
+  ].filter(item=>item.label.toLowerCase().includes(paletteQueryText));
+  const activeIndex=Math.min(paletteActive,Math.max(0,paletteResults.length-1));
+
 
   return <div className="app-shell">
     <a className="skip" href="#main">Skip to main content</a>
@@ -181,7 +199,7 @@ export default function Home() {
     <header className="topbar">
       <div className="date"><CalendarBlank/>{todayLabel}</div>
       <div className="top-actions">
-        <button className="search" onClick={()=>setPalette(true)}><MagnifyingGlass/><span>Search</span><kbd>⌘ K</kbd></button>
+        <button className="search" onClick={()=>setPalette(true)}><MagnifyingGlass/><span>Search</span><kbd>{modKey}&nbsp;K</kbd></button>
         <button className="icon-button" aria-label="Open contextual assistant" onClick={()=>setAssistant(true)}><Sparkle/></button>
         <NotificationButton/>
       </div>
@@ -275,7 +293,7 @@ export default function Home() {
                   </select>
                 </label>
                 <div className="field-row">
-                  <label>Due<input type="date" value={dateValue(draft.dueAt)} onChange={e => setDraft({ ...draft, dueAt: e.target.value ? new Date(`${e.target.value}T00:00:00+07:00`).toISOString() : null, scheduledStartAt: null })} /></label>
+                  <label>Due<input type="date" value={dateValue(draft.dueAt)} onChange={e => setDraft({ ...draft, dueAt: e.target.value ? localIso(`${e.target.value}T00:00:00`) : null, scheduledStartAt: null })} /></label>
                   <label>Priority
                     <select value={draft.priority} onChange={e => setDraft({ ...draft, priority: e.target.value as Task["priority"] })}>
                       <option>High</option>
@@ -335,7 +353,7 @@ export default function Home() {
       {([["Home","/",House],["Capture","/capture",Tray],["Vault","/vault",Folder],["Calendar","/calendar",CalendarBlank],["Coding","/coding",Code]] as const).map(([label,href,Icon])=><Link className={label==="Home"?"active":""} href={href} key={label}><Icon/><span>{label}</span></Link>)}
     </nav>
 
-    {palette&&<ModalDialog className="palette-dialog" onClose={()=>setPalette(false)}><div className="palette-search"><MagnifyingGlass/><input autoFocus value={paletteQuery} onChange={event=>setPaletteQuery(event.target.value)} aria-label="Search commands" placeholder="Search Noema or run a command…"/><button className="icon-button" aria-label="Close search" onClick={()=>setPalette(false)}><X/></button></div><p aria-live="polite">Quick actions</p>{([["New capture","#capture",Plus,""],["Add task","/?open=new",CheckSquare,"⌘ ⇧ T"],["Open calendar","/calendar",CalendarBlank,"G C"],["Search vault","/vault",Folder,"G V"]] as const).filter(([label])=>label.toLowerCase().includes(paletteQuery.toLowerCase())).map(([label,href,Icon,key])=><Link href={href} onClick={()=>{setPalette(false);setPaletteQuery("");if(href==="/?open=new")setDraft(blankTask())}} key={label}><Icon/><span>{label}</span>{key&&<kbd>{key}</kbd>}</Link>)}</ModalDialog>}
+    {palette&&<ModalDialog className="palette-dialog" onClose={closePalette}><div className="palette-search"><MagnifyingGlass/><input role="combobox" aria-expanded="true" aria-controls="palette-options" aria-activedescendant={paletteResults[activeIndex]?`palette-option-${paletteResults[activeIndex].id}`:undefined} autoFocus value={paletteQuery} onChange={event=>{setPaletteQuery(event.target.value);setPaletteActive(0)}} onKeyDown={event=>{if(event.key==="ArrowDown"){event.preventDefault();setPaletteActive(Math.min(activeIndex+1,paletteResults.length-1))}else if(event.key==="ArrowUp"){event.preventDefault();setPaletteActive(Math.max(activeIndex-1,0))}else if(event.key==="Enter"){event.preventDefault();paletteResults[activeIndex]?.run()}}} aria-label="Search commands" placeholder="Search Noema or run a command…"/></div><p aria-live="polite">Quick actions</p><div id="palette-options" role="listbox" aria-label="Quick actions">{paletteResults.map((item,index)=><button type="button" role="option" aria-selected={index===activeIndex} id={`palette-option-${item.id}`} key={item.id} onMouseEnter={()=>setPaletteActive(index)} onClick={item.run}><item.Icon/><span>{item.label}</span>{item.hint&&<kbd>{item.hint}</kbd>}</button>)}</div>{!paletteResults.length&&<p className="palette-empty" role="status">No commands match “{paletteQueryText?paletteQuery.trim():paletteQuery}”. Try a different word.</p>}<button type="button" className="icon-button palette-close" aria-label="Close search" onClick={closePalette}><X/></button></ModalDialog>}
     {handwriting&&<HandwritingCapture onClose={()=>setHandwriting(false)}/>}
     <ContextualAssistant
       isOpen={assistant}

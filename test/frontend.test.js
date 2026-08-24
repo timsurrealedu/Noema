@@ -203,7 +203,7 @@ test("camera quick action batches multiple photos into one interpreted capture",
 });
 test("captures can skip AI and stay raw with a device default",()=>{
   const home=read("app/page.tsx"),settingsPage=read("app/settings/page.tsx");
-  assert.match(home,/noema-auto-interpret/);assert.match(home,/autoInterpret\?addAndInterpretCapture\(capture\.trim\(\)\):addCapture\(capture\.trim\(\)\)/);
+  assert.match(home,/noema-auto-interpret/);assert.match(home,/autoInterpret\?addAndInterpretCapture\(text\):addCapture\(text\)/);
   assert.match(settingsPage,/Interpret captures with AI/);
 });
 test("inbox surfaces pending handwriting processing",()=>{
