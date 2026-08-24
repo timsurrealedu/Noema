@@ -229,10 +229,13 @@ export default function Home() {
         <button className="send" disabled={!capture.trim()} aria-label="Process capture"><PaperPlaneTilt/></button>
       </form>
 
-      {review&&<section className="review" aria-live="polite">
-        <div className="review-head"><span><Sparkle/>{review.status==="processing"?"Interpreting capture":review.status==="failed"?"Interpretation failed":"Interpretation ready"}</span><button aria-label="Dismiss review" onClick={()=>closeReview("dismissed")}><X/></button></div>
-        {review.status==="processing"?<div className="review-processing"><CircleNotch className="spin"/><span>Reading the capture and identifying useful objects…</span></div>:review.status==="failed"?<p className="review-status-text" role="alert">{review.error||"Processing failed. Open Capture to retry."}</p>:<div className="review-items">{review.objects.map((object,index)=><article key={`${object.type}-${index}`}>{object.type==="event"?<CalendarBlank/>:object.type==="task"?<CheckSquare/>:<FileText/>}<div><strong>{object.title}</strong><span>{object.detail}</span></div></article>)}</div>}
-        <div className="review-actions"><Link className="secondary" href={`/capture?open=${review.id}`}>{review.status==="processing"?"Continue in Capture":"Edit"}</Link>{review.status==="review"&&review.objects.length>0&&<button className="primary" onClick={()=>closeReview("confirmed")}><Check/>Confirm all</button>}</div>
+      {review&&<section className={`review ${review.status==="failed"?"failed":review.status==="processing"?"processing":"ready"}`} aria-live="polite">
+        <div className="review-head">
+          {review.status==="processing"?<CircleNotch className="spin"/>:<Sparkle weight={review.status==="failed"?"fill":undefined}/>}
+          <div className="review-copy"><strong>{review.status==="processing"?"Interpreting capture":review.status==="failed"?"Interpretation failed":`Interpretation ready${review.objects.length?` · ${review.objects.length} ${review.objects.length===1?"object":"objects"}`:""}`}</strong>{review.status==="failed"?<small role="alert">{review.error||"Processing failed. Open Capture to retry."}</small>:review.status==="processing"?<small>Reading the capture and identifying useful objects…</small>:null}</div>
+          <div className="review-actions"><Link className="secondary" href={`/capture?open=${review.id}`}>{review.status==="processing"?"Continue in Capture":"Edit"}</Link>{review.status==="review"&&review.objects.length>0&&<button className="primary" onClick={()=>closeReview("confirmed")}><Check/>Confirm all</button>}<button className="icon-button review-dismiss" aria-label="Dismiss review" title="Dismiss" onClick={()=>closeReview("dismissed")}><X/></button></div>
+        </div>
+        {review.status==="review"&&review.objects.length>0&&<div className="review-items">{review.objects.map((object,index)=><article key={`${object.type}-${index}`}>{object.type==="event"?<CalendarBlank/>:object.type==="task"?<CheckSquare/>:<FileText/>}<div><strong>{object.title}</strong><span>{object.detail}</span></div></article>)}</div>}
       </section>}
 
       <section className="tasks-section home-tasks" aria-label="Tasks">
