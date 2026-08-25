@@ -1029,6 +1029,11 @@ article.task-subtask{padding-left:34px;font-size:.88rem}
   .calendar-layout>.mobile-agenda-view{padding:16px clamp(16px,2vw,28px);overflow:auto}
 }
 
+/* Day view all-day row and live now-line */
+.day-view>.day-all-day{position:sticky;top:0;z-index:3;grid-column:1/-1;display:grid;grid-template-columns:58px minmax(0,1fr);border-bottom:1px solid var(--border);background:var(--raised)}
+.day-view>.day-all-day>span{padding:10px 8px;color:var(--faint);font-size:.68rem;text-align:right}
+.day-view>.day-all-day>div{display:flex;min-width:0;flex-direction:column;gap:3px;padding:4px;border-left:1px solid var(--border);min-height:42px;box-sizing:border-box}
+
 /* Command palette: keyboard-driven options, empty state, close button after results */
 .palette-search{position:relative}.palette-search input{padding-right:38px}
 .palette-dialog .palette-close{position:absolute;top:15px;right:18px;width:32px;height:32px;min-width:32px;padding:0;grid-template-columns:auto;place-items:center;color:var(--muted)}

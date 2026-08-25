@@ -473,6 +473,25 @@ export default function CalendarPage() {
 
         {view === "Day" && (
           <section className="day-view">
+            <div className="day-all-day">
+              <span>All day</span>
+              <div
+                aria-label="All day items"
+                onDragOver={event => event.preventDefault()}
+                onDrop={event => toAllDay(event, selectedDay)}
+              >
+                {selectedEvents.filter(event => event.allDay).map(event => (
+                  <button draggable className="calendar-all-day" key={event.id} onDragStart={drag => dragEvent(drag, event)} onClick={() => setDraft({...event})}>
+                    {event.title}
+                  </button>
+                ))}
+                {selectedTasks.filter(task => !task.scheduledStartAt).map(task => (
+                  <button className="calendar-all-day calendar-task" key={`task-${task.id}`} onClick={() => openTask(task.id)}>
+                    {task.title}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="times">
               {dayTimes.map(t => (
                 <time key={t}>{t}</time>
@@ -480,6 +499,8 @@ export default function CalendarPage() {
             </div>
             <div
               aria-label="Day schedule"
+              onDragOver={event => event.preventDefault()}
+              onDrop={event => toTimed(event, selectedDay)}
               onClick={event => {
                 const target = event.target as HTMLElement;
                 if (target.closest("button")) return;
@@ -489,17 +510,18 @@ export default function CalendarPage() {
                 setDraft({...blankEvent(), day: selectedDay, time: eventTime(start.toISOString()), startAt: start.toISOString(), endAt: end.toISOString()});
               }}
             >
-              {selectedEvents.map(event => (
+              {isSameDate(now, activeSelectedDate) && <span className="calendar-now" style={{top: nowTop}} aria-label="Current time" />}
+              {selectedEvents.filter(event => !event.allDay).map(event => (
                 <button style={{top: dayPositionFor(event.time), height: event.height}} key={event.id} onClick={() => setDraft({...event})}>
                   <time dateTime={event.startAt || undefined}>{event.time}</time>
                   <strong>{event.title}</strong>
                   <small>{event.location}</small>
                 </button>
               ))}
-              {selectedTasks.map(task => (
+              {selectedTasks.filter(task => !!task.scheduledStartAt).map(task => (
                 <button
                   className="calendar-task"
-                  style={{top: task.scheduledStartAt ? dayPositionFor(task.time) : 0, height: 42}}
+                  style={{top: dayPositionFor(task.time), height: 42}}
                   key={`task-${task.id}`}
                   onClick={() => openTask(task.id)}
                 >
