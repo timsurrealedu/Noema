@@ -135,10 +135,10 @@ test("tutor insert lands after the active block when asked",async()=>{
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
-test("note PDF download resolves its default database and embeds rich note content",async()=>{
+test("note PDF download embeds rich content and authoritative handwriting blocks",async()=>{
   const dir=mkdtempSync(join(tmpdir(),"noema-note-pdf-")),vaultDir=join(dir,"vault");mkdirSync(vaultDir);
   const fs=await import("node:fs");
-  const {getDatabase,closeDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),vault=await import("../server/vault.mjs"),objects=await import("../server/objects.mjs"),inkRaster=await import("../server/ink-raster.mjs"),core=await import("../server/core.mjs"),{load:pdfLoad}=await import("pdf-lib").then(module=>module.PDFDocument);
+  const {getDatabase,closeDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),vault=await import("../server/vault.mjs"),objects=await import("../server/objects.mjs"),inkRaster=await import("../server/ink-raster.mjs"),core=await import("../server/core.mjs"),{load:pdfLoad}=await import("pdf-lib").then(module=>module.PDFDocument),{getDocument,OPS}=await import("pdfjs-dist/legacy/build/pdf.mjs");
   const {notePdf}=await import("../server/note-pdf.mjs");
   const config={dataDir:dir,dbPath:join(dir,"test.sqlite"),objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs")};
   const db=getDatabase(config);
@@ -147,14 +147,20 @@ test("note PDF download resolves its default database and embeds rich note conte
     const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),workspace=collaboration.ensureDefaultWorkspace(user.id,db),actor={id:user.id,workspaceId:workspace.id};
     const connected=vault.connectVault({rootPath:vaultDir},workspace.id,db);
     const created=vault.createVaultNote(connected.id||connected.sourceId,{relativePath:"Export.md",content:"# Export\n\nIntro paragraph.\n\n$$\\alpha + \\beta \\geq 1$$\n"},actor,db);
-    vault.saveInkBlock(created.noteId,{formatVersion:2,coordinateSpace:"world",width:200,height:100,strokes:[{id:"s1",tool:"pen",color:"#123456",width:3,points:[{x:10,y:10,pressure:.5,time:0},{x:150,y:80,pressure:.5,time:1}]}]},actor,db);
     const png=inkRaster.strokesToPng({width:40,height:40,strokes:[{tool:"pen",color:"#111827",width:2,points:[{x:1,y:1},{x:30,y:30}]}]});
     const asset=await objects.storeAsset({stream:require("node:stream").Readable.from([png]),name:"diagram.png",mime:"image/png"},config,db,workspace.id);
-    core.saveNote({id:created.noteId,content:"# Export\n\nIntro paragraph.\n\n$$\\alpha + \\beta \\geq 1$$\n\n![diagram](/api/v1/assets/"+asset.id+")",version:2},db,actor);
+    const content="# Export\n\nIntro paragraph.\n\n$$\\alpha + \\beta \\geq 1$$\n\n![diagram](/api/v1/assets/"+asset.id+")",markdown=vault.listNoteBlocks(created.noteId,actor,db)[0];
+    vault.saveMarkdownBlock(created.noteId,{id:markdown.id,markdown:content,version:markdown.version},actor,db);
+    vault.saveInkBlock(created.noteId,{formatVersion:2,coordinateSpace:"world",width:200,height:100,strokes:[{id:"s1",tool:"pen",color:"#123456",width:3,points:[{x:10,y:10,pressure:.5,time:0},{x:150,y:80,pressure:.5,time:1}]}]},actor,db);
+    core.saveNote({id:created.noteId,content,version:db.prepare("SELECT version FROM notes WHERE id=?").get(created.noteId).version},db,actor);
     const result=await notePdf(created.noteId,undefined,workspace.id,config);
     const pdf=await pdfLoad(result.bytes);
     assert.ok(pdf.getPageCount()>=1);
     assert.ok(result.bytes.length>1200,"export should carry embedded image weight");
+    const rendered=await getDocument({data:new Uint8Array(result.bytes)}).promise,operators=await (await rendered.getPage(1)).getOperatorList();
+    assert.ok(operators.fnArray.includes(OPS.paintImageXObject),"exported PDF should contain the saved image");
+    const inkColor=operators.fnArray.findIndex((fn,index)=>fn===OPS.setStrokeRGBColor&&operators.argsArray[index]?.[0]==="#123456"),inkPath=operators.fnArray.indexOf(OPS.constructPath,inkColor);
+    assert.ok(inkColor>=0&&inkPath>inkColor&&operators.argsArray[inkPath]?.[0]===OPS.stroke,"exported PDF should contain the saved handwriting stroke");
   }finally{closeDatabase();rmSync(dir,{recursive:true,force:true})}
 });
 test("parallel tutor answers require at least two distinct providers",async()=>{

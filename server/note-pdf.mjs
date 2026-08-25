@@ -1,5 +1,4 @@
 import {readFileSync} from "node:fs";
-import {join} from "node:path";
 import {PDFDocument,StandardFonts,rgb} from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import {exportMarkdown} from "./core.mjs";
@@ -90,15 +89,15 @@ function hexColor(value){
 
 async function renderNotePdf(noteId,db,workspaceId,config,subset){
   config=config||loadConfig();
-  const markdown=exportMarkdown(noteId,db,workspaceId);
+  const exported=exportMarkdown(noteId,db,workspaceId);
+  const blocks=db.prepare("SELECT b.id,b.kind,b.markdown,i.width,i.height,i.strokes_json AS strokesJson FROM note_blocks b LEFT JOIN note_ink_blocks i ON i.block_id=b.id WHERE b.note_id=? ORDER BY b.position").all(noteId);
+  const markdown=blocks.some(block=>block.kind==="ink")?blocks.map(block=>block.kind==="ink"?`![[Attachments/Noema Ink/${block.id}.svg]]`:block.markdown||"").join("\n\n"):exported;
   const title=markdown.match(/^#\s+(.+)$/m)?.[1]||"Noema note";
-  const vaultEntry=db.prepare(`SELECT e.*,s.root_path FROM vault_entries e JOIN vault_sources s ON s.id=e.source_id WHERE e.note_id=? AND e.deleted_at IS NULL`).get(noteId);
+  const inkBlocks=new Map(blocks.filter(block=>block.kind==="ink").map(block=>[block.id,block]));
   const resolveInk=id=>{
-    if(!vaultEntry?.root_path)return null;
     try{
-      const sidecar=JSON.parse(readFileSync(join(vaultEntry.root_path,"Attachments","Noema Ink",`${id}.json`),"utf8"));
-      if(!Array.isArray(sidecar.strokes)||!sidecar.width||!sidecar.height)return null;
-      return sidecar;
+      const block=inkBlocks.get(id),strokes=JSON.parse(block?.strokesJson||"null");
+      return Array.isArray(strokes)&&block.width&&block.height?{width:block.width,height:block.height,strokes}:null;
     }catch{return null}
   };
   const pdf=await PDFDocument.create();
