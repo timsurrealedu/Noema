@@ -1,8 +1,9 @@
-import {readdirSync,readFileSync} from "node:fs";
-import {dirname,join} from "node:path";
+import {existsSync,readdirSync,readFileSync} from "node:fs";
+import {dirname,join,resolve} from "node:path";
 import {fileURLToPath} from "node:url";
 
-const directory=join(dirname(fileURLToPath(import.meta.url)),"migrations");
+const sourceDirectory=join(dirname(fileURLToPath(import.meta.url)),"migrations");
+const directory=existsSync(sourceDirectory)?sourceDirectory:resolve(process.cwd(),"server","db","migrations");
 export function migrate(db){
   const applied=new Set(db.prepare("SELECT version FROM schema_migrations").all().map(row=>row.version));
   for(const file of readdirSync(directory).filter(name=>/^\d+_.+\.sql$/.test(name)).sort()){
