@@ -55,7 +55,7 @@ export function ModuleShell({active,title,action,assistantContext,children}:{act
     return()=>{clearTimeout(timer);controller.abort()};
   },[query,semanticSearch]);
   const navigationResults:Array<SearchHit>=[...primaryNav,...moreNav].map(([label,href,Icon])=>({id:`nav-${href}`,label,detail:"Open module",href,Icon}));
-  navigationResults.push({id:"nav-compiler",label:"Compiler",detail:"Compile and run code safely",href:"/coding/compiler",Icon:Code},{id:"nav-canvas",label:"Canvas",detail:"Arrange connected material",href:"/canvas",Icon:FileText},{id:"nav-activity",label:"Activity and undo",detail:"Review changes",href:"/activity",Icon:FileText});
+  navigationResults.push({id:"nav-compiler",label:"Compiler",detail:"Compile and run code safely",href:"/coding/compiler",Icon:Code},{id:"nav-activity",label:"Activity and undo",detail:"Review changes",href:"/activity",Icon:FileText});
   const filteredNavigationResults=navigationResults.filter(item=>`${item.label} ${item.detail}`.toLowerCase().includes(query.toLowerCase()));
   const results=query.trim().length<2?filteredNavigationResults:searchResults;
   function go(href:string){setPalette(false);setMore(false);setQuery("");router.push(href)}

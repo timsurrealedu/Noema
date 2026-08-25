@@ -33,7 +33,8 @@ Supported MVP targets:
 - [x] Persisted Tutor sessions with provider/citation provenance and reversible, idempotent note insertion
 - [x] Study upload/camera, processing-result, source comparison, flashcard, quiz, and assignment interfaces
 - [x] Handwriting and mathematical recognition through image upload
-- [x] Project, repository, coding-agent, automation, and Canvas workspaces
+- [x] Project, repository, coding-agent, and automation workspaces
+- [x] Infinite Canvas discontinued; legacy data remains readable but receives no new product work
 - [x] Global navigation search, notifications, contextual AI panel, Activity, Settings, Help, and authentication surfaces
 - [x] Shared accessible fallback for AI, authentication, server persistence, integrations, and remote execution
 - [x] PWA manifest, service worker, offline shell, share target, update notice, and raster icons

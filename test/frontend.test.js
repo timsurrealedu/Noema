@@ -23,6 +23,7 @@ test("ink selection handles and touch input match stylus interactions",()=>{cons
 test("handwriting notes expose durable creation and batch-processing endpoints",()=>{const route=read("app/api/v1/handwriting-notes/route.ts"),process=read("app/api/v1/captures/process-pending/route.ts"),service=read("server/handwriting.mjs");assert.match(route,/requireWorkspace\(request,"editor"\)/);assert.match(route,/idempotent/);assert.match(process,/processPendingHandwriting/);assert.match(service,/dedupeKey:`handwriting-intake:/);assert.match(service,/queueOcr:false/)});
 test("Capture Done history shows handwriting provenance and its note link",()=>{const page=read("app/capture/page.tsx"),state=read("app/components/AppState.tsx");for(const value of ["Done","AI action","Confidence","Source ink","Open note"])assert.match(page,new RegExp(value));assert.match(state,/handwriting\?:/)});
 test("Vault New note action is icon-only",()=>{const vault=read("app/components/VaultOrganizer.tsx");assert.match(vault,/aria-label="New note"/);assert.doesNotMatch(vault,/<FilePlus\/>New note/)});
+test("Vault New note chooses typed or handwritten creation through one flow",()=>{const vault=read("app/components/VaultOrganizer.tsx");for(const value of ["note-type-dialog","Typed note","Handwritten note"])assert.match(vault,new RegExp(value));assert.match(vault,/create\(undefined,sourceId,false\)/);assert.match(vault,/create\(undefined,sourceId,true\)/);assert.match(vault,/ariaLabel="Choose note type"/)});
 test("closed Vault sidebar leaves its content pane full width",()=>{const css=read("app/globals.css");assert.match(css,/\.obsidian-vault:not\(\.drawer-open\) \.obsidian-vault-body\{grid-template-columns:minmax\(0,1fr\)\}/)});
 test("local development supervises Next and a visibly running worker",()=>{const scripts=JSON.parse(read("package.json")).scripts,dev=read("scripts/dev.mjs"),worker=read("server/worker.mjs");assert.equal(scripts.dev,"node scripts/dev.mjs");assert.match(dev,/dev:web/);assert.match(dev,/server\/worker\.mjs/);assert.match(dev,/stopping development services/);assert.match(worker,/\[worker\] started/);assert.match(scripts.worker,/--env-file-if-exists=\.env\.local/)});
 test("capture review refreshes its version after AI processing",()=>assert.match(read("app/components/AppState.tsx"),/version:job\.result\?\.captureVersion/));
@@ -236,7 +237,7 @@ test("shared ink viewport helpers are tested pure functions adopted by every ink
   const view={x:0,y:0,zoom:1};
   assert.deepEqual(panBy(view,10,20),{x:-10,y:-20,zoom:1});
   assert.equal(clampZoom(.1),.25);
-  assert.equal(clampZoom(9),4);
+  assert.equal(clampZoom(9),9);
   const pinched=applyPinch(view,rect,200,200,{x:50,y:50},{x:60,y:60},2);
   assert.equal(pinched.zoom,2);
   assert.ok(Math.abs(pinched.x-40)<1e-9&&Math.abs(pinched.y-40)<1e-9);
@@ -247,10 +248,12 @@ test("shared ink viewport helpers are tested pure functions adopted by every ink
   assert.equal(zoomed.zoom,2);
   assert.ok(Math.abs(zoomed.x-50)<1e-9&&Math.abs(zoomed.y-50)<1e-9);
   assert.equal(zoomAtPoint(view,rect,200,200,50,50,.001).zoom,.25);
+  assert.equal(clampZoom(100),16);
   assert.equal(penRecentlyUp("touch",false,0,100),true);
   assert.equal(penRecentlyUp("touch",false,0,400),false);
   assert.equal(penRecentlyUp("pen",false,0,0),false);
 });
+test("Vault ink keeps vector geometry and scales new-detail precision with zoom",()=>{const ink=read("app/lib/ink.ts"),mixed=read("app/components/MixedNoteEditor.tsx"),vault=read("server/vault.mjs");assert.match(ink,/ZOOM_MAX=16/);assert.match(ink,/Q\$\{/);assert.match(mixed,/width:\s*size\s*\/\s*\(zoomRef\?\.current\s*\|\|\s*1\)/);assert.match(mixed,/size\s*\*\s*4\s*\/\s*\(zoomRef\?\.current\s*\|\|\s*1\)/);assert.match(mixed,/svgClientToPoint/);assert.match(vault,/smoothStrokePath/);assert.doesNotMatch(vault,/\.png\]\]/)});
 test("ink auto-fit avoids opening a small drawing at maximum zoom",()=>assert.match(read("app/lib/ink.ts"),/Math\.min\(2,/));
 test("Vault uses an Obsidian-style tree with breadcrumbs and visible ink entry points",()=>{const page=read("app/vault/page.tsx"),organizer=read("app/components/VaultOrganizer.tsx");assert.match(page,/VaultOrganizer/);assert.match(organizer,/Vault folders/);assert.match(organizer,/Breadcrumb/);assert.match(organizer,/Draw in/);assert.match(organizer,/entries\/move/);assert.match(organizer,/entries\/trash/);assert.match(organizer,/New note/)});
 test("Vault initial connection uses one snapshot request without a client waterfall",()=>{const organizer=read("app/components/VaultOrganizer.tsx"),route=read("app/api/v1/vault-sources/route.ts");assert.match(organizer,/tree=true/);assert.doesNotMatch(organizer,/vault-sources\/\$\{id\}\/tree/);assert.match(route,/vaultTree/);assert.match(route,/selectedSourceId/)});
@@ -431,6 +434,7 @@ test("Home centers attention and capture while task creation floats",()=>{
   assert.match(calendar,/userSelectedView/);assert.match(calendar,/media\.addEventListener\("change"/);assert.match(calendar,/chooseView/);
 });
 test("Canvas persists versioned workspace objects with pointer, keyboard, and accessible list controls",()=>{const page=read("app/canvas/page.tsx"),engine=read("app/components/InfiniteCanvas.tsx"),routes=[read("app/api/v1/canvases/route.ts"),read("app/api/v1/canvases/[id]/route.ts")].join("\n");assert.match(page,/dynamic\(/);assert.match(engine,/onWheel/);assert.match(engine,/onPointerDown/);assert.match(engine,/ArrowLeft/);assert.match(engine,/longPress/);assert.match(engine,/Undo/);assert.match(engine,/Redo/);assert.match(engine,/Accessible object list/);assert.match(engine,/useAppState/);assert.match(engine,/refId/);assert.match(engine,/version/);assert.match(routes,/requireWorkspace/);assert.match(routes,/saveCanvas/)});
+test("Infinite Canvas is retained only as a discontinued legacy surface",()=>{const page=read("app/canvas/page.tsx"),shell=read("app/components/ModuleShell.tsx"),project=read("PROJECT.md"),readme=read("README.md");assert.match(page,/Discontinued/);assert.doesNotMatch(shell,/nav-canvas/);for(const text of [project,readme])assert.match(text,/Canvas[^\n]*[Dd]iscontinued/)});
 
 test("Markdown toolbar and LiveMarkdownEditor use compact labels (H1, H2, H3, P) and horizontal expand toggle",()=>{
   const toolbar=read("app/components/MarkdownToolbar.tsx"),live=read("app/components/LiveMarkdownEditor.tsx"),css=read("app/globals.css");

@@ -13,15 +13,24 @@ test("note page wheel zoom keeps layout coherent and insert handle reachable",as
     const sourceText=await connected.text();
     if(!connected.ok) return {error:"connect failed",status:connected.status,sourceText};
     const source=JSON.parse(sourceText);
-    const entry=await fetch(`/api/v1/vault-sources/${source.id}/entries`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({relativePath:`Zoom verification ${Date.now()}.md`})});
+    const title=`Zoom verification ${Date.now()}`;
+    const entry=await fetch(`/api/v1/vault-sources/${source.id}/entries`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({relativePath:`${title}.md`})});
     const entryText=await entry.text();
     if(!entry.ok) return {error:"entry failed",status:entry.status,entryText};
-    return {noteId:JSON.parse(entryText).noteId};
+    return {noteId:JSON.parse(entryText).noteId,title};
   }, join(process.cwd(),"test","fixtures","zoom-vault-repo"));
   console.log("RESULT",JSON.stringify(result));
   expect(result.noteId,"vault note create").toBeTruthy();
   await page.goto("/vault");
-  await page.locator(".vault-file-card button",{hasText:"Zoom verification"}).first().click();
+  const newNote=page.getByRole("button",{name:"New note",exact:true});
+  await expect(newNote).toBeEnabled();
+  await newNote.focus();
+  await page.keyboard.press("Enter");
+  const noteTypeDialog=page.getByRole("dialog",{name:"Choose note type"});
+  await expect(noteTypeDialog.getByRole("button",{name:/Typed note/})).toBeVisible();
+  await expect(noteTypeDialog.getByRole("button",{name:/Handwritten note/})).toBeVisible();
+  await noteTypeDialog.getByRole("button",{name:"Cancel"}).click();
+  await page.locator(".vault-file-card button",{hasText:result.title}).click();
   const editor=page.locator(".mixed-note-editor");
   await expect(editor).toBeVisible({timeout:30_000});
   await expect(page.getByRole("button",{name:"Insert ink"}).first()).toBeAttached();
@@ -30,27 +39,30 @@ test("note page wheel zoom keeps layout coherent and insert handle reachable",as
   await docPage.evaluate(()=>{
     const container=document.querySelector(".integrated-doc-container")!;
     const rect=container.getBoundingClientRect();
-    for(let i=0;i<3;i++) container.dispatchEvent(new WheelEvent("wheel",{deltaY:-120,ctrlKey:true,clientX:rect.left+rect.width/2,clientY:rect.top+rect.height/2,bubbles:true,cancelable:true}));
+    for(let i=0;i<18;i++) container.dispatchEvent(new WheelEvent("wheel",{deltaY:-120,ctrlKey:true,clientX:rect.left+rect.width/2,clientY:rect.top+rect.height/2,bubbles:true,cancelable:true}));
   });
-  await expect.poll(()=>docPage.evaluate(el=>Number(el.style.zoom)||1)).toBeGreaterThan(1.2);
+  await expect.poll(()=>docPage.evaluate(el=>Number(el.style.zoom)||1)).toBeGreaterThan(4);
   const zoomed=await docPage.evaluate(el=>({zoom:Number(el.style.zoom),rectW:el.getBoundingClientRect().width,offsetW:(el as HTMLElement).offsetWidth}));
-  expect(Math.abs(zoomed.rectW-zoomed.offsetW*zoomed.zoom)).toBeLessThan(2);
+  expect(Math.abs(zoomed.rectW-zoomed.offsetW*zoomed.zoom)).toBeLessThan(zoomed.zoom);
   // Draw a stroke while zoomed: stored coordinates must stay in unzoomed layout units.
   await page.locator(".ink-mode-toggle").click();
   const overlay=page.locator(".integrated-ink-overlay");
   await expect(overlay).toBeVisible();
   const box=await overlay.boundingBox();
   expect(box).toBeTruthy();
-  await page.mouse.move(box!.x+box!.width*0.3,box!.y+box!.height*0.4);
+  const viewport=page.viewportSize()!;
+  const startX=Math.max(box!.x+20,Math.min(box!.x+box!.width-140,viewport.width/2));
+  const startY=Math.max(box!.y+20,Math.min(box!.y+box!.height-80,viewport.height/2));
+  await page.mouse.move(startX,startY);
   await page.mouse.down();
-  await page.mouse.move(box!.x+box!.width*0.6,box!.y+box!.height*0.5,{steps:8});
+  await page.mouse.move(startX+120,startY+40,{steps:8});
   await page.mouse.up();
   const strokeCheck=await page.evaluate(async noteId=>{
     for(let attempt=0;attempt<30;attempt++){
       await new Promise(resolve=>setTimeout(resolve,500));
       const data=await (await fetch(`/api/v1/notes/${noteId}/blocks`)).json();
       const ink=(data.blocks||[]).find((block:{kind:string})=>block.kind==="ink");
-      if(ink?.strokes?.length) return {width:ink.width,height:ink.height,maxX:Math.max(...ink.strokes.flatMap((s:{points:{x:number}[]})=>s.points.map((p:{x:number})=>p.x)))};
+      if(ink?.strokes?.length) return {width:ink.width,height:ink.height,strokeWidth:ink.strokes[0].width,maxX:Math.max(...ink.strokes.flatMap((s:{points:{x:number}[]})=>s.points.map((p:{x:number})=>p.x)))};
     }
     const debug=await (await fetch(`/api/v1/notes/${noteId}/blocks`)).json();
     console.log("BLOCKS_DEBUG",JSON.stringify(debug.blocks?.map((block:{id:string;kind:string;ocrStatus:string})=>({id:block.id,kind:block.kind,ocr:block.ocrStatus}))));
@@ -58,6 +70,8 @@ test("note page wheel zoom keeps layout coherent and insert handle reachable",as
   },result.noteId);
   expect(strokeCheck,"stroke persisted").toBeTruthy();
   expect(strokeCheck!.maxX).toBeLessThanOrEqual(strokeCheck!.width+1);
+  expect(strokeCheck!.strokeWidth).toBeLessThan(1);
+  await expect(overlay.locator("path").last()).toHaveAttribute("d",/Q/);
   await page.locator("summary[aria-label='More note options']").click();
   await expect(page.getByText(/Reset zoom/)).toBeVisible();
   await page.getByRole("button",{name:/Reset zoom/}).click();
