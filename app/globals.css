@@ -1013,6 +1013,22 @@ article.task-subtask{padding-left:34px;font-size:.88rem}
 .day-popover>button time{font-size:.75rem;color:var(--muted);min-width:88px}
 .day-popover footer{margin-top:10px;display:flex;justify-content:flex-end}
 
+/* Desktop calendar fills the viewport below its toolbar */
+@media(min-width:821px){
+  .module-shell:has(.calendar-layout) .module-main{display:flex;flex-direction:column;min-height:0;overflow:hidden;padding:12px 0 0}
+  .module-shell:has(.calendar-layout) .module-main>.auth-result{margin-inline:clamp(16px,2vw,28px)}
+  .module-shell:has(.calendar-layout) .calendar-toolbar{padding-inline:clamp(16px,2vw,28px);margin-bottom:14px}
+  .calendar-layout{flex:1;display:flex;flex-direction:column;min-height:0}
+  .calendar-layout>.week,.calendar-layout>.day-view,.calendar-layout>.month-scroll,.calendar-layout>.mobile-agenda-view{flex:1;min-height:0}
+  .calendar-layout>.week,.calendar-layout>.day-view,.calendar-layout .month-view{border-radius:0}
+  .calendar-layout>.week{display:flex;flex-direction:column;overflow:hidden}
+  .calendar-layout>.week .week-scroll{flex:1;height:auto;min-height:0}
+  .calendar-layout>.day-view{height:auto}
+  .calendar-layout>.month-scroll{overflow:auto}
+  .month-scroll>.month-view{grid-template-rows:minmax(42px,auto);grid-auto-rows:minmax(92px,1fr);min-height:100%}
+  .calendar-layout>.mobile-agenda-view{padding:16px clamp(16px,2vw,28px);overflow:auto}
+}
+
 /* Command palette: keyboard-driven options, empty state, close button after results */
 .palette-search{position:relative}.palette-search input{padding-right:38px}
 .palette-dialog .palette-close{position:absolute;top:15px;right:18px;width:32px;height:32px;min-width:32px;padding:0;grid-template-columns:auto;place-items:center;color:var(--muted)}
