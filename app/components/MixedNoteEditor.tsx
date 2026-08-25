@@ -228,7 +228,9 @@ function IntegratedOverlayCanvas({
   visible = true,
   zoomRef,
   onChange,
-  onResize
+  onResize,
+  onPinch,
+  onGestureUndo
 }: {
   width: number;
   height: number;
@@ -241,6 +243,8 @@ function IntegratedOverlayCanvas({
   zoomRef?: {current: number};
   onChange: (nextStrokes: InkStroke[]) => void;
   onResize?: (width: number, height: number) => void;
+  onPinch?: (previousCenter: {x: number; y: number}, nextCenter: {x: number; y: number}, distRatio: number) => void;
+  onGestureUndo?: () => void;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const drawing = useRef(false);
@@ -250,7 +254,10 @@ function IntegratedOverlayCanvas({
   const liveStrokes = useRef<InkStroke[]>(strokes);
   const penActive = useRef(false);
   const penUpAt = useRef(0);
-  const touchCount = useRef(0);
+  const touchPoints = useRef(new Map<number, {x: number; y: number}>());
+  const pinchDistance = useRef(0);
+  const pinchCenter = useRef({x: 0, y: 0});
+  const lastTwoTap = useRef(0);
 
   useEffect(() => {
     setCurrentStrokes(strokes);
@@ -298,10 +305,25 @@ function IntegratedOverlayCanvas({
   function handlePointerDown(event: React.PointerEvent<SVGSVGElement>) {
     if (!interactive) return;
 
-    // Pen gate: reject touch if pen was recently active (palm rejection)
+    // Touches are gesture-only on the overlay (drawing stays pen/mouse).
+    // Two fingers drive page pinch-zoom/pan via onPinch; two-finger double
+    // tap undoes the last stroke via onGestureUndo.
     if (event.pointerType === "touch") {
       if (penRecentlyUp(event.pointerType, penActive.current, penUpAt.current)) return;
-      touchCount.current++;
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+      touchPoints.current.set(event.pointerId, {x: event.clientX, y: event.clientY});
+      if (touchPoints.current.size === 2) {
+        const [a, b] = [...touchPoints.current.values()];
+        const now = performance.now();
+        if (onGestureUndo && now - lastTwoTap.current < 350) {
+          lastTwoTap.current = 0;
+          onGestureUndo();
+        } else {
+          lastTwoTap.current = now;
+        }
+        pinchDistance.current = Math.hypot(a.x - b.x, a.y - b.y);
+        pinchCenter.current = {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2};
+      }
       return;
     }
     if (!acceptInkPointer(event.pointerType, penActive.current)) return;
@@ -335,13 +357,27 @@ function IntegratedOverlayCanvas({
   }
 
   function handlePointerMove(event: React.PointerEvent<SVGSVGElement>) {
-    if (!drawing.current || !interactive) return;
+    if (!interactive) return;
 
-    // Two-finger scroll: pass through
+    // Two-finger pinch-zoom and pan, forwarded to the page navigation handler.
     if (event.pointerType === "touch") {
-      touchCount.current = Math.max(touchCount.current, event.isPrimary ? 1 : 2);
+      const previous = touchPoints.current.get(event.pointerId);
+      if (!previous) return;
+      touchPoints.current.set(event.pointerId, {x: event.clientX, y: event.clientY});
+      if (touchPoints.current.size === 2 && onPinch) {
+        const [a, b] = [...touchPoints.current.values()];
+        const distance = Math.hypot(a.x - b.x, a.y - b.y);
+        const center = {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2};
+        const previousCenter = pinchCenter.current;
+        const distRatio = distance / Math.max(1, pinchDistance.current);
+        pinchDistance.current = distance;
+        pinchCenter.current = center;
+        onPinch(previousCenter, center, distRatio);
+      }
       return;
     }
+
+    if (!drawing.current) return;
 
     const pt = getPoint(event);
     if (!pt) return;
@@ -368,7 +404,7 @@ function IntegratedOverlayCanvas({
 
   function handlePointerUp(event: React.PointerEvent<SVGSVGElement>) {
     if (event.pointerType === "touch") {
-      touchCount.current = Math.max(0, touchCount.current - 1);
+      touchPoints.current.delete(event.pointerId);
       return;
     }
     if (!drawing.current) return;
@@ -691,8 +727,9 @@ export function MixedNoteEditor({
       return {x: (touches[0].clientX + touches[1].clientX) / 2 - rect.left, y: (touches[0].clientY + touches[1].clientY) / 2 - rect.top};
     };
     const spread = (touches: TouchList) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
-    // Ink surfaces run their own pinch/pan logic; a simultaneous page zoom
-    // would scale the canvas twice per frame, making it jump sizes and drift.
+    // Ink surfaces handle two-finger gestures themselves (.ink-canvas runs its
+    // own view pinch; the overlay forwards to page zoom via onPinch), so the
+    // container must skip them or every gesture would be applied twice.
     const onInkSurface = (event: TouchEvent) =>
       event.target instanceof Element && !!event.target.closest(".ink-canvas,.integrated-ink-overlay.mode-ink");
     const onTouchStart = (event: TouchEvent) => {
@@ -769,6 +806,19 @@ export function MixedNoteEditor({
     setViewportWidth(current => current === w ? current : w);
     setViewportHeight(current => current === h ? current : h);
   }, []);
+
+  // The ink overlay owns its touches (drawing stays pen/mouse-only) and
+  // forwards two-finger gestures here so page navigation keeps working even
+  // though the container's touch handlers ignore ink surfaces.
+  function handleOverlayPinch(previous: {x: number; y: number}, next: {x: number; y: number}, distRatio: number) {
+    const container = docRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    commitPageZoom(pageZoomRef.current * distRatio, {x: next.x - rect.left, y: next.y - rect.top});
+    // Two-finger pan: scroll units track visual pixels, so subtract directly.
+    container.scrollLeft -= next.x - previous.x;
+    container.scrollTop -= next.y - previous.y;
+  }
 
   const currentInkVersion = useRef<number>(inkBlock?.inkVersion || 0);
   const savingInkRef = useRef<boolean>(false);
@@ -1293,6 +1343,8 @@ export function MixedNoteEditor({
             zoomRef={pageZoomRef}
             onChange={saveInkStrokes}
             onResize={handleOverlayResize}
+            onPinch={handleOverlayPinch}
+            onGestureUndo={handleUndo}
           />
 
           {/* Background Layer 1: Rendered Document Blocks */}
