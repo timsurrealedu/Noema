@@ -13,6 +13,12 @@ export type ScreenPoint={x:number;y:number};
 export const ZOOM_MIN=.25,ZOOM_MAX=4;
 export function clampZoom(zoom:number,min=ZOOM_MIN,max=ZOOM_MAX){return Math.max(min,Math.min(max,zoom))}
 export function screenToWorld(clientX:number,clientY:number,rect:DOMRect,view:InkView,width:number,height:number):InkPoint{return{x:view.x+(clientX-rect.left)/rect.width*width/view.zoom,y:view.y+(clientY-rect.top)/rect.height*height/view.zoom,pressure:1,time:performance.now(),tiltX:0,tiltY:0}}
+// Maps a client (screen) point into an SVG element's user-unit space using the
+// browser's own transform — this includes the viewBox, preserveAspectRatio,
+// pan/zoom of the viewBox, and CSS zoom on ancestors. Manual rect/scale math
+// drifts once CSS zoom is involved because browsers disagree on whether
+// clientX/clientY are reported pre- or post-zoom.
+export function svgClientToPoint(svg:SVGSVGElement,clientX:number,clientY:number):{x:number;y:number}|null{const matrix=svg.getScreenCTM();if(!matrix)return null;const mapped=new DOMPoint(clientX,clientY).matrixTransform(matrix.inverse());return Number.isFinite(mapped.x)&&Number.isFinite(mapped.y)?{x:mapped.x,y:mapped.y}:null}
 function screenToCanvas(point:ScreenPoint,rect:DOMRect|Pick<DOMRect,"left"|"top"|"width"|"height">,width:number,height:number):ScreenPoint{return{x:(point.x-rect.left)/rect.width*width,y:(point.y-rect.top)/rect.height*height}}
 function viewAnchor(view:InkView,canvas:ScreenPoint):ScreenPoint{return{x:view.x+canvas.x/view.zoom,y:view.y+canvas.y/view.zoom}}
 function anchorToView(anchor:ScreenPoint,canvas:ScreenPoint,zoom:number):InkView{return{x:anchor.x-canvas.x/zoom,y:anchor.y-canvas.y/zoom,zoom}}

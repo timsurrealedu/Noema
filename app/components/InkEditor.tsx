@@ -244,14 +244,13 @@ export function InkEditor({
   }
 
   function point(event: React.PointerEvent<SVGSVGElement> | PointerEvent) {
-    const base = screenToWorld(
-      event.clientX,
-      event.clientY,
-      svg.current!.getBoundingClientRect(),
-      view,
-      canvasSize.width,
-      canvasSize.height
-    );
+    const element = svg.current!;
+    // Browser-derived mapping stays glued to the pen tip at any zoom level;
+    // fall back to rect math only if getScreenCTM is unavailable.
+    const ctm = element.getScreenCTM();
+    const base = ctm
+      ? (() => { const mapped = new DOMPoint(event.clientX, event.clientY).matrixTransform(ctm.inverse()); return {x: mapped.x, y: mapped.y}; })()
+      : screenToWorld(event.clientX, event.clientY, element.getBoundingClientRect(), view, canvasSize.width, canvasSize.height);
     return {
       ...base,
       pressure: event.pressure > 0 ? event.pressure : event.pointerType === "pen" ? 0.5 : 1,

@@ -33,6 +33,7 @@ import {
   InkTool,
   sanitizeStrokes,
   strokePath,
+  svgClientToPoint,
   acceptInkPointer,
   penRecentlyUp
 } from "../lib/ink";
@@ -289,12 +290,14 @@ function IntegratedOverlayCanvas({
   if (!visible) return null;
 
   function getPoint(event: {clientX:number;clientY:number;pressure:number;pointerType:string;timeStamp:number;tiltX:number;tiltY:number}): InkPoint | null {
-    if (!svgRef.current) return null;
-    const rect = svgRef.current.getBoundingClientRect();
-    const scale = zoomRef?.current || 1;
+    const element = svgRef.current;
+    if (!element) return null;
+    // Browser-derived screen→user-space mapping stays exact at any page zoom.
+    const mapped = svgClientToPoint(element, event.clientX, event.clientY);
+    if (!mapped) return null;
     return {
-      x: Math.max(0, Math.min(rect.width, event.clientX - rect.left)) / scale,
-      y: Math.max(0, Math.min(rect.height, event.clientY - rect.top)) / scale,
+      x: Math.max(0, Math.min(width, mapped.x)),
+      y: Math.max(0, Math.min(height, mapped.y)),
       pressure: event.pressure > 0 ? event.pressure : event.pointerType === "pen" ? 0.5 : 1,
       time: event.timeStamp,
       tiltX: Number(event.tiltX) || 0,
