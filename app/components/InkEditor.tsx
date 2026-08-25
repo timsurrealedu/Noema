@@ -38,6 +38,7 @@ import {
   selectionBounds,
   snapInkPoint,
   strokePath,
+  toInkDocument,
   translateStroke
 } from "../lib/ink";
 import {deleteInkDraft, loadInkDraft, saveInkDraft} from "../lib/offlineQueue";
@@ -201,20 +202,25 @@ export function InkEditor({
   }, [strokes, canvasSize.width, canvasSize.height]);
 
   useEffect(() => {
-    if (!containerRef.current) return;
     const updateSize = () => {
-      if (containerRef.current) {
-        const rect = containerRef.current.getBoundingClientRect();
-        const w = Math.max(300, Math.floor(rect.width));
-        const h = Math.max(200, Math.floor(rect.height - (capture ? 46 : 110)));
-        if (w > 0 && h > 0) setCanvasSize({width: w, height: h});
+      const element = svg.current;
+      if (!element) return;
+      // Measure the rendered canvas itself, never a parent minus assumed chrome:
+      // deriving height from the container feeds back through layout and makes
+      // the canvas grow/shrink on every ResizeObserver tick.
+      const rect = element.getBoundingClientRect();
+      const w = Math.floor(rect.width);
+      const h = Math.floor(rect.height);
+      if (w > 0 && h > 0) {
+        setCanvasSize(current => current.width === w && current.height === h ? current : {width: w, height: h});
       }
     };
     updateSize();
+    if (!svg.current) return;
     const observer = new ResizeObserver(updateSize);
-    observer.observe(containerRef.current);
+    observer.observe(svg.current);
     return () => observer.disconnect();
-  }, [capture]);
+  }, []);
 
   function persist(next: InkStroke[]) {
     liveStrokes.current = next;
@@ -502,16 +508,20 @@ export function InkEditor({
     setSaving(true);
     setMessage("");
     try {
+      // Strokes live in an unbounded world space (pan/zoom offsets make
+      // coordinates negative or larger than the canvas). Normalize into a
+      // padded positive document so the server's bounds check always passes.
+      const ink = toInkDocument(strokes);
       const response = await fetch(`/api/v1/notes/${noteId}/ink`, {
         method: "POST",
         headers: {"Content-Type": "application/json", "Idempotency-Key": createId()},
         body: JSON.stringify({
           id,
-          formatVersion: 2,
-          coordinateSpace: "world",
-          width: canvasSize.width,
-          height: canvasSize.height,
-          strokes,
+          formatVersion: ink.formatVersion,
+          coordinateSpace: ink.coordinateSpace,
+          width: ink.width,
+          height: ink.height,
+          strokes: ink.strokes,
           version
         })
       });
@@ -779,7 +789,6 @@ export function InkEditor({
         ref={svg}
         className="ink-canvas"
         viewBox={`${view.x} ${view.y} ${canvasSize.width / view.zoom} ${canvasSize.height / view.zoom}`}
-        style={{aspectRatio: `${canvasSize.width}/${canvasSize.height}`}}
         role="img"
         aria-label="Pressure-aware handwriting canvas"
         onWheel={wheel}

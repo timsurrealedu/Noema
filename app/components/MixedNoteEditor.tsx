@@ -1,7 +1,7 @@
 "use client";
 
 import {createId} from "../lib/id";
-import {useEffect,useMemo,useRef,useState} from "react";
+import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -26,6 +26,7 @@ import {
 import {InkEditor} from "./InkEditor";
 import {
   clampZoom,
+  clampInkStrokes,
   eraseAt,
   InkPoint,
   InkStroke,
@@ -226,7 +227,8 @@ function IntegratedOverlayCanvas({
   interactive,
   visible = true,
   zoomRef,
-  onChange
+  onChange,
+  onResize
 }: {
   width: number;
   height: number;
@@ -238,6 +240,7 @@ function IntegratedOverlayCanvas({
   visible?: boolean;
   zoomRef?: {current: number};
   onChange: (nextStrokes: InkStroke[]) => void;
+  onResize?: (width: number, height: number) => void;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const drawing = useRef(false);
@@ -253,6 +256,28 @@ function IntegratedOverlayCanvas({
     setCurrentStrokes(strokes);
     liveStrokes.current = strokes;
   }, [strokes]);
+
+  // Report the rendered box (in layout pixels) so the saved document dimensions
+  // always match the coordinate space strokes are captured in. Sizing comes
+  // from CSS alone, so measuring never feeds back into layout.
+  const onResizeRef = useRef(onResize);
+  onResizeRef.current = onResize;
+  useEffect(() => {
+    const element = svgRef.current;
+    if (!element) return;
+    const update = () => {
+      if (!onResizeRef.current) return;
+      const scale = zoomRef?.current || 1;
+      const rect = element.getBoundingClientRect();
+      const w = Math.max(320, Math.floor(rect.width / scale));
+      const h = Math.max(500, Math.floor(rect.height / scale));
+      if (w > 0 && h > 0) onResizeRef.current(w, h);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [visible]);
 
   if (!visible) return null;
 
@@ -372,7 +397,6 @@ function IntegratedOverlayCanvas({
       ref={svgRef}
       className={`integrated-ink-overlay ${interactive ? "mode-ink" : "mode-text"} ${penDrawing ? "pen-drawing" : ""}`}
       viewBox={`0 0 ${width} ${height}`}
-      style={{width: "100%", height: `${height}px`}}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -667,8 +691,12 @@ export function MixedNoteEditor({
       return {x: (touches[0].clientX + touches[1].clientX) / 2 - rect.left, y: (touches[0].clientY + touches[1].clientY) / 2 - rect.top};
     };
     const spread = (touches: TouchList) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+    // Ink surfaces run their own pinch/pan logic; a simultaneous page zoom
+    // would scale the canvas twice per frame, making it jump sizes and drift.
+    const onInkSurface = (event: TouchEvent) =>
+      event.target instanceof Element && !!event.target.closest(".ink-canvas,.integrated-ink-overlay.mode-ink");
     const onTouchStart = (event: TouchEvent) => {
-      if (event.touches.length !== 2) return;
+      if (event.touches.length !== 2 || onInkSurface(event)) return;
       event.preventDefault();
       // Two-finger double tap: undo the last stroke (ink mode only).
       const now = performance.now();
@@ -732,22 +760,15 @@ export function MixedNoteEditor({
   }
 
 
-  useEffect(() => {
-    if (!pageRef.current) return;
-    const observer = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        if (pageRef.current) {
-          const scale = pageZoomRef.current || 1;
-          const scrollH = pageRef.current.scrollHeight || 0;
-          const contentH = entry.contentRect ? Math.floor(entry.contentRect.height) : 0;
-          setViewportWidth(Math.max(320, Math.floor(pageRef.current.getBoundingClientRect().width / scale)));
-          setViewportHeight(Math.max(500, Math.floor(scrollH / scale), contentH));
-        }
-      }
-    });
-    observer.observe(pageRef.current);
-    return () => observer.disconnect();
-  }, [blocks, orientation]);
+  // Overlay dimensions come from the overlay's rendered box itself (reported by
+  // IntegratedOverlayCanvas). Deriving them from pageRef.scrollHeight fed back
+  // through layout: the absolutely-positioned overlay inflated scrollHeight,
+  // which grew its own height on every observer tick until the server rejected
+  // the document as "Invalid ink dimensions".
+  const handleOverlayResize = useCallback((w: number, h: number) => {
+    setViewportWidth(current => current === w ? current : w);
+    setViewportHeight(current => current === h ? current : h);
+  }, []);
 
   const currentInkVersion = useRef<number>(inkBlock?.inkVersion || 0);
   const savingInkRef = useRef<boolean>(false);
@@ -818,7 +839,9 @@ export function MixedNoteEditor({
             version: currentInkVersion.current,
             width: viewportWidth,
             height: viewportHeight,
-            strokes: strokesToSave
+            // Strokes captured before a resize may sit outside the current
+            // document box; pin them into it so validation never rejects them.
+            strokes: clampInkStrokes(strokesToSave, viewportWidth, viewportHeight)
           })
         });
 
@@ -896,7 +919,7 @@ export function MixedNoteEditor({
       await fetch(`/api/v1/notes/${noteId}/ink`, {
         method: "POST",
         headers: {"Content-Type": "application/json", "Idempotency-Key": createId()},
-        body: JSON.stringify({id: createId(), width: viewportWidth, height: viewportHeight, strokes: source?.strokes || []})
+        body: JSON.stringify({id: createId(), width: viewportWidth, height: viewportHeight, strokes: clampInkStrokes(sanitizeStrokes(source?.strokes), viewportWidth, viewportHeight)})
       });
     }
     await load();
@@ -1269,6 +1292,7 @@ export function MixedNoteEditor({
             visible={showAnnotations}
             zoomRef={pageZoomRef}
             onChange={saveInkStrokes}
+            onResize={handleOverlayResize}
           />
 
           {/* Background Layer 1: Rendered Document Blocks */}

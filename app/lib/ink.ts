@@ -35,3 +35,27 @@ export function snapInkPoint(start:InkPoint,end:InkPoint){const distance=Math.hy
 export function fitInkView(strokes:InkStroke[],width:number,height:number):InkView{const points=strokes.flatMap(stroke=>stroke.points);if(!points.length)return{x:0,y:0,zoom:1};const left=Math.min(...points.map(point=>point.x)),right=Math.max(...points.map(point=>point.x)),top=Math.min(...points.map(point=>point.y)),bottom=Math.max(...points.map(point=>point.y)),boundingW=Math.max(1,right-left),boundingH=Math.max(1,bottom-top),zoom=Math.max(.01,Math.min(2,.9*Math.min(width/boundingW,height/boundingH)));return{x:(left+right)/2-width/(2*zoom),y:(top+bottom)/2-height/(2*zoom),zoom}}
 export function selectionBounds(strokes:InkStroke[],selected:string[]){const points=strokes.filter(stroke=>selected.includes(stroke.id)).flatMap(stroke=>stroke.points);if(!points.length)return null;const left=Math.min(...points.map(point=>point.x)),right=Math.max(...points.map(point=>point.x)),top=Math.min(...points.map(point=>point.y)),bottom=Math.max(...points.map(point=>point.y));return{left,right,top,bottom,cx:(left+right)/2,cy:(top+bottom)/2}}
 export function normalizeInk(strokes:InkStroke[],padding=24){const points=strokes.flatMap(stroke=>stroke.points);if(!points.length)return{formatVersion:2,coordinateSpace:"world" as const,width:320,height:240,strokes:[]};const left=Math.min(...points.map(point=>point.x)),top=Math.min(...points.map(point=>point.y)),right=Math.max(...points.map(point=>point.x)),bottom=Math.max(...points.map(point=>point.y));return{formatVersion:2,coordinateSpace:"world" as const,width:Math.max(320,Math.ceil(right-left+padding*2)),height:Math.max(240,Math.ceil(bottom-top+padding*2)),strokes:strokes.map(stroke=>({...stroke,points:stroke.points.map(point=>({...point,x:point.x-left+padding,y:point.y-top+padding}))}))}}
+export const INK_MAX_DIMENSION=10000,INK_MIN_WIDTH=320,INK_MIN_HEIGHT=240,INK_PADDING=24;
+export function clampPointToBox(point:InkPoint,width:number,height:number):InkPoint{return{...point,x:Math.max(0,Math.min(width,point.x)),y:Math.max(0,Math.min(height,point.y))}}
+export function clampInkStrokes(strokes:InkStroke[],width:number,height:number):InkStroke[]{return strokes.map(stroke=>({...stroke,points:stroke.points.map(point=>clampPointToBox(point,width,height))}))}
+export type InkDocument={formatVersion:2;coordinateSpace:"world";width:number;height:number;strokes:InkStroke[]};
+// The server (server/vault.mjs validateStrokes) requires finite dimensions within
+// [1,10000] and every point inside [0,width]x[0,height]. World coordinates are
+// unbounded (pan/zoom offsets), so translate into a padded positive box and cap
+// the document before saving.
+export function toInkDocument(value:InkStroke[]):InkDocument{
+  const strokes=sanitizeStrokes(value);
+  if(!strokes.length)return{formatVersion:2,coordinateSpace:"world",width:INK_MIN_WIDTH,height:INK_MIN_HEIGHT,strokes:[]};
+  const points=strokes.flatMap(stroke=>stroke.points);
+  const left=Math.min(...points.map(point=>point.x)),top=Math.min(...points.map(point=>point.y));
+  const right=Math.max(...points.map(point=>point.x)),bottom=Math.max(...points.map(point=>point.y));
+  const width=Math.min(INK_MAX_DIMENSION,Math.max(INK_MIN_WIDTH,Math.ceil(right-left+INK_PADDING*2)));
+  const height=Math.min(INK_MAX_DIMENSION,Math.max(INK_MIN_HEIGHT,Math.ceil(bottom-top+INK_PADDING*2)));
+  return{
+    formatVersion:2,
+    coordinateSpace:"world",
+    width,
+    height,
+    strokes:strokes.map(stroke=>({...stroke,points:stroke.points.map(point=>clampPointToBox({x:point.x-left+INK_PADDING,y:point.y-top+INK_PADDING,pressure:point.pressure,time:point.time,tiltX:point.tiltX,tiltY:point.tiltY},width,height))}))
+  };
+}
