@@ -173,7 +173,7 @@ function MarkdownBlock({
         </article>
       )}
       <nav className="block-actions" aria-label={`Actions for block ${block.position + 1}`}>
-        <button type="button" onClick={() => onInsertInk(block, value, value.length)} title="Insert a handwriting block after this block">Insert ink</button>
+        <button type="button" onClick={() => onInsertInk(block, value, value.length)} title="Split this block here and add an inline handwriting canvas between the text">Insert ink</button>
       </nav>
     </div>
   );
@@ -564,7 +564,13 @@ export function MixedNoteEditor({
   const [undoStack, setUndoStack] = useState<InkStroke[][]>([]);
   const [redoStack, setRedoStack] = useState<InkStroke[][]>([]);
 
-  const inkBlock = blocks.find(b => b.kind === "ink");
+  // The full-page overlay binds to the LAST ink block (most recent layer). Earlier
+  // ink blocks render inline; binding to the first instead would let a newly
+  // inserted inline canvas steal the overlay and hide the page-wide ink.
+  const inkBlock = useMemo(() => {
+    for (let i = blocks.length - 1; i >= 0; i--) if (blocks[i].kind === "ink") return blocks[i];
+    return undefined;
+  }, [blocks]);
   const overlayStrokes = useMemo(() => sanitizeStrokes(inkBlock?.strokes || []), [inkBlock?.strokes]);
 
   function moveInk(block: Block, delta: number) {
@@ -626,8 +632,14 @@ export function MixedNoteEditor({
   const pageRef = useRef<HTMLDivElement>(null);
   const pageZoomRef = useRef(1);
   const [pageZoom, setPageZoom] = useState(1);
-  const pinchGesture = useRef<{distance: number} | null>(null);
+  const gesture = useRef<{distance: number; cx: number; cy: number} | null>(null);
+  const lastTwoFingerTap = useRef(0);
   const wheelZoomTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Latest-value mirrors so the touch listeners below never read stale closures.
+  const editorModeRef = useRef(editorMode);
+  editorModeRef.current = editorMode;
+  const gestureUndoRef = useRef(handleUndo);
+  gestureUndoRef.current = handleUndo;
 
   function commitPageZoom(next: number, anchor?: {x: number; y: number}) {
     const container = docRef.current;
@@ -656,23 +668,37 @@ export function MixedNoteEditor({
     };
     const spread = (touches: TouchList) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
     const onTouchStart = (event: TouchEvent) => {
-      if (event.touches.length === 2) {
-        pinchGesture.current = {distance: spread(event.touches)};
-        event.preventDefault();
+      if (event.touches.length !== 2) return;
+      event.preventDefault();
+      // Two-finger double tap: undo the last stroke (ink mode only).
+      const now = performance.now();
+      if (editorModeRef.current === "ink" && now - lastTwoFingerTap.current < 350) {
+        lastTwoFingerTap.current = 0;
+        gesture.current = null;
+        gestureUndoRef.current();
+        return;
       }
+      lastTwoFingerTap.current = now;
+      const point = center(event.touches);
+      gesture.current = {distance: spread(event.touches), cx: point.x, cy: point.y};
     };
     const onTouchMove = (event: TouchEvent) => {
-      const gesture = pinchGesture.current;
-      if (!gesture || event.touches.length !== 2) return;
+      const active = gesture.current;
+      if (!active || event.touches.length !== 2) return;
       event.preventDefault();
       const distance = spread(event.touches);
-      const ratio = distance / Math.max(1, gesture.distance);
-      gesture.distance = distance;
-      commitPageZoom(pageZoomRef.current * ratio, center(event.touches));
+      const next = center(event.touches);
+      commitPageZoom(pageZoomRef.current * (distance / Math.max(1, active.distance)), next);
+      // Two-finger pan: scroll units track visual pixels, so subtract directly.
+      container.scrollLeft -= next.x - active.cx;
+      container.scrollTop -= next.y - active.cy;
+      active.distance = distance;
+      active.cx = next.x;
+      active.cy = next.y;
     };
     const onTouchEnd = (event: TouchEvent) => {
-      if (pinchGesture.current && event.touches.length < 2) {
-        pinchGesture.current = null;
+      if (gesture.current && event.touches.length < 2) {
+        gesture.current = null;
         setPageZoom(pageZoomRef.current);
       }
     };
@@ -728,6 +754,13 @@ export function MixedNoteEditor({
   const pendingStrokesRef = useRef<InkStroke[] | null>(null);
   const gestureUndoPushed = useRef(false);
   const gestureBeforeRef = useRef<InkStroke[] | null>(null);
+  // Stable id for the full-page overlay ink block; reused across rapid strokes so
+  // two saves in one render pass cannot mint competing blocks.
+  const overlayInkIdRef = useRef<string | null>(inkBlock?.id || null);
+
+  useEffect(() => {
+    if (inkBlock?.id) overlayInkIdRef.current = inkBlock.id;
+  }, [inkBlock?.id]);
 
   useEffect(() => {
     if (inkBlock?.inkVersion !== undefined) {
@@ -735,12 +768,28 @@ export function MixedNoteEditor({
     }
   }, [inkBlock?.inkVersion]);
 
+  async function syncInkBlock(blockId: string): Promise<boolean> {
+    try {
+      const response = await fetch(`/api/v1/notes/${noteId}/blocks`);
+      if (!response.ok) return false;
+      const data = await response.json();
+      const found = ((data.blocks || []) as Block[]).find(item => item.id === blockId);
+      if (!found) return false;
+      currentInkVersion.current = found.inkVersion ?? currentInkVersion.current;
+      setBlocks(items => items.map(item => item.id === blockId ? {...item, ...found} : item));
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
   async function saveInkStrokes(nextStrokes: InkStroke[], pushUndo = true) {
     if (pushUndo) {
       setUndoStack(prev => [...prev, overlayStrokes]);
       setRedoStack([]);
     }
-    const targetInkId = inkBlock?.id || createId();
+    if (!overlayInkIdRef.current) overlayInkIdRef.current = inkBlock?.id || createId();
+    const targetInkId = overlayInkIdRef.current;
     setBlocks(items => {
       const existing = items.find(item => item.id === targetInkId);
       if (existing) return items.map(item => item.id === targetInkId ? {...item, strokes: nextStrokes} : item);
@@ -751,9 +800,11 @@ export function MixedNoteEditor({
     if (savingInkRef.current) return;
     savingInkRef.current = true;
 
-    while (pendingStrokesRef.current !== null) {
+    let attempts = 0;
+    while (pendingStrokesRef.current !== null && attempts < 5) {
       const strokesToSave: InkStroke[] = pendingStrokesRef.current;
       pendingStrokesRef.current = null;
+      attempts++;
 
       try {
         const response = await fetch(`/api/v1/notes/${noteId}/ink`, {
@@ -772,10 +823,14 @@ export function MixedNoteEditor({
         });
 
         if (response.status === 409) {
-          await load();
-          if (!pendingStrokesRef.current) {
-            pendingStrokesRef.current = strokesToSave;
+          // Version drifted (another device or a replayed save): resync from the
+          // server and retry with the authoritative version.
+          const synced = await syncInkBlock(targetInkId);
+          if (!synced) {
+            setError("Handwriting is out of sync — reopen the note to continue drawing.");
+            break;
           }
+          pendingStrokesRef.current = strokesToSave;
           continue;
         }
 
@@ -784,6 +839,7 @@ export function MixedNoteEditor({
           currentInkVersion.current = data.version ?? data.inkVersion ?? currentInkVersion.current + 1;
           setBlocks(items => items.map(item => item.id === targetInkId ? {...item, strokes: strokesToSave, inkVersion: currentInkVersion.current} : item));
           setError("");
+          attempts = 0;
         } else {
           const errData = await response.json().catch(() => ({}));
           setError(errData.error?.message || "Save ink failed");
@@ -923,7 +979,6 @@ export function MixedNoteEditor({
   async function insertInk(block: Block, value: string, caret: number) {
     const inkId = createId();
     const afterId = createId();
-    const index = blocks.findIndex(item => item.id === block.id);
     const request = (url: string, body: object) =>
       fetch(url, {
         method: "POST",
@@ -931,10 +986,30 @@ export function MixedNoteEditor({
         body: JSON.stringify(body)
       });
     try {
+      // Persist any debounced edits first so the block version we send is the one
+      // on the server; otherwise the split PATCH races the autosave and 409s with
+      // "Expected version N".
+      await flushMarkdownSaves();
+      const listing = await fetch(`/api/v1/notes/${noteId}/blocks`);
+      if (!listing.ok) throw new Error("Could not read note blocks");
+      const current = ((await listing.json()).blocks || []) as Block[];
+      const fresh = current.find(item => item.id === block.id);
+      if (!fresh || fresh.kind !== "markdown") throw new Error("This block changed; try again.");
+      let ids = current.map(item => item.id);
+      // The full-page overlay renders the FIRST ink block. Make sure an overlay
+      // block exists before inserting, so this inline canvas is never swallowed
+      // by the overlay layer and stays visible between paragraphs.
+      if (!current.some(item => item.kind === "ink")) {
+        const overlayId = createId();
+        const created = await request(`/api/v1/notes/${noteId}/ink`, {id: overlayId, width: viewportWidth, height: viewportHeight, strokes: []});
+        if (!created.ok) throw new Error((await created.json()).error?.message || "Could not prepare ink layer");
+        ids.push(overlayId);
+        overlayInkIdRef.current = overlayId;
+      }
       const updated = await fetch(`/api/v1/notes/${noteId}/blocks/${block.id}`, {
         method: "PATCH",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({markdown: value.slice(0,caret), version: block.version})
+        body: JSON.stringify({markdown: value.slice(0,caret), version: fresh.version})
       });
       if (!updated.ok) throw new Error((await updated.json()).error?.message || "Could not split block");
       for (const [url, body] of [
@@ -944,7 +1019,7 @@ export function MixedNoteEditor({
         const response = await request(url, body);
         if (!response.ok) throw new Error((await response.json()).error?.message || "Could not insert ink");
       }
-      const ids = blocks.map(item => item.id);
+      const index = ids.indexOf(block.id);
       ids.splice(index+1,0,inkId,afterId);
       const reordered = await fetch(`/api/v1/notes/${noteId}/blocks`, {
         method: "PATCH",
@@ -1128,11 +1203,8 @@ export function MixedNoteEditor({
                   </button>
                   <button
                     className="primary ink-done-btn"
-                    onClick={() => {
-                      saveInkStrokes(overlayStrokes);
-                      setEditorMode("text");
-                    }}
-                    title="Done saving handwriting"
+                    onClick={() => setEditorMode("text")}
+                    title="Finish drawing (strokes are saved automatically)"
                     aria-label="Done saving handwriting"
                     style={{
                       background: "var(--primary)",
