@@ -2,7 +2,7 @@
 
 import {ChangeEvent, useEffect, useRef, useState} from "react";
 import dynamic from "next/dynamic";
-import {ArrowLeft, ArrowsIn, ArrowsOut, BookOpen, Clock, DownloadSimple, FileText, Folder, MagnifyingGlass, Plus, SidebarSimple, Sparkle, Star, Tag, Trash, UploadSimple, X} from "@phosphor-icons/react";
+import {ArrowLeft, ArrowsIn, ArrowsOut, BookOpen, Clock, DotsThree, DownloadSimple, FileText, Folder, MagnifyingGlass, Plus, SidebarSimple, Sparkle, Star, Tag, Trash, UploadSimple, X} from "@phosphor-icons/react";
 import {ModuleShell} from "../components/ModuleShell";
 import {Note, useAppState} from "../components/AppState";
 import {createId} from "../lib/id";
@@ -224,10 +224,16 @@ export default function VaultPage(){
           <header className="note-toolbar">
             <button className="icon-button" aria-label="Back to notes" onClick={closeNote}><ArrowLeft /></button>
             <span className="mixed-note-path">{draft.relativePath || draft.title}</span>
-            <button className={`secondary note-secondary-action ${showProperties ? "active" : ""}`} title={showProperties ? "Hide properties" : "Show properties"} aria-label="Toggle properties panel" onClick={() => setShowProperties(v => !v)}><SidebarSimple /><span>Properties</span></button>
             <button className="secondary note-secondary-action tutor-action" onClick={() => setTutorOpen(true)}><Sparkle />Tutor</button>
-            <button className="secondary note-secondary-action" onClick={exportNote}><DownloadSimple /><span>Markdown</span></button><button className="secondary note-secondary-action" onClick={exportPdf}><DownloadSimple /><span>PDF</span></button>
-            <button className="icon-button secondary fullscreen-toggle" title={fullscreen ? "Exit fullscreen" : "Fullscreen"} aria-label={fullscreen ? "Exit fullscreen" : "Open note fullscreen"} onClick={toggleFullscreen}>{fullscreen ? <ArrowsIn /> : <ArrowsOut />}</button>
+            <details className="note-actions-menu">
+              <summary aria-label="Note actions" title="Note actions"><DotsThree /></summary>
+              <div>
+                <button type="button" className={showProperties ? "active" : ""} onClick={() => setShowProperties(v => !v)}><SidebarSimple /><span>{showProperties ? "Hide properties" : "Show properties"}</span></button>
+                <button type="button" onClick={exportNote}><DownloadSimple /><span>Export Markdown</span></button>
+                <button type="button" onClick={exportPdf}><FileText /><span>Export PDF</span></button>
+                <button type="button" onClick={toggleFullscreen}>{fullscreen ? <ArrowsIn /> : <ArrowsOut />}<span>{fullscreen ? "Exit fullscreen" : "Fullscreen"}</span></button>
+              </div>
+            </details>
           </header>
           <MixedNoteEditor ref={mixedRef} noteId={draft.id} initialContent={draft.content} initialInk={new URLSearchParams(location.search).get("ink") === "1"} onNavigateNote={navigateToNote} onDirtyChange={setMixedDirty} fullscreen={fullscreen} onToggleFullscreen={toggleFullscreen} />
           <aside className="note-inspector">

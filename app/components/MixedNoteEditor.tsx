@@ -149,13 +149,11 @@ function MarkdownBlock({
   block,
   preview,
   onSave,
-  onInsertInk,
   onNavigateNote
 }: {
   block: Block;
   preview: boolean;
   onSave: (block: Block, value: string) => void;
-  onInsertInk: (block: Block, value: string, caret: number) => void;
   onNavigateNote?: (target: string) => void;
 }) {
   const [value, setValue] = useState(block.markdown);
@@ -177,9 +175,6 @@ function MarkdownBlock({
           <MarkdownContent text={value} onNavigateNote={onNavigateNote} />
         </article>
       )}
-      <nav className="block-actions" aria-label={`Actions for block ${block.position + 1}`}>
-        <button type="button" onClick={() => onInsertInk(block, value, value.length)} title="Split this block here and add an inline handwriting canvas between the text">Insert ink</button>
-      </nav>
     </div>
   );
 }
@@ -930,23 +925,6 @@ export function MixedNoteEditor({
     return () => { ref.current = null; };
   });
 
-  async function add(kind: "markdown" | "ink", source?: Block) {
-    if (kind === "markdown") {
-      await fetch(`/api/v1/notes/${noteId}/blocks`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json", "Idempotency-Key": createId()},
-        body: JSON.stringify({markdown: source?.markdown || ""})
-      });
-    } else {
-      await fetch(`/api/v1/notes/${noteId}/ink`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json", "Idempotency-Key": createId()},
-        body: JSON.stringify({id: createId(), width: viewportWidth, height: viewportHeight, strokes: clampInkStrokes(sanitizeStrokes(source?.strokes), viewportWidth, viewportHeight)})
-      });
-    }
-    await load();
-  }
-
   async function remove(block: Block) {
     const response = await fetch(`/api/v1/notes/${noteId}/blocks/${block.id}`, {
       method: "DELETE",
@@ -1021,64 +999,6 @@ export function MixedNoteEditor({
     else setError((await response.json()).error?.message || "Reorder failed");
   }
 
-  async function insertInk(block: Block, value: string, caret: number) {
-    const inkId = createId();
-    const afterId = createId();
-    const request = (url: string, body: object) =>
-      fetch(url, {
-        method: "POST",
-        headers: {"Content-Type": "application/json", "Idempotency-Key": createId()},
-        body: JSON.stringify(body)
-      });
-    try {
-      // Persist any debounced edits first so the block version we send is the one
-      // on the server; otherwise the split PATCH races the autosave and 409s with
-      // "Expected version N".
-      await flushMarkdownSaves();
-      const listing = await fetch(`/api/v1/notes/${noteId}/blocks`);
-      if (!listing.ok) throw new Error("Could not read note blocks");
-      const current = ((await listing.json()).blocks || []) as Block[];
-      const fresh = current.find(item => item.id === block.id);
-      if (!fresh || fresh.kind !== "markdown") throw new Error("This block changed; try again.");
-      let ids = current.map(item => item.id);
-      // The full-page overlay renders the FIRST ink block. Make sure an overlay
-      // block exists before inserting, so this inline canvas is never swallowed
-      // by the overlay layer and stays visible between paragraphs.
-      if (!current.some(item => item.kind === "ink")) {
-        const overlayId = createId();
-        const created = await request(`/api/v1/notes/${noteId}/ink`, {id: overlayId, width: viewportWidth, height: viewportHeight, strokes: []});
-        if (!created.ok) throw new Error((await created.json()).error?.message || "Could not prepare ink layer");
-        ids.push(overlayId);
-        overlayInkIdRef.current = overlayId;
-      }
-      const updated = await fetch(`/api/v1/notes/${noteId}/blocks/${block.id}`, {
-        method: "PATCH",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({markdown: value.slice(0,caret), version: fresh.version})
-      });
-      if (!updated.ok) throw new Error((await updated.json()).error?.message || "Could not split block");
-      for (const [url, body] of [
-        [`/api/v1/notes/${noteId}/ink`, {id: inkId, width: viewportWidth, height: viewportHeight, strokes: []}],
-        [`/api/v1/notes/${noteId}/blocks`, {id: afterId, markdown: value.slice(caret)}]
-      ] as const) {
-        const response = await request(url, body);
-        if (!response.ok) throw new Error((await response.json()).error?.message || "Could not insert ink");
-      }
-      const index = ids.indexOf(block.id);
-      ids.splice(index+1,0,inkId,afterId);
-      const reordered = await fetch(`/api/v1/notes/${noteId}/blocks`, {
-        method: "PATCH",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ids})
-      });
-      if (!reordered.ok) throw new Error((await reordered.json()).error?.message || "Could not place ink");
-      await load();
-    } catch (reason) {
-      setError((reason as Error).message);
-      await load();
-    }
-  }
-
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
@@ -1114,22 +1034,24 @@ export function MixedNoteEditor({
         {paletteCollapsed ? <button className="palette-expand-btn" onClick={() => setPaletteCollapsed(false)} aria-label="Expand note controls" title="Expand note controls"><PencilLine size={18} /><CaretDown size={14} /></button> : <div className="palette-rows-container">
         <div className="palette-row">
           <div className="palette-group" aria-label="Document view">
-            <button className={viewMode === "write" ? "active" : ""} onClick={() => setViewMode("write")} aria-pressed={viewMode === "write"}>Edit</button>
-            <button className={viewMode === "preview" ? "active" : ""} onClick={() => setViewMode("preview")} aria-pressed={viewMode === "preview"}>Preview</button>
+            <button type="button" className={viewMode === "write" ? "active" : ""} onClick={() => setViewMode("write")} aria-pressed={viewMode === "write"}>Edit</button>
+            <button type="button" className={viewMode === "preview" ? "active" : ""} onClick={() => setViewMode("preview")} aria-pressed={viewMode === "preview"}>Preview</button>
           </div>
-          <button className={`ink-mode-toggle ${editorMode === "ink" ? "active" : ""}`} onClick={() => setEditorMode(mode => mode === "ink" ? "text" : "ink")} aria-pressed={editorMode === "ink"} title="Toggle ink layer">
+          <button type="button" className={`ink-mode-toggle ${editorMode === "ink" ? "active" : ""}`} onClick={() => setEditorMode(mode => mode === "ink" ? "text" : "ink")} aria-pressed={editorMode === "ink"} title="Draw over note">
             <PencilLine size={18} /><span>Ink</span>
           </button>
-          {inkBlock&&<span className="status-label" role="status">OCR · {inkBlock.ocrStatus||"pending"}{inkBlock.ocrStatus==="failed"&&<button type="button" onClick={()=>void retryOcr()}>Retry</button>}<button type="button" aria-expanded={ocrPanelOpen} aria-label="Toggle OCR review panel" onClick={()=>{setOcrPanelOpen(open=>!open);setDismissedOcr(false)}}>{ocrPanelOpen?"Hide":"Review"}</button></span>}
           <details className="note-toolbar-menu">
-            <summary aria-label="More note options" title="More note options"><DotsThree size={20} /></summary>
+            <summary aria-label={`More note options${inkBlock ? `. Handwriting recognition ${inkBlock.ocrStatus||"pending"}` : ""}`} title="More note options"><DotsThree size={20} />{inkBlock&&<span className={`ocr-status-dot ${inkBlock.ocrStatus||"pending"}`} aria-hidden="true" />}</summary>
             <div>
-              <button onClick={() => setShowAnnotations(v => !v)}>{showAnnotations ? <Eye size={18} /> : <EyeSlash size={18} />}<span>{showAnnotations ? "Hide ink" : "Show ink"}</span></button>
-              {pageZoom !== 1 && <button onClick={resetPageZoom}><span>Reset zoom ({Math.round(pageZoom * 100)}%)</span></button>}
-              {onToggleFullscreen && <button onClick={onToggleFullscreen}>{fullscreen ? <ArrowsIn size={18} /> : <ArrowsOut size={18} />}<span>{fullscreen ? "Exit fullscreen" : "Fullscreen"}</span></button>}
+              {inkBlock&&<p className="ocr-menu-status" role="status"><span>Handwriting recognition</span><strong>{inkBlock.ocrStatus||"pending"}</strong></p>}
+              {inkBlock?.ocrStatus==="failed"&&<button type="button" onClick={()=>void retryOcr()}>Retry recognition</button>}
+              {inkBlock&&<button type="button" aria-expanded={ocrPanelOpen} onClick={()=>{setOcrPanelOpen(open=>!open);setDismissedOcr(false)}}>{ocrPanelOpen?"Hide OCR review":"Review OCR"}</button>}
+              <button type="button" onClick={() => setShowAnnotations(v => !v)}>{showAnnotations ? <Eye size={18} /> : <EyeSlash size={18} />}<span>{showAnnotations ? "Hide ink" : "Show ink"}</span></button>
+              {pageZoom !== 1 && <button type="button" onClick={resetPageZoom}><span>Reset zoom ({Math.round(pageZoom * 100)}%)</span></button>}
+              {onToggleFullscreen && <button type="button" onClick={onToggleFullscreen}>{fullscreen ? <ArrowsIn size={18} /> : <ArrowsOut size={18} />}<span>{fullscreen ? "Exit fullscreen" : "Fullscreen"}</span></button>}
             </div>
           </details>
-          <button onClick={() => setPaletteCollapsed(true)} aria-label="Collapse note controls" title="Collapse note controls"><CaretUp size={18} /></button>
+          <button type="button" onClick={() => setPaletteCollapsed(true)} aria-label="Collapse note controls" title="Collapse note controls"><CaretUp size={18} /></button>
         </div>
             {editorMode === "ink" && (
               <div className="palette-row">
@@ -1328,7 +1250,6 @@ export function MixedNoteEditor({
                     block={block}
                     preview={viewMode === "preview"}
                     onSave={markdown}
-                    onInsertInk={insertInk}
                     onNavigateNote={onNavigateNote}
                   />
                 </article>

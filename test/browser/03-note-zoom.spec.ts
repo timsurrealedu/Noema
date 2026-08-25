@@ -1,7 +1,7 @@
 import {expect,test} from "@playwright/test";
 import {join} from "node:path";
 
-test("note page wheel zoom keeps layout coherent and insert handle reachable",async({page})=>{
+test("note page wheel zoom keeps full-page annotation coherent",async({page})=>{
   test.setTimeout(120_000);
   await page.goto("/login");
   await page.getByLabel("Email address").fill("owner@example.com");
@@ -32,7 +32,14 @@ test("note page wheel zoom keeps layout coherent and insert handle reachable",as
   await page.locator(".vault-file-card button",{hasText:result.title}).click();
   const editor=page.locator(".mixed-note-editor");
   await expect(editor).toBeVisible({timeout:30_000});
-  await expect(page.getByRole("button",{name:"Insert ink"}).first()).toBeAttached();
+  await expect(page.getByRole("button",{name:"Insert ink"})).toHaveCount(0);
+  await expect(page.locator(".milkdown-top-bar:visible")).toHaveCount(1);
+  expect(await page.locator(".milkdown-top-bar button").evaluateAll(buttons=>buttons.filter(button=>!button.getAttribute("aria-label")).length)).toBe(0);
+  await page.getByLabel("Note actions").focus();
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("button",{name:"Export Markdown"})).toBeVisible();
+  await expect(page.getByRole("button",{name:"Export PDF"})).toBeVisible();
+  await page.keyboard.press("Enter");
   const docPage=page.locator(".integrated-doc-page").last();
   await page.hover(".markdown-block-editor");
   const focal=await docPage.evaluate(pageElement=>{
@@ -109,10 +116,17 @@ test("note page wheel zoom keeps layout coherent and insert handle reachable",as
     return (data.blocks||[]).find((block:{kind:string})=>block.kind==="ink")?.strokes?.length||0;
   },result.noteId)).toBeGreaterThanOrEqual(2);
   expect((await page.locator(".tutor-error").allTextContents()).join(" ")).not.toContain("Expected version");
-  await page.locator("summary[aria-label='More note options']").click();
+  await page.getByLabel(/^More note options/).click();
   await expect(page.getByText(/Reset zoom/)).toBeVisible();
   await page.getByRole("button",{name:/Reset zoom/}).click();
   await expect.poll(()=>docPage.evaluate(el=>Number(el.style.zoom)||1)).toBe(1);
   await expect(overlay.locator("path").last()).toHaveAttribute("d",storedPath!);
   expect(await overlay.locator("path").evaluateAll(paths=>paths.map(path=>Number(path.getAttribute("stroke-width"))))).toEqual([3,3]);
+  await page.getByLabel(/^More note options/).click();
+  for(const size of [{width:820,height:1180},{width:390,height:844}]){
+    await page.setViewportSize(size);
+    expect(await page.evaluate(()=>document.documentElement.scrollWidth<=window.innerWidth+1)).toBe(true);
+    const targets=await page.locator(".integrated-floating-palette button:visible,.integrated-floating-palette summary:visible,.mixed-workspace .note-toolbar button:visible,.mixed-workspace .note-toolbar summary:visible").evaluateAll(elements=>elements.map(element=>{const rect=element.getBoundingClientRect();return {width:rect.width,height:rect.height}}));
+    expect(targets.every(target=>target.width>=44&&target.height>=44)).toBe(true);
+  }
 });
