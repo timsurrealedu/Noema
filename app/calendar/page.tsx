@@ -401,6 +401,13 @@ export default function CalendarPage() {
           >
             <ArrowsClockwise className={syncing ? "spin-icon" : ""} />
           </button>
+          <button
+            className="secondary icon-button calendar-mobile-add"
+            aria-label="New event"
+            onClick={() => {setEventTitleError("");setDraft({...blankEvent(), day: selectedDay})}}
+          >
+            <Plus />
+          </button>
         </div>
         <div className="view-switch" role="group" aria-label="Calendar view">
           {(["Day", "Week", "Month", "Agenda"] as const).map(item => (
@@ -411,15 +418,22 @@ export default function CalendarPage() {
         </div>
         <div className="calendar-toolbar-actions">
           <button
-            className="secondary calendar-sync-action"
+            className="secondary icon-button calendar-sync-action"
+            aria-label={syncing ? "Syncing calendar" : "Sync calendar"}
+            title="Sync events and tasks with Google Calendar"
             onClick={() => void triggerSync()}
             disabled={syncing}
-            title="Sync events and tasks with Google Calendar"
           >
             <ArrowsClockwise className={syncing ? "spin-icon" : ""} />
-            {syncing ? "Syncing..." : "Sync"}
           </button>
-          <button className="primary calendar-primary-action" onClick={() => {setEventTitleError("");setDraft({...blankEvent(), day: selectedDay})}}>Add event</button>
+          <button
+            className="primary icon-button calendar-primary-action"
+            aria-label="New event"
+            title="New event"
+            onClick={() => {setEventTitleError("");setDraft({...blankEvent(), day: selectedDay})}}
+          >
+            <Plus />
+          </button>
         </div>
       </div>
 
@@ -966,7 +980,6 @@ export default function CalendarPage() {
           </aside>
         ) : null}
       </div>
-      {!draft&&<div className="mobile-action-dock calendar-mobile-dock"><button className="primary" onClick={()=>{setEventTitleError("");setDraft({...blankEvent(),day:selectedDay})}} aria-label="New event"><Plus/></button></div>}
       {scopeDraft&&<div className="calendar-scope" role="dialog" aria-modal="true" aria-labelledby="recurring-scope-title" onKeyDown={event=>event.key==="Escape"&&setScopeDraft(null)}><div><h2 id="recurring-scope-title">Update recurring event</h2><p>Which events should change?</p><button className="primary" autoFocus onClick={()=>void saveOccurrence(scopeDraft,"this")}>This event</button><button className="secondary" onClick={()=>void saveOccurrence(scopeDraft,"following")}>This and following</button><button className="secondary" onClick={()=>void saveOccurrence(scopeDraft,"all")}>All events</button><button className="secondary" onClick={()=>setScopeDraft(null)}>Cancel</button></div></div>}
       {saveMessage&&<p className="calendar-live" role="status">{saveMessage}</p>}
     </ModuleShell>

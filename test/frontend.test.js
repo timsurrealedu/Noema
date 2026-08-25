@@ -422,7 +422,8 @@ test("Home centers attention and capture while task creation floats",()=>{
   assert.match(home,/home-task-fab/);assert.doesNotMatch(home,/home-mobile-dock/);
   assert.doesNotMatch(home,/home-new-task/);
   assert.match(home,/task-overdue-relative/);assert.match(home,/task-due-exact/);assert.match(home,/DotsThree/);
-  for(const [source,label] of [[capture,"Quick capture"],[calendar,"New event"]]){assert.match(source,/mobile-action-dock/);assert.match(source,new RegExp(label))}
+  assert.match(capture,/mobile-action-dock/);assert.match(capture,/Quick capture/);
+  assert.doesNotMatch(calendar,/mobile-action-dock/);assert.match(calendar,/calendar-mobile-add/);assert.match(calendar,/aria-label="New event"/);
   assert.match(capture,/import Link from "next\/link"/);assert.match(capture,/<Link className="primary capture-primary-action" href="\/#capture"/);
   assert.doesNotMatch(css,/\.module-main :is\(p,li\)\{font-size:max\(1rem,1em\)\}/);
   assert.match(css,/\.mobile-action-dock\{[^}]*position:fixed[^}]*bottom:calc\(72px \+ env\(safe-area-inset-bottom\)\)/);
