@@ -791,9 +791,10 @@ export default function CaptureInbox() {
                             {asset.mime} · {asset.size > 1048576 ? `${(asset.size / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(asset.size / 1024))} KB`}
                           </small>
                         </span>
-                        <a className="row-action" href={`/api/v1/assets/${asset.id}`} target="_blank" rel="noreferrer" aria-label={`Open original ${asset.name}`}>
-                          <ArrowSquareOut />
-                        </a>
+                        <span className="capture-asset-actions">
+                          {asset.mime==="application/pdf"&&<Link className="row-action" href={`/assets/${asset.id}/annotate`} aria-label={`Annotate ${asset.name}`}><PenNib/></Link>}
+                          <a className="row-action" href={`/api/v1/assets/${asset.id}`} target="_blank" rel="noreferrer" aria-label={`Open original ${asset.name}`}><ArrowSquareOut/></a>
+                        </span>
                       </div>
                     ))}
                   </section>

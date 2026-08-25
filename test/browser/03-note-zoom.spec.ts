@@ -86,7 +86,7 @@ test("note page wheel zoom keeps layout coherent and insert handle reachable",as
   },result.noteId);
   expect(strokeCheck,"stroke persisted").toBeTruthy();
   expect(strokeCheck!.maxX).toBeLessThanOrEqual(strokeCheck!.width+1);
-  expect(strokeCheck!.strokeWidth).toBeLessThan(1);
+  expect(strokeCheck!.strokeWidth).toBe(3);
   const storedPath=await overlay.locator("path").last().getAttribute("d");
   expect(storedPath).toMatch(/Q/);
   const advanced=await page.evaluate(async({noteId,blockId})=>{
@@ -114,4 +114,5 @@ test("note page wheel zoom keeps layout coherent and insert handle reachable",as
   await page.getByRole("button",{name:/Reset zoom/}).click();
   await expect.poll(()=>docPage.evaluate(el=>Number(el.style.zoom)||1)).toBe(1);
   await expect(overlay.locator("path").last()).toHaveAttribute("d",storedPath!);
+  expect(await overlay.locator("path").evaluateAll(paths=>paths.map(path=>Number(path.getAttribute("stroke-width"))))).toEqual([3,3]);
 });

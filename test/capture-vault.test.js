@@ -135,13 +135,13 @@ test("tutor insert lands after the active block when asked",async()=>{
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
-test("note PDF export embeds math, images, and handwriting strokes",async()=>{
+test("note PDF download resolves its default database and embeds rich note content",async()=>{
   const dir=mkdtempSync(join(tmpdir(),"noema-note-pdf-")),vaultDir=join(dir,"vault");mkdirSync(vaultDir);
   const fs=await import("node:fs");
-  const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),vault=await import("../server/vault.mjs"),objects=await import("../server/objects.mjs"),inkRaster=await import("../server/ink-raster.mjs"),core=await import("../server/core.mjs"),{load:pdfLoad}=await import("pdf-lib").then(module=>module.PDFDocument);
+  const {getDatabase,closeDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),vault=await import("../server/vault.mjs"),objects=await import("../server/objects.mjs"),inkRaster=await import("../server/ink-raster.mjs"),core=await import("../server/core.mjs"),{load:pdfLoad}=await import("pdf-lib").then(module=>module.PDFDocument);
   const {notePdf}=await import("../server/note-pdf.mjs");
-  const db=openDatabase(join(dir,"test.sqlite"));
-  const config={dataDir:dir,objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs")};
+  const config={dataDir:dir,dbPath:join(dir,"test.sqlite"),objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs")};
+  const db=getDatabase(config);
   fs.mkdirSync(config.objectsDir,{recursive:true});fs.mkdirSync(config.jobsDir,{recursive:true});
   try{
     const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),workspace=collaboration.ensureDefaultWorkspace(user.id,db),actor={id:user.id,workspaceId:workspace.id};
@@ -151,11 +151,11 @@ test("note PDF export embeds math, images, and handwriting strokes",async()=>{
     const png=inkRaster.strokesToPng({width:40,height:40,strokes:[{tool:"pen",color:"#111827",width:2,points:[{x:1,y:1},{x:30,y:30}]}]});
     const asset=await objects.storeAsset({stream:require("node:stream").Readable.from([png]),name:"diagram.png",mime:"image/png"},config,db,workspace.id);
     core.saveNote({id:created.noteId,content:"# Export\n\nIntro paragraph.\n\n$$\\alpha + \\beta \\geq 1$$\n\n![diagram](/api/v1/assets/"+asset.id+")",version:2},db,actor);
-    const result=await notePdf(created.noteId,db,workspace.id,config);
+    const result=await notePdf(created.noteId,undefined,workspace.id,config);
     const pdf=await pdfLoad(result.bytes);
     assert.ok(pdf.getPageCount()>=1);
     assert.ok(result.bytes.length>1200,"export should carry embedded image weight");
-  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+  }finally{closeDatabase();rmSync(dir,{recursive:true,force:true})}
 });
 test("parallel tutor answers require at least two distinct providers",async()=>{
   const dir=mkdtempSync(join(tmpdir(),"noema-tutor-parallel-")),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),skills=await import("../server/skills.mjs"),db=openDatabase(join(dir,"test.sqlite"));

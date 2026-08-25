@@ -3,6 +3,7 @@ import {join} from "node:path";
 import {PDFDocument,StandardFonts,rgb} from "pdf-lib";
 import fontkit from "@pdf-lib/fontkit";
 import {exportMarkdown} from "./core.mjs";
+import {getDatabase} from "./db.mjs";
 import {assetPath,getAsset} from "./objects.mjs";
 import {loadConfig} from "./config.mjs";
 
@@ -71,7 +72,7 @@ function inlineRuns(text){
 
 function runWidth(text,font,size){try{return font.widthOfTextAtSize(text,size)}catch{return text.length*size*.55}}
 
-export async function notePdf(noteId,db,workspaceId,config){
+export async function notePdf(noteId,db=getDatabase(),workspaceId,config){
   try{
     return await renderNotePdf(noteId,db,workspaceId,config??undefined,true);
   }catch(error){

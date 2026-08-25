@@ -337,13 +337,12 @@ function IntegratedOverlayCanvas({
 
     const pt = getPoint(event);
     if (!pt) return;
-    const zoom = zoomRef?.current || 1;
     drawing.current = true;
     if (event.pointerType === "pen") setPenDrawing(true);
     (event.target as HTMLElement).setPointerCapture?.(event.pointerId);
 
     if (activeTool === "eraser") {
-      const erased = eraseAt(liveStrokes.current, pt, size * 4 / zoom);
+      const erased = eraseAt(liveStrokes.current, pt, size * 4);
       liveStrokes.current = erased;
       setCurrentStrokes(erased);
       onChange(erased);
@@ -355,7 +354,7 @@ function IntegratedOverlayCanvas({
       id: createId(),
       tool,
       color,
-      width: size / (zoomRef?.current || 1),
+      width: size,
       points: [pt]
     };
     activeStroke.current = stroke;
@@ -390,7 +389,7 @@ function IntegratedOverlayCanvas({
     if (!pt) return;
 
     if (activeTool === "eraser") {
-      const erased = eraseAt(liveStrokes.current, pt, size * 4 / (zoomRef?.current || 1));
+      const erased = eraseAt(liveStrokes.current, pt, size * 4);
       liveStrokes.current = erased;
       setCurrentStrokes(erased);
       return;

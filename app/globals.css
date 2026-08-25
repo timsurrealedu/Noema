@@ -1041,3 +1041,4 @@ article.task-subtask{padding-left:34px;font-size:.88rem}
 .palette-dialog [role="listbox"]{display:flex;flex-direction:column}
 .palette-dialog button[aria-selected="true"]{background:var(--surface)}
 .palette-empty{margin:6px 12px;color:var(--faint);font-size:.8rem}
+.capture-asset-actions{display:flex!important;flex-direction:row!important;gap:4px!important}.capture-asset-actions .row-action{display:grid;place-items:center;min-width:32px;min-height:32px}
