@@ -91,7 +91,8 @@ async function renderNotePdf(noteId,db,workspaceId,config,subset){
   config=config||loadConfig();
   const exported=exportMarkdown(noteId,db,workspaceId);
   const blocks=db.prepare("SELECT b.id,b.kind,b.markdown,i.width,i.height,i.strokes_json AS strokesJson FROM note_blocks b LEFT JOIN note_ink_blocks i ON i.block_id=b.id WHERE b.note_id=? ORDER BY b.position").all(noteId);
-  const markdown=blocks.some(block=>block.kind==="ink")?blocks.map(block=>block.kind==="ink"?`![[Attachments/Noema Ink/${block.id}.svg]]`:block.markdown||"").join("\n\n"):exported;
+  const overlayInk=blocks.findLast(block=>block.kind==="ink");
+  const markdown=overlayInk?blocks.map(block=>block.id===overlayInk.id?"":block.kind==="ink"?`![[Attachments/Noema Ink/${block.id}.svg]]`:block.markdown||"").join("\n\n"):exported;
   const title=markdown.match(/^#\s+(.+)$/m)?.[1]||"Noema note";
   const inkBlocks=new Map(blocks.filter(block=>block.kind==="ink").map(block=>[block.id,block]));
   const resolveInk=id=>{
@@ -105,6 +106,7 @@ async function renderNotePdf(noteId,db,workspaceId,config,subset){
   const regular=await pdf.embedFont(StandardFonts.Helvetica),bold=await pdf.embedFont(StandardFonts.HelveticaBold),mono=await pdf.embedFont(StandardFonts.Courier),italic=await pdf.embedFont(StandardFonts.HelveticaOblique);
   let wide=null;
   let page=pdf.addPage(),y=TOP;
+  const firstPage=page;
   const newPage=()=>{page=pdf.addPage();y=TOP};
   const ensure=size=>{if(y<size+30)newPage()};
   const ensureWide=text=>{
@@ -140,21 +142,21 @@ async function renderNotePdf(noteId,db,workspaceId,config,subset){
     }
   };
 
+  const drawInk=(sidecar,target,top,scale)=>{
+    for(const stroke of sidecar.strokes){
+      const points=stroke.points||[];
+      if(!points.length)continue;
+      const d=points.length===1?`M${(points[0].x*scale).toFixed(1)} ${(points[0].y*scale).toFixed(1)}h.01`:points.map((point,index)=>`${index?"L":"M"}${(point.x*scale).toFixed(1)} ${(point.y*scale).toFixed(1)}`).join(" ");
+      try{target.drawSvgPath(d,{x:MARGIN,y:top,scale:1,borderColor:hexColor(stroke.color),borderWidth:Math.max(.6,(stroke.width||3)*scale*(stroke.tool==="highlighter"?4:1))})}catch{/* skip malformed stroke */}
+    }
+  };
   const drawInkBlock=(inkId)=>{
     const sidecar=resolveInk(inkId);
     if(!sidecar){drawLine(`[handwriting block ${inkId.slice(0,8)} not available in export]`,{color:MUTED});return}
     const scale=Math.min(BODY_WIDTH/sidecar.width,480/sidecar.height),blockHeight=sidecar.height*scale;
     ensure(blockHeight+20);
     const top=y;
-    for(const stroke of sidecar.strokes){
-      const points=stroke.points||[];
-      if(points.length<2)continue;
-      const d=points.map((point,index)=>`${index?"L":"M"}${(point.x*scale).toFixed(1)} ${(point.y*scale).toFixed(1)}`).join(" ");
-      const color=stroke.tool==="highlighter"?hexColor(stroke.color):hexColor(stroke.color);
-      try{
-        page.drawSvgPath(d,{x:MARGIN,y:top,scale:1,borderColor:color,borderWidth:Math.max(.6,(stroke.width||3)*scale*(stroke.tool==="highlighter"?4:1)),borderLineJoinColor:undefined});
-      }catch{/* skip malformed stroke */}
-    }
+    drawInk(sidecar,page,top,scale);
     y=top-blockHeight-14;
   };
 
@@ -193,11 +195,13 @@ async function renderNotePdf(noteId,db,workspaceId,config,subset){
   ensure(20);
   page.drawText(title,{x:MARGIN,y,size:20,font:bold,color:INK});y-=34;
   page.drawText(`Exported from Noema · ${new Date().toLocaleDateString("en-CA")}`,{x:MARGIN,y,size:9,font:regular,color:MUTED});y-=28;
+  const contentTop=y;
 
   const lines=markdown.split(/\r?\n/);
   for(let index=0;index<lines.length;index++){
     const raw=lines[index];
     if(!raw.trim()){y-=6;continue}
+    if(/^<br\s*\/?\s*>$/i.test(raw.trim()))continue;
     if(raw.trim().startsWith("<!--"))continue;
     if(raw.startsWith("```")){
       index+=1;
@@ -219,7 +223,7 @@ async function renderNotePdf(noteId,db,workspaceId,config,subset){
       continue;
     }
     const heading=raw.match(/^(#{1,4})\s+(.+)/);
-    if(heading){y-=6;drawLine(heading[2],{size:[18,14,12,11][heading[1].length-1],heavy:true});continue}
+    if(heading){if(heading[1]==="#"&&heading[2].trim()===title.trim())continue;y-=6;drawLine(heading[2],{size:[18,14,12,11][heading[1].length-1],heavy:true});continue}
     if(/^(---|\*\*\*|___)\s*$/.test(raw)){ensure(8);page.drawLine({start:{x:MARGIN,y},end:{x:MARGIN+BODY_WIDTH,y},thickness:.5,color:MUTED});y-=12;continue}
     const quote=raw.match(/^>\s?(.*)/);
     if(quote){drawLine(quote[1],{indent:14,color:MUTED});continue}
@@ -235,6 +239,7 @@ async function renderNotePdf(noteId,db,workspaceId,config,subset){
     }
     await drawInlineContent(raw,{});
   }
+  if(overlayInk){const sidecar=resolveInk(overlayInk.id);if(sidecar)drawInk(sidecar,firstPage,contentTop,Math.min(BODY_WIDTH/sidecar.width,(contentTop-MARGIN)/sidecar.height))}
   try{
     return {bytes:await pdf.save(),filename:`${safe(title)}-${new Date().toISOString().slice(0,10)}.pdf`};
   }catch(error){
@@ -243,6 +248,7 @@ async function renderNotePdf(noteId,db,workspaceId,config,subset){
   }
 
   async function drawInlineContent(text,options={}){
+    if(/^\s*!\[[^\]]*\]\(\s*\)\s*$/.test(text))return;
     const image=/^\s*!\[([^\]]*)\]\(([^)]+)\)\s*$/.exec(text);
     if(image){await drawImageBlock(image[2],image[1]);return}
     const ink=/^\s*!\[\[Attachments\/Noema Ink\/([0-9a-f-]+)\.svg\]\]\s*$/.exec(text);

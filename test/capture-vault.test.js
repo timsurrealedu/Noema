@@ -149,18 +149,21 @@ test("note PDF download embeds rich content and authoritative handwriting blocks
     const created=vault.createVaultNote(connected.id||connected.sourceId,{relativePath:"Export.md",content:"# Export\n\nIntro paragraph.\n\n$$\\alpha + \\beta \\geq 1$$\n"},actor,db);
     const png=inkRaster.strokesToPng({width:40,height:40,strokes:[{tool:"pen",color:"#111827",width:2,points:[{x:1,y:1},{x:30,y:30}]}]});
     const asset=await objects.storeAsset({stream:require("node:stream").Readable.from([png]),name:"diagram.png",mime:"image/png"},config,db,workspace.id);
-    const content="# Export\n\nIntro paragraph.\n\n$$\\alpha + \\beta \\geq 1$$\n\n![diagram](/api/v1/assets/"+asset.id+")",markdown=vault.listNoteBlocks(created.noteId,actor,db)[0];
+    const content="![1.00]()\n\n# Export\n\nIntro paragraph.\n\n$$\\alpha + \\beta \\geq 1$$\n\n"+Array(19).fill("<br />").join("\n\n")+"\n\n![diagram](/api/v1/assets/"+asset.id+")",markdown=vault.listNoteBlocks(created.noteId,actor,db)[0];
     vault.saveMarkdownBlock(created.noteId,{id:markdown.id,markdown:content,version:markdown.version},actor,db);
-    vault.saveInkBlock(created.noteId,{formatVersion:2,coordinateSpace:"world",width:200,height:100,strokes:[{id:"s1",tool:"pen",color:"#123456",width:3,points:[{x:10,y:10,pressure:.5,time:0},{x:150,y:80,pressure:.5,time:1}]}]},actor,db);
+    vault.saveInkBlock(created.noteId,{formatVersion:2,coordinateSpace:"world",width:810,height:595,strokes:[{id:"s1",tool:"pen",color:"#123456",width:3,points:[{x:10,y:10,pressure:.5,time:0},{x:750,y:500,pressure:.5,time:1}]},{id:"s2",tool:"pen",color:"#654321",width:3,points:[{x:400,y:300,pressure:.5,time:2}]}]},actor,db);
     core.saveNote({id:created.noteId,content,version:db.prepare("SELECT version FROM notes WHERE id=?").get(created.noteId).version},db,actor);
     const result=await notePdf(created.noteId,undefined,workspace.id,config);
     const pdf=await pdfLoad(result.bytes);
-    assert.ok(pdf.getPageCount()>=1);
+    assert.equal(pdf.getPageCount(),1,"editor line breaks should not push handwriting onto a hidden second page");
     assert.ok(result.bytes.length>1200,"export should carry embedded image weight");
-    const rendered=await getDocument({data:new Uint8Array(result.bytes)}).promise,operators=await (await rendered.getPage(1)).getOperatorList();
+    const rendered=await getDocument({data:new Uint8Array(result.bytes)}).promise,page=await rendered.getPage(1),operators=await page.getOperatorList(),textItems=(await page.getTextContent()).items.map(item=>item.str||""),text=textItems.join(" ");
+    assert.equal(textItems.filter(item=>item==="Export").length,1,"the note title should not be duplicated");
+    assert.doesNotMatch(text,/<br\s*\/?\s*>|\[image:\s*1\.00\]/i);
     assert.ok(operators.fnArray.includes(OPS.paintImageXObject),"exported PDF should contain the saved image");
     const inkColor=operators.fnArray.findIndex((fn,index)=>fn===OPS.setStrokeRGBColor&&operators.argsArray[index]?.[0]==="#123456"),inkPath=operators.fnArray.indexOf(OPS.constructPath,inkColor);
     assert.ok(inkColor>=0&&inkPath>inkColor&&operators.argsArray[inkPath]?.[0]===OPS.stroke,"exported PDF should contain the saved handwriting stroke");
+    assert.ok(operators.fnArray.some((fn,index)=>fn===OPS.setStrokeRGBColor&&operators.argsArray[index]?.[0]==="#654321"),"single-point pen marks should remain visible");
   }finally{closeDatabase();rmSync(dir,{recursive:true,force:true})}
 });
 test("parallel tutor answers require at least two distinct providers",async()=>{
