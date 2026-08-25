@@ -1,5 +1,5 @@
-import rrule from "rrule";
-const {rrulestr}=rrule;
+import {createRequire} from "node:module";
+const {rrulestr}=createRequire(`${process.cwd()}/`)("rrule");
 
 const asRules=value=>Array.isArray(value?.rules)?value.rules:value?.frequency?[`RRULE:FREQ=${value.frequency.toUpperCase()}${Number(value.interval)>1?`;INTERVAL=${Number(value.interval)}`:""}`]:[];
 export function occurrences(event,rangeStart,rangeEnd,overrides=[]){
