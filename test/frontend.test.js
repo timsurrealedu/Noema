@@ -23,7 +23,7 @@ test("ink selection handles and touch input match stylus interactions",()=>{cons
 test("handwriting notes expose durable creation and batch-processing endpoints",()=>{const route=read("app/api/v1/handwriting-notes/route.ts"),process=read("app/api/v1/captures/process-pending/route.ts"),service=read("server/handwriting.mjs");assert.match(route,/requireWorkspace\(request,"editor"\)/);assert.match(route,/idempotent/);assert.match(process,/processPendingHandwriting/);assert.match(service,/dedupeKey:`handwriting-intake:/);assert.match(service,/queueOcr:false/)});
 test("Capture Done history shows handwriting provenance and its note link",()=>{const page=read("app/capture/page.tsx"),state=read("app/components/AppState.tsx");for(const value of ["Done","AI action","Confidence","Source ink","Open note"])assert.match(page,new RegExp(value));assert.match(state,/handwriting\?:/)});
 test("Vault New note action is icon-only",()=>{const vault=read("app/components/VaultOrganizer.tsx");assert.match(vault,/aria-label="New note"/);assert.doesNotMatch(vault,/<FilePlus\/>New note/)});
-test("Vault New note chooses typed or handwritten creation through one flow",()=>{const vault=read("app/components/VaultOrganizer.tsx");for(const value of ["note-type-dialog","Typed note","Handwritten note"])assert.match(vault,new RegExp(value));assert.match(vault,/create\(undefined,sourceId,false\)/);assert.match(vault,/create\(undefined,sourceId,true\)/);assert.match(vault,/ariaLabel="Choose note type"/)});
+test("Vault New note directly creates one mixed note",()=>{const vault=read("app/components/VaultOrganizer.tsx");assert.match(vault,/aria-label="New note"[^>]*onClick=\{\(\)=>void create\(\)\}/);for(const value of ["createMenu","note-type-dialog","Choose note type","Typed note"])assert.doesNotMatch(vault,new RegExp(value))});
 test("closed Vault sidebar leaves its content pane full width",()=>{const css=read("app/globals.css");assert.match(css,/\.obsidian-vault:not\(\.drawer-open\) \.obsidian-vault-body\{grid-template-columns:minmax\(0,1fr\)\}/)});
 test("local development supervises Next and a visibly running worker",()=>{const scripts=JSON.parse(read("package.json")).scripts,dev=read("scripts/dev.mjs"),worker=read("server/worker.mjs");assert.equal(scripts.dev,"node scripts/dev.mjs");assert.match(dev,/dev:web/);assert.match(dev,/server\/worker\.mjs/);assert.match(dev,/stopping development services/);assert.match(worker,/\[worker\] started/);assert.match(scripts.worker,/--env-file-if-exists=\.env\.local/)});
 test("capture review refreshes its version after AI processing",()=>assert.match(read("app/components/AppState.tsx"),/version:job\.result\?\.captureVersion/));
@@ -252,6 +252,22 @@ test("shared ink viewport helpers are tested pure functions adopted by every ink
   assert.equal(penRecentlyUp("touch",false,0,100),true);
   assert.equal(penRecentlyUp("touch",false,0,400),false);
   assert.equal(penRecentlyUp("pen",false,0,0),false);
+});
+test("ink save retries an expected-version conflict with the authoritative block version",async()=>{
+  const ts=require("typescript");
+  const compiled=ts.transpileModule(read("app/lib/ink.ts"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:"es2019"}}).outputText;
+  const module={exports:{}};
+  new Function("exports","module","performance",compiled)(module.exports,module,{now:()=>0});
+  const calls=[];
+  const responses=[
+    {ok:false,status:409,json:async()=>({error:{message:"Expected version 3"}})},
+    {ok:true,status:200,json:async()=>({blocks:[{id:"ink-1",inkVersion:3}]})},
+    {ok:true,status:201,json:async()=>({id:"ink-1",version:4})}
+  ];
+  const request=async(url,options)=>{calls.push({url,body:options?.body&&JSON.parse(options.body)});return responses.shift()};
+  const saved=await module.exports.saveInkWithRetry("note-1",{id:"ink-1",version:2,width:320,height:240,strokes:[]},request,()=>"key");
+  assert.equal(saved.version,4);
+  assert.deepEqual(calls.filter(call=>call.body).map(call=>call.body.version),[2,3]);
 });
 test("Vault ink keeps vector geometry and scales new-detail precision with zoom",()=>{const ink=read("app/lib/ink.ts"),mixed=read("app/components/MixedNoteEditor.tsx"),vault=read("server/vault.mjs");assert.match(ink,/ZOOM_MAX=16/);assert.match(ink,/Q\$\{/);assert.match(mixed,/width:\s*size\s*\/\s*\(zoomRef\?\.current\s*\|\|\s*1\)/);assert.match(mixed,/size\s*\*\s*4\s*\/\s*\(zoomRef\?\.current\s*\|\|\s*1\)/);assert.match(mixed,/svgClientToPoint/);assert.match(vault,/smoothStrokePath/);assert.doesNotMatch(vault,/\.png\]\]/)});
 test("ink auto-fit avoids opening a small drawing at maximum zoom",()=>assert.match(read("app/lib/ink.ts"),/Math\.min\(2,/));

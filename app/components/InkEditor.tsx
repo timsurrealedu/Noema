@@ -32,6 +32,7 @@ import {
   InkStroke,
   InkTool,
   rotateStroke,
+  saveInkWithRetry,
   sanitizeStrokes,
   scaleStroke,
   screenToWorld,
@@ -511,10 +512,7 @@ export function InkEditor({
       // coordinates negative or larger than the canvas). Normalize into a
       // padded positive document so the server's bounds check always passes.
       const ink = toInkDocument(strokes);
-      const response = await fetch(`/api/v1/notes/${noteId}/ink`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json", "Idempotency-Key": createId()},
-        body: JSON.stringify({
+      await saveInkWithRetry(noteId, {
           id,
           formatVersion: ink.formatVersion,
           coordinateSpace: ink.coordinateSpace,
@@ -522,10 +520,7 @@ export function InkEditor({
           height: ink.height,
           strokes: ink.strokes,
           version
-        })
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error?.message || "Ink save failed");
+      }, fetch, createId);
       await deleteInkDraft(id);
       setMessage("Saved · OCR queued");
       onSaved();

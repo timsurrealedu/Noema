@@ -26,10 +26,9 @@ test("note page wheel zoom keeps layout coherent and insert handle reachable",as
   await expect(newNote).toBeEnabled();
   await newNote.focus();
   await page.keyboard.press("Enter");
-  const noteTypeDialog=page.getByRole("dialog",{name:"Choose note type"});
-  await expect(noteTypeDialog.getByRole("button",{name:/Typed note/})).toBeVisible();
-  await expect(noteTypeDialog.getByRole("button",{name:/Handwritten note/})).toBeVisible();
-  await noteTypeDialog.getByRole("button",{name:"Cancel"}).click();
+  const newNoteDialog=page.getByRole("dialog",{name:"New note"});
+  await expect(newNoteDialog.getByLabel("Note name")).toBeVisible();
+  await newNoteDialog.getByRole("button",{name:"Cancel"}).click();
   await page.locator(".vault-file-card button",{hasText:result.title}).click();
   const editor=page.locator(".mixed-note-editor");
   await expect(editor).toBeVisible({timeout:30_000});
@@ -62,7 +61,7 @@ test("note page wheel zoom keeps layout coherent and insert handle reachable",as
       await new Promise(resolve=>setTimeout(resolve,500));
       const data=await (await fetch(`/api/v1/notes/${noteId}/blocks`)).json();
       const ink=(data.blocks||[]).find((block:{kind:string})=>block.kind==="ink");
-      if(ink?.strokes?.length) return {width:ink.width,height:ink.height,strokeWidth:ink.strokes[0].width,maxX:Math.max(...ink.strokes.flatMap((s:{points:{x:number}[]})=>s.points.map((p:{x:number})=>p.x)))};
+      if(ink?.strokes?.length) return {id:ink.id,width:ink.width,height:ink.height,strokeWidth:ink.strokes[0].width,maxX:Math.max(...ink.strokes.flatMap((s:{points:{x:number}[]})=>s.points.map((p:{x:number})=>p.x)))};
     }
     const debug=await (await fetch(`/api/v1/notes/${noteId}/blocks`)).json();
     console.log("BLOCKS_DEBUG",JSON.stringify(debug.blocks?.map((block:{id:string;kind:string;ocrStatus:string})=>({id:block.id,kind:block.kind,ocr:block.ocrStatus}))));
@@ -72,6 +71,26 @@ test("note page wheel zoom keeps layout coherent and insert handle reachable",as
   expect(strokeCheck!.maxX).toBeLessThanOrEqual(strokeCheck!.width+1);
   expect(strokeCheck!.strokeWidth).toBeLessThan(1);
   await expect(overlay.locator("path").last()).toHaveAttribute("d",/Q/);
+  const advanced=await page.evaluate(async({noteId,blockId})=>{
+    for(let attempt=0;attempt<10;attempt++){
+      const blocks=await (await fetch(`/api/v1/notes/${noteId}/blocks`)).json();
+      const ink=(blocks.blocks||[]).find((block:{id:string})=>block.id===blockId);
+      const response=await fetch(`/api/v1/ink/${blockId}/transcript`,{method:"PATCH",headers:{"Content-Type":"application/json"},body:JSON.stringify({transcript:ink.transcript||"",equations:ink.equations||[],version:ink.inkVersion})});
+      if(response.ok)return true;
+      if(response.status!==409)return false;
+    }
+    return false;
+  },{noteId:result.noteId,blockId:strokeCheck!.id});
+  expect(advanced,"server version advanced outside the drawing editor").toBe(true);
+  await page.mouse.move(startX,startY+30);
+  await page.mouse.down();
+  await page.mouse.move(startX+100,startY+70,{steps:8});
+  await page.mouse.up();
+  await expect.poll(async()=>page.evaluate(async noteId=>{
+    const data=await (await fetch(`/api/v1/notes/${noteId}/blocks`)).json();
+    return (data.blocks||[]).find((block:{kind:string})=>block.kind==="ink")?.strokes?.length||0;
+  },result.noteId)).toBeGreaterThanOrEqual(2);
+  expect((await page.locator(".tutor-error").allTextContents()).join(" ")).not.toContain("Expected version");
   await page.locator("summary[aria-label='More note options']").click();
   await expect(page.getByText(/Reset zoom/)).toBeVisible();
   await page.getByRole("button",{name:/Reset zoom/}).click();

@@ -45,6 +45,22 @@ export const INK_MAX_DIMENSION=10000,INK_MIN_WIDTH=320,INK_MIN_HEIGHT=240,INK_PA
 export function clampPointToBox(point:InkPoint,width:number,height:number):InkPoint{return{...point,x:Math.max(0,Math.min(width,point.x)),y:Math.max(0,Math.min(height,point.y))}}
 export function clampInkStrokes(strokes:InkStroke[],width:number,height:number):InkStroke[]{return strokes.map(stroke=>({...stroke,points:stroke.points.map(point=>clampPointToBox(point,width,height))}))}
 export type InkDocument={formatVersion:2;coordinateSpace:"world";width:number;height:number;strokes:InkStroke[]};
+type InkSaveRequest=(url:string,options?:RequestInit)=>Promise<{ok:boolean;status:number;json:()=>Promise<any>}>;
+export async function saveInkWithRetry(noteId:string,input:{id:string;version:number;[key:string]:unknown},request:InkSaveRequest,key:()=>string){
+  let payload={...input};
+  for(let attempt=0;attempt<3;attempt++){
+    const response=await request(`/api/v1/notes/${noteId}/ink`,{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":key()},body:JSON.stringify(payload)});
+    const data=await response.json().catch(()=>({}));
+    if(response.ok)return data;
+    const message=data.error?.message||"Ink save failed";
+    if(response.status!==409||!/^Expected version \d+$/.test(message)||attempt===2)throw new Error(message);
+    const listing=await request(`/api/v1/notes/${noteId}/blocks`),listed=await listing.json().catch(()=>({}));
+    const block=(listed.blocks||[]).find((item:{id?:string})=>item.id===payload.id);
+    if(!listing.ok||!Number.isFinite(block?.inkVersion))throw new Error(message);
+    payload={...payload,version:block.inkVersion};
+  }
+  throw new Error("Ink save failed");
+}
 // The server (server/vault.mjs validateStrokes) requires finite dimensions within
 // [1,10000] and every point inside [0,width]x[0,height]. World coordinates are
 // unbounded (pan/zoom offsets), so translate into a padded positive box and cap

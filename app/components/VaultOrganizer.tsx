@@ -5,7 +5,6 @@ import {ArrowClockwise,CaretDown,CaretRight,FilePlus,FileText,Folder,FolderOpen,
 import type {Note} from "./AppState";
 import {KnowledgeGraphView} from "./KnowledgeGraphView";
 import {useActionDialog} from "./ActionDialog";
-import {ModalDialog} from "./ModalDialog";
 
 type VaultSource={id:string;name:string;state:string;last_sync_at?:string;lastResult?:{conflicts?:number}};
 type TreeNote={name:string;path:string;noteId:string;syncState:string};
@@ -61,7 +60,6 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
   const [sources,setSources]=useState<VaultSource[]>([]),[sourceId,setSourceId]=useState(""),[tree,setTree]=useState<Tree|null>(null),[folder,setFolderState]=useState<string>(()=>initialFolder||(typeof window!=="undefined"?new URLSearchParams(location.search).get("folder")||"": "")),[query,setQuery]=useState(""),[drawer,setDrawer]=useState(false),[busy,setBusy]=useState(false),[initialLoading,setInitialLoading]=useState(true),[error,setError]=useState(""),[showGraph,setShowGraph]=useState(false),startedInk=useRef(false);
   const [dragItem,setDragItem]=useState<DragPayload|null>(null);
   const [dragTarget,setDragTarget]=useState<string|null>(null);
-  const [createMenu,setCreateMenu]=useState(false);
   const noteMap=useMemo(()=>({get:(id:string)=>notes.find(note=>note.id===id)||({id,title:"Note",excerpt:"",tags:[],time:"",ai:false} as unknown as Note)}),[notes]);
 
   const setFolder=(path:string)=>{
@@ -232,7 +230,7 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
           <button className={`secondary ${showGraph?"active":""}`} onClick={()=>setShowGraph(!showGraph)}><ShareNetwork/>Graph</button>
           <button className="secondary" disabled={Boolean(busy||!sourceId)} suppressHydrationWarning onClick={sync}><ArrowClockwise/>{busy?"Syncing…":"Sync"}</button>
           <button className="secondary icon-button" aria-label="New folder" title="New folder" disabled={Boolean(!sourceId||folder.startsWith("@"))} suppressHydrationWarning onClick={()=>void createFolder()}><FolderPlus/></button>
-          <button className="primary icon-button" aria-label="New note" title="New note" disabled={Boolean(!sourceId||folder.startsWith("@"))} suppressHydrationWarning onClick={()=>setCreateMenu(true)}><FilePlus/></button>
+          <button className="primary icon-button" aria-label="New note" title="New note" disabled={Boolean(!sourceId||folder.startsWith("@"))} suppressHydrationWarning onClick={()=>void create()}><FilePlus/></button>
         </div>
       </header>
       {error&&<div className="tutor-error" role="alert">{error}</div>}
@@ -394,7 +392,7 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
                           </article>
                         );
                       })}
-                      {!current?.folders.length&&!visible.length&&<div className="empty-state"><Folder/><h3>No notes here</h3><p>{query?"Try a broader search.":"Create a note or folder here to begin."}</p>{!query&&!folder.startsWith("@")&&<button className="primary" onClick={()=>setCreateMenu(true)}>Create note</button>}</div>}
+                      {!current?.folders.length&&!visible.length&&<div className="empty-state"><Folder/><h3>No notes here</h3><p>{query?"Try a broader search.":"Create a note or folder here to begin."}</p>{!query&&!folder.startsWith("@")&&<button className="primary" onClick={()=>void create()}>Create note</button>}</div>}
                     </div>
                   </>
                 )}
@@ -403,13 +401,7 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
           </main>
         </div>
       )}
-      {!initialLoading&&sources.length>0&&<div className="vault-mobile-action" style={{display:"none"}}><button className="primary" disabled={Boolean(!sourceId||folder.startsWith("@"))} onClick={()=>setCreateMenu(true)}><FilePlus/><span>New note</span></button></div>}
-      {createMenu&&<ModalDialog className="note-type-dialog" ariaLabel="Choose note type" onClose={()=>setCreateMenu(false)}>
-        <header><h2>New note</h2><p>Start with text or open the same Vault note directly in handwriting mode.</p></header>
-        <button type="button" onClick={()=>{setCreateMenu(false);void create(undefined,sourceId,false)}}><FileText/><span><strong>Typed note</strong><small>Open the Markdown editor.</small></span></button>
-        <button type="button" onClick={()=>{setCreateMenu(false);void create(undefined,sourceId,true)}}><PencilSimple/><span><strong>Handwritten note</strong><small>Open vector ink on the zoomable note page.</small></span></button>
-        <footer><button type="button" className="secondary" onClick={()=>setCreateMenu(false)}>Cancel</button></footer>
-      </ModalDialog>}
+      {!initialLoading&&sources.length>0&&<div className="vault-mobile-action" style={{display:"none"}}><button className="primary" disabled={Boolean(!sourceId||folder.startsWith("@"))} onClick={()=>void create()}><FilePlus/><span>New note</span></button></div>}
     </section>
   );
 }

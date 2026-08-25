@@ -35,7 +35,8 @@ import {
   strokePath,
   svgClientToPoint,
   acceptInkPointer,
-  penRecentlyUp
+  penRecentlyUp,
+  saveInkWithRetry
 } from "../lib/ink";
 import {MarkdownContent, extractTagsAndCleanText, StructuredTags} from "./MarkdownContent";
 import {LiveMarkdownEditor} from "./LiveMarkdownEditor";
@@ -843,21 +844,6 @@ export function MixedNoteEditor({
     }
   }, [inkBlock?.inkVersion]);
 
-  async function syncInkBlock(blockId: string): Promise<boolean> {
-    try {
-      const response = await fetch(`/api/v1/notes/${noteId}/blocks`);
-      if (!response.ok) return false;
-      const data = await response.json();
-      const found = ((data.blocks || []) as Block[]).find(item => item.id === blockId);
-      if (!found) return false;
-      currentInkVersion.current = found.inkVersion ?? currentInkVersion.current;
-      setBlocks(items => items.map(item => item.id === blockId ? {...item, ...found} : item));
-      return true;
-    } catch {
-      return false;
-    }
-  }
-
   async function saveInkStrokes(nextStrokes: InkStroke[], pushUndo = true) {
     if (pushUndo) {
       setUndoStack(prev => [...prev, overlayStrokes]);
@@ -882,13 +868,7 @@ export function MixedNoteEditor({
       attempts++;
 
       try {
-        const response = await fetch(`/api/v1/notes/${noteId}/ink`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Idempotency-Key": createId()
-          },
-          body: JSON.stringify({
+        const data = await saveInkWithRetry(noteId, {
             id: targetInkId,
             version: currentInkVersion.current,
             width: viewportWidth,
@@ -896,33 +876,13 @@ export function MixedNoteEditor({
             // Strokes captured before a resize may sit outside the current
             // document box; pin them into it so validation never rejects them.
             strokes: clampInkStrokes(strokesToSave, viewportWidth, viewportHeight)
-          })
-        });
-
-        if (response.status === 409) {
-          // Version drifted (another device or a replayed save): resync from the
-          // server and retry with the authoritative version.
-          const synced = await syncInkBlock(targetInkId);
-          if (!synced) {
-            setError("Handwriting is out of sync — reopen the note to continue drawing.");
-            break;
-          }
-          pendingStrokesRef.current = strokesToSave;
-          continue;
-        }
-
-        if (response.ok) {
-          const data = await response.json();
-          currentInkVersion.current = data.version ?? data.inkVersion ?? currentInkVersion.current + 1;
-          setBlocks(items => items.map(item => item.id === targetInkId ? {...item, strokes: strokesToSave, inkVersion: currentInkVersion.current} : item));
-          setError("");
-          attempts = 0;
-        } else {
-          const errData = await response.json().catch(() => ({}));
-          setError(errData.error?.message || "Save ink failed");
-        }
-      } catch {
-        // Fallback
+        }, fetch, createId);
+        currentInkVersion.current = data.version ?? data.inkVersion ?? currentInkVersion.current + 1;
+        setBlocks(items => items.map(item => item.id === targetInkId ? {...item, strokes: strokesToSave, inkVersion: currentInkVersion.current} : item));
+        setError("");
+        attempts = 0;
+      } catch (reason) {
+        setError((reason as Error).message || "Save ink failed");
       }
     }
 
