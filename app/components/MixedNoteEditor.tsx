@@ -27,6 +27,7 @@ import {InkEditor} from "./InkEditor";
 import {
   clampZoom,
   clampInkStrokes,
+  pinchViewport,
   eraseAt,
   InkPoint,
   InkStroke,
@@ -36,7 +37,8 @@ import {
   svgClientToPoint,
   acceptInkPointer,
   penRecentlyUp,
-  saveInkWithRetry
+  saveInkWithRetry,
+  zoomAtScreenPoint
 } from "../lib/ink";
 import {MarkdownContent, extractTagsAndCleanText, StructuredTags} from "./MarkdownContent";
 import {LiveMarkdownEditor} from "./LiveMarkdownEditor";
@@ -706,22 +708,35 @@ export function MixedNoteEditor({
   const gestureUndoRef = useRef(handleUndo);
   gestureUndoRef.current = handleUndo;
 
-  function commitPageZoom(next: number, anchor?: {x: number; y: number}) {
+  function commitPageZoom(next: number, previousFocal?: {x: number; y: number}, nextFocal?: {x: number; y: number}) {
     const container = docRef.current;
     const page = pageRef.current;
     const previous = pageZoomRef.current;
     const zoom = clampZoom(next);
-    if (!container || !page || zoom === previous) return previous;
-    const scrollLeft = container.scrollLeft;
-    const scrollTop = container.scrollTop;
-    page.style.zoom = String(zoom);
-    pageZoomRef.current = zoom;
-    if (anchor) {
-      const ratio = zoom / previous;
-      container.scrollLeft = (scrollLeft + anchor.x) * ratio - anchor.x;
-      container.scrollTop = (scrollTop + anchor.y) * ratio - anchor.y;
+    if (!container || !page) return previous;
+    if (zoom !== 1 && !page.style.width) {
+      page.style.setProperty("width", `${page.offsetWidth}px`, "important");
+      page.style.setProperty("min-height", `${page.offsetHeight}px`, "important");
     }
-    return zoom;
+    const containerRect = container.getBoundingClientRect();
+    const pageRect = page.getBoundingClientRect();
+    const viewport = {x: pageRect.left - containerRect.left, y: pageRect.top - containerRect.top, zoom: pageRect.width / page.offsetWidth};
+    page.style.zoom = String(zoom);
+    if (zoom === 1) {
+      page.style.removeProperty("width");
+      page.style.removeProperty("min-height");
+    }
+    const scaledRect = page.getBoundingClientRect();
+    const actualZoom = scaledRect.width / page.offsetWidth;
+    const target = previousFocal
+      ? nextFocal
+        ? pinchViewport(viewport, previousFocal, nextFocal, actualZoom)
+        : zoomAtScreenPoint(viewport, previousFocal, actualZoom)
+      : {...viewport, zoom: actualZoom};
+    pageZoomRef.current = actualZoom;
+    container.scrollLeft += scaledRect.left - containerRect.left - target.x;
+    container.scrollTop += scaledRect.top - containerRect.top - target.y;
+    return actualZoom;
   }
 
   useEffect(() => {
@@ -758,10 +773,7 @@ export function MixedNoteEditor({
       event.preventDefault();
       const distance = spread(event.touches);
       const next = center(event.touches);
-      commitPageZoom(pageZoomRef.current * (distance / Math.max(1, active.distance)), next);
-      // Two-finger pan: scroll units track visual pixels, so subtract directly.
-      container.scrollLeft -= next.x - active.cx;
-      container.scrollTop -= next.y - active.cy;
+      commitPageZoom(pageZoomRef.current * (distance / Math.max(1, active.distance)), {x: active.cx, y: active.cy}, next);
       active.distance = distance;
       active.cx = next.x;
       active.cy = next.y;
@@ -819,10 +831,7 @@ export function MixedNoteEditor({
     const container = docRef.current;
     if (!container) return;
     const rect = container.getBoundingClientRect();
-    commitPageZoom(pageZoomRef.current * distRatio, {x: next.x - rect.left, y: next.y - rect.top});
-    // Two-finger pan: scroll units track visual pixels, so subtract directly.
-    container.scrollLeft -= next.x - previous.x;
-    container.scrollTop -= next.y - previous.y;
+    commitPageZoom(pageZoomRef.current * distRatio, {x: previous.x - rect.left, y: previous.y - rect.top}, {x: next.x - rect.left, y: next.y - rect.top});
   }
 
   const currentInkVersion = useRef<number>(inkBlock?.inkVersion || 0);

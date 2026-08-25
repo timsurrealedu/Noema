@@ -35,12 +35,29 @@ test("note page wheel zoom keeps layout coherent and insert handle reachable",as
   await expect(page.getByRole("button",{name:"Insert ink"}).first()).toBeAttached();
   const docPage=page.locator(".integrated-doc-page").last();
   await page.hover(".markdown-block-editor");
-  await docPage.evaluate(()=>{
+  const focal=await docPage.evaluate(pageElement=>{
     const container=document.querySelector(".integrated-doc-container")!;
     const rect=container.getBoundingClientRect();
-    for(let i=0;i<18;i++) container.dispatchEvent(new WheelEvent("wheel",{deltaY:-120,ctrlKey:true,clientX:rect.left+rect.width/2,clientY:rect.top+rect.height/2,bubbles:true,cancelable:true}));
+    const pageRect=pageElement.getBoundingClientRect();
+    let clientX=rect.left+rect.width*.6,clientY=rect.top+Math.min(240,rect.height*.4);
+    const marker=document.createElement("span");
+    marker.dataset.zoomMarker="true";
+    Object.assign(marker.style,{position:"absolute",left:`${clientX-pageRect.left}px`,top:`${clientY-pageRect.top}px`,width:"1px",height:"1px"});
+    pageElement.append(marker);
+    const markerRect=marker.getBoundingClientRect();
+    clientX=markerRect.left;
+    clientY=markerRect.top;
+    for(let i=0;i<18;i++) container.dispatchEvent(new WheelEvent("wheel",{deltaY:-120,ctrlKey:true,clientX,clientY,bubbles:true,cancelable:true}));
+    return {x:clientX,y:clientY};
   });
   await expect.poll(()=>docPage.evaluate(el=>Number(el.style.zoom)||1)).toBeGreaterThan(4);
+  const marker=page.locator("[data-zoom-marker]");
+  const markerBox=await marker.boundingBox();
+  expect(markerBox).toBeTruthy();
+  const documentPixel=Number(await docPage.evaluate(el=>el.style.zoom))||1;
+  expect(Math.abs(markerBox!.x-focal.x)).toBeLessThan(documentPixel*2);
+  expect(Math.abs(markerBox!.y-focal.y)).toBeLessThan(documentPixel*2);
+  await marker.evaluate(element=>element.remove());
   const zoomed=await docPage.evaluate(el=>({zoom:Number(el.style.zoom),rectW:el.getBoundingClientRect().width,offsetW:(el as HTMLElement).offsetWidth}));
   expect(Math.abs(zoomed.rectW-zoomed.offsetW*zoomed.zoom)).toBeLessThan(zoomed.zoom);
   // Draw a stroke while zoomed: stored coordinates must stay in unzoomed layout units.
@@ -70,7 +87,8 @@ test("note page wheel zoom keeps layout coherent and insert handle reachable",as
   expect(strokeCheck,"stroke persisted").toBeTruthy();
   expect(strokeCheck!.maxX).toBeLessThanOrEqual(strokeCheck!.width+1);
   expect(strokeCheck!.strokeWidth).toBeLessThan(1);
-  await expect(overlay.locator("path").last()).toHaveAttribute("d",/Q/);
+  const storedPath=await overlay.locator("path").last().getAttribute("d");
+  expect(storedPath).toMatch(/Q/);
   const advanced=await page.evaluate(async({noteId,blockId})=>{
     for(let attempt=0;attempt<10;attempt++){
       const blocks=await (await fetch(`/api/v1/notes/${noteId}/blocks`)).json();
@@ -95,4 +113,5 @@ test("note page wheel zoom keeps layout coherent and insert handle reachable",as
   await expect(page.getByText(/Reset zoom/)).toBeVisible();
   await page.getByRole("button",{name:/Reset zoom/}).click();
   await expect.poll(()=>docPage.evaluate(el=>Number(el.style.zoom)||1)).toBe(1);
+  await expect(overlay.locator("path").last()).toHaveAttribute("d",storedPath!);
 });

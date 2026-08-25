@@ -39,6 +39,7 @@ import {
   selectionBounds,
   snapInkPoint,
   strokePath,
+  svgClientToPoint,
   toInkDocument,
   translateStroke
 } from "../lib/ink";
@@ -248,9 +249,9 @@ export function InkEditor({
     const element = svg.current!;
     // Browser-derived mapping stays glued to the pen tip at any zoom level;
     // fall back to rect math only if getScreenCTM is unavailable.
-    const ctm = element.getScreenCTM();
-    const base = ctm
-      ? (() => { const mapped = new DOMPoint(event.clientX, event.clientY).matrixTransform(ctm.inverse()); return {x: mapped.x, y: mapped.y}; })()
+    const mapped = svgClientToPoint(element, event.clientX, event.clientY);
+    const base = mapped
+      ? mapped
       : screenToWorld(event.clientX, event.clientY, element.getBoundingClientRect(), view, canvasSize.width, canvasSize.height);
     return {
       ...base,

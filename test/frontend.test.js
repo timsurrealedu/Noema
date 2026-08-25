@@ -181,7 +181,7 @@ test("vault tasks expose live counts, source links, device-zone scheduling, and 
 test("mixed handwriting editor preserves offline strokes and pen-first input",()=>{const editor=read("app/components/InkEditor.tsx"),mixed=read("app/components/MixedNoteEditor.tsx"),ink=read("app/lib/ink.ts"),queue=read("app/lib/offlineQueue.ts"),worker=read("server/worker/handlers/handwriting-ocr.mjs");assert.match(editor,/getCoalescedEvents/);assert.match(editor,/pointerType==="pen"/);assert.match(editor,/saveInkDraft/);for(const tool of ["pen","highlighter","eraser","lasso"])assert.match(editor,new RegExp(`"${tool}"`));assert.match(mixed,/blocks/);assert.match(queue,/ink-drafts/);assert.match(ink,/pressure:event\.pressure>0/);assert.match(worker,/strokesToPng/);assert.match(worker,/mimeType:"image\/png"/);assert.doesNotMatch(worker,/mimeType:"image\/svg\+xml"/)});
 test("mixed note editor inserts an ink block at the active Markdown caret",()=>{const mixed=read("app/components/MixedNoteEditor.tsx");assert.match(mixed,/insertInk/);assert.match(mixed,/value\.slice\(0,caret\)/);assert.match(mixed,/ids\.splice\(index\+1,0,inkId,afterId\)/)});
 test("mixed note editor renders every ink block in flow with move/delete handles",()=>{const mixed=read("app/components/MixedNoteEditor.tsx");assert.match(mixed,/InkBlockView/);assert.match(mixed,/Move ink block up/);assert.match(mixed,/Move ink block down/);assert.match(mixed,/Delete ink block/);assert.match(mixed,/blocks\.map\(\(block\) =>/)});
-test("ink surfaces share the viewport gesture helpers instead of inline math",()=>{const ink=read("app/lib/ink.ts"),editor=read("app/components/InkEditor.tsx"),mixed=read("app/components/MixedNoteEditor.tsx");assert.match(ink,/export function applyPinch|function applyPinch/);assert.match(ink,/export function zoomAtPoint|function zoomAtPoint/);assert.match(editor,/applyPinch|zoomAtPoint|panBy/);assert.doesNotMatch(editor,/pinchAnchor/)});
+test("ink surfaces share the viewport gesture helpers instead of inline math",()=>{const ink=read("app/lib/ink.ts"),editor=read("app/components/InkEditor.tsx"),mixed=read("app/components/MixedNoteEditor.tsx");assert.match(ink,/export function applyPinch|function applyPinch/);assert.match(ink,/export function zoomAtPoint|function zoomAtPoint/);assert.match(editor,/applyPinch|zoomAtPoint|panBy/);assert.match(mixed,/pinchViewport/);assert.match(mixed,/zoomAtScreenPoint/);assert.doesNotMatch(editor,/pinchAnchor/)});
 
 test("handwritten math continuation proposes reviewable blocks without touching strokes",()=>{
   const handler=read("server/worker/handlers/continue-math.mjs"),dispatch=read("server/worker/dispatch.mjs"),math=read("server/math.mjs"),route=read("app/api/v1/notes/[id]/continue-math/route.ts"),mixed=read("app/components/MixedNoteEditor.tsx");
@@ -252,6 +252,27 @@ test("shared ink viewport helpers are tested pure functions adopted by every ink
   assert.equal(penRecentlyUp("touch",false,0,100),true);
   assert.equal(penRecentlyUp("touch",false,0,400),false);
   assert.equal(penRecentlyUp("pen",false,0,0),false);
+});
+test("viewport transforms preserve focal document points without drift",()=>{
+  const ts=require("typescript");
+  const compiled=ts.transpileModule(read("app/lib/ink.ts"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:"es2019"}}).outputText;
+  const module={exports:{}};
+  new Function("exports","module","performance",compiled)(module.exports,module,{now:()=>0});
+  const {screenToCanvas,canvasToScreen,zoomAtScreenPoint,pinchViewport}=module.exports;
+  const viewport={x:10,y:-20,zoom:2};
+  assert.deepEqual(screenToCanvas({x:110,y:80},viewport),{x:50,y:50});
+  assert.deepEqual(canvasToScreen({x:50,y:50},viewport),{x:110,y:80});
+  const focal={x:200,y:150};
+  const anchored=zoomAtScreenPoint({x:-100,y:-50,zoom:1},focal,4);
+  assert.deepEqual(anchored,{x:-1000,y:-650,zoom:4});
+  assert.deepEqual(canvasToScreen(screenToCanvas(focal,{x:-100,y:-50,zoom:1}),anchored),focal);
+  let cycled={x:-120,y:-80,zoom:1};
+  for(let index=0;index<10;index++){
+    cycled=zoomAtScreenPoint(cycled,focal,5);
+    cycled=zoomAtScreenPoint(cycled,focal,1);
+  }
+  assert.ok(Math.abs(cycled.x+120)<1e-9&&Math.abs(cycled.y+80)<1e-9&&cycled.zoom===1);
+  assert.deepEqual(pinchViewport({x:0,y:0,zoom:16},{x:50,y:50},{x:70,y:80},32),{x:20,y:30,zoom:16});
 });
 test("ink save retries an expected-version conflict with the authoritative block version",async()=>{
   const ts=require("typescript");
