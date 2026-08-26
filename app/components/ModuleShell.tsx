@@ -17,9 +17,10 @@ type SearchHit={id:string;label:string;detail:string;href:string;Icon:typeof Fil
 
 const primaryNav = [
   ["Home","/",House],["Capture","/capture",Plus],["Vault","/vault",Folder],
-  ["Calendar","/calendar",CalendarBlank],["Coding","/coding",Code]
+  ["Calendar","/calendar",CalendarBlank]
 ] as const;
 const moreNav = [
+  ["Coding","/coding",Code],
   ["Study","/study",BookOpen],["Projects","/projects",Tray],["Automations","/automations",Lightning],
   ["Dashboards","/dashboards",Command],["Plugins","/plugins",FileText],["Collaboration","/collaboration",Bell],
   ["Help","/help",Command],["Settings","/settings",Gear]

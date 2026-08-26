@@ -45,15 +45,31 @@ test("Home desktop keeps Coding inside More and Settings owns theme switching",a
   await expect(page.getByRole("button",{name:/Switch to (light|dark)/})).toBeVisible();
 });
 
-test("desktop capture keeps the inspector in a bounded scroll region",async({page})=>{
+test("module desktop navigation keeps Coding inside More",async({page})=>{
+  await page.setViewportSize({width:1440,height:900});
+  await page.goto("/login");
+  await page.getByLabel("Email address").fill("owner@example.com");
+  await page.getByLabel("Password").fill("correct horse battery staple");
+  await page.getByRole("button",{name:"Continue securely"}).click();
+  await page.goto("/tasks");
+  const sidebar=page.locator(".module-shell > .sidebar");
+  await expect(sidebar.getByRole("link",{name:"Coding"})).toHaveCount(0);
+  await sidebar.getByRole("button",{name:"More"}).click();
+  await expect(page.getByRole("dialog",{name:"More navigation"}).getByRole("link",{name:"Coding"})).toBeVisible();
+});
+
+test("desktop capture gives the list and inspector independent scroll regions",async({page})=>{
   await page.setViewportSize({width:1440,height:900});
   await page.goto("/login");
   await page.getByLabel("Email address").fill("owner@example.com");
   await page.getByLabel("Password").fill("correct horse battery staple");
   await page.getByRole("button",{name:"Continue securely"}).click();
   await page.goto("/capture");
-  const styles=await page.locator(".capture-inspector").evaluate(element=>{const style=getComputedStyle(element);return {position:style.position,top:style.top,height:style.height,overflow:style.overflow}});
-  expect(styles).toMatchObject({position:"sticky",top:"0px",height:"836px",overflow:"auto"});
+  const styles=await page.locator(".capture-inspector").evaluate(element=>{const style=getComputedStyle(element);return {position:style.position,height:style.height,overflowY:style.overflowY}});
+  expect(styles).toMatchObject({position:"static",overflowY:"auto"});
+  expect(Number.parseFloat(styles.height)).toBeGreaterThan(0);
+  const listStyles=await page.locator(".capture-list-pane").evaluate(element=>{const style=getComputedStyle(element);return {overflowY:style.overflowY}});
+  expect(listStyles.overflowY).toBe("auto");
   const toolbar=await page.locator(".capture-queue-toolbar").evaluate(element=>{const style=getComputedStyle(element);return {zIndex:style.zIndex,background:style.backgroundColor}});
   expect(toolbar).toMatchObject({zIndex:"20",background:"rgb(29, 32, 33)"});
 });
