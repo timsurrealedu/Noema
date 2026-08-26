@@ -3,8 +3,8 @@
 import {
   Archive, Bell, BookOpen, CalendarBlank, Camera, CaretRight, Check, CheckSquare, CircleNotch, Clock,
   Code, Command, FileText, Folder, Gear, House, Lightning, ListChecks,
-  MagnifyingGlass, Microphone, Moon, Paperclip, PaperPlaneTilt, PenNib, Plus, Sparkle,
-  Sun, Tray, UploadSimple, Warning, X, Circle, DotsThree
+  MagnifyingGlass, Microphone, Paperclip, PaperPlaneTilt, PenNib, Plus, Sparkle,
+  Tray, UploadSimple, Warning, X, Circle, DotsThree
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
@@ -24,6 +24,7 @@ const primaryNav = [
   ["Calendar","/calendar",CalendarBlank],["Coding","/coding",Code]
 ] as const;
 const moreNav = [
+  ["Coding","/coding",Code],
   ["Study","/study",BookOpen],["Projects","/projects",Tray],["Automations","/automations",Lightning],
   ["Dashboards","/dashboards",Command],["Plugins","/plugins",FileText],["Collaboration","/collaboration",Bell],
   ["Help","/help",Command],["Settings","/settings",Gear]
@@ -41,8 +42,6 @@ const overdueDays=(task:Task,today:string)=>task.dueAt?Math.max(1,Math.round((ne
 
 export default function Home() {
   const {addAndInterpretCapture,addCapture,addFileCapture,addFileCaptures,addVoiceCapture,captures,confirmCapture,events,tasks,projects,toggleTask,saveTask,archiveTask,updateCapture}=useAppState();
-  const [theme,setTheme] = useState<"dark"|"light">("dark");
-  const ThemeIcon = theme === "dark" ? Sun : Moon;
   const [capture,setCapture] = useState("");
   const [reviewId,setReviewId] = useState<string|null>(null);
   const [palette,setPalette] = useState(false);
@@ -67,15 +66,11 @@ export default function Home() {
   const openResolvedRef = useRef(false);
 
   useEffect(() => {
-    const saved=localStorage.getItem("noema-theme") as "dark"|"light"|null;
-    if(saved)setTheme(saved);
     setAutoInterpret(localStorage.getItem("noema-auto-interpret")!=="off");
     setMounted(true);
     if(!/Mac|iPhone|iPad|iPod/i.test(navigator.platform||""))setModKey("Ctrl");
   },[]);
   useEffect(() => {
-    document.documentElement.dataset.theme=theme;
-    localStorage.setItem("noema-theme",theme);
     const onKey=(e:KeyboardEvent)=>{
       if ((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k") {e.preventDefault();setPalette(true)}
       if ((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="j") {e.preventDefault();setAssistant(true)}
@@ -84,7 +79,7 @@ export default function Home() {
       if (e.key==="Escape") { setPalette(false); setMore(false); setAssistant(false); }
     };
     addEventListener("keydown",onKey); return()=>removeEventListener("keydown",onKey);
-  },[theme]);
+  },[]);
 
   // Restore unsent capture draft from sessionStorage
   useEffect(() => {
@@ -195,10 +190,9 @@ export default function Home() {
     <a className="skip" href="#main">Skip to main content</a>
     <aside className="sidebar" aria-label="Primary navigation">
       <Link className="brand" href="/"><NoemaLogo /><span>Noema</span></Link>
-      <nav>{primaryNav.map(([label,href,Icon])=><Link className={label==="Home"?"active":""} href={href} key={label}><Icon/><span>{label}</span></Link>)}</nav>
+      <nav>{primaryNav.slice(0,4).map(([label,href,Icon])=><Link className={label==="Home"?"active":""} href={href} key={label}><Icon/><span>{label}</span></Link>)}<button aria-expanded={more} aria-haspopup="dialog" onClick={()=>setMore(true)}><ListChecks/><span>More</span></button></nav>
       <div className="sidebar-footer">
         <Link className="settings" href="/settings"><Gear/><span>Settings</span></Link>
-        <button className="icon-button theme-toggle" aria-label={`Use ${theme === "dark" ? "light" : "dark"} theme`} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}><ThemeIcon /></button>
       </div>
     </aside>
 
