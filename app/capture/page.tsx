@@ -485,7 +485,7 @@ export default function CaptureInbox() {
   }
 
   return (
-    <ModuleShell active="Capture" title="Capture inbox" action={<a className="primary top-primary" href="/#capture"><Plus/>Quick capture</a>}>
+    <ModuleShell active="Capture" title="Capture inbox" action={<Link className="primary top-primary" href="/#capture"><Plus/>Quick capture</Link>}>
       <div className={`capture-inbox ${detailOpen ? "detail-open" : ""}`}>
         <section
           className="capture-list-pane"

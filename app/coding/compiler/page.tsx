@@ -1268,7 +1268,7 @@ export default function CompilerPage() {
                       ) : (
                         <span className="ok-badge">
                           <CheckCircle size={14} />
-                          <span>Process exited with code {result?.code} · {(result?.durationMs! / 1000).toFixed(2)}s</span>
+                          <span>Process exited with code {result?.code} · {((result?.durationMs ?? 0) / 1000).toFixed(2)}s</span>
                         </span>
                       )}
                     </div>
