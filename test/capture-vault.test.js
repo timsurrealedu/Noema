@@ -34,6 +34,8 @@ test("capture prompts state the exact action JSON contract",async()=>{
   const instructions=captureProposalInstructions();
   for(const type of ["task.create","event.create","note.create","vault.note.create"])assert.match(instructions,new RegExp(type.replace(".","\\.")));assert.match(instructions,/sourceReferences/);assert.match(instructions,/arguments/);
   assert.match(instructions,/linkedActionId/);
+  assert.match(instructions,/clock time[^.]+full ISO 8601 timestamp/i);
+  assert.match(instructions,/date-only[^.]+no clock time/i);
   assert.match(captureProposalInstructions([60,30]),/\[60,30\]/);
 });
 
@@ -47,7 +49,7 @@ test("capture tasks create linked timed or all-day calendar events",async()=>{
   try{
     core.createCapture({id:"timed",text:"Study",source:"typed"},db);
     core.saveInterpretation("timed",{schemaVersion:1,summary:"Study",clarifications:[],actions:[{id:"t",type:"task.create",confidence:.9,sourceReferences:["capture:timed"],arguments:{title:"Study",dueAt:"2026-08-13T10:00:00+07:00",project:"Inbox",linkedActionId:null}}]},db);
-    core.applyCaptureInterpretation("timed",db);const timed=core.listState(db);assert.equal(timed.tasks[0].reminderAt,null);assert.equal(timed.events[0].endAt,"2026-08-13T04:00:00.000Z");assert.equal(timed.events[0].taskId,timed.tasks[0].id);
+    core.applyCaptureInterpretation("timed",db);const timed=core.listState(db);assert.equal(timed.tasks[0].reminderAt,null);assert.equal(timed.events[0].endAt,"2026-08-13T04:00:00.000Z");assert.equal(timed.events[0].timezone,"Asia/Jakarta");assert.equal(timed.events[0].time,"10:00");assert.equal(timed.events[0].allDay,false);assert.equal(timed.events[0].taskId,timed.tasks[0].id);assert.deepEqual(timed.calendarItems.map(item=>item.kind),["event"]);
     const expectedReminders=(await import("../server/settings.mjs")).reminderOffsets().length;assert.equal(db.prepare("SELECT COUNT(*) count FROM event_reminders WHERE event_id=?").get(timed.events[0].id).count,expectedReminders);
     core.createCapture({id:"day",text:"Submit",source:"typed"},db);
     core.saveInterpretation("day",{schemaVersion:1,summary:"Submit",clarifications:[],actions:[{id:"d",type:"task.create",confidence:.9,sourceReferences:["capture:day"],arguments:{title:"Submit",dueAt:"2026-08-14",project:"Inbox",linkedActionId:null}}]},db);

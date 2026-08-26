@@ -10,7 +10,7 @@ export function loadConfig(env=process.env){
   if(cachedConfig)return cachedConfig;
   const dataDir=absolute(setting(env,"DATA_DIR")||".data"),newDb=resolve(dataDir,"noema.sqlite"),legacyDb=resolve(dataDir,"lifeos.sqlite");
   const config={
-    dataDir,dbPath:!existsSync(newDb)&&existsSync(legacyDb)?legacyDb:newDb,objectsDir:resolve(dataDir,"objects"),jobsDir:resolve(dataDir,"jobs"),backupsDir:resolve(dataDir,"backups"),pluginsDir:resolve(dataDir,"plugins"),
+    dataDir,dbPath:!existsSync(newDb)&&existsSync(legacyDb)?legacyDb:newDb,objectsDir:resolve(dataDir,"objects"),jobsDir:resolve(dataDir,"jobs"),backupsDir:resolve(dataDir,"backups"),pluginsDir:resolve(dataDir,"plugins"),timezone:setting(env,"TIMEZONE")||"Asia/Jakarta",
     ownerEmail:(setting(env,"OWNER_EMAIL")||"").trim().toLowerCase(),ownerPassword:setting(env,"OWNER_PASSWORD")||"",totpSecret:(setting(env,"TOTP_SECRET")||"").replace(/\s+/g,"").toUpperCase(),appEncryptionKey:setting(env,"ENCRYPTION_KEY")||"",
     codeDir:absolute(setting(env,"CODE_DIR")||"."),savedCodeDir:absolute(setting(env,"SAVED_CODE_DIR")||resolve(homedir(),"Documents/mycode/snippets")),repositoryRoots:(setting(env,"REPOSITORY_ROOTS")||setting(env,"CODE_DIR")||".").split(delimiter).filter(Boolean).map(absolute),pluginCatalogs:(setting(env,"PLUGIN_CATALOGS")||"").split(delimiter).filter(Boolean).map(absolute),compilerEnabled:setting(env,"COMPILER_ENABLED")!=="false",codexEnabled:setting(env,"CODEX_ENABLED")==="true",
     geminiApiKey:env.GEMINI_API_KEY||env.GOOGLE_API_KEY||"",geminiModel:setting(env,"GEMINI_MODEL")||"gemini-2.5-flash",
@@ -24,6 +24,7 @@ export function loadConfig(env=process.env){
     googleClientId:setting(env,"GOOGLE_CLIENT_ID")||"",googleClientSecret:setting(env,"GOOGLE_CLIENT_SECRET")||"",googleRedirectUri:setting(env,"GOOGLE_REDIRECT_URI")||"",googleLoginRedirectUri:setting(env,"GOOGLE_LOGIN_REDIRECT_URI")||"",
   };
   if(!Number.isFinite(config.sessionHours)||config.sessionHours<=0)throw new Error("NOEMA_SESSION_HOURS must be positive");
+  try{new Intl.DateTimeFormat("en",{timeZone:config.timezone})}catch{throw new Error("NOEMA_TIMEZONE must be a valid IANA time zone")}
   if(config.totpSecret&&(config.totpSecret.length<32||!/^[A-Z2-7]+$/.test(config.totpSecret)))throw new Error("NOEMA_TOTP_SECRET must be at least 32 base32 characters");
   if(config.appEncryptionKey&&config.appEncryptionKey.length<32)throw new Error("NOEMA_ENCRYPTION_KEY must contain at least 32 characters");
   if(!Number.isInteger(config.backupRetention)||config.backupRetention<1)throw new Error("NOEMA_BACKUP_RETENTION must be a positive integer");
