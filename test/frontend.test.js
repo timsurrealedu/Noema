@@ -128,6 +128,13 @@ test("reduced motion and responsive breakpoints remain enforced",()=>{
   assert.match(css,/focus-visible/);
 });
 
+test("Capture inbox keeps its sticky toolbar opaque and omits recording",()=>{
+  const capture=read("app/capture/page.tsx"),css=read("app/globals.css");
+  assert.doesNotMatch(capture,/DurableRecorder|addVoiceCapture/);
+  assert.match(css,/\.capture-queue-toolbar\{position:sticky;top:0;z-index:15;isolation:isolate;[^}]*background-color:var\(--bg\)/);
+  assert.doesNotMatch(css,/\.capture-queue-toolbar\{[^}]*backdrop-filter/);
+});
+
 
 test("remote actions disclose missing AI and persistence",()=>{
   const notice=read("app/components/ServiceNotice.tsx");
@@ -221,7 +228,7 @@ test("lecture recordings transcribe through a chunked provider chain",()=>{
 test("voice captures are honestly tagged and transcribe into synced study notes",()=>{
   const state=read("app/components/AppState.tsx"),page=read("app/capture/page.tsx");
   assert.match(state,/addVoiceCapture:\(file/);assert.match(state,/source:"voice" as const/);assert.match(state,/Voice recording · /);
-  for(const token of ["TranscriptPanel","transcript-segment","Summarize into study note","mode: \"study\"","Record lecture"])assert.match(page,new RegExp(token));
+  for(const token of ["TranscriptPanel","transcript-segment","Summarize into study note","mode: \"study\""])assert.match(page,new RegExp(token));
 });
 test("mixed notes debounce serialized block saves and protect dirty drafts",()=>{const mixed=read("app/components/MixedNoteEditor.tsx"),live=read("app/components/LiveMarkdownEditor.tsx"),vault=read("app/vault/page.tsx");assert.match(mixed,/setTimeout\(\(\) => void flushMarkdown\(block\.id\), 800\)/);assert.match(mixed,/saveChains\.current/);assert.match(mixed,/onDirtyChange/);assert.match(live,/replaceAll/);assert.match(vault,/beforeunload/)});
 test("ink exposes world-edit transforms and geometric tool types",()=>{const editor=read("app/components/InkEditor.tsx"),ink=read("app/lib/ink.ts");for(const tool of ["rectangle","ellipse","arrow","rotateStroke","scaleStroke","formatVersion:2","coordinateSpace:\"world\"","Ruler snap"])assert.match(`${editor}\n${ink}`,new RegExp(tool))});

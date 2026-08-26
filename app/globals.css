@@ -67,7 +67,7 @@ section.review.failed .review-copy strong{color:var(--warning)}
 .capture-status.status-review{color:var(--warning)}.capture-status.status-confirmed{color:var(--success)}.capture-status.status-failed{color:var(--error)}.capture-status.status-processing{color:var(--primary)}
 
 /* Capture Card & Review Queue Enhancements */
-.capture-queue-toolbar{position:sticky;top:0;z-index:15;display:flex;flex-direction:column;gap:8px;padding-top:12px;margin-bottom:0;background:var(--bg);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+.capture-queue-toolbar{position:sticky;top:0;z-index:15;isolation:isolate;display:flex;flex-direction:column;gap:8px;padding-top:12px;margin-bottom:0;background-color:var(--bg)}
 .capture-filters{display:flex;gap:4px;border-bottom:1px solid var(--border);padding-bottom:0}
 .capture-groups{margin-top:0}
 .capture-filters button{display:flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--muted);font-size:.875rem;font-weight:500;cursor:pointer;transition:background-color .15s ease,border-color .15s ease,color .15s ease,opacity .15s ease,transform .15s ease}

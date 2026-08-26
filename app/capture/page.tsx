@@ -8,7 +8,6 @@ import {
 } from "@phosphor-icons/react";
 import {Capture, CaptureSource, useAppState} from "../components/AppState";
 import {ModuleShell} from "../components/ModuleShell";
-import {DurableRecorder} from "../components/DurableRecorder";
 
 const filters = ["All", "Review", "Processing", "Done"] as const;
 type Filter = (typeof filters)[number];
@@ -337,7 +336,7 @@ function TranscriptPanel({capture}: {capture: Capture}) {
 }
 
 export default function CaptureInbox() {
-  const {addCapture, addVoiceCapture, cancelInterpretation, captures, confirmCapture, requestInterpretation, updateCapture} = useAppState();
+  const {addCapture, cancelInterpretation, captures, confirmCapture, requestInterpretation, updateCapture} = useAppState();
   const [filter, setFilter] = useState<Filter>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const didReadParams = useRef(false);
@@ -515,7 +514,6 @@ export default function CaptureInbox() {
                 <Sparkle />{processingInbox ? "Processing…" : "Process inbox"}
               </button>
             )}
-            <DurableRecorder onFinished={file => {const id = addVoiceCapture(file); choose(id);}} label="Record lecture or voice memo"/>
             <div className="capture-filters" role="tablist" aria-label="Capture status">
               {filters.map(item => {
                 const count = item === "All"
