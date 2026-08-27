@@ -57,6 +57,9 @@ export function validateProposal(proposal,sources,vaultSourceIds=null){
     ids.add(action.id);
     if(!Array.isArray(action.sourceReferences))action.sourceReferences=[];
     if(action.type==="vault.note.create"){
+      if(action.arguments.sourceId){
+        action.arguments.sourceId=String(action.arguments.sourceId).replace(/^vault:/,"").trim();
+      }
       if(!vaultSourceIds&&!action.sourceReferences.includes(`vault:${action.arguments.sourceId}`)){
         throw new Error("Vault note must cite its target vault source");
       }
