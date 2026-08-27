@@ -78,10 +78,20 @@ test("capture tasks create linked timed or all-day calendar events",async()=>{
     core.createCapture({id:"timed",text:"Study",source:"typed"},db);
     core.saveInterpretation("timed",{schemaVersion:1,summary:"Study",clarifications:[],actions:[{id:"t",type:"task.create",confidence:.9,sourceReferences:["capture:timed"],arguments:{title:"Study",dueAt:"2026-08-13T10:00:00+07:00",project:"Inbox",linkedActionId:null}}]},db);
     core.applyCaptureInterpretation("timed",db);const timed=core.listState(db);assert.equal(timed.tasks[0].reminderAt,null);assert.equal(timed.events[0].endAt,"2026-08-13T04:00:00.000Z");assert.equal(timed.events[0].timezone,"Asia/Jakarta");assert.equal(timed.events[0].time,"10:00");assert.equal(timed.events[0].allDay,false);assert.equal(timed.events[0].taskId,timed.tasks[0].id);assert.deepEqual(timed.calendarItems.map(item=>item.kind),["event"]);
+    assert.equal(timed.tasks[0].scheduledStartAt,"2026-08-13T03:00:00.000Z");assert.equal(timed.tasks[0].scheduledEndAt,"2026-08-13T04:00:00.000Z");
     const expectedReminders=(await import("../server/settings.mjs")).reminderOffsets().length;assert.equal(db.prepare("SELECT COUNT(*) count FROM event_reminders WHERE event_id=?").get(timed.events[0].id).count,expectedReminders);
     core.createCapture({id:"day",text:"Submit",source:"typed"},db);
     core.saveInterpretation("day",{schemaVersion:1,summary:"Submit",clarifications:[],actions:[{id:"d",type:"task.create",confidence:.9,sourceReferences:["capture:day"],arguments:{title:"Submit",dueAt:"2026-08-14",project:"Inbox",linkedActionId:null}}]},db);
     core.applyCaptureInterpretation("day",db);const event=core.listState(db).events.find(item=>item.title==="Submit");assert.equal(event.allDay,true);assert.equal(event.reminders.length,0);
+    // The apply response must expose the auto-created linked event so the client calendar renders it without a refresh.
+    core.createCapture({id:"reveal",text:"Meet",source:"typed"},db);
+    core.saveInterpretation("reveal",{schemaVersion:1,summary:"Meet",clarifications:[],actions:[{id:"t2",type:"task.create",confidence:.9,sourceReferences:["capture:reveal"],arguments:{title:"Meet",dueAt:"2026-08-13T09:30:00+07:00",project:"Inbox",linkedActionId:null}}]},db);
+    const reveal=core.applyCaptureInterpretation("reveal",db);
+    const revealedEvent=reveal.created.find(item=>item.type==="event");
+    assert.ok(revealedEvent,"auto-created linked event missing from apply response");
+    assert.equal(revealedEvent.object.startAt,"2026-08-13T02:30:00.000Z");
+    assert.equal(revealedEvent.object.allDay,false);
+    assert.equal(reveal.created.find(item=>item.type==="task").object.eventId,revealedEvent.object.id);
     const audit=core.listAuditEvents(10,db).find(item=>item.objectId==="timed"&&item.action==="apply");core.undoAuditEvent(audit.id,db);assert.equal(core.listState(db).events.some(item=>item.title==="Study"),false);
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
