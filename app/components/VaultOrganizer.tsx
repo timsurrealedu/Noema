@@ -234,7 +234,20 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
         </div>
       </header>
       {error&&<div className="tutor-error" role="alert">{error}</div>}
-      {initialLoading?<div className="vault-loading" role="status" aria-live="polite"><span/><span/><span/><p>Loading vault…</p></div>:!sources.length?<div className="empty-state"><Folder/><h3>Connect your Obsidian vault</h3><p>Add its local path in Settings, then return here to browse the exact folder structure.</p><Link className="primary" href="/settings">Open Settings</Link></div>:(
+      {initialLoading?<div className="vault-loading" role="status" aria-live="polite"><span/><span/><span/><p>Loading vault…</p></div>:showGraph?(
+        <div className="obsidian-vault-body">
+          {Boolean(sources.length)&&(
+            <aside className="obsidian-tree" aria-label="Vault folders">
+              <div className="vault-derived-views">{views.map(view=><button className={folder===view.id?"active":""} onClick={()=>{setShowGraph(false);setFolder(view.id);if(view.id==="@favorites")setActiveTab("favorites")}} key={view.id}><view.icon/><span>{view.label}</span></button>)}</div>
+              <button className={`${!folder&&!showGraph?"active":""} ${dragTarget===""?"drag-over":""}`} onDragOver={e=>handleDragOver(e,"")} onDragLeave={handleDragLeave} onDrop={e=>handleDrop(e,"")} onClick={()=>{setShowGraph(false);setFolder("");setActiveTab("recent")}}><FolderOpen/><span>{source?.name}</span></button>
+              {tree?.folders.map(item=><TreeFolder node={item} current={showGraph?"":folder} onSelect={path=>{setShowGraph(false);setFolder(path)}} onOpenNote={id=>onOpen(noteMap.get(id))} dragTarget={dragTarget} dragItem={dragItem} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} key={item.path}/>)}
+            </aside>
+          )}
+          <main>
+            <KnowledgeGraphView onOpenNote={id=>{const found=notes.find(item=>item.id===id||item.title===id);if(found)onOpen(found)}}/>
+          </main>
+        </div>
+      ):!sources.length?<div className="empty-state"><Folder/><h3>Connect your Obsidian vault</h3><p>Add its local path in Settings, then return here to browse the exact folder structure.</p><Link className="primary" href="/settings">Open Settings</Link></div>:(
         <div className="obsidian-vault-body">
           <aside className="obsidian-tree" aria-label="Vault folders">
             <div className="vault-derived-views">{views.map(view=><button className={folder===view.id?"active":""} onClick={()=>{setShowGraph(false);setFolder(view.id);if(view.id==="@favorites")setActiveTab("favorites")}} key={view.id}><view.icon/><span>{view.label}</span></button>)}</div>
@@ -242,9 +255,7 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
             {tree?.folders.map(item=><TreeFolder node={item} current={showGraph?"":folder} onSelect={path=>{setShowGraph(false);setFolder(path)}} onOpenNote={id=>onOpen(noteMap.get(id))} dragTarget={dragTarget} dragItem={dragItem} onDragStart={handleDragStart} onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop} key={item.path}/>)}
           </aside>
           <main>
-            {showGraph?<KnowledgeGraphView onOpenNote={id=>{const found=notes.find(item=>item.id===id||item.title===id);if(found)onOpen(found)}}/>:(
-              <>
-                <nav className="vault-breadcrumbs" aria-label="Breadcrumb">
+            <nav className="vault-breadcrumbs" aria-label="Breadcrumb">
                   <button className={dragTarget===""?"drag-over":""} onDragOver={e=>handleDragOver(e,"")} onDragLeave={handleDragLeave} onDrop={e=>handleDrop(e,"")} onClick={()=>{setFolder("");setActiveTab("recent")}}>{source?.name}</button>
                   {!folder.startsWith("@")&&(() => {
                     const parts = folder.split("/").filter(Boolean);
@@ -396,8 +407,6 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
                     </div>
                   </>
                 )}
-              </>
-            )}
           </main>
         </div>
       )}

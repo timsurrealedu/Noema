@@ -86,10 +86,10 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
   const [hudTab, setHudTab] = useState<"filters" | "forces" | "display">("forces");
   const [physicsRunning, setPhysicsRunning] = useState(true);
   const [centerForce, setCenterForce] = useState(0.4);
-  const [repulsionForce, setRepulsionForce] = useState(320);
-  const [linkDistance, setLinkDistance] = useState(110);
-  const [linkStrength, setLinkStrength] = useState(0.5);
-  const [damping, setDamping] = useState(0.86);
+  const [repulsionForce, setRepulsionForce] = useState(160);
+  const [linkDistance, setLinkDistance] = useState(90);
+  const [linkStrength, setLinkStrength] = useState(0.45);
+  const [damping, setDamping] = useState(0.82);
   const [nodeScale, setNodeScale] = useState(1.0);
   const [linkScale, setLinkScale] = useState(1.0);
   const [showLabels, setShowLabels] = useState<"always" | "hover" | "off">("always");
@@ -168,7 +168,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     [graph.nodes]
   );
 
-  // Calculate Node Degrees for Mass & Filtering
+  // Calculate Node Degrees for Mass & Sizing
   const nodeDegrees = useMemo(() => {
     const deg: Record<string, number> = {};
     for (const edge of graph.edges) {
@@ -208,9 +208,145 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
   }, [visibleEdges]);
 
   // Re-heat simulation function
-  const reheat = useCallback((amount = 0.6) => {
+  const reheat = useCallback((amount = 0.5) => {
     alphaRef.current = Math.max(alphaRef.current, amount);
   }, []);
+
+  // Step physics simulation by 1 tick
+  const runPhysicsStep = useCallback((nodes: SimNode[], edges: SimEdge[], alpha: number) => {
+    const nLen = nodes.length;
+    if (nLen === 0) return;
+
+    // 1. Center Gravity Force (Centroid pull)
+    const cForce = centerForce * 0.03 * alpha;
+    for (let i = 0; i < nLen; i++) {
+      const n = nodes[i];
+      if (n.pinned) continue;
+      const dist = Math.sqrt(n.x * n.x + n.y * n.y) || 1;
+      const pull = Math.min(dist * cForce, 6);
+      n.vx -= (n.x / dist) * pull;
+      n.vy -= (n.y / dist) * pull;
+    }
+
+    // 2. Many-Body Coulomb Repulsion (Charge)
+    const repPower = repulsionForce * 40 * alpha;
+    for (let i = 0; i < nLen; i++) {
+      const a = nodes[i];
+      for (let j = i + 1; j < nLen; j++) {
+        const b = nodes[j];
+        let dx = b.x - a.x;
+        let dy = b.y - a.y;
+        let distSq = dx * dx + dy * dy;
+
+        if (distSq < 1) {
+          dx = (Math.random() - 0.5) * 2;
+          dy = (Math.random() - 0.5) * 2;
+          distSq = dx * dx + dy * dy || 1;
+        }
+
+        const dist = Math.sqrt(distSq);
+        if (dist > 500) continue; // Cutoff for efficiency and stability
+
+        const clampedDist = Math.max(dist, 25);
+        const force = repPower / (clampedDist * clampedDist);
+        const fx = (dx / dist) * force;
+        const fy = (dy / dist) * force;
+
+        if (!a.pinned) {
+          a.vx -= fx / a.mass;
+          a.vy -= fy / a.mass;
+        }
+        if (!b.pinned) {
+          b.vx += fx / b.mass;
+          b.vy += fy / b.mass;
+        }
+      }
+    }
+
+    // 3. Collision avoidance (Hard physical disc separation)
+    for (let i = 0; i < nLen; i++) {
+      const a = nodes[i];
+      for (let j = i + 1; j < nLen; j++) {
+        const b = nodes[j];
+        const minDistance = (a.radius + b.radius) * nodeScale + 8;
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
+        if (dist < minDistance) {
+          const overlap = (minDistance - dist) * 0.5;
+          const nx = (dx / dist) * overlap;
+          const ny = (dy / dist) * overlap;
+          if (!a.pinned) {
+            a.x -= nx;
+            a.y -= ny;
+            a.vx -= nx * 0.4;
+            a.vy -= ny * 0.4;
+          }
+          if (!b.pinned) {
+            b.x += nx;
+            b.y += ny;
+            b.vx += nx * 0.4;
+            b.vy += ny * 0.4;
+          }
+        }
+      }
+    }
+
+    // 4. Link Spring Force (Hooke's Law)
+    const targetDist = linkDistance;
+    const springK = linkStrength * 0.08 * alpha;
+    for (let k = 0; k < edges.length; k++) {
+      const e = edges[k];
+      const u = e.sourceNode;
+      const v = e.targetNode;
+      if (!u || !v) continue;
+
+      const dx = v.x - u.x;
+      const dy = v.y - u.y;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      const delta = dist - targetDist;
+      const force = delta * springK;
+
+      const fx = (dx / dist) * force;
+      const fy = (dy / dist) * force;
+
+      const biasU = v.degree / (u.degree + v.degree || 1);
+      const biasV = 1 - biasU;
+
+      if (!u.pinned) {
+        u.vx += (fx / u.mass) * (0.4 + biasU * 0.6);
+        u.vy += (fy / u.mass) * (0.4 + biasU * 0.6);
+      }
+      if (!v.pinned) {
+        v.vx -= (fx / v.mass) * (0.4 + biasV * 0.6);
+        v.vy -= (fy / v.mass) * (0.4 + biasV * 0.6);
+      }
+    }
+
+    // 5. Integrate & Damp Velocities
+    const maxVelocity = 14;
+    for (let i = 0; i < nLen; i++) {
+      const n = nodes[i];
+      if (n.pinned) {
+        n.vx = 0;
+        n.vy = 0;
+        continue;
+      }
+
+      n.vx *= damping;
+      n.vy *= damping;
+
+      const speed = Math.sqrt(n.vx * n.vx + n.vy * n.vy);
+      if (speed > maxVelocity) {
+        n.vx = (n.vx / speed) * maxVelocity;
+        n.vy = (n.vy / speed) * maxVelocity;
+      }
+
+      n.x += n.vx;
+      n.y += n.vy;
+    }
+  }, [centerForce, repulsionForce, linkDistance, linkStrength, damping, nodeScale]);
 
   // Initialize or update simulation nodes & edges
   useEffect(() => {
@@ -220,29 +356,29 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     const newNodes: SimNode[] = visibleNodes.map((n, i) => {
       const existing = existingMap.get(n.id);
       const degree = nodeDegrees[n.id] || 0;
-      const baseRadius = Math.max(7, Math.min(22, 7 + Math.sqrt(degree) * 3.5));
+      const baseRadius = Math.max(6, Math.min(18, 6 + Math.sqrt(degree) * 3));
 
       if (existing) {
         return {
           ...existing,
           ...n,
           radius: baseRadius,
-          mass: 1 + Math.sqrt(degree) * 1.5,
+          mass: 1 + Math.sqrt(degree) * 1.2,
           degree,
         };
       }
 
-      // Initial organic circle layout
-      const angle = (i / Math.max(total, 1)) * Math.PI * 2 + (Math.random() - 0.5) * 0.5;
-      const dist = 90 + Math.sqrt(i) * 32 + (Math.random() - 0.5) * 40;
+      // Golden ratio spiral for even, pleasing initial dispersion
+      const phi = i * 2.39996323; // Golden angle in radians
+      const r = Math.min(220, 25 + Math.sqrt(i) * 24);
       return {
         ...n,
-        x: Math.cos(angle) * dist,
-        y: Math.sin(angle) * dist,
-        vx: (Math.random() - 0.5) * 2,
-        vy: (Math.random() - 0.5) * 2,
+        x: Math.cos(phi) * r,
+        y: Math.sin(phi) * r,
+        vx: 0,
+        vy: 0,
         radius: baseRadius,
-        mass: 1 + Math.sqrt(degree) * 1.5,
+        mass: 1 + Math.sqrt(degree) * 1.2,
         degree,
         pinned: false,
       };
@@ -258,11 +394,17 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
       }))
       .filter((e) => e.sourceNode && e.targetNode);
 
+    // Warm up simulation for 25 steps so initial layout is already clean & untangled
+    for (let step = 0; step < 25; step++) {
+      const alphaStep = 1.0 - (step / 25) * 0.4;
+      runPhysicsStep(newNodes, newEdges, alphaStep);
+    }
+
     nodesRef.current = newNodes;
     edgesRef.current = newEdges;
 
-    reheat(0.8);
-  }, [visibleNodes, visibleEdges, nodeDegrees, reheat]);
+    reheat(0.6);
+  }, [visibleNodes, visibleEdges, nodeDegrees, runPhysicsStep, reheat]);
 
   // Read Theme Colors
   const getThemePalette = useCallback(() => {
@@ -300,20 +442,14 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     return { x: wx, y: wy };
   }, []);
 
-  const worldToScreen = useCallback((wx: number, wy: number, width: number, height: number) => {
-    const cam = cameraRef.current;
-    const sx = (wx - cam.x) * cam.zoom + width / 2;
-    const sy = (wy - cam.y) * cam.zoom + height / 2;
-    return { x: sx, y: sy };
-  }, []);
-
   // Hit test node in world space
   const getNodeAt = useCallback(
     (wx: number, wy: number) => {
       const nodes = nodesRef.current;
+      const hitPadding = 8 / cameraRef.current.zoom;
       for (let i = nodes.length - 1; i >= 0; i--) {
         const n = nodes[i];
-        const r = n.radius * nodeScale + 6 / cameraRef.current.zoom;
+        const r = n.radius * nodeScale + hitPadding;
         const dx = n.x - wx;
         const dy = n.y - wy;
         if (dx * dx + dy * dy <= r * r) {
@@ -325,116 +461,17 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     [nodeScale]
   );
 
-  // Physics Simulation Step
+  // Physics simulation step called every animation frame
   const stepPhysics = useCallback(() => {
     if (!physicsRunning) return;
     const alpha = alphaRef.current;
-    if (alpha < 0.001) return; // Equilibrium resting state
+    if (alpha < 0.001) return; // Resting state
 
-    const nodes = nodesRef.current;
-    const edges = edgesRef.current;
-    const nLen = nodes.length;
+    runPhysicsStep(nodesRef.current, edgesRef.current, alpha);
 
-    // 1. Center Gravity Force
-    for (let i = 0; i < nLen; i++) {
-      const n = nodes[i];
-      if (n.pinned) continue;
-      const dist = Math.sqrt(n.x * n.x + n.y * n.y) || 1;
-      const pull = centerForce * 0.004;
-      n.vx -= (n.x / dist) * Math.min(dist * pull, 12);
-      n.vy -= (n.y / dist) * Math.min(dist * pull, 12);
-    }
-
-    // 2. Many-Body Coulomb Repulsion Force + Collision buffer
-    const repBase = repulsionForce * 240;
-    for (let i = 0; i < nLen; i++) {
-      const a = nodes[i];
-      for (let j = i + 1; j < nLen; j++) {
-        const b = nodes[j];
-        const dx = b.x - a.x;
-        const dy = b.y - a.y;
-        const distSq = dx * dx + dy * dy + 1;
-        const dist = Math.sqrt(distSq);
-        const minR = (a.radius + b.radius) * nodeScale + 12;
-
-        let force = repBase / (distSq + 200);
-        if (dist < minR) {
-          // Hard spring-collision prevention
-          force += (minR - dist) * 0.6;
-        }
-
-        const fx = (dx / dist) * force;
-        const fy = (dy / dist) * force;
-
-        if (!a.pinned) {
-          a.vx -= fx / a.mass;
-          a.vy -= fy / a.mass;
-        }
-        if (!b.pinned) {
-          b.vx += fx / b.mass;
-          b.vy += fy / b.mass;
-        }
-      }
-    }
-
-    // 3. Link Spring Force (Hooke's Law)
-    const targetDist = linkDistance;
-    const springK = linkStrength * 0.04;
-    for (let k = 0; k < edges.length; k++) {
-      const e = edges[k];
-      const u = e.sourceNode;
-      const v = e.targetNode;
-      if (!u || !v) continue;
-
-      const dx = v.x - u.x;
-      const dy = v.y - u.y;
-      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      const delta = dist - targetDist;
-      const force = delta * springK;
-
-      const fx = (dx / dist) * force;
-      const fy = (dy / dist) * force;
-
-      if (!u.pinned) {
-        u.vx += fx / u.mass;
-        u.vy += fy / u.mass;
-      }
-      if (!v.pinned) {
-        v.vx -= fx / v.mass;
-        v.vy -= fy / v.mass;
-      }
-    }
-
-    // 4. Integrate Velocities and Damp
-    const maxSpeed = 30;
-    for (let i = 0; i < nLen; i++) {
-      const n = nodes[i];
-      if (n.pinned) continue;
-
-      n.vx *= damping;
-      n.vy *= damping;
-
-      const speed = Math.sqrt(n.vx * n.vx + n.vy * n.vy);
-      if (speed > maxSpeed) {
-        n.vx = (n.vx / speed) * maxSpeed;
-        n.vy = (n.vy / speed) * maxSpeed;
-      }
-
-      n.x += n.vx * alpha;
-      n.y += n.vy * alpha;
-    }
-
-    // 5. Dynamic Alpha Cooling (Decay smoothly)
-    alphaRef.current = Math.max(0.0005, alpha * 0.994);
-  }, [
-    physicsRunning,
-    centerForce,
-    repulsionForce,
-    linkDistance,
-    linkStrength,
-    damping,
-    nodeScale,
-  ]);
+    // Smooth exponential decay
+    alphaRef.current = alpha * 0.985;
+  }, [physicsRunning, runPhysicsStep]);
 
   // Main Render Loop
   const draw = useCallback(() => {
@@ -443,8 +480,9 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const width = canvas.width / (window.devicePixelRatio || 1);
-    const height = canvas.height / (window.devicePixelRatio || 1);
+    const dpr = window.devicePixelRatio || 1;
+    const width = canvas.width / dpr;
+    const height = canvas.height / dpr;
     const cam = cameraRef.current;
     const palette = getThemePalette();
 
@@ -452,7 +490,6 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     // High-DPI Scale
-    const dpr = window.devicePixelRatio || 1;
     ctx.scale(dpr, dpr);
 
     // Apply Camera Transform
@@ -472,7 +509,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
       const startX = Math.floor(minX / gridSize) * gridSize;
       const startY = Math.floor(minY / gridSize) * gridSize;
 
-      ctx.fillStyle = "rgba(146, 131, 116, 0.15)";
+      ctx.fillStyle = "rgba(146, 131, 116, 0.12)";
       for (let x = startX; x <= maxX; x += gridSize) {
         for (let y = startY; y <= maxY; y += gridSize) {
           ctx.fillRect(x - 1, y - 1, 2, 2);
@@ -528,7 +565,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
         const dx = v.x - u.x;
         const dy = v.y - u.y;
         const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist > 20) {
+        if (dist > 18) {
           const arrowOffset = v.radius * nodeScale + 4;
           const ax = v.x - (dx / dist) * arrowOffset;
           const ay = v.y - (dy / dist) * arrowOffset;
@@ -605,7 +642,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
       const shouldDrawLabel =
         showLabels === "always" ||
         (showLabels === "hover" && (isActive || isNeighbor)) ||
-        cam.zoom > 1.4 ||
+        cam.zoom > 1.3 ||
         n.degree >= 3;
 
       if (shouldDrawLabel && showLabels !== "off" && alpha > 0.3) {
@@ -620,7 +657,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
         const textWidth = textMetrics.width;
 
         // Label Pill Background
-        ctx.fillStyle = "rgba(29, 32, 33, 0.75)";
+        ctx.fillStyle = "rgba(29, 32, 33, 0.78)";
         ctx.beginPath();
         ctx.roundRect(
           n.x - textWidth / 2 - 4,
@@ -684,7 +721,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
       canvas.height = Math.floor(rect.height * dpr);
       canvas.style.width = `${rect.width}px`;
       canvas.style.height = `${rect.height}px`;
-      reheat(0.4);
+      reheat(0.3);
     };
 
     updateSize();
@@ -720,7 +757,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
       hit.y = world.y;
       hit.vx = 0;
       hit.vy = 0;
-      reheat(0.8);
+      reheat(0.6);
     } else {
       // Start Panning Viewport
       panStateRef.current = {
@@ -756,7 +793,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
       node.y = world.y;
       node.vx = 0;
       node.vy = 0;
-      reheat(0.4);
+      reheat(0.35);
     } else if (panStateRef.current.active) {
       // Pan Canvas
       const dx = e.clientX - panStateRef.current.startX;
@@ -897,16 +934,16 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     const nodes = nodesRef.current;
     const total = nodes.length;
     nodes.forEach((n, i) => {
-      const angle = (i / Math.max(total, 1)) * Math.PI * 2;
-      const dist = 90 + Math.sqrt(i) * 35;
-      n.x = Math.cos(angle) * dist;
-      n.y = Math.sin(angle) * dist;
-      n.vx = (Math.random() - 0.5) * 4;
-      n.vy = (Math.random() - 0.5) * 4;
+      const phi = i * 2.39996323;
+      const r = Math.min(220, 25 + Math.sqrt(i) * 24);
+      n.x = Math.cos(phi) * r;
+      n.y = Math.sin(phi) * r;
+      n.vx = (Math.random() - 0.5) * 2;
+      n.vy = (Math.random() - 0.5) * 2;
       n.pinned = false;
     });
     cameraRef.current = { x: 0, y: 0, zoom: 1.0 };
-    reheat(1.0);
+    reheat(0.8);
   };
 
   const choose = (node: Node) => {
@@ -1139,13 +1176,13 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
                           </label>
                           <input
                             type="range"
-                            min="50"
-                            max="800"
+                            min="30"
+                            max="400"
                             step="10"
                             value={repulsionForce}
                             onChange={(e) => {
                               setRepulsionForce(parseInt(e.target.value, 10));
-                              reheat(0.7);
+                              reheat(0.6);
                             }}
                           />
                         </div>
@@ -1158,12 +1195,12 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
                           <input
                             type="range"
                             min="40"
-                            max="260"
+                            max="200"
                             step="5"
                             value={linkDistance}
                             onChange={(e) => {
                               setLinkDistance(parseInt(e.target.value, 10));
-                              reheat(0.6);
+                              reheat(0.5);
                             }}
                           />
                         </div>
@@ -1193,8 +1230,8 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
                           </label>
                           <input
                             type="range"
-                            min="0.70"
-                            max="0.96"
+                            min="0.65"
+                            max="0.94"
                             step="0.02"
                             value={damping}
                             onChange={(e) => {
@@ -1219,10 +1256,10 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
                             style={{ flex: 1, padding: "6px 8px", fontSize: "0.75rem" }}
                             onClick={() => {
                               setCenterForce(0.4);
-                              setRepulsionForce(320);
-                              setLinkDistance(110);
-                              setLinkStrength(0.5);
-                              setDamping(0.86);
+                              setRepulsionForce(160);
+                              setLinkDistance(90);
+                              setLinkStrength(0.45);
+                              setDamping(0.82);
                               reheat(0.8);
                             }}
                           >
@@ -1533,4 +1570,3 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     </div>
   );
 }
-
