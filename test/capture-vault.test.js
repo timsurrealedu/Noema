@@ -47,8 +47,7 @@ test("capture prompts include vault folder context and placement rules",async()=
   const {vaultPlacementInstructions}=await import("../server/worker/handlers/interpret-capture.mjs");
   const instructions=vaultPlacementInstructions();
   assert.match(instructions,/never assume a fixed structure/);
-  assert.match(instructions,/at most 3 new nested folders/);
-  assert.match(instructions,/at most 6 levels deep/);
+  assert.match(instructions,/adapt to the existing folder structure/i);
   assert.match(instructions,/ending in \.md/);
 });
 
@@ -127,6 +126,48 @@ test("AI capture nests session notes under the existing university tree",async()
     const state=core.listState(db,workspace.id),reviewed=state.captures.find(item=>item.id==="c1");
     assert.equal(reviewed.objects[0].type,"vault");assert.equal(reviewed.objects[0].detail,action.arguments.relativePath);
     const completed=jobs.getJob(id,db);assert.equal(completed.state,"completed");
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("AI capture adapts to alternative university trees (e.g. College/MIT)",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-capture-mit-")),vaultDir=join(dir,"vault"),jobsDir=join(dir,"jobs");mkdirSync(join(vaultDir,"College","MIT"),{recursive:true});mkdirSync(jobsDir);
+  const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),core=await import("../server/core.mjs"),vault=await import("../server/vault.mjs"),jobs=await import("../server/jobs.mjs"),{handleInterpretCapture}=await import("../server/worker/handlers/interpret-capture.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),workspace=collaboration.ensureDefaultWorkspace(user.id,db),actor={id:user.id,workspaceId:workspace.id};vault.connectVault({rootPath:vaultDir},workspace.id,db);
+    core.createCapture({id:"c2",text:"semester 3 course network penetration testing first session about information gathering",source:"typed"},db,actor);
+    const id=jobs.enqueueJob("interpret-capture",{captureId:"c2"},db,workspace.id),job=jobs.claimJob(["interpret-capture"],60,db);
+    await handleInterpretCapture({job,config:{dataDir:dir,dbPath:join(dir,"test.sqlite"),objectsDir:join(dir,"objects"),backupsDir:join(dir,"backups"),pluginsDir:join(dir,"plugins"),codexEnabled:true,codexPath:resolve("test/fixtures/fake-codex.mjs"),jobsDir,timezone:"Asia/Jakarta"},db});
+    const capture=db.prepare("SELECT status,error,objects_json FROM captures WHERE id='c2'").get();assert.equal(capture.status,"review",capture.error);
+    const proposal=JSON.parse(capture.objects_json),action=proposal.actions.find(item=>item.type==="vault.note.create");
+    assert.ok(action,`expected a vault note proposal: ${JSON.stringify(proposal)}`);
+    assert.match(action.arguments.relativePath,/^College\/MIT\/Sem3\//);
+    core.applyCaptureInterpretation("c2",db,actor);
+    assert.equal(existsSync(join(vaultDir,action.arguments.relativePath)),true);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("AI capture produces both checkmarkable task and calendar event for meeting and reminder captures",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-capture-meeting-")),jobsDir=join(dir,"jobs");mkdirSync(jobsDir);
+  const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),core=await import("../server/core.mjs"),jobs=await import("../server/jobs.mjs"),{handleInterpretCapture}=await import("../server/worker/handlers/interpret-capture.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),workspace=collaboration.ensureDefaultWorkspace(user.id,db),actor={id:user.id,workspaceId:workspace.id};
+    core.createCapture({id:"c_meet",text:"meeting tomorrow 1 pm",source:"typed"},db,actor);
+    const id=jobs.enqueueJob("interpret-capture",{captureId:"c_meet"},db,workspace.id),job=jobs.claimJob(["interpret-capture"],60,db);
+    await handleInterpretCapture({job,config:{dataDir:dir,dbPath:join(dir,"test.sqlite"),objectsDir:join(dir,"objects"),backupsDir:join(dir,"backups"),pluginsDir:join(dir,"plugins"),codexEnabled:true,codexPath:resolve("test/fixtures/fake-codex.mjs"),jobsDir,timezone:"Asia/Jakarta"},db});
+    const capture=db.prepare("SELECT status,error,objects_json FROM captures WHERE id='c_meet'").get();assert.equal(capture.status,"review",capture.error);
+    const proposal=JSON.parse(capture.objects_json);
+    const taskAction=proposal.actions.find(a=>a.type==="task.create"),eventAction=proposal.actions.find(a=>a.type==="event.create");
+    assert.ok(taskAction,"expected task.create in proposal");
+    assert.ok(eventAction,"expected event.create in proposal");
+    const result=core.applyCaptureInterpretation("c_meet",db,actor);
+    const state=core.listState(db,workspace.id);
+    const createdTask=state.tasks.find(t=>t.title.includes("meeting tomorrow 1 pm"));
+    const createdEvent=state.events.find(e=>e.title.includes("meeting tomorrow 1 pm"));
+    assert.ok(createdTask,"expected checkmarkable task to be created in state");
+    assert.ok(createdEvent,"expected calendar event to be created in state");
+    assert.equal(createdTask.completed,false);
+    assert.equal(createdTask.event_id,createdEvent.id);
+    assert.equal(createdEvent.taskId,createdTask.id);
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 

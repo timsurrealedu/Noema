@@ -196,7 +196,11 @@ export function updateCapture(id,status,version,db=getDatabase(),actor=null){
 
 const cleanTaskArguments=args=>({title:required(args.title,"task title",500),dueAt:args.dueAt?( /^\d{4}-\d{2}-\d{2}$/.test(args.dueAt)?args.dueAt:absolute(args.dueAt,"dueAt").toISOString()):null,project:args.project?required(args.project,"project",200):null,linkedActionId:args.linkedActionId?required(args.linkedActionId,"linked action id",100):null});
 const cleanNoteArguments=args=>({title:required(args.title,"note title",500),content:String(args.content||"").slice(0,100000),tags:Array.isArray(args.tags)?args.tags.map(tag=>required(tag,"tag",100)).slice(0,20):[]});
-const cleanVaultNoteArguments=args=>({sourceId:required(args.sourceId,"vault source",100),relativePath:required(args.relativePath,"vault note path",1000),title:required(args.title,"vault note title",500),content:String(args.content||"").slice(0,100000),tags:Array.isArray(args.tags)?args.tags.map(tag=>required(tag,"tag",100)).slice(0,20):[]});
+const cleanVaultNoteArguments=args=>{
+  let rel=String(args.relativePath||"").replaceAll("\\","/").replace(/^\/+/,"").replace(/\/+/g,"/").trim();
+  if(!rel.toLowerCase().endsWith(".md"))rel+=".md";
+  return {sourceId:required(args.sourceId,"vault source",100),relativePath:required(rel,"vault note path",1000),title:required(args.title,"vault note title",500),content:String(args.content||"").slice(0,100000),tags:Array.isArray(args.tags)?args.tags.map(tag=>required(tag,"tag",100)).slice(0,20):[]};
+};
 function cleanEventArguments(args){const start=absolute(args.startAt,"startAt"),end=absolute(args.endAt,"endAt");if(end<=start){throw new Error("endAt must be after startAt")}eventPosition(start,required(args.timezone,"timezone",100));const reminders=(Array.isArray(args.reminders)?args.reminders:[]).map(item=>({offsetMinutes:Number(item.offsetMinutes)}));if(reminders.some(item=>!Number.isInteger(item.offsetMinutes)||item.offsetMinutes<0||item.offsetMinutes>525600)){throw new Error("Invalid reminder offset")}return {title:required(args.title,"event title",500),startAt:start.toISOString(),endAt:end.toISOString(),timezone:args.timezone,location:args.location?required(args.location,"location",500):null,reminders}}
 const captureActionCleaners={"task.create":cleanTaskArguments,"event.create":cleanEventArguments,"note.create":cleanNoteArguments,"vault.note.create":cleanVaultNoteArguments};
 function cleanCaptureAction(action,ids){
@@ -253,6 +257,20 @@ export function applyCaptureInterpretation(id,db=getDatabase(),actor=null){
       if(!eventCreated||!taskCreated||!eventCreated.object?.id||!taskCreated.object?.id)continue;
       db.prepare("UPDATE tasks SET event_id=? WHERE id=?").run(eventCreated.object.id,taskCreated.object.id);
       db.prepare("UPDATE events SET task_id=? WHERE id=?").run(taskCreated.object.id,eventCreated.object.id);
+    }
+    // If an event was created without a companion task, auto-create the task so checkmarkable item exists on Home.
+    for(const item of created.filter(c=>c.type==="event")){
+      const event=item.object;
+      if(!event?.id)continue;
+      const existingTask=db.prepare("SELECT id FROM tasks WHERE event_id=?").get(event.id);
+      if(!existingTask){
+        const startIso=event.startAt||event.start_at||null;
+        const taskObj=saveTask({title:event.title,project:"Inbox",due:startIso||"No date",dueAt:startIso,scheduledStartAt:startIso,scheduledEndAt:event.endAt||event.end_at||null,estimatedMinutes:60,reminderAt:null,priority:"Medium"},db,actor);
+        db.prepare("UPDATE tasks SET event_id=? WHERE id=?").run(event.id,taskObj.id);
+        db.prepare("UPDATE events SET task_id=? WHERE id=?").run(taskObj.id,event.id);
+        const projected=taskProjection(findOwned(db,"tasks",taskObj.id,context.workspaceId),db);
+        created.push({type:"task",actionId:item.actionId,object:projected});
+      }
     }
     // Refresh task rows so created[].object reflects linking done above (projected shape for the client).
     for(const item of created)if(item.type==="task"&&item.object?.id){const row=findOwned(db,"tasks",item.object.id,context.workspaceId);if(row)item.object=taskProjection(row,db)}
