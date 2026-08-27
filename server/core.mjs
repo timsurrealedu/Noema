@@ -196,7 +196,11 @@ export function updateCapture(id,status,version,db=getDatabase(),actor=null){
 
 const cleanTaskArguments=args=>({title:required(args.title,"task title",500),dueAt:args.dueAt?( /^\d{4}-\d{2}-\d{2}$/.test(args.dueAt)?args.dueAt:absolute(args.dueAt,"dueAt").toISOString()):null,project:args.project?required(args.project,"project",200):null,linkedActionId:args.linkedActionId?required(args.linkedActionId,"linked action id",100):null});
 const cleanNoteArguments=args=>({title:required(args.title,"note title",500),content:String(args.content||"").slice(0,100000),tags:Array.isArray(args.tags)?args.tags.map(tag=>required(tag,"tag",100)).slice(0,20):[]});
-const cleanVaultNoteArguments=args=>({sourceId:required(args.sourceId,"vault source",100),relativePath:required(args.relativePath,"vault note path",1000),title:required(args.title,"vault note title",500),content:String(args.content||"").slice(0,100000),tags:Array.isArray(args.tags)?args.tags.map(tag=>required(tag,"tag",100)).slice(0,20):[]});
+const cleanVaultNoteArguments=args=>{
+  let rel=String(args.relativePath||"").replaceAll("\\","/").replace(/^\/+/,"").replace(/\/+/g,"/").trim();
+  if(!rel.toLowerCase().endsWith(".md"))rel+=".md";
+  return {sourceId:required(args.sourceId,"vault source",100),relativePath:required(rel,"vault note path",1000),title:required(args.title,"vault note title",500),content:String(args.content||"").slice(0,100000),tags:Array.isArray(args.tags)?args.tags.map(tag=>required(tag,"tag",100)).slice(0,20):[]};
+};
 function cleanEventArguments(args){const start=absolute(args.startAt,"startAt"),end=absolute(args.endAt,"endAt");if(end<=start){throw new Error("endAt must be after startAt")}eventPosition(start,required(args.timezone,"timezone",100));const reminders=(Array.isArray(args.reminders)?args.reminders:[]).map(item=>({offsetMinutes:Number(item.offsetMinutes)}));if(reminders.some(item=>!Number.isInteger(item.offsetMinutes)||item.offsetMinutes<0||item.offsetMinutes>525600)){throw new Error("Invalid reminder offset")}return {title:required(args.title,"event title",500),startAt:start.toISOString(),endAt:end.toISOString(),timezone:args.timezone,location:args.location?required(args.location,"location",500):null,reminders}}
 const captureActionCleaners={"task.create":cleanTaskArguments,"event.create":cleanEventArguments,"note.create":cleanNoteArguments,"vault.note.create":cleanVaultNoteArguments};
 function cleanCaptureAction(action,ids){
@@ -211,19 +215,24 @@ export function saveInterpretation(id,proposal,db=getDatabase()){
 }
 
 function applyCaptureAction(action,captureId,db,actor){
-  const id=randomUUID(),args=action.arguments||action;let type=action.type.split(".")[0],object;
+  const id=randomUUID(),args=action.arguments||action;let type=action.type.split(".")[0],object,linkedEvent=null;
   const presets=reminderOffsets(actor?.id,db);
   if(type==="task"){
-    object=saveTask({id,title:args.title,project:args.project||"Inbox",due:args.dueAt||"No date",dueAt:args.dueAt||null,reminderAt:null,priority:"Medium"},db,actor);
-    if(args.dueAt&&!args.linkedActionId){const allDay=/^\d{4}-\d{2}-\d{2}$/.test(args.dueAt),start=allDay?`${args.dueAt}T00:00:00.000Z`:args.dueAt,end=new Date(new Date(start).getTime()+(allDay?86400000:3600000)).toISOString(),event=saveEvent({title:args.title,startAt:start,endAt:end,timezone:loadConfig().timezone||"UTC",allDay,reminders:allDay?[]:presets.map(offsetMinutes=>({offsetMinutes}))},db,actor);db.prepare("UPDATE tasks SET event_id=? WHERE id=?").run(event.id,object.id);db.prepare("UPDATE events SET task_id=? WHERE id=?").run(object.id,event.id);object=findOwned(db,"tasks",object.id,actorInfo(actor).workspaceId)}
+    // Timed due dates schedule the task into its calendar slot (not the all-day row).
+    const allDay=/^\d{4}-\d{2}-\d{2}$/.test(args.dueAt||"");
+    const scheduledStart=!allDay&&args.dueAt?absolute(args.dueAt,"dueAt").toISOString():null;
+    object=saveTask({id,title:args.title,project:args.project||"Inbox",due:args.dueAt||"No date",dueAt:args.dueAt||null,scheduledStartAt:scheduledStart,scheduledEndAt:scheduledStart?new Date(new Date(scheduledStart).getTime()+3600000).toISOString():null,estimatedMinutes:scheduledStart?60:null,reminderAt:null,priority:"Medium"},db,actor);
+    if(args.dueAt&&!args.linkedActionId){const start=allDay?`${args.dueAt}T00:00:00.000Z`:args.dueAt,end=new Date(new Date(start).getTime()+(allDay?86400000:3600000)).toISOString(),event=saveEvent({title:args.title,startAt:start,endAt:end,timezone:loadConfig().timezone||"UTC",allDay,reminders:allDay?[]:presets.map(offsetMinutes=>({offsetMinutes}))},db,actor);db.prepare("UPDATE tasks SET event_id=? WHERE id=?").run(event.id,object.id);db.prepare("UPDATE events SET task_id=? WHERE id=?").run(object.id,event.id);object=findOwned(db,"tasks",object.id,actorInfo(actor).workspaceId);
+      if(object)object=taskProjection(object,db);
+      linkedEvent=event;}
   }
   else if(type==="event"){const reminder=action.arguments?.reminders?.[0],reminderAt=reminder?new Date(new Date(args.startAt).getTime()-reminder.offsetMinutes*60000).toISOString():null;object=saveEvent(action.arguments?{id,title:args.title,startAt:args.startAt,endAt:args.endAt,timezone:args.timezone,location:args.location,reminderAt}:{id,title:args.title,day:new Date().getDay(),time:"09:00",top:0,height:58},db,actor)}
   else if(action.type==="vault.note.create"){
-    const context=actorInfo(actor),relativePath=resolveVaultNotePath(args.sourceId,args.relativePath,context.workspaceId,db),assets=assetsForCapture(captureId,db,context.workspaceId).filter(asset=>asset.mime.startsWith("image/")),root=sourceRoot(args.sourceId,context.workspaceId,db),attachmentNoteId=randomUUID(),attachments=assets.map(asset=>{const path=`Attachments/Noema/${attachmentNoteId}/${asset.id}${extname(asset.name)||".img"}`;mkdirSync(dirname(join(root,path)),{recursive:true});copyFileSync(assetPath(asset.sha256),join(root,path));return {asset,path}}),content=[args.content||`# ${args.title}\n\n`,...attachments.map(({path})=>`![](${path})`)].join("\n\n"),vault=createVaultNote(args.sourceId,{relativePath,content},actor,db),note=findOwned(db,"notes",vault.noteId,context.workspaceId);
+    const context=actorInfo(actor),relativePath=resolveVaultNotePath(args.sourceId,args.relativePath,context.workspaceId,db),assets=assetsForCapture(captureId,db,context.workspaceId).filter(asset=>asset.mime.startsWith("image/")),root=sourceRoot(args.sourceId,context.workspaceId,db),attachmentNoteId=randomUUID(),attachments=assets.map(asset=>{const path=`Attachments/Noema/${attachmentNoteId}/${asset.id}${extname(asset.name)||".img"}`;mkdirSync(dirname(join(root,path)),{recursive:true});copyFileSync(assetPath(asset.sha256),join(root,path));return {asset,path}}),content=[args.content||`# ${args.title}\n\n`,...attachments.map(({path})=>`![](${path})`)].join("\n\n"),vault=createVaultNote(args.sourceId,{relativePath,content,title:args.title,tags:args.tags},actor,db),note=findOwned(db,"notes",vault.noteId,context.workspaceId);
     for(const {asset,path} of attachments)db.prepare("INSERT INTO note_assets(note_id,asset_id,relative_path,workspace_id) VALUES(?,?,?,?)").run(note.id,asset.id,path,actorInfo(actor).workspaceId);
     object={...note,sourceId:args.sourceId,relativePath:vault.relativePath};type="vault-note";
   }else object=saveNote({id,title:args.title,content:args.content||args.detail||args.title,tags:args.tags||[],ai:true,source:`Capture ${captureId}`},db,actor);
-  return {type,actionId:action.id,object};
+  return {type,actionId:action.id,object,linkedEvent};
 }
 
 export function applyCaptureInterpretation(id,db=getDatabase(),actor=null){
@@ -232,7 +241,12 @@ export function applyCaptureInterpretation(id,db=getDatabase(),actor=null){
   const proposal=JSON.parse(capture.objects_json),actions=Array.isArray(proposal)?proposal:proposal.actions;if(!actions?.length)throw Object.assign(new Error("No interpreted actions to apply"),{status:409,code:"NOTHING_TO_APPLY"});
   const created=[];db.exec("BEGIN IMMEDIATE");
   try{
-    for(const action of actions)created.push(applyCaptureAction(action,id,db,actor));
+    for(const action of actions){
+      const applied=applyCaptureAction(action,id,db,actor);
+      created.push(applied);
+      // Auto-created linked events must reach the client so the calendar renders them immediately.
+      if(applied.linkedEvent)created.push({type:"event",actionId:applied.actionId,object:applied.linkedEvent});
+    }
     // Symmetric task<->event linking for explicitly dual-created proposals.
     for(const action of actions){
       const linkId=action.arguments?.linkedActionId;
@@ -244,6 +258,22 @@ export function applyCaptureInterpretation(id,db=getDatabase(),actor=null){
       db.prepare("UPDATE tasks SET event_id=? WHERE id=?").run(eventCreated.object.id,taskCreated.object.id);
       db.prepare("UPDATE events SET task_id=? WHERE id=?").run(taskCreated.object.id,eventCreated.object.id);
     }
+    // If an event was created without a companion task, auto-create the task so checkmarkable item exists on Home.
+    for(const item of created.filter(c=>c.type==="event")){
+      const event=item.object;
+      if(!event?.id)continue;
+      const existingTask=db.prepare("SELECT id FROM tasks WHERE event_id=?").get(event.id);
+      if(!existingTask){
+        const startIso=event.startAt||event.start_at||null;
+        const taskObj=saveTask({title:event.title,project:"Inbox",due:startIso||"No date",dueAt:startIso,scheduledStartAt:startIso,scheduledEndAt:event.endAt||event.end_at||null,estimatedMinutes:60,reminderAt:null,priority:"Medium"},db,actor);
+        db.prepare("UPDATE tasks SET event_id=? WHERE id=?").run(event.id,taskObj.id);
+        db.prepare("UPDATE events SET task_id=? WHERE id=?").run(taskObj.id,event.id);
+        const projected=taskProjection(findOwned(db,"tasks",taskObj.id,context.workspaceId),db);
+        created.push({type:"task",actionId:item.actionId,object:projected});
+      }
+    }
+    // Refresh task rows so created[].object reflects linking done above (projected shape for the client).
+    for(const item of created)if(item.type==="task"&&item.object?.id){const row=findOwned(db,"tasks",item.object.id,context.workspaceId);if(row)item.object=taskProjection(row,db)}
     db.prepare(`UPDATE captures SET status='confirmed',updated_at=?,version=version+1 WHERE id=?${context.workspaceId?" AND workspace_id=?":""}`).run(stamp(),id,...(context.workspaceId?[context.workspaceId]:[]));
     const objects=created.filter(({type})=>type!=="vault-note").flatMap(({type,object})=>type==="task"&&object.event_id?[{type,id:object.id},{type:"event",id:object.event_id}]:[{type,id:object.id}]);
     audit(db,"apply","capture",id,`Applied ${created.length} object(s) from capture`,{op:"delete-many",objects,vaultNotes:created.filter(({type})=>type==="vault-note").map(({object})=>({sourceId:object.sourceId,relativePath:object.relativePath})),captureStatus:"review"},actor);

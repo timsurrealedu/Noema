@@ -12,9 +12,57 @@ test("capture can propose, apply, and undo a vault note",async()=>{
     core.createCapture({id:"c1",text:"Keep this project idea",source:"typed"},db,actor);
     core.saveInterpretation("c1",{schemaVersion:1,summary:"Save the idea in Obsidian",clarifications:[],actions:[{id:"vault-1",type:"vault.note.create",confidence:.9,sourceReferences:["capture:c1",`vault:${source.id}`],arguments:{sourceId:source.id,relativePath:"Ideas/Project Idea.md",title:"Project Idea",content:"# Project Idea\n\nKeep this project idea\n",tags:["ideas"]}}]},db);
     const applied=core.applyCaptureInterpretation("c1",db,actor);
-    assert.equal(applied.created.length,1);assert.equal(existsSync(join(vaultDir,"Ideas/Project Idea.md")),true);assert.equal(readFileSync(join(vaultDir,"Ideas/Project Idea.md"),"utf8"),"# Project Idea\n\nKeep this project idea\n");
+    assert.equal(applied.created.length,1);assert.equal(existsSync(join(vaultDir,"Ideas/Project Idea.md")),true);
+    assert.match(readFileSync(join(vaultDir,"Ideas/Project Idea.md"),"utf8"),/tags: \[ideas\]/);
+    assert.match(readFileSync(join(vaultDir,"Ideas/Project Idea.md"),"utf8"),/# Project Idea/);
     const event=core.listAuditEvents(10,db,workspace.id).find(item=>item.action==="apply");core.undoAuditEvent(event.id,db,actor);
     assert.equal(existsSync(join(vaultDir,"Ideas/Project Idea.md")),false);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("vault note creation auto-generates MOC notes and maintains clickable wikilinks",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-capture-moc-")),vaultDir=join(dir,"vault");mkdirSync(vaultDir);
+  const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),core=await import("../server/core.mjs"),vault=await import("../server/vault.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),workspace=collaboration.ensureDefaultWorkspace(user.id,db),actor={id:user.id,workspaceId:workspace.id},source=vault.connectVault({rootPath:vaultDir},workspace.id,db);
+    // Pre-create parent BINUS MOC
+    mkdirSync(join(vaultDir,"University/BINUS"),{recursive:true});
+    vault.createVaultNote(source.id,{relativePath:"University/BINUS/BINUS.md",content:"---\ntags: [moc, university, binus]\n---\n# 🎓 BINUS — Map of Content\n\n## Semesters\n- [[SEM 1]]\n\n→ [[University]]\n"},actor,db);
+    
+    // Now create a note in a new semester and course hierarchy
+    const note=vault.createVaultNote(source.id,{
+      relativePath:"University/BINUS/SEM3/NetworkPenetrationTesting/Kelas/Session1/Information Gathering.md",
+      title:"Information Gathering",
+      content:"# Information Gathering\n\nMethodology details.\n",
+      tags:["NetworkPenetrationTesting","EthicalHacking"]
+    },actor,db);
+
+    // 1. Note has frontmatter tags
+    const noteContent=readFileSync(join(vaultDir,"University/BINUS/SEM3/NetworkPenetrationTesting/Kelas/Session1/Information Gathering.md"),"utf8");
+    assert.match(noteContent,/tags: \[NetworkPenetrationTesting, EthicalHacking\]/);
+    assert.match(noteContent,/# Information Gathering/);
+
+    // 2. Course MOC was generated with clickable link
+    const courseMocPath=join(vaultDir,"University/BINUS/SEM3/NetworkPenetrationTesting/Network Penetration Testing.md");
+    assert.equal(existsSync(courseMocPath),true);
+    const courseMoc=readFileSync(courseMocPath,"utf8");
+    assert.match(courseMoc,/tags: \[moc, course, networkpenetrationtesting\]/);
+    assert.match(courseMoc,/# 🗺️ Network Penetration Testing — Map of Content/);
+    assert.match(courseMoc,/\[\[Information Gathering\]\]/);
+    assert.match(courseMoc,/→ \[\[SEM 3\]\]/);
+
+    // 3. Semester MOC was generated with course link
+    const semMocPath=join(vaultDir,"University/BINUS/SEM3/SEM 3.md");
+    assert.equal(existsSync(semMocPath),true);
+    const semMoc=readFileSync(semMocPath,"utf8");
+    assert.match(semMoc,/tags: \[moc, semester, sem3\]/);
+    assert.match(semMoc,/# 📗 Semester 3 — Map of Content/);
+    assert.match(semMoc,/\[\[Network Penetration Testing\]\]/);
+    assert.match(semMoc,/→ \[\[BINUS\]\]/);
+
+    // 4. Existing parent BINUS MOC was updated with the new semester
+    const binusMoc=readFileSync(join(vaultDir,"University/BINUS/BINUS.md"),"utf8");
+    assert.match(binusMoc,/\[\[SEM 3\]\]/);
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
@@ -47,8 +95,7 @@ test("capture prompts include vault folder context and placement rules",async()=
   const {vaultPlacementInstructions}=await import("../server/worker/handlers/interpret-capture.mjs");
   const instructions=vaultPlacementInstructions();
   assert.match(instructions,/never assume a fixed structure/);
-  assert.match(instructions,/at most 3 new nested folders/);
-  assert.match(instructions,/at most 6 levels deep/);
+  assert.match(instructions,/adapt to the existing folder structure/i);
   assert.match(instructions,/ending in \.md/);
 });
 
@@ -78,10 +125,20 @@ test("capture tasks create linked timed or all-day calendar events",async()=>{
     core.createCapture({id:"timed",text:"Study",source:"typed"},db);
     core.saveInterpretation("timed",{schemaVersion:1,summary:"Study",clarifications:[],actions:[{id:"t",type:"task.create",confidence:.9,sourceReferences:["capture:timed"],arguments:{title:"Study",dueAt:"2026-08-13T10:00:00+07:00",project:"Inbox",linkedActionId:null}}]},db);
     core.applyCaptureInterpretation("timed",db);const timed=core.listState(db);assert.equal(timed.tasks[0].reminderAt,null);assert.equal(timed.events[0].endAt,"2026-08-13T04:00:00.000Z");assert.equal(timed.events[0].timezone,"Asia/Jakarta");assert.equal(timed.events[0].time,"10:00");assert.equal(timed.events[0].allDay,false);assert.equal(timed.events[0].taskId,timed.tasks[0].id);assert.deepEqual(timed.calendarItems.map(item=>item.kind),["event"]);
+    assert.equal(timed.tasks[0].scheduledStartAt,"2026-08-13T03:00:00.000Z");assert.equal(timed.tasks[0].scheduledEndAt,"2026-08-13T04:00:00.000Z");
     const expectedReminders=(await import("../server/settings.mjs")).reminderOffsets().length;assert.equal(db.prepare("SELECT COUNT(*) count FROM event_reminders WHERE event_id=?").get(timed.events[0].id).count,expectedReminders);
     core.createCapture({id:"day",text:"Submit",source:"typed"},db);
     core.saveInterpretation("day",{schemaVersion:1,summary:"Submit",clarifications:[],actions:[{id:"d",type:"task.create",confidence:.9,sourceReferences:["capture:day"],arguments:{title:"Submit",dueAt:"2026-08-14",project:"Inbox",linkedActionId:null}}]},db);
     core.applyCaptureInterpretation("day",db);const event=core.listState(db).events.find(item=>item.title==="Submit");assert.equal(event.allDay,true);assert.equal(event.reminders.length,0);
+    // The apply response must expose the auto-created linked event so the client calendar renders it without a refresh.
+    core.createCapture({id:"reveal",text:"Meet",source:"typed"},db);
+    core.saveInterpretation("reveal",{schemaVersion:1,summary:"Meet",clarifications:[],actions:[{id:"t2",type:"task.create",confidence:.9,sourceReferences:["capture:reveal"],arguments:{title:"Meet",dueAt:"2026-08-13T09:30:00+07:00",project:"Inbox",linkedActionId:null}}]},db);
+    const reveal=core.applyCaptureInterpretation("reveal",db);
+    const revealedEvent=reveal.created.find(item=>item.type==="event");
+    assert.ok(revealedEvent,"auto-created linked event missing from apply response");
+    assert.equal(revealedEvent.object.startAt,"2026-08-13T02:30:00.000Z");
+    assert.equal(revealedEvent.object.allDay,false);
+    assert.equal(reveal.created.find(item=>item.type==="task").object.eventId,revealedEvent.object.id);
     const audit=core.listAuditEvents(10,db).find(item=>item.objectId==="timed"&&item.action==="apply");core.undoAuditEvent(audit.id,db);assert.equal(core.listState(db).events.some(item=>item.title==="Study"),false);
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
@@ -117,6 +174,48 @@ test("AI capture nests session notes under the existing university tree",async()
     const state=core.listState(db,workspace.id),reviewed=state.captures.find(item=>item.id==="c1");
     assert.equal(reviewed.objects[0].type,"vault");assert.equal(reviewed.objects[0].detail,action.arguments.relativePath);
     const completed=jobs.getJob(id,db);assert.equal(completed.state,"completed");
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("AI capture adapts to alternative university trees (e.g. College/MIT)",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-capture-mit-")),vaultDir=join(dir,"vault"),jobsDir=join(dir,"jobs");mkdirSync(join(vaultDir,"College","MIT"),{recursive:true});mkdirSync(jobsDir);
+  const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),core=await import("../server/core.mjs"),vault=await import("../server/vault.mjs"),jobs=await import("../server/jobs.mjs"),{handleInterpretCapture}=await import("../server/worker/handlers/interpret-capture.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),workspace=collaboration.ensureDefaultWorkspace(user.id,db),actor={id:user.id,workspaceId:workspace.id};vault.connectVault({rootPath:vaultDir},workspace.id,db);
+    core.createCapture({id:"c2",text:"semester 3 course network penetration testing first session about information gathering",source:"typed"},db,actor);
+    const id=jobs.enqueueJob("interpret-capture",{captureId:"c2"},db,workspace.id),job=jobs.claimJob(["interpret-capture"],60,db);
+    await handleInterpretCapture({job,config:{dataDir:dir,dbPath:join(dir,"test.sqlite"),objectsDir:join(dir,"objects"),backupsDir:join(dir,"backups"),pluginsDir:join(dir,"plugins"),codexEnabled:true,codexPath:resolve("test/fixtures/fake-codex.mjs"),jobsDir,timezone:"Asia/Jakarta"},db});
+    const capture=db.prepare("SELECT status,error,objects_json FROM captures WHERE id='c2'").get();assert.equal(capture.status,"review",capture.error);
+    const proposal=JSON.parse(capture.objects_json),action=proposal.actions.find(item=>item.type==="vault.note.create");
+    assert.ok(action,`expected a vault note proposal: ${JSON.stringify(proposal)}`);
+    assert.match(action.arguments.relativePath,/^College\/MIT\/Sem3\//);
+    core.applyCaptureInterpretation("c2",db,actor);
+    assert.equal(existsSync(join(vaultDir,action.arguments.relativePath)),true);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("AI capture produces both checkmarkable task and calendar event for meeting and reminder captures",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-capture-meeting-")),jobsDir=join(dir,"jobs");mkdirSync(jobsDir);
+  const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),core=await import("../server/core.mjs"),jobs=await import("../server/jobs.mjs"),{handleInterpretCapture}=await import("../server/worker/handlers/interpret-capture.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),workspace=collaboration.ensureDefaultWorkspace(user.id,db),actor={id:user.id,workspaceId:workspace.id};
+    core.createCapture({id:"c_meet",text:"meeting tomorrow 1 pm",source:"typed"},db,actor);
+    const id=jobs.enqueueJob("interpret-capture",{captureId:"c_meet"},db,workspace.id),job=jobs.claimJob(["interpret-capture"],60,db);
+    await handleInterpretCapture({job,config:{dataDir:dir,dbPath:join(dir,"test.sqlite"),objectsDir:join(dir,"objects"),backupsDir:join(dir,"backups"),pluginsDir:join(dir,"plugins"),codexEnabled:true,codexPath:resolve("test/fixtures/fake-codex.mjs"),jobsDir,timezone:"Asia/Jakarta"},db});
+    const capture=db.prepare("SELECT status,error,objects_json FROM captures WHERE id='c_meet'").get();assert.equal(capture.status,"review",capture.error);
+    const proposal=JSON.parse(capture.objects_json);
+    const taskAction=proposal.actions.find(a=>a.type==="task.create"),eventAction=proposal.actions.find(a=>a.type==="event.create");
+    assert.ok(taskAction,"expected task.create in proposal");
+    assert.ok(eventAction,"expected event.create in proposal");
+    const result=core.applyCaptureInterpretation("c_meet",db,actor);
+    const state=core.listState(db,workspace.id);
+    const createdTask=state.tasks.find(t=>t.title.includes("meeting tomorrow 1 pm"));
+    const createdEvent=state.events.find(e=>e.title.includes("meeting tomorrow 1 pm"));
+    assert.ok(createdTask,"expected checkmarkable task to be created in state");
+    assert.ok(createdEvent,"expected calendar event to be created in state");
+    assert.equal(createdTask.completed,false);
+    assert.equal(createdTask.event_id,createdEvent.id);
+    assert.equal(createdEvent.taskId,createdTask.id);
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 

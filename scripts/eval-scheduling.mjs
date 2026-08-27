@@ -22,6 +22,7 @@ const phrasings=[
 
 const schema={type:"object",additionalProperties:false,required:["summary","actions","clarifications"],properties:{summary:{type:"string"},actions:{type:"array",items:{type:"object"}},clarifications:{type:"array",items:{type:"string"}}}};
 
+const isTimed=value=>/T\d{2}:\d{2}/.test(String(value||""));
 const config=ensureDataDirs(loadConfig());
 if(!config.geminiApiKey&&!config.groqApiKey&&!config.openaiApiKey){console.log("[eval-scheduling] no AI provider configured — skipping");process.exit(0)}
 
@@ -32,7 +33,10 @@ for(const [index,text] of phrasings.entries()){
     const output=await runAI({prompt,cwd:resolve(config.jobsDir,`eval-${index}`),schema,config,profile:"fast"});
     const actions=output.result.actions||[],types=new Set(actions.map(action=>action.type));
     const dual=types.has("task.create")&&types.has("event.create");
-    if(dual)pass++;else{fail++;console.error(`[eval-scheduling] phrasing ${index+1} produced [${[...types].join(", ")}]: "${text}"`)}
+    const timedAction=actions.find(action=>isTimed(action.arguments?.dueAt));
+    const timedTaskNeedsEvent=types.has("task.create")&&timedAction&&!types.has("event.create");
+    if(dual&&!timedTaskNeedsEvent)pass++;
+    else{fail++;console.error(`[eval-scheduling] phrasing ${index+1} produced [${[...types].join(", ")}]: "${text}"`)}
   }catch(error){fail++;console.error(`[eval-scheduling] phrasing ${index+1} failed: ${error.message}`)}
 }
 console.log(`[eval-scheduling] dual-create on ${pass}/${phrasings.length} phrasings`);
