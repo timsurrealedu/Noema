@@ -55,7 +55,35 @@ export function validateProposal(proposal,sources,vaultSourceIds=null){
   for(const action of proposal.actions){
     if(ids.has(action.id))throw new Error(`Duplicate action id: ${action.id}`);
     ids.add(action.id);
-    if(action.sourceReferences.some(reference=>!sources.has(reference)))throw new Error(`Unknown source reference in action: ${action.id}`);
+    if(!Array.isArray(action.sourceReferences))action.sourceReferences=[];
+    if(action.type==="vault.note.create"){
+      if(!vaultSourceIds&&!action.sourceReferences.includes(`vault:${action.arguments.sourceId}`)){
+        throw new Error("Vault note must cite its target vault source");
+      }
+      if(!action.arguments.sourceId&&vaultSourceIds?.size===1){
+        action.arguments.sourceId=Array.from(vaultSourceIds)[0];
+      }
+      if(vaultSourceIds&&!vaultSourceIds.has(action.arguments.sourceId)){
+        throw new Error(`Vault note targets unknown vault source: ${action.arguments.sourceId}`);
+      }
+      const vaultRef=`vault:${action.arguments.sourceId}`;
+      if(!action.sourceReferences.includes(vaultRef)){
+        action.sourceReferences.push(vaultRef);
+      }
+      let rel=String(action.arguments.relativePath||"").replaceAll("\\","/").replace(/^\/+/,"").replace(/\/+/g,"/").trim();
+      action.arguments.relativePath=rel;
+      try{safeRelativePath(action.arguments.relativePath)}catch{throw new Error("Vault note path is invalid; use Folder/Subfolder/Note Title.md")}
+      if(!action.arguments.relativePath.toLowerCase().endsWith(".md"))throw new Error("Vault note path must end in .md");
+      if(action.arguments.relativePath.split("/").length>8)throw new Error("Vault note nesting exceeds 8 levels");
+    }
+    action.sourceReferences=action.sourceReferences.filter(reference=>sources.has(reference)||reference.startsWith("capture:")||reference.startsWith("vault:"));
+    if(!action.sourceReferences.some(ref=>ref.startsWith("capture:"))&&sources.size>0){
+      const capSource=Array.from(sources).find(s=>s.startsWith("capture:"));
+      if(capSource)action.sourceReferences.push(capSource);
+    }
+    if(!action.sourceReferences.length&&sources.size>0){
+      action.sourceReferences.push(Array.from(sources)[0]);
+    }
     if(action.type==="event.create"){
       const start=new Date(action.arguments.startAt),end=new Date(action.arguments.endAt);
       if(Number.isNaN(start.valueOf()))throw new Error("Invalid event start time");
@@ -63,13 +91,6 @@ export function validateProposal(proposal,sources,vaultSourceIds=null){
       if(!validTimezones.has(action.arguments.timezone))action.arguments.timezone=Intl.DateTimeFormat().resolvedOptions().timeZone||"UTC";
     }
     if(action.type==="task.create"&&action.arguments.dueAt&&Number.isNaN(new Date(action.arguments.dueAt).valueOf()))throw new Error("Invalid task due time");
-    if(action.type==="vault.note.create"){
-      if(!action.sourceReferences.includes(`vault:${action.arguments.sourceId}`))throw new Error("Vault note must cite its target vault source");
-      if(vaultSourceIds&&!vaultSourceIds.has(action.arguments.sourceId))throw new Error(`Vault note targets unknown vault source: ${action.arguments.sourceId}`);
-      try{safeRelativePath(action.arguments.relativePath)}catch{throw new Error("Vault note path is invalid; use Folder/Subfolder/Note Title.md")}
-      if(!action.arguments.relativePath.toLowerCase().endsWith(".md"))throw new Error("Vault note path must end in .md");
-      if(action.arguments.relativePath.split("/").length>8)throw new Error("Vault note nesting exceeds 8 levels");
-    }
   }
   for(const action of proposal.actions){const linked=action.arguments.linkedActionId;if(linked&&!ids.has(linked))action.arguments.linkedActionId=null}
   return proposal;
@@ -119,7 +140,7 @@ export async function handleInterpretCapture({job,config,db}){
     const now=new Date().toISOString(),timezone=config.timezone||Intl.DateTimeFormat().resolvedOptions().timeZone,{text:dynamic,truncated}=buildCaptureInput({id:job.input.captureId,...capture},attachments,config.captureMaxInputChars||24000),routing=vaultContext?`A connected vault is available below. Use vault.note.create only for durable knowledge notes, with its sourceId and source reference. Use note.create for local notes. Choose relativePath following the placement rules.\n\n${vaultContext}${vaultContextTruncated?"\n(folder list truncated; prefer folders shown above)":""}\n\n${vaultPlacementInstructions()}\n\n`:"",prompt=`Interpret this Noema capture into proposed actions. Do not perform actions. Preserve the original language. Use ISO 8601 timestamps with offsets and IANA time zones. Every sourceReferences value must use a supplied Source ID. If required scheduling information is ambiguous, add a clarification and omit that action. Return only the required structured result.\n\n${captureProposalInstructions(reminderOffsets(job.input.userId,db))}\n\nCurrent time: ${now}\nTime zone: ${timezone}\n\n${routing}${dynamic}`;
     const isNoteWorkload=capture.source==="file"||capture.text.length>200||/semester|kuliah|session|lecture|chapter|materi|note|summary|catatan|research|modul/i.test(capture.text);
     const maxOutputTokens=isNoteWorkload?Math.max(config.captureMaxOutputTokens||2000,3500):(config.captureMaxOutputTokens||2000);
-    const output=await runAI({prompt,cwd:resolve(config.jobsDir,job.id),schema:captureProposalSchema,codexSchema:codexCaptureProposalSchema,geminiSchema:codexCaptureProposalSchema,config,profile:job.input.profile||job.profile||"fast",maxOutputTokens,workload:isNoteWorkload?"note":"schedule",validate:result=>validateProposal(result.actionsJson?{...result,actions:parseActionsJson(result.actionsJson)}:result,sources,new Set(vaultTargets.map(target=>target.id))),onEvent:event=>{assertNotCancelled(job.id,db);addJobEvent(job.id,"ai",{type:event.type,provider:event.provider,model:event.model},db);if(event.type==="provider.completed"||event.type==="provider.failed")db.prepare("INSERT INTO ai_runs(job_id,profile,provider,model,input_tokens,output_tokens,duration_ms,outcome,fallback_reason,truncated,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)").run(job.id,job.input.profile||"fast",event.provider,event.model,event.usage?.inputTokens??null,event.usage?.outputTokens??null,event.durationMs||0,event.type==="provider.completed"?"success":"failed",event.reason||null,truncated?1:0,new Date().toISOString())}});
+    const output=await runAI({prompt,cwd:resolve(config.jobsDir,job.id),schema:captureProposalSchema,codexSchema:codexCaptureProposalSchema,geminiSchema:captureProposalSchema,config,profile:job.input.profile||job.profile||"fast",maxOutputTokens,workload:isNoteWorkload?"note":"schedule",validate:result=>validateProposal(result.actionsJson?{...result,actions:parseActionsJson(result.actionsJson)}:result,sources,new Set(vaultTargets.map(target=>target.id))),onEvent:event=>{assertNotCancelled(job.id,db);addJobEvent(job.id,"ai",{type:event.type,provider:event.provider,model:event.model},db);if(event.type==="provider.completed"||event.type==="provider.failed")db.prepare("INSERT INTO ai_runs(job_id,profile,provider,model,input_tokens,output_tokens,duration_ms,outcome,fallback_reason,truncated,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)").run(job.id,job.input.profile||"fast",event.provider,event.model,event.usage?.inputTokens??null,event.usage?.outputTokens??null,event.durationMs||0,event.type==="provider.completed"?"success":"failed",event.reason||null,truncated?1:0,new Date().toISOString())}});
     assertNotCancelled(job.id,db);const result=output.result;if(truncated)result.clarifications=[...result.clarifications,"Some capture content was omitted from AI processing because it exceeded the configured input limit. Review the original capture before applying."];if(vaultContextTruncated)result.clarifications=[...result.clarifications,"Only part of the vault folder list was shown to the AI; verify the proposed note location before applying."];const proposal=saveInterpretation(job.input.captureId,result,db),captureVersion=db.prepare("SELECT version FROM captures WHERE id=?").get(job.input.captureId).version;finishJob(job.id,{provider:output.provider,model:output.model,durationMs:output.durationMs,truncated,captureVersion,...proposal},db);
     // Optional auto-apply (F5.3): only for trusted patterns — every action confident and nothing ambiguous.
     try{
