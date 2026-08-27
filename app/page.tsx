@@ -1,10 +1,10 @@
 "use client";
 
 import {
-  Archive, BookOpen, CalendarBlank, Camera, CaretRight, Check, CheckSquare, CircleNotch, Clock,
+  Archive, Bell, BookOpen, CalendarBlank, Camera, CaretRight, Check, CheckSquare, CircleNotch, Clock,
   Code, Command, FileText, Folder, Gear, House, Lightning, ListChecks,
-  MagnifyingGlass, Microphone, Moon, Paperclip, PaperPlaneTilt, PenNib, Plus, Sparkle,
-  Sun, Tray, UploadSimple, Warning, X, Circle, DotsThree
+  MagnifyingGlass, Microphone, Paperclip, PaperPlaneTilt, PenNib, Plus, Sparkle,
+  Tray, UploadSimple, Warning, X, Circle, DotsThree
 } from "@phosphor-icons/react";
 import Link from "next/link";
 import {useRouter} from "next/navigation";
@@ -19,9 +19,15 @@ import { NoemaLogo } from "./components/NoemaLogo";
 import { NotificationButton } from "./components/NotificationButton";
 import { createId } from "./lib/id";
 
-const nav = [
+const primaryNav = [
   ["Home","/",House],["Capture","/capture",Plus],["Vault","/vault",Folder],
   ["Calendar","/calendar",CalendarBlank],["Coding","/coding",Code]
+] as const;
+const moreNav = [
+  ["Coding","/coding",Code],
+  ["Study","/study",BookOpen],["Projects","/projects",Tray],["Automations","/automations",Lightning],
+  ["Dashboards","/dashboards",Command],["Plugins","/plugins",FileText],["Collaboration","/collaboration",Bell],
+  ["Help","/help",Command],["Settings","/settings",Gear]
 ] as const;
 
 const blankTask=():Task=>({id:createId(),title:"",project:"Inbox",due:"",dueAt:new Date().toISOString(),priority:"Medium",completed:false,status:"open",reminderAt:null});
@@ -36,11 +42,10 @@ const overdueDays=(task:Task,today:string)=>task.dueAt?Math.max(1,Math.round((ne
 
 export default function Home() {
   const {addAndInterpretCapture,addCapture,addFileCapture,addFileCaptures,addVoiceCapture,captures,confirmCapture,events,tasks,projects,toggleTask,saveTask,archiveTask,updateCapture}=useAppState();
-  const [theme,setTheme] = useState<"dark"|"light">("dark");
-  const ThemeIcon = theme === "dark" ? Sun : Moon;
   const [capture,setCapture] = useState("");
   const [reviewId,setReviewId] = useState<string|null>(null);
   const [palette,setPalette] = useState(false);
+  const [more,setMore] = useState(false);
   const [paletteQuery,setPaletteQuery] = useState("");
   const [assistant,setAssistant] = useState(false);
   const [handwriting,setHandwriting] = useState(false);
@@ -61,24 +66,20 @@ export default function Home() {
   const openResolvedRef = useRef(false);
 
   useEffect(() => {
-    const saved=localStorage.getItem("noema-theme") as "dark"|"light"|null;
-    if(saved)setTheme(saved);
     setAutoInterpret(localStorage.getItem("noema-auto-interpret")!=="off");
     setMounted(true);
     if(!/Mac|iPhone|iPad|iPod/i.test(navigator.platform||""))setModKey("Ctrl");
   },[]);
   useEffect(() => {
-    document.documentElement.dataset.theme=theme;
-    localStorage.setItem("noema-theme",theme);
     const onKey=(e:KeyboardEvent)=>{
       if ((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="k") {e.preventDefault();setPalette(true)}
       if ((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==="j") {e.preventDefault();setAssistant(true)}
       if ((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.key.toLowerCase()==="c") {e.preventDefault();input.current?.focus()}
       if ((e.metaKey||e.ctrlKey)&&e.shiftKey&&e.key.toLowerCase()==="t") {e.preventDefault();setDraft(blankTask())}
-      if (e.key==="Escape") { setPalette(false); setAssistant(false); }
+      if (e.key==="Escape") { setPalette(false); setMore(false); setAssistant(false); }
     };
     addEventListener("keydown",onKey); return()=>removeEventListener("keydown",onKey);
-  },[theme]);
+  },[]);
 
   // Restore unsent capture draft from sessionStorage
   useEffect(() => {
@@ -189,10 +190,9 @@ export default function Home() {
     <a className="skip" href="#main">Skip to main content</a>
     <aside className="sidebar" aria-label="Primary navigation">
       <Link className="brand" href="/"><NoemaLogo /><span>Noema</span></Link>
-      <nav>{nav.map(([label,href,Icon])=><Link className={label==="Home"?"active":""} href={href} key={label}><Icon/><span>{label}</span></Link>)}</nav>
+      <nav>{primaryNav.slice(0,4).map(([label,href,Icon])=><Link className={label==="Home"?"active":""} href={href} key={label}><Icon/><span>{label}</span></Link>)}<button aria-expanded={more} aria-haspopup="dialog" onClick={()=>setMore(true)}><ListChecks/><span>More</span></button></nav>
       <div className="sidebar-footer">
         <Link className="settings" href="/settings"><Gear/><span>Settings</span></Link>
-        <button className="icon-button theme-toggle" aria-label={`Use ${theme === "dark" ? "light" : "dark"} theme`} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}><ThemeIcon /></button>
       </div>
     </aside>
 
@@ -353,9 +353,11 @@ export default function Home() {
     {!draft&&<button className="home-task-fab" aria-label="New task" onClick={()=>{setTaskTitleError("");setDraft(blankTask())}}><Plus/><span>New task</span></button>}
 
     <nav className="mobile-nav" aria-label="Mobile navigation">
-      {([["Home","/",House],["Capture","/capture",Tray],["Vault","/vault",Folder],["Calendar","/calendar",CalendarBlank],["Coding","/coding",Code]] as const).map(([label,href,Icon])=><Link className={label==="Home"?"active":""} href={href} key={label}><Icon/><span>{label}</span></Link>)}
+      {primaryNav.slice(0,4).map(([label,href,Icon])=><Link className={label==="Home"?"active":""} href={href} key={label}><Icon/><span>{label}</span></Link>)}
+      <button aria-expanded={more} aria-haspopup="dialog" onClick={()=>setMore(true)}><ListChecks/><span>More</span></button>
     </nav>
 
+    {more&&<ModalDialog className="more-dialog" ariaLabel="More navigation" onClose={()=>setMore(false)}><header><strong>More</strong><button className="icon-button" aria-label="Close More navigation" onClick={()=>setMore(false)}><X/></button></header><nav aria-label="More navigation">{moreNav.map(([label,href,Icon])=><Link href={href} onClick={()=>setMore(false)} key={label}><Icon/><span>{label}</span></Link>)}</nav></ModalDialog>}
     {palette&&<ModalDialog className="palette-dialog" onClose={closePalette}><div className="palette-search"><MagnifyingGlass/><input role="combobox" aria-expanded="true" aria-controls="palette-options" aria-activedescendant={paletteResults[activeIndex]?`palette-option-${paletteResults[activeIndex].id}`:undefined} autoFocus value={paletteQuery} onChange={event=>{setPaletteQuery(event.target.value);setPaletteActive(0)}} onKeyDown={event=>{if(event.key==="ArrowDown"){event.preventDefault();setPaletteActive(Math.min(activeIndex+1,paletteResults.length-1))}else if(event.key==="ArrowUp"){event.preventDefault();setPaletteActive(Math.max(activeIndex-1,0))}else if(event.key==="Enter"){event.preventDefault();paletteResults[activeIndex]?.run()}}} aria-label="Search commands" placeholder="Search Noema or run a command…"/></div><p aria-live="polite">Quick actions</p><div id="palette-options" role="listbox" aria-label="Quick actions">{paletteResults.map((item,index)=><button type="button" role="option" aria-selected={index===activeIndex} id={`palette-option-${item.id}`} key={item.id} onMouseEnter={()=>setPaletteActive(index)} onClick={item.run}><item.Icon/><span>{item.label}</span>{item.hint&&<kbd>{item.hint}</kbd>}</button>)}</div>{!paletteResults.length&&<p className="palette-empty" role="status">No commands match “{paletteQueryText?paletteQuery.trim():paletteQuery}”. Try a different word.</p>}<button type="button" className="icon-button palette-close" aria-label="Close search" onClick={closePalette}><X/></button></ModalDialog>}
     {handwriting&&<HandwritingCapture onClose={()=>setHandwriting(false)}/>}
     <ContextualAssistant

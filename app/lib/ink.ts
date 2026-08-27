@@ -4,34 +4,90 @@ export type InkStroke={id:string;tool:Exclude<InkTool,"lasso"|"pan">;color:strin
 export function sanitizeStrokes(value:unknown):InkStroke[]{if(!Array.isArray(value))return [];return value.filter((stroke):stroke is InkStroke=>!!stroke&&typeof stroke==="object"&&Array.isArray((stroke as InkStroke).points)&&(stroke as InkStroke).points.length>0&&(stroke as InkStroke).points.every(point=>Number.isFinite(point?.x)&&Number.isFinite(point?.y)))}
 export function inkPoint(event:PointerEvent|React.PointerEvent,rect:DOMRect):InkPoint{return{x:Math.max(0,Math.min(rect.width,event.clientX-rect.left)),y:Math.max(0,Math.min(rect.height,event.clientY-rect.top)),pressure:event.pressure>0?event.pressure:event.pointerType==="pen"?.5:1,time:event.timeStamp,tiltX:Number(event.tiltX)||0,tiltY:Number(event.tiltY)||0}}
 export function acceptInkPointer(pointerType:string,penActive:boolean){return pointerType==="pen"||!penActive}
-export function strokePath(stroke:InkStroke){const a=stroke.points[0],b=stroke.points.at(-1);if(!a||!b)return "";if(stroke.tool==="rectangle")return `M${a.x} ${a.y}H${b.x}V${b.y}H${a.x}Z`;if(stroke.tool==="ellipse"){const rx=Math.abs(b.x-a.x)/2,ry=Math.abs(b.y-a.y)/2,cx=(a.x+b.x)/2,cy=(a.y+b.y)/2;return `M${cx-rx} ${cy}a${rx} ${ry} 0 1 0 ${rx*2} 0a${rx} ${ry} 0 1 0 ${-rx*2} 0`}if(stroke.tool==="arrow"){const angle=Math.atan2(b.y-a.y,b.x-a.x),wing=12;return `M${a.x} ${a.y}L${b.x} ${b.y}M${b.x} ${b.y}L${b.x-wing*Math.cos(angle-.5)} ${b.y-wing*Math.sin(angle-.5)}M${b.x} ${b.y}L${b.x-wing*Math.cos(angle+.5)} ${b.y-wing*Math.sin(angle+.5)}`}return stroke.points.map((point,index)=>`${index?"L":"M"}${point.x.toFixed(1)} ${point.y.toFixed(1)}`).join(" ")}
+export function strokePath(stroke:InkStroke){const a=stroke.points[0],b=stroke.points.at(-1);if(!a||!b)return "";if(stroke.tool==="rectangle")return `M${a.x} ${a.y}H${b.x}V${b.y}H${a.x}Z`;if(stroke.tool==="ellipse"){const rx=Math.abs(b.x-a.x)/2,ry=Math.abs(b.y-a.y)/2,cx=(a.x+b.x)/2,cy=(a.y+b.y)/2;return `M${cx-rx} ${cy}a${rx} ${ry} 0 1 0 ${rx*2} 0a${rx} ${ry} 0 1 0 ${-rx*2} 0`}if(stroke.tool==="arrow"){const angle=Math.atan2(b.y-a.y,b.x-a.x),wing=12;return `M${a.x} ${a.y}L${b.x} ${b.y}M${b.x} ${b.y}L${b.x-wing*Math.cos(angle-.5)} ${b.y-wing*Math.sin(angle-.5)}M${b.x} ${b.y}L${b.x-wing*Math.cos(angle+.5)} ${b.y-wing*Math.sin(angle+.5)}`}if(stroke.points.length===1)return `M${a.x} ${a.y}h.01`;if(stroke.points.length===2)return `M${a.x} ${a.y}L${b.x} ${b.y}`;let path=`M${a.x.toFixed(1)} ${a.y.toFixed(1)}`;for(let index=1;index<stroke.points.length-1;index++){const point=stroke.points[index],next=stroke.points[index+1];path+=` Q${point.x.toFixed(1)} ${point.y.toFixed(1)} ${((point.x+next.x)/2).toFixed(1)} ${((point.y+next.y)/2).toFixed(1)}`}return `${path} L${b.x.toFixed(1)} ${b.y.toFixed(1)}`}
 export function eraseAt(strokes:InkStroke[],point:InkPoint,radius:number){const squared=radius*radius;return strokes.filter(stroke=>!stroke.points.some(item=>(item.x-point.x)**2+(item.y-point.y)**2<=squared))}
 export function scaleStroke(stroke:InkStroke,sx:number,sy=sx,origin=stroke.points[0]){if(!origin)return stroke;return {...stroke,points:stroke.points.map(point=>({...point,x:origin.x+(point.x-origin.x)*sx,y:origin.y+(point.y-origin.y)*sy}))}}
 export function rotateStroke(stroke:InkStroke,radians:number,origin=stroke.points[0]){if(!origin)return stroke;const cos=Math.cos(radians),sin=Math.sin(radians);return {...stroke,points:stroke.points.map(point=>{const x=point.x-origin.x,y=point.y-origin.y;return {...point,x:origin.x+x*cos-y*sin,y:origin.y+x*sin+y*cos}})}}
+export type Point={x:number;y:number};
+// x/y are local-screen translation: screen = canvas * zoom + translation.
+export type Viewport={x:number;y:number;zoom:number};
+// Existing standalone SVG viewBox origin; adapters below route it through Viewport.
 export type InkView={x:number;y:number;zoom:number};
-export type ScreenPoint={x:number;y:number};
-export const ZOOM_MIN=.25,ZOOM_MAX=4;
+export type ScreenPoint=Point;
+export const ZOOM_MIN=.25,ZOOM_MAX=16;
 export function clampZoom(zoom:number,min=ZOOM_MIN,max=ZOOM_MAX){return Math.max(min,Math.min(max,zoom))}
-export function screenToWorld(clientX:number,clientY:number,rect:DOMRect,view:InkView,width:number,height:number):InkPoint{return{x:view.x+(clientX-rect.left)/rect.width*width/view.zoom,y:view.y+(clientY-rect.top)/rect.height*height/view.zoom,pressure:1,time:performance.now(),tiltX:0,tiltY:0}}
-function screenToCanvas(point:ScreenPoint,rect:DOMRect|Pick<DOMRect,"left"|"top"|"width"|"height">,width:number,height:number):ScreenPoint{return{x:(point.x-rect.left)/rect.width*width,y:(point.y-rect.top)/rect.height*height}}
-function viewAnchor(view:InkView,canvas:ScreenPoint):ScreenPoint{return{x:view.x+canvas.x/view.zoom,y:view.y+canvas.y/view.zoom}}
-function anchorToView(anchor:ScreenPoint,canvas:ScreenPoint,zoom:number):InkView{return{x:anchor.x-canvas.x/zoom,y:anchor.y-canvas.y/zoom,zoom}}
+export function screenToCanvas(point:Point,viewport:Viewport):Point{return{x:(point.x-viewport.x)/viewport.zoom,y:(point.y-viewport.y)/viewport.zoom}}
+export function canvasToScreen(point:Point,viewport:Viewport):Point{return{x:point.x*viewport.zoom+viewport.x,y:point.y*viewport.zoom+viewport.y}}
+export function zoomAtScreenPoint(viewport:Viewport,focalPoint:Point,targetZoom:number,min=ZOOM_MIN,max=ZOOM_MAX):Viewport{
+  const zoom=clampZoom(targetZoom,min,max),canvasPoint=screenToCanvas(focalPoint,viewport);
+  return{x:focalPoint.x-canvasPoint.x*zoom,y:focalPoint.y-canvasPoint.y*zoom,zoom};
+}
+export function pinchViewport(viewport:Viewport,previousFocal:Point,nextFocal:Point,targetZoom:number,min=ZOOM_MIN,max=ZOOM_MAX):Viewport{
+  const zoom=clampZoom(targetZoom,min,max),canvasPoint=screenToCanvas(previousFocal,viewport);
+  return{x:nextFocal.x-canvasPoint.x*zoom,y:nextFocal.y-canvasPoint.y*zoom,zoom};
+}
+export function panViewport(viewport:Viewport,dx:number,dy:number):Viewport{return{...viewport,x:viewport.x+dx,y:viewport.y+dy}}
+function clientToLocal(point:Point,rect:DOMRect|Pick<DOMRect,"left"|"top"|"width"|"height">,width:number,height:number):Point{return{x:(point.x-rect.left)/rect.width*width,y:(point.y-rect.top)/rect.height*height}}
+function inkViewToViewport(view:InkView):Viewport{return{x:-view.x*view.zoom,y:-view.y*view.zoom,zoom:view.zoom}}
+function viewportToInkView(viewport:Viewport):InkView{return{x:-viewport.x/viewport.zoom,y:-viewport.y/viewport.zoom,zoom:viewport.zoom}}
+export function screenToWorld(clientX:number,clientY:number,rect:DOMRect,view:InkView,width:number,height:number):InkPoint{return{...screenToCanvas(clientToLocal({x:clientX,y:clientY},rect,width,height),inkViewToViewport(view)),pressure:1,time:performance.now(),tiltX:0,tiltY:0}}
+// Maps a client (screen) point into an SVG element's user-unit space using the
+// browser's own transform — this includes the viewBox, preserveAspectRatio,
+// pan/zoom of the viewBox, and CSS zoom on ancestors. Manual rect/scale math
+// drifts once CSS zoom is involved because browsers disagree on whether
+// clientX/clientY are reported pre- or post-zoom.
+export function svgClientToPoint(svg:SVGSVGElement,clientX:number,clientY:number):{x:number;y:number}|null{const matrix=svg.getScreenCTM();if(!matrix)return null;const mapped=new DOMPoint(clientX,clientY).matrixTransform(matrix.inverse());return Number.isFinite(mapped.x)&&Number.isFinite(mapped.y)?{x:mapped.x,y:mapped.y}:null}
 export function applyPinch(view:InkView,rect:DOMRect,width:number,height:number,previousCenter:ScreenPoint,nextCenter:ScreenPoint,distRatio:number,min=ZOOM_MIN,max=ZOOM_MAX):InkView{
-  const zoom=clampZoom(view.zoom*Math.max(.01,distRatio),min,max);
-  if(zoom===view.zoom)return view;
-  const previousCanvas=screenToCanvas(previousCenter,rect,width,height);
-  return anchorToView(viewAnchor(view,previousCanvas),screenToCanvas(nextCenter,rect,width,height),zoom);
+  return viewportToInkView(pinchViewport(inkViewToViewport(view),clientToLocal(previousCenter,rect,width,height),clientToLocal(nextCenter,rect,width,height),view.zoom*Math.max(.01,distRatio),min,max));
 }
 export function zoomAtPoint(view:InkView,rect:DOMRect,width:number,height:number,clientX:number,clientY:number,factor:number,min=ZOOM_MIN,max=ZOOM_MAX):InkView{
-  const zoom=clampZoom(view.zoom*factor,min,max);
-  if(zoom===view.zoom)return view;
-  const canvas=screenToCanvas({x:clientX,y:clientY},rect,width,height);
-  return anchorToView(viewAnchor(view,canvas),canvas,zoom);
+  const focal=clientToLocal({x:clientX,y:clientY},rect,width,height);
+  return viewportToInkView(zoomAtScreenPoint(inkViewToViewport(view),focal,view.zoom*factor,min,max));
 }
-export function panBy(view:InkView,dx:number,dy:number):InkView{return{...view,x:view.x-dx/view.zoom,y:view.y-dy/view.zoom}}
+export function panBy(view:InkView,dx:number,dy:number):InkView{return viewportToInkView(panViewport(inkViewToViewport(view),dx,dy))}
 export function penRecentlyUp(pointerType:string,penActive:boolean,penUpAt:number,now:number=performance.now(),cooldown=150){return pointerType==="touch"&&(penActive||now-penUpAt<cooldown)}
 export function translateStroke(stroke:InkStroke,dx:number,dy:number){return{...stroke,points:stroke.points.map(point=>({...point,x:point.x+dx,y:point.y+dy}))}}
 export function snapInkPoint(start:InkPoint,end:InkPoint){const distance=Math.hypot(end.x-start.x,end.y-start.y),angle=Math.round(Math.atan2(end.y-start.y,end.x-start.x)/(Math.PI/4))*(Math.PI/4);return{...end,x:start.x+Math.cos(angle)*distance,y:start.y+Math.sin(angle)*distance}}
 export function fitInkView(strokes:InkStroke[],width:number,height:number):InkView{const points=strokes.flatMap(stroke=>stroke.points);if(!points.length)return{x:0,y:0,zoom:1};const left=Math.min(...points.map(point=>point.x)),right=Math.max(...points.map(point=>point.x)),top=Math.min(...points.map(point=>point.y)),bottom=Math.max(...points.map(point=>point.y)),boundingW=Math.max(1,right-left),boundingH=Math.max(1,bottom-top),zoom=Math.max(.01,Math.min(2,.9*Math.min(width/boundingW,height/boundingH)));return{x:(left+right)/2-width/(2*zoom),y:(top+bottom)/2-height/(2*zoom),zoom}}
 export function selectionBounds(strokes:InkStroke[],selected:string[]){const points=strokes.filter(stroke=>selected.includes(stroke.id)).flatMap(stroke=>stroke.points);if(!points.length)return null;const left=Math.min(...points.map(point=>point.x)),right=Math.max(...points.map(point=>point.x)),top=Math.min(...points.map(point=>point.y)),bottom=Math.max(...points.map(point=>point.y));return{left,right,top,bottom,cx:(left+right)/2,cy:(top+bottom)/2}}
 export function normalizeInk(strokes:InkStroke[],padding=24){const points=strokes.flatMap(stroke=>stroke.points);if(!points.length)return{formatVersion:2,coordinateSpace:"world" as const,width:320,height:240,strokes:[]};const left=Math.min(...points.map(point=>point.x)),top=Math.min(...points.map(point=>point.y)),right=Math.max(...points.map(point=>point.x)),bottom=Math.max(...points.map(point=>point.y));return{formatVersion:2,coordinateSpace:"world" as const,width:Math.max(320,Math.ceil(right-left+padding*2)),height:Math.max(240,Math.ceil(bottom-top+padding*2)),strokes:strokes.map(stroke=>({...stroke,points:stroke.points.map(point=>({...point,x:point.x-left+padding,y:point.y-top+padding}))}))}}
+export const INK_MAX_DIMENSION=10000,INK_MIN_WIDTH=320,INK_MIN_HEIGHT=240,INK_PADDING=24;
+export function clampPointToBox(point:InkPoint,width:number,height:number):InkPoint{return{...point,x:Math.max(0,Math.min(width,point.x)),y:Math.max(0,Math.min(height,point.y))}}
+export function clampInkStrokes(strokes:InkStroke[],width:number,height:number):InkStroke[]{return strokes.map(stroke=>({...stroke,points:stroke.points.map(point=>clampPointToBox(point,width,height))}))}
+export type InkDocument={formatVersion:2;coordinateSpace:"world";width:number;height:number;strokes:InkStroke[]};
+type InkSaveRequest=(url:string,options?:RequestInit)=>Promise<{ok:boolean;status:number;json:()=>Promise<any>}>;
+export async function saveInkWithRetry(noteId:string,input:{id:string;version:number;[key:string]:unknown},request:InkSaveRequest,key:()=>string){
+  let payload={...input};
+  for(let attempt=0;attempt<3;attempt++){
+    const response=await request(`/api/v1/notes/${noteId}/ink`,{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":key()},body:JSON.stringify(payload)});
+    const data=await response.json().catch(()=>({}));
+    if(response.ok)return data;
+    const message=data.error?.message||"Ink save failed";
+    if(response.status!==409||!/^Expected version \d+$/.test(message)||attempt===2)throw new Error(message);
+    const listing=await request(`/api/v1/notes/${noteId}/blocks`),listed=await listing.json().catch(()=>({}));
+    const block=(listed.blocks||[]).find((item:{id?:string})=>item.id===payload.id);
+    if(!listing.ok||!Number.isFinite(block?.inkVersion))throw new Error(message);
+    payload={...payload,version:block.inkVersion};
+  }
+  throw new Error("Ink save failed");
+}
+// The server (server/vault.mjs validateStrokes) requires finite dimensions within
+// [1,10000] and every point inside [0,width]x[0,height]. World coordinates are
+// unbounded (pan/zoom offsets), so translate into a padded positive box and cap
+// the document before saving.
+export function toInkDocument(value:InkStroke[]):InkDocument{
+  const strokes=sanitizeStrokes(value);
+  if(!strokes.length)return{formatVersion:2,coordinateSpace:"world",width:INK_MIN_WIDTH,height:INK_MIN_HEIGHT,strokes:[]};
+  const points=strokes.flatMap(stroke=>stroke.points);
+  const left=Math.min(...points.map(point=>point.x)),top=Math.min(...points.map(point=>point.y));
+  const right=Math.max(...points.map(point=>point.x)),bottom=Math.max(...points.map(point=>point.y));
+  const width=Math.min(INK_MAX_DIMENSION,Math.max(INK_MIN_WIDTH,Math.ceil(right-left+INK_PADDING*2)));
+  const height=Math.min(INK_MAX_DIMENSION,Math.max(INK_MIN_HEIGHT,Math.ceil(bottom-top+INK_PADDING*2)));
+  return{
+    formatVersion:2,
+    coordinateSpace:"world",
+    width,
+    height,
+    strokes:strokes.map(stroke=>({...stroke,points:stroke.points.map(point=>clampPointToBox({x:point.x-left+INK_PADDING,y:point.y-top+INK_PADDING,pressure:point.pressure,time:point.time,tiltX:point.tiltX,tiltY:point.tiltY},width,height))}))
+  };
+}

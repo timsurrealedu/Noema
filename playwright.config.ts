@@ -16,6 +16,7 @@ export default defineConfig({
   projects:[
     {name:"firefox",testIgnore:"**/install.spec.ts",use:{...devices["Desktop Firefox"]}},
     {name:"mobile-chromium",testMatch:"**/install.spec.ts",use:{...devices["Pixel 7"]}},
+    {name:"desktop-chrome",testMatch:"**/04-ink-gestures.spec.ts",use:{...devices["Desktop Chrome"]}},
   ],
   webServer:{
     command:`node server/worker.mjs & npm run dev -- --hostname 127.0.0.1 --port ${port}`,

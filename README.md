@@ -21,7 +21,8 @@ Capture uses direct model APIs for low latency; Codex remains available for agen
 | Capture interpretation | Experimental |
 | Google Calendar sync | Experimental |
 | C/Python/JavaScript runner | Experimental; Linux only |
-| Canvas, Tutor | Prototype |
+| Canvas | Discontinued; legacy data remains readable |
+| Tutor | Prototype |
 | PDF annotations and flattened export | Beta |
 | Plugins, collaboration, dashboards | Post-v1; frozen |
 | Trading integration | Planned |

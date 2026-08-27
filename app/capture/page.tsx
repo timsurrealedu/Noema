@@ -8,7 +8,6 @@ import {
 } from "@phosphor-icons/react";
 import {Capture, CaptureSource, useAppState} from "../components/AppState";
 import {ModuleShell} from "../components/ModuleShell";
-import {DurableRecorder} from "../components/DurableRecorder";
 
 const filters = ["All", "Review", "Processing", "Done"] as const;
 type Filter = (typeof filters)[number];
@@ -337,7 +336,7 @@ function TranscriptPanel({capture}: {capture: Capture}) {
 }
 
 export default function CaptureInbox() {
-  const {addCapture, addVoiceCapture, cancelInterpretation, captures, confirmCapture, requestInterpretation, updateCapture} = useAppState();
+  const {addCapture, cancelInterpretation, captures, confirmCapture, requestInterpretation, updateCapture} = useAppState();
   const [filter, setFilter] = useState<Filter>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const didReadParams = useRef(false);
@@ -486,7 +485,7 @@ export default function CaptureInbox() {
   }
 
   return (
-    <ModuleShell active="Capture" title="Capture inbox" action={<a className="primary top-primary" href="/#capture"><Plus/>Quick capture</a>}>
+    <ModuleShell active="Capture" title="Capture inbox" action={<Link className="primary top-primary" href="/#capture"><Plus/>Quick capture</Link>}>
       <div className={`capture-inbox ${detailOpen ? "detail-open" : ""}`}>
         <section
           className="capture-list-pane"
@@ -515,7 +514,6 @@ export default function CaptureInbox() {
                 <Sparkle />{processingInbox ? "Processing…" : "Process inbox"}
               </button>
             )}
-            <DurableRecorder onFinished={file => {const id = addVoiceCapture(file); choose(id);}} label="Record lecture or voice memo"/>
             <div className="capture-filters" role="tablist" aria-label="Capture status">
               {filters.map(item => {
                 const count = item === "All"
@@ -791,9 +789,10 @@ export default function CaptureInbox() {
                             {asset.mime} · {asset.size > 1048576 ? `${(asset.size / 1048576).toFixed(1)} MB` : `${Math.max(1, Math.round(asset.size / 1024))} KB`}
                           </small>
                         </span>
-                        <a className="row-action" href={`/api/v1/assets/${asset.id}`} target="_blank" rel="noreferrer" aria-label={`Open original ${asset.name}`}>
-                          <ArrowSquareOut />
-                        </a>
+                        <span className="capture-asset-actions">
+                          {asset.mime==="application/pdf"&&<Link className="row-action" href={`/assets/${asset.id}/annotate`} aria-label={`Annotate ${asset.name}`}><PenNib/></Link>}
+                          <a className="row-action" href={`/api/v1/assets/${asset.id}`} target="_blank" rel="noreferrer" aria-label={`Open original ${asset.name}`}><ArrowSquareOut/></a>
+                        </span>
                       </div>
                     ))}
                   </section>

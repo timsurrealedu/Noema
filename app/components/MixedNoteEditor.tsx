@@ -1,7 +1,7 @@
 "use client";
 
 import {createId} from "../lib/id";
-import {useEffect,useMemo,useRef,useState} from "react";
+import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {
   ArrowDown,
   ArrowUp,
@@ -26,14 +26,19 @@ import {
 import {InkEditor} from "./InkEditor";
 import {
   clampZoom,
+  clampInkStrokes,
+  pinchViewport,
   eraseAt,
   InkPoint,
   InkStroke,
   InkTool,
   sanitizeStrokes,
   strokePath,
+  svgClientToPoint,
   acceptInkPointer,
-  penRecentlyUp
+  penRecentlyUp,
+  saveInkWithRetry,
+  zoomAtScreenPoint
 } from "../lib/ink";
 import {MarkdownContent, extractTagsAndCleanText, StructuredTags} from "./MarkdownContent";
 import {LiveMarkdownEditor} from "./LiveMarkdownEditor";
@@ -144,13 +149,11 @@ function MarkdownBlock({
   block,
   preview,
   onSave,
-  onInsertInk,
   onNavigateNote
 }: {
   block: Block;
   preview: boolean;
   onSave: (block: Block, value: string) => void;
-  onInsertInk: (block: Block, value: string, caret: number) => void;
   onNavigateNote?: (target: string) => void;
 }) {
   const [value, setValue] = useState(block.markdown);
@@ -172,9 +175,6 @@ function MarkdownBlock({
           <MarkdownContent text={value} onNavigateNote={onNavigateNote} />
         </article>
       )}
-      <nav className="block-actions" aria-label={`Actions for block ${block.position + 1}`}>
-        <button type="button" onClick={() => onInsertInk(block, value, value.length)} title="Insert a handwriting block after this block">Insert ink</button>
-      </nav>
     </div>
   );
 }
@@ -226,7 +226,10 @@ function IntegratedOverlayCanvas({
   interactive,
   visible = true,
   zoomRef,
-  onChange
+  onChange,
+  onResize,
+  onPinch,
+  onGestureUndo
 }: {
   width: number;
   height: number;
@@ -238,6 +241,9 @@ function IntegratedOverlayCanvas({
   visible?: boolean;
   zoomRef?: {current: number};
   onChange: (nextStrokes: InkStroke[]) => void;
+  onResize?: (width: number, height: number) => void;
+  onPinch?: (previousCenter: {x: number; y: number}, nextCenter: {x: number; y: number}, distRatio: number) => void;
+  onGestureUndo?: () => void;
 }) {
   const svgRef = useRef<SVGSVGElement>(null);
   const drawing = useRef(false);
@@ -247,22 +253,49 @@ function IntegratedOverlayCanvas({
   const liveStrokes = useRef<InkStroke[]>(strokes);
   const penActive = useRef(false);
   const penUpAt = useRef(0);
-  const touchCount = useRef(0);
+  const touchPoints = useRef(new Map<number, {x: number; y: number}>());
+  const pinchDistance = useRef(0);
+  const pinchCenter = useRef({x: 0, y: 0});
+  const lastTwoTap = useRef(0);
 
   useEffect(() => {
     setCurrentStrokes(strokes);
     liveStrokes.current = strokes;
   }, [strokes]);
 
+  // Report the rendered box (in layout pixels) so the saved document dimensions
+  // always match the coordinate space strokes are captured in. Sizing comes
+  // from CSS alone, so measuring never feeds back into layout.
+  const onResizeRef = useRef(onResize);
+  onResizeRef.current = onResize;
+  useEffect(() => {
+    const element = svgRef.current;
+    if (!element) return;
+    const update = () => {
+      if (!onResizeRef.current) return;
+      const scale = zoomRef?.current || 1;
+      const rect = element.getBoundingClientRect();
+      const w = Math.max(320, Math.floor(rect.width / scale));
+      const h = Math.max(500, Math.floor(rect.height / scale));
+      if (w > 0 && h > 0) onResizeRef.current(w, h);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [visible]);
+
   if (!visible) return null;
 
   function getPoint(event: {clientX:number;clientY:number;pressure:number;pointerType:string;timeStamp:number;tiltX:number;tiltY:number}): InkPoint | null {
-    if (!svgRef.current) return null;
-    const rect = svgRef.current.getBoundingClientRect();
-    const scale = zoomRef?.current || 1;
+    const element = svgRef.current;
+    if (!element) return null;
+    // Browser-derived screen→user-space mapping stays exact at any page zoom.
+    const mapped = svgClientToPoint(element, event.clientX, event.clientY);
+    if (!mapped) return null;
     return {
-      x: Math.max(0, Math.min(rect.width, event.clientX - rect.left)) / scale,
-      y: Math.max(0, Math.min(rect.height, event.clientY - rect.top)) / scale,
+      x: Math.max(0, Math.min(width, mapped.x)),
+      y: Math.max(0, Math.min(height, mapped.y)),
       pressure: event.pressure > 0 ? event.pressure : event.pointerType === "pen" ? 0.5 : 1,
       time: event.timeStamp,
       tiltX: Number(event.tiltX) || 0,
@@ -273,10 +306,25 @@ function IntegratedOverlayCanvas({
   function handlePointerDown(event: React.PointerEvent<SVGSVGElement>) {
     if (!interactive) return;
 
-    // Pen gate: reject touch if pen was recently active (palm rejection)
+    // Touches are gesture-only on the overlay (drawing stays pen/mouse).
+    // Two fingers drive page pinch-zoom/pan via onPinch; two-finger double
+    // tap undoes the last stroke via onGestureUndo.
     if (event.pointerType === "touch") {
       if (penRecentlyUp(event.pointerType, penActive.current, penUpAt.current)) return;
-      touchCount.current++;
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+      touchPoints.current.set(event.pointerId, {x: event.clientX, y: event.clientY});
+      if (touchPoints.current.size === 2) {
+        const [a, b] = [...touchPoints.current.values()];
+        const now = performance.now();
+        if (onGestureUndo && now - lastTwoTap.current < 350) {
+          lastTwoTap.current = 0;
+          onGestureUndo();
+        } else {
+          lastTwoTap.current = now;
+        }
+        pinchDistance.current = Math.hypot(a.x - b.x, a.y - b.y);
+        pinchCenter.current = {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2};
+      }
       return;
     }
     if (!acceptInkPointer(event.pointerType, penActive.current)) return;
@@ -310,13 +358,27 @@ function IntegratedOverlayCanvas({
   }
 
   function handlePointerMove(event: React.PointerEvent<SVGSVGElement>) {
-    if (!drawing.current || !interactive) return;
+    if (!interactive) return;
 
-    // Two-finger scroll: pass through
+    // Two-finger pinch-zoom and pan, forwarded to the page navigation handler.
     if (event.pointerType === "touch") {
-      touchCount.current = Math.max(touchCount.current, event.isPrimary ? 1 : 2);
+      const previous = touchPoints.current.get(event.pointerId);
+      if (!previous) return;
+      touchPoints.current.set(event.pointerId, {x: event.clientX, y: event.clientY});
+      if (touchPoints.current.size === 2 && onPinch) {
+        const [a, b] = [...touchPoints.current.values()];
+        const distance = Math.hypot(a.x - b.x, a.y - b.y);
+        const center = {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2};
+        const previousCenter = pinchCenter.current;
+        const distRatio = distance / Math.max(1, pinchDistance.current);
+        pinchDistance.current = distance;
+        pinchCenter.current = center;
+        onPinch(previousCenter, center, distRatio);
+      }
       return;
     }
+
+    if (!drawing.current) return;
 
     const pt = getPoint(event);
     if (!pt) return;
@@ -343,7 +405,7 @@ function IntegratedOverlayCanvas({
 
   function handlePointerUp(event: React.PointerEvent<SVGSVGElement>) {
     if (event.pointerType === "touch") {
-      touchCount.current = Math.max(0, touchCount.current - 1);
+      touchPoints.current.delete(event.pointerId);
       return;
     }
     if (!drawing.current) return;
@@ -372,7 +434,6 @@ function IntegratedOverlayCanvas({
       ref={svgRef}
       className={`integrated-ink-overlay ${interactive ? "mode-ink" : "mode-text"} ${penDrawing ? "pen-drawing" : ""}`}
       viewBox={`0 0 ${width} ${height}`}
-      style={{width: "100%", height: `${height}px`}}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -564,7 +625,13 @@ export function MixedNoteEditor({
   const [undoStack, setUndoStack] = useState<InkStroke[][]>([]);
   const [redoStack, setRedoStack] = useState<InkStroke[][]>([]);
 
-  const inkBlock = blocks.find(b => b.kind === "ink");
+  // The full-page overlay binds to the LAST ink block (most recent layer). Earlier
+  // ink blocks render inline; binding to the first instead would let a newly
+  // inserted inline canvas steal the overlay and hide the page-wide ink.
+  const inkBlock = useMemo(() => {
+    for (let i = blocks.length - 1; i >= 0; i--) if (blocks[i].kind === "ink") return blocks[i];
+    return undefined;
+  }, [blocks]);
   const overlayStrokes = useMemo(() => sanitizeStrokes(inkBlock?.strokes || []), [inkBlock?.strokes]);
 
   function moveInk(block: Block, delta: number) {
@@ -626,25 +693,44 @@ export function MixedNoteEditor({
   const pageRef = useRef<HTMLDivElement>(null);
   const pageZoomRef = useRef(1);
   const [pageZoom, setPageZoom] = useState(1);
-  const pinchGesture = useRef<{distance: number} | null>(null);
+  const gesture = useRef<{distance: number; cx: number; cy: number} | null>(null);
+  const lastTwoFingerTap = useRef(0);
   const wheelZoomTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Latest-value mirrors so the touch listeners below never read stale closures.
+  const editorModeRef = useRef(editorMode);
+  editorModeRef.current = editorMode;
+  const gestureUndoRef = useRef(handleUndo);
+  gestureUndoRef.current = handleUndo;
 
-  function commitPageZoom(next: number, anchor?: {x: number; y: number}) {
+  function commitPageZoom(next: number, previousFocal?: {x: number; y: number}, nextFocal?: {x: number; y: number}) {
     const container = docRef.current;
     const page = pageRef.current;
     const previous = pageZoomRef.current;
     const zoom = clampZoom(next);
-    if (!container || !page || zoom === previous) return previous;
-    const scrollLeft = container.scrollLeft;
-    const scrollTop = container.scrollTop;
-    page.style.zoom = String(zoom);
-    pageZoomRef.current = zoom;
-    if (anchor) {
-      const ratio = zoom / previous;
-      container.scrollLeft = (scrollLeft + anchor.x) * ratio - anchor.x;
-      container.scrollTop = (scrollTop + anchor.y) * ratio - anchor.y;
+    if (!container || !page) return previous;
+    if (zoom !== 1 && !page.style.width) {
+      page.style.setProperty("width", `${page.offsetWidth}px`, "important");
+      page.style.setProperty("min-height", `${page.offsetHeight}px`, "important");
     }
-    return zoom;
+    const containerRect = container.getBoundingClientRect();
+    const pageRect = page.getBoundingClientRect();
+    const viewport = {x: pageRect.left - containerRect.left, y: pageRect.top - containerRect.top, zoom: pageRect.width / page.offsetWidth};
+    page.style.zoom = String(zoom);
+    if (zoom === 1) {
+      page.style.removeProperty("width");
+      page.style.removeProperty("min-height");
+    }
+    const scaledRect = page.getBoundingClientRect();
+    const actualZoom = scaledRect.width / page.offsetWidth;
+    const target = previousFocal
+      ? nextFocal
+        ? pinchViewport(viewport, previousFocal, nextFocal, actualZoom)
+        : zoomAtScreenPoint(viewport, previousFocal, actualZoom)
+      : {...viewport, zoom: actualZoom};
+    pageZoomRef.current = actualZoom;
+    container.scrollLeft += scaledRect.left - containerRect.left - target.x;
+    container.scrollTop += scaledRect.top - containerRect.top - target.y;
+    return actualZoom;
   }
 
   useEffect(() => {
@@ -655,24 +741,40 @@ export function MixedNoteEditor({
       return {x: (touches[0].clientX + touches[1].clientX) / 2 - rect.left, y: (touches[0].clientY + touches[1].clientY) / 2 - rect.top};
     };
     const spread = (touches: TouchList) => Math.hypot(touches[0].clientX - touches[1].clientX, touches[0].clientY - touches[1].clientY);
+    // Ink surfaces handle two-finger gestures themselves (.ink-canvas runs its
+    // own view pinch; the overlay forwards to page zoom via onPinch), so the
+    // container must skip them or every gesture would be applied twice.
+    const onInkSurface = (event: TouchEvent) =>
+      event.target instanceof Element && !!event.target.closest(".ink-canvas,.integrated-ink-overlay.mode-ink");
     const onTouchStart = (event: TouchEvent) => {
-      if (event.touches.length === 2) {
-        pinchGesture.current = {distance: spread(event.touches)};
-        event.preventDefault();
+      if (event.touches.length !== 2 || onInkSurface(event)) return;
+      event.preventDefault();
+      // Two-finger double tap: undo the last stroke (ink mode only).
+      const now = performance.now();
+      if (editorModeRef.current === "ink" && now - lastTwoFingerTap.current < 350) {
+        lastTwoFingerTap.current = 0;
+        gesture.current = null;
+        gestureUndoRef.current();
+        return;
       }
+      lastTwoFingerTap.current = now;
+      const point = center(event.touches);
+      gesture.current = {distance: spread(event.touches), cx: point.x, cy: point.y};
     };
     const onTouchMove = (event: TouchEvent) => {
-      const gesture = pinchGesture.current;
-      if (!gesture || event.touches.length !== 2) return;
+      const active = gesture.current;
+      if (!active || event.touches.length !== 2) return;
       event.preventDefault();
       const distance = spread(event.touches);
-      const ratio = distance / Math.max(1, gesture.distance);
-      gesture.distance = distance;
-      commitPageZoom(pageZoomRef.current * ratio, center(event.touches));
+      const next = center(event.touches);
+      commitPageZoom(pageZoomRef.current * (distance / Math.max(1, active.distance)), {x: active.cx, y: active.cy}, next);
+      active.distance = distance;
+      active.cx = next.x;
+      active.cy = next.y;
     };
     const onTouchEnd = (event: TouchEvent) => {
-      if (pinchGesture.current && event.touches.length < 2) {
-        pinchGesture.current = null;
+      if (gesture.current && event.touches.length < 2) {
+        gesture.current = null;
         setPageZoom(pageZoomRef.current);
       }
     };
@@ -706,28 +808,38 @@ export function MixedNoteEditor({
   }
 
 
-  useEffect(() => {
-    if (!pageRef.current) return;
-    const observer = new ResizeObserver(entries => {
-      for (const entry of entries) {
-        if (pageRef.current) {
-          const scale = pageZoomRef.current || 1;
-          const scrollH = pageRef.current.scrollHeight || 0;
-          const contentH = entry.contentRect ? Math.floor(entry.contentRect.height) : 0;
-          setViewportWidth(Math.max(320, Math.floor(pageRef.current.getBoundingClientRect().width / scale)));
-          setViewportHeight(Math.max(500, Math.floor(scrollH / scale), contentH));
-        }
-      }
-    });
-    observer.observe(pageRef.current);
-    return () => observer.disconnect();
-  }, [blocks, orientation]);
+  // Overlay dimensions come from the overlay's rendered box itself (reported by
+  // IntegratedOverlayCanvas). Deriving them from pageRef.scrollHeight fed back
+  // through layout: the absolutely-positioned overlay inflated scrollHeight,
+  // which grew its own height on every observer tick until the server rejected
+  // the document as "Invalid ink dimensions".
+  const handleOverlayResize = useCallback((w: number, h: number) => {
+    setViewportWidth(current => current === w ? current : w);
+    setViewportHeight(current => current === h ? current : h);
+  }, []);
+
+  // The ink overlay owns its touches (drawing stays pen/mouse-only) and
+  // forwards two-finger gestures here so page navigation keeps working even
+  // though the container's touch handlers ignore ink surfaces.
+  function handleOverlayPinch(previous: {x: number; y: number}, next: {x: number; y: number}, distRatio: number) {
+    const container = docRef.current;
+    if (!container) return;
+    const rect = container.getBoundingClientRect();
+    commitPageZoom(pageZoomRef.current * distRatio, {x: previous.x - rect.left, y: previous.y - rect.top}, {x: next.x - rect.left, y: next.y - rect.top});
+  }
 
   const currentInkVersion = useRef<number>(inkBlock?.inkVersion || 0);
   const savingInkRef = useRef<boolean>(false);
   const pendingStrokesRef = useRef<InkStroke[] | null>(null);
   const gestureUndoPushed = useRef(false);
   const gestureBeforeRef = useRef<InkStroke[] | null>(null);
+  // Stable id for the full-page overlay ink block; reused across rapid strokes so
+  // two saves in one render pass cannot mint competing blocks.
+  const overlayInkIdRef = useRef<string | null>(inkBlock?.id || null);
+
+  useEffect(() => {
+    if (inkBlock?.id) overlayInkIdRef.current = inkBlock.id;
+  }, [inkBlock?.id]);
 
   useEffect(() => {
     if (inkBlock?.inkVersion !== undefined) {
@@ -740,7 +852,8 @@ export function MixedNoteEditor({
       setUndoStack(prev => [...prev, overlayStrokes]);
       setRedoStack([]);
     }
-    const targetInkId = inkBlock?.id || createId();
+    if (!overlayInkIdRef.current) overlayInkIdRef.current = inkBlock?.id || createId();
+    const targetInkId = overlayInkIdRef.current;
     setBlocks(items => {
       const existing = items.find(item => item.id === targetInkId);
       if (existing) return items.map(item => item.id === targetInkId ? {...item, strokes: nextStrokes} : item);
@@ -751,45 +864,28 @@ export function MixedNoteEditor({
     if (savingInkRef.current) return;
     savingInkRef.current = true;
 
-    while (pendingStrokesRef.current !== null) {
+    let attempts = 0;
+    while (pendingStrokesRef.current !== null && attempts < 5) {
       const strokesToSave: InkStroke[] = pendingStrokesRef.current;
       pendingStrokesRef.current = null;
+      attempts++;
 
       try {
-        const response = await fetch(`/api/v1/notes/${noteId}/ink`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Idempotency-Key": createId()
-          },
-          body: JSON.stringify({
+        const data = await saveInkWithRetry(noteId, {
             id: targetInkId,
             version: currentInkVersion.current,
             width: viewportWidth,
             height: viewportHeight,
-            strokes: strokesToSave
-          })
-        });
-
-        if (response.status === 409) {
-          await load();
-          if (!pendingStrokesRef.current) {
-            pendingStrokesRef.current = strokesToSave;
-          }
-          continue;
-        }
-
-        if (response.ok) {
-          const data = await response.json();
-          currentInkVersion.current = data.version ?? data.inkVersion ?? currentInkVersion.current + 1;
-          setBlocks(items => items.map(item => item.id === targetInkId ? {...item, strokes: strokesToSave, inkVersion: currentInkVersion.current} : item));
-          setError("");
-        } else {
-          const errData = await response.json().catch(() => ({}));
-          setError(errData.error?.message || "Save ink failed");
-        }
-      } catch {
-        // Fallback
+            // Strokes captured before a resize may sit outside the current
+            // document box; pin them into it so validation never rejects them.
+            strokes: clampInkStrokes(strokesToSave, viewportWidth, viewportHeight)
+        }, fetch, createId);
+        currentInkVersion.current = data.version ?? data.inkVersion ?? currentInkVersion.current + 1;
+        setBlocks(items => items.map(item => item.id === targetInkId ? {...item, strokes: strokesToSave, inkVersion: currentInkVersion.current} : item));
+        setError("");
+        attempts = 0;
+      } catch (reason) {
+        setError((reason as Error).message || "Save ink failed");
       }
     }
 
@@ -828,23 +924,6 @@ export function MixedNoteEditor({
     ref.current = {refresh: () => void load(), getActiveBlock: () => activeBlockRef.current};
     return () => { ref.current = null; };
   });
-
-  async function add(kind: "markdown" | "ink", source?: Block) {
-    if (kind === "markdown") {
-      await fetch(`/api/v1/notes/${noteId}/blocks`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json", "Idempotency-Key": createId()},
-        body: JSON.stringify({markdown: source?.markdown || ""})
-      });
-    } else {
-      await fetch(`/api/v1/notes/${noteId}/ink`, {
-        method: "POST",
-        headers: {"Content-Type": "application/json", "Idempotency-Key": createId()},
-        body: JSON.stringify({id: createId(), width: viewportWidth, height: viewportHeight, strokes: source?.strokes || []})
-      });
-    }
-    await load();
-  }
 
   async function remove(block: Block) {
     const response = await fetch(`/api/v1/notes/${noteId}/blocks/${block.id}`, {
@@ -920,45 +999,6 @@ export function MixedNoteEditor({
     else setError((await response.json()).error?.message || "Reorder failed");
   }
 
-  async function insertInk(block: Block, value: string, caret: number) {
-    const inkId = createId();
-    const afterId = createId();
-    const index = blocks.findIndex(item => item.id === block.id);
-    const request = (url: string, body: object) =>
-      fetch(url, {
-        method: "POST",
-        headers: {"Content-Type": "application/json", "Idempotency-Key": createId()},
-        body: JSON.stringify(body)
-      });
-    try {
-      const updated = await fetch(`/api/v1/notes/${noteId}/blocks/${block.id}`, {
-        method: "PATCH",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({markdown: value.slice(0,caret), version: block.version})
-      });
-      if (!updated.ok) throw new Error((await updated.json()).error?.message || "Could not split block");
-      for (const [url, body] of [
-        [`/api/v1/notes/${noteId}/ink`, {id: inkId, width: viewportWidth, height: viewportHeight, strokes: []}],
-        [`/api/v1/notes/${noteId}/blocks`, {id: afterId, markdown: value.slice(caret)}]
-      ] as const) {
-        const response = await request(url, body);
-        if (!response.ok) throw new Error((await response.json()).error?.message || "Could not insert ink");
-      }
-      const ids = blocks.map(item => item.id);
-      ids.splice(index+1,0,inkId,afterId);
-      const reordered = await fetch(`/api/v1/notes/${noteId}/blocks`, {
-        method: "PATCH",
-        headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({ids})
-      });
-      if (!reordered.ok) throw new Error((await reordered.json()).error?.message || "Could not place ink");
-      await load();
-    } catch (reason) {
-      setError((reason as Error).message);
-      await load();
-    }
-  }
-
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
@@ -994,22 +1034,24 @@ export function MixedNoteEditor({
         {paletteCollapsed ? <button className="palette-expand-btn" onClick={() => setPaletteCollapsed(false)} aria-label="Expand note controls" title="Expand note controls"><PencilLine size={18} /><CaretDown size={14} /></button> : <div className="palette-rows-container">
         <div className="palette-row">
           <div className="palette-group" aria-label="Document view">
-            <button className={viewMode === "write" ? "active" : ""} onClick={() => setViewMode("write")} aria-pressed={viewMode === "write"}>Edit</button>
-            <button className={viewMode === "preview" ? "active" : ""} onClick={() => setViewMode("preview")} aria-pressed={viewMode === "preview"}>Preview</button>
+            <button type="button" className={viewMode === "write" ? "active" : ""} onClick={() => setViewMode("write")} aria-pressed={viewMode === "write"}>Edit</button>
+            <button type="button" className={viewMode === "preview" ? "active" : ""} onClick={() => setViewMode("preview")} aria-pressed={viewMode === "preview"}>Preview</button>
           </div>
-          <button className={`ink-mode-toggle ${editorMode === "ink" ? "active" : ""}`} onClick={() => setEditorMode(mode => mode === "ink" ? "text" : "ink")} aria-pressed={editorMode === "ink"} title="Toggle ink layer">
+          <button type="button" className={`ink-mode-toggle ${editorMode === "ink" ? "active" : ""}`} onClick={() => setEditorMode(mode => mode === "ink" ? "text" : "ink")} aria-pressed={editorMode === "ink"} title="Draw over note">
             <PencilLine size={18} /><span>Ink</span>
           </button>
-          {inkBlock&&<span className="status-label" role="status">OCR · {inkBlock.ocrStatus||"pending"}{inkBlock.ocrStatus==="failed"&&<button type="button" onClick={()=>void retryOcr()}>Retry</button>}<button type="button" aria-expanded={ocrPanelOpen} aria-label="Toggle OCR review panel" onClick={()=>{setOcrPanelOpen(open=>!open);setDismissedOcr(false)}}>{ocrPanelOpen?"Hide":"Review"}</button></span>}
           <details className="note-toolbar-menu">
-            <summary aria-label="More note options" title="More note options"><DotsThree size={20} /></summary>
+            <summary aria-label={`More note options${inkBlock ? `. Handwriting recognition ${inkBlock.ocrStatus||"pending"}` : ""}`} title="More note options"><DotsThree size={20} />{inkBlock&&<span className={`ocr-status-dot ${inkBlock.ocrStatus||"pending"}`} aria-hidden="true" />}</summary>
             <div>
-              <button onClick={() => setShowAnnotations(v => !v)}>{showAnnotations ? <Eye size={18} /> : <EyeSlash size={18} />}<span>{showAnnotations ? "Hide ink" : "Show ink"}</span></button>
-              {pageZoom !== 1 && <button onClick={resetPageZoom}><span>Reset zoom ({Math.round(pageZoom * 100)}%)</span></button>}
-              {onToggleFullscreen && <button onClick={onToggleFullscreen}>{fullscreen ? <ArrowsIn size={18} /> : <ArrowsOut size={18} />}<span>{fullscreen ? "Exit fullscreen" : "Fullscreen"}</span></button>}
+              {inkBlock&&<p className="ocr-menu-status" role="status"><span>Handwriting recognition</span><strong>{inkBlock.ocrStatus||"pending"}</strong></p>}
+              {inkBlock?.ocrStatus==="failed"&&<button type="button" onClick={()=>void retryOcr()}>Retry recognition</button>}
+              {inkBlock&&<button type="button" aria-expanded={ocrPanelOpen} onClick={()=>{setOcrPanelOpen(open=>!open);setDismissedOcr(false)}}>{ocrPanelOpen?"Hide OCR review":"Review OCR"}</button>}
+              <button type="button" onClick={() => setShowAnnotations(v => !v)}>{showAnnotations ? <Eye size={18} /> : <EyeSlash size={18} />}<span>{showAnnotations ? "Hide ink" : "Show ink"}</span></button>
+              {pageZoom !== 1 && <button type="button" onClick={resetPageZoom}><span>Reset zoom ({Math.round(pageZoom * 100)}%)</span></button>}
+              {onToggleFullscreen && <button type="button" onClick={onToggleFullscreen}>{fullscreen ? <ArrowsIn size={18} /> : <ArrowsOut size={18} />}<span>{fullscreen ? "Exit fullscreen" : "Fullscreen"}</span></button>}
             </div>
           </details>
-          <button onClick={() => setPaletteCollapsed(true)} aria-label="Collapse note controls" title="Collapse note controls"><CaretUp size={18} /></button>
+          <button type="button" onClick={() => setPaletteCollapsed(true)} aria-label="Collapse note controls" title="Collapse note controls"><CaretUp size={18} /></button>
         </div>
             {editorMode === "ink" && (
               <div className="palette-row">
@@ -1128,11 +1170,8 @@ export function MixedNoteEditor({
                   </button>
                   <button
                     className="primary ink-done-btn"
-                    onClick={() => {
-                      saveInkStrokes(overlayStrokes);
-                      setEditorMode("text");
-                    }}
-                    title="Done saving handwriting"
+                    onClick={() => setEditorMode("text")}
+                    title="Finish drawing (strokes are saved automatically)"
                     aria-label="Done saving handwriting"
                     style={{
                       background: "var(--primary)",
@@ -1197,6 +1236,9 @@ export function MixedNoteEditor({
             visible={showAnnotations}
             zoomRef={pageZoomRef}
             onChange={saveInkStrokes}
+            onResize={handleOverlayResize}
+            onPinch={handleOverlayPinch}
+            onGestureUndo={handleUndo}
           />
 
           {/* Background Layer 1: Rendered Document Blocks */}
@@ -1208,7 +1250,6 @@ export function MixedNoteEditor({
                     block={block}
                     preview={viewMode === "preview"}
                     onSave={markdown}
-                    onInsertInk={insertInk}
                     onNavigateNote={onNavigateNote}
                   />
                 </article>

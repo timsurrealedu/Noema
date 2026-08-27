@@ -34,6 +34,8 @@ test("capture prompts state the exact action JSON contract",async()=>{
   const instructions=captureProposalInstructions();
   for(const type of ["task.create","event.create","note.create","vault.note.create"])assert.match(instructions,new RegExp(type.replace(".","\\.")));assert.match(instructions,/sourceReferences/);assert.match(instructions,/arguments/);
   assert.match(instructions,/linkedActionId/);
+  assert.match(instructions,/clock time[^.]+full ISO 8601 timestamp/i);
+  assert.match(instructions,/date-only[^.]+no clock time/i);
   assert.match(captureProposalInstructions([60,30]),/\[60,30\]/);
 });
 
@@ -47,7 +49,7 @@ test("capture tasks create linked timed or all-day calendar events",async()=>{
   try{
     core.createCapture({id:"timed",text:"Study",source:"typed"},db);
     core.saveInterpretation("timed",{schemaVersion:1,summary:"Study",clarifications:[],actions:[{id:"t",type:"task.create",confidence:.9,sourceReferences:["capture:timed"],arguments:{title:"Study",dueAt:"2026-08-13T10:00:00+07:00",project:"Inbox",linkedActionId:null}}]},db);
-    core.applyCaptureInterpretation("timed",db);const timed=core.listState(db);assert.equal(timed.tasks[0].reminderAt,null);assert.equal(timed.events[0].endAt,"2026-08-13T04:00:00.000Z");assert.equal(timed.events[0].taskId,timed.tasks[0].id);
+    core.applyCaptureInterpretation("timed",db);const timed=core.listState(db);assert.equal(timed.tasks[0].reminderAt,null);assert.equal(timed.events[0].endAt,"2026-08-13T04:00:00.000Z");assert.equal(timed.events[0].timezone,"Asia/Jakarta");assert.equal(timed.events[0].time,"10:00");assert.equal(timed.events[0].allDay,false);assert.equal(timed.events[0].taskId,timed.tasks[0].id);assert.deepEqual(timed.calendarItems.map(item=>item.kind),["event"]);
     const expectedReminders=(await import("../server/settings.mjs")).reminderOffsets().length;assert.equal(db.prepare("SELECT COUNT(*) count FROM event_reminders WHERE event_id=?").get(timed.events[0].id).count,expectedReminders);
     core.createCapture({id:"day",text:"Submit",source:"typed"},db);
     core.saveInterpretation("day",{schemaVersion:1,summary:"Submit",clarifications:[],actions:[{id:"d",type:"task.create",confidence:.9,sourceReferences:["capture:day"],arguments:{title:"Submit",dueAt:"2026-08-14",project:"Inbox",linkedActionId:null}}]},db);
@@ -135,27 +137,36 @@ test("tutor insert lands after the active block when asked",async()=>{
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 
-test("note PDF export embeds math, images, and handwriting strokes",async()=>{
+test("note PDF download embeds rich content and authoritative handwriting blocks",async()=>{
   const dir=mkdtempSync(join(tmpdir(),"noema-note-pdf-")),vaultDir=join(dir,"vault");mkdirSync(vaultDir);
   const fs=await import("node:fs");
-  const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),vault=await import("../server/vault.mjs"),objects=await import("../server/objects.mjs"),inkRaster=await import("../server/ink-raster.mjs"),core=await import("../server/core.mjs"),{load:pdfLoad}=await import("pdf-lib").then(module=>module.PDFDocument);
+  const {getDatabase,closeDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),vault=await import("../server/vault.mjs"),objects=await import("../server/objects.mjs"),inkRaster=await import("../server/ink-raster.mjs"),core=await import("../server/core.mjs"),{load:pdfLoad}=await import("pdf-lib").then(module=>module.PDFDocument),{getDocument,OPS}=await import("pdfjs-dist/legacy/build/pdf.mjs");
   const {notePdf}=await import("../server/note-pdf.mjs");
-  const db=openDatabase(join(dir,"test.sqlite"));
-  const config={dataDir:dir,objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs")};
+  const config={dataDir:dir,dbPath:join(dir,"test.sqlite"),objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs")};
+  const db=getDatabase(config);
   fs.mkdirSync(config.objectsDir,{recursive:true});fs.mkdirSync(config.jobsDir,{recursive:true});
   try{
     const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),workspace=collaboration.ensureDefaultWorkspace(user.id,db),actor={id:user.id,workspaceId:workspace.id};
     const connected=vault.connectVault({rootPath:vaultDir},workspace.id,db);
     const created=vault.createVaultNote(connected.id||connected.sourceId,{relativePath:"Export.md",content:"# Export\n\nIntro paragraph.\n\n$$\\alpha + \\beta \\geq 1$$\n"},actor,db);
-    vault.saveInkBlock(created.noteId,{formatVersion:2,coordinateSpace:"world",width:200,height:100,strokes:[{id:"s1",tool:"pen",color:"#123456",width:3,points:[{x:10,y:10,pressure:.5,time:0},{x:150,y:80,pressure:.5,time:1}]}]},actor,db);
     const png=inkRaster.strokesToPng({width:40,height:40,strokes:[{tool:"pen",color:"#111827",width:2,points:[{x:1,y:1},{x:30,y:30}]}]});
     const asset=await objects.storeAsset({stream:require("node:stream").Readable.from([png]),name:"diagram.png",mime:"image/png"},config,db,workspace.id);
-    core.saveNote({id:created.noteId,content:"# Export\n\nIntro paragraph.\n\n$$\\alpha + \\beta \\geq 1$$\n\n![diagram](/api/v1/assets/"+asset.id+")",version:2},db,actor);
-    const result=await notePdf(created.noteId,db,workspace.id,config);
+    const content="![1.00]()\n\n# Export\n\nIntro paragraph.\n\n$$\\alpha + \\beta \\geq 1$$\n\n"+Array(19).fill("<br />").join("\n\n")+"\n\n![diagram](/api/v1/assets/"+asset.id+")",markdown=vault.listNoteBlocks(created.noteId,actor,db)[0];
+    vault.saveMarkdownBlock(created.noteId,{id:markdown.id,markdown:content,version:markdown.version},actor,db);
+    vault.saveInkBlock(created.noteId,{formatVersion:2,coordinateSpace:"world",width:810,height:595,strokes:[{id:"s1",tool:"pen",color:"#123456",width:3,points:[{x:10,y:10,pressure:.5,time:0},{x:750,y:500,pressure:.5,time:1}]},{id:"s2",tool:"pen",color:"#654321",width:3,points:[{x:400,y:300,pressure:.5,time:2}]}]},actor,db);
+    core.saveNote({id:created.noteId,content,version:db.prepare("SELECT version FROM notes WHERE id=?").get(created.noteId).version},db,actor);
+    const result=await notePdf(created.noteId,undefined,workspace.id,config);
     const pdf=await pdfLoad(result.bytes);
-    assert.ok(pdf.getPageCount()>=1);
+    assert.equal(pdf.getPageCount(),1,"editor line breaks should not push handwriting onto a hidden second page");
     assert.ok(result.bytes.length>1200,"export should carry embedded image weight");
-  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+    const rendered=await getDocument({data:new Uint8Array(result.bytes)}).promise,page=await rendered.getPage(1),operators=await page.getOperatorList(),textItems=(await page.getTextContent()).items.map(item=>item.str||""),text=textItems.join(" ");
+    assert.equal(textItems.filter(item=>item==="Export").length,1,"the note title should not be duplicated");
+    assert.doesNotMatch(text,/<br\s*\/?\s*>|\[image:\s*1\.00\]/i);
+    assert.ok(operators.fnArray.includes(OPS.paintImageXObject),"exported PDF should contain the saved image");
+    const inkColor=operators.fnArray.findIndex((fn,index)=>fn===OPS.setStrokeRGBColor&&operators.argsArray[index]?.[0]==="#123456"),inkPath=operators.fnArray.indexOf(OPS.constructPath,inkColor);
+    assert.ok(inkColor>=0&&inkPath>inkColor&&operators.argsArray[inkPath]?.[0]===OPS.stroke,"exported PDF should contain the saved handwriting stroke");
+    assert.ok(operators.fnArray.some((fn,index)=>fn===OPS.setStrokeRGBColor&&operators.argsArray[index]?.[0]==="#654321"),"single-point pen marks should remain visible");
+  }finally{closeDatabase();rmSync(dir,{recursive:true,force:true})}
 });
 test("parallel tutor answers require at least two distinct providers",async()=>{
   const dir=mkdtempSync(join(tmpdir(),"noema-tutor-parallel-")),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),skills=await import("../server/skills.mjs"),db=openDatabase(join(dir,"test.sqlite"));

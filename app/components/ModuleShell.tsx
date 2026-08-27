@@ -5,7 +5,7 @@ import {useRouter} from "next/navigation";
 import {ReactNode, useEffect, useState} from "react";
 import {
   Bell, BookOpen, CalendarBlank, CheckSquare, Code, Command, FileText, Folder, Gear,
-  House, Lightning, ListChecks, MagnifyingGlass, Moon, Plus, ShareNetwork, Sparkle, Sun, Tray, X
+  House, Lightning, ListChecks, MagnifyingGlass, Plus, ShareNetwork, Sparkle, Tray, X
 } from "@phosphor-icons/react";
 import {ModalDialog} from "./ModalDialog";
 import {NoemaLogo} from "./NoemaLogo";
@@ -17,9 +17,10 @@ type SearchHit={id:string;label:string;detail:string;href:string;Icon:typeof Fil
 
 const primaryNav = [
   ["Home","/",House],["Capture","/capture",Plus],["Vault","/vault",Folder],
-  ["Calendar","/calendar",CalendarBlank],["Coding","/coding",Code]
+  ["Calendar","/calendar",CalendarBlank]
 ] as const;
 const moreNav = [
+  ["Coding","/coding",Code],
   ["Study","/study",BookOpen],["Projects","/projects",Tray],["Automations","/automations",Lightning],
   ["Dashboards","/dashboards",Command],["Plugins","/plugins",FileText],["Collaboration","/collaboration",Bell],
   ["Help","/help",Command],["Settings","/settings",Gear]
@@ -27,8 +28,6 @@ const moreNav = [
 
 export function ModuleShell({active,title,action,assistantContext,children}:{active:string;title:string;action?:ReactNode;assistantContext?:{type:string;id:string};children:ReactNode}) {
   const router=useRouter();
-  const [theme,setTheme]=useState<"dark"|"light">("dark");
-  const ThemeIcon = theme === "dark" ? Sun : Moon;
   const [palette,setPalette]=useState(false);
   const [more,setMore]=useState(false);
   const [assistant,setAssistant]=useState(false);
@@ -37,9 +36,7 @@ export function ModuleShell({active,title,action,assistantContext,children}:{act
   const [searching,setSearching]=useState(false);
   const [searchError,setSearchError]=useState("");
   const [semanticSearch,setSemanticSearch]=useState(false),[rankingSource,setRankingSource]=useState("");
-  useEffect(()=>{const saved=localStorage.getItem("noema-theme") as "dark"|"light"|null;if(saved)setTheme(saved)},[]);
   useEffect(()=>{const area=active.toLowerCase(),allowed=new Set(["home","today","capture","tasks","calendar","vault","graph","study","projects","coding","automations","dashboards","plugins","collaboration","settings"]);if(allowed.has(area))void fetch("/api/v1/analytics",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({event:"navigation",properties:{area}})}).catch(()=>{})},[active]);
-  useEffect(()=>{document.documentElement.dataset.theme=theme;localStorage.setItem("noema-theme",theme)},[theme]);
   useEffect(()=>{const key=(event:KeyboardEvent)=>{if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==="k"){event.preventDefault();setPalette(true)}if((event.metaKey||event.ctrlKey)&&event.key.toLowerCase()==="j"){event.preventDefault();setAssistant(true)}if(event.key==="Escape"){setPalette(false);setMore(false);setAssistant(false)}};addEventListener("keydown",key);return()=>removeEventListener("keydown",key)},[]);
 
   useEffect(() => {
@@ -55,7 +52,7 @@ export function ModuleShell({active,title,action,assistantContext,children}:{act
     return()=>{clearTimeout(timer);controller.abort()};
   },[query,semanticSearch]);
   const navigationResults:Array<SearchHit>=[...primaryNav,...moreNav].map(([label,href,Icon])=>({id:`nav-${href}`,label,detail:"Open module",href,Icon}));
-  navigationResults.push({id:"nav-compiler",label:"Compiler",detail:"Compile and run code safely",href:"/coding/compiler",Icon:Code},{id:"nav-canvas",label:"Canvas",detail:"Arrange connected material",href:"/canvas",Icon:FileText},{id:"nav-activity",label:"Activity and undo",detail:"Review changes",href:"/activity",Icon:FileText});
+  navigationResults.push({id:"nav-compiler",label:"Compiler",detail:"Compile and run code safely",href:"/coding/compiler",Icon:Code},{id:"nav-activity",label:"Activity and undo",detail:"Review changes",href:"/activity",Icon:FileText});
   const filteredNavigationResults=navigationResults.filter(item=>`${item.label} ${item.detail}`.toLowerCase().includes(query.toLowerCase()));
   const results=query.trim().length<2?filteredNavigationResults:searchResults;
   function go(href:string){setPalette(false);setMore(false);setQuery("");router.push(href)}
@@ -67,7 +64,6 @@ export function ModuleShell({active,title,action,assistantContext,children}:{act
       <nav>{primaryNav.map(([label,href,Icon])=><Link className={label===active?"active":""} href={href} key={label}><Icon/><span>{label}</span></Link>)}<button className={moreNav.some(([label])=>label===active)?"active":""} aria-expanded={more} aria-haspopup="dialog" onClick={()=>setMore(true)}><ListChecks/><span>More</span></button></nav>
       <div className="sidebar-footer">
         <Link className="settings" href="/settings"><Gear/><span>Settings</span></Link>
-        <button className="icon-button theme-toggle" aria-label={`Use ${theme === "dark" ? "light" : "dark"} theme`} onClick={() => setTheme(theme === "dark" ? "light" : "dark")}><ThemeIcon /></button>
       </div>
     </aside>
     <header className="module-topbar">{title ? <h1>{title}</h1> : null}<div className="top-actions"><button className="search" aria-label="Search workspace" onClick={()=>setPalette(true)}><MagnifyingGlass/><span>Search</span><kbd>⌘ K</kbd></button><button className="icon-button" aria-label="Open contextual assistant" onClick={()=>setAssistant(true)}><Sparkle/></button><NotificationButton/>{action}</div></header>

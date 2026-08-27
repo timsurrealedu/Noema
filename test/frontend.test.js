@@ -23,6 +23,7 @@ test("ink selection handles and touch input match stylus interactions",()=>{cons
 test("handwriting notes expose durable creation and batch-processing endpoints",()=>{const route=read("app/api/v1/handwriting-notes/route.ts"),process=read("app/api/v1/captures/process-pending/route.ts"),service=read("server/handwriting.mjs");assert.match(route,/requireWorkspace\(request,"editor"\)/);assert.match(route,/idempotent/);assert.match(process,/processPendingHandwriting/);assert.match(service,/dedupeKey:`handwriting-intake:/);assert.match(service,/queueOcr:false/)});
 test("Capture Done history shows handwriting provenance and its note link",()=>{const page=read("app/capture/page.tsx"),state=read("app/components/AppState.tsx");for(const value of ["Done","AI action","Confidence","Source ink","Open note"])assert.match(page,new RegExp(value));assert.match(state,/handwriting\?:/)});
 test("Vault New note action is icon-only",()=>{const vault=read("app/components/VaultOrganizer.tsx");assert.match(vault,/aria-label="New note"/);assert.doesNotMatch(vault,/<FilePlus\/>New note/)});
+test("Vault New note directly creates one mixed note",()=>{const vault=read("app/components/VaultOrganizer.tsx");assert.match(vault,/aria-label="New note"[^>]*onClick=\{\(\)=>void create\(\)\}/);for(const value of ["createMenu","note-type-dialog","Choose note type","Typed note"])assert.doesNotMatch(vault,new RegExp(value))});
 test("closed Vault sidebar leaves its content pane full width",()=>{const css=read("app/globals.css");assert.match(css,/\.obsidian-vault:not\(\.drawer-open\) \.obsidian-vault-body\{grid-template-columns:minmax\(0,1fr\)\}/)});
 test("local development supervises Next and a visibly running worker",()=>{const scripts=JSON.parse(read("package.json")).scripts,dev=read("scripts/dev.mjs"),worker=read("server/worker.mjs");assert.equal(scripts.dev,"node scripts/dev.mjs");assert.match(dev,/dev:web/);assert.match(dev,/server\/worker\.mjs/);assert.match(dev,/stopping development services/);assert.match(worker,/\[worker\] started/);assert.match(scripts.worker,/--env-file-if-exists=\.env\.local/)});
 test("capture review refreshes its version after AI processing",()=>assert.match(read("app/components/AppState.tsx"),/version:job\.result\?\.captureVersion/));
@@ -60,14 +61,18 @@ test("shared shell exposes keyboard search and accessible navigation",()=>{
   assert.match(read("app/components/ModalDialog.tsx"),/ariaLabel="Search Noema"/);
   assert.match(shell,/Skip to main content/);
 });
-test("shared navigation groups secondary modules in an accessible More menu",()=>{const shell=read("app/components/ModuleShell.tsx"),css=read("app/globals.css");for(const label of ["Study","Projects","Automations","Dashboards","Plugins","Collaboration","Help","Settings"])assert.match(shell,new RegExp(`\\["${label}"`));assert.match(shell,/ariaLabel="More navigation"/);assert.match(shell,/aria-haspopup="dialog"/);assert.match(shell,/primaryNav\.slice\(0,4\)/);assert.match(css,/\.more-dialog>nav/)});
+test("shared navigation groups secondary modules in an accessible More menu",()=>{const shell=read("app/components/ModuleShell.tsx"),css=read("app/globals.css");for(const label of ["Coding","Study","Projects","Automations","Dashboards","Plugins","Collaboration","Help","Settings"])assert.match(shell,new RegExp(`\\["${label}"`));assert.match(shell,/ariaLabel="More navigation"/);assert.match(shell,/aria-haspopup="dialog"/);assert.match(shell,/primaryNav\.slice\(0,4\)/);assert.match(css,/\.more-dialog>nav/)});
+test("compact module sidebar hides the nested Settings label",()=>{const css=read("app/globals.css");assert.match(css,/\.sidebar-footer \.settings span\{display:none!important\}/)});
+test("Home mobile navigation matches the shared four-item bar and More menu",()=>{const home=read("app/page.tsx");assert.match(home,/primaryNav\.slice\(0,4\)/);assert.match(home,/ariaLabel="More navigation"/);assert.match(home,/aria-haspopup="dialog"/);assert.doesNotMatch(home,/\[\["Home","\/",House\][^\n]+\["Coding","\/coding",Code\]\]/)});
+test("Home desktop navigation uses More for Coding and has no theme shortcut",()=>{const home=read("app/page.tsx"),shell=read("app/components/ModuleShell.tsx"),settings=read("app/settings/page.tsx");assert.match(home,/primaryNav\.slice\(0,4\)/);assert.match(home,/aria-label="More navigation"/);assert.match(home,/\["Coding","\/coding",Code\]/);assert.doesNotMatch(home,/theme-toggle/);assert.doesNotMatch(shell,/theme-toggle/);assert.match(settings,/Theme/)});
+test("capture desktop layout gives each pane its own bounded scroll region",()=>{const css=read("app/globals.css");assert.match(css,/\.module-shell:has\(\.capture-inbox\) \.module-main\{[^}]*height:calc\(100dvh - 64px\);[^}]*overflow:hidden/);assert.match(css,/\.module-shell:has\(\.capture-inbox\) \.capture-list-pane\{[^}]*overflow-y:auto/);assert.match(css,/\.module-shell:has\(\.capture-inbox\) \.capture-inspector\{[^}]*position:static;[^}]*height:100%;[^}]*overflow-y:auto/);assert.match(css,/\.capture-queue-toolbar\{[^}]*z-index:20;[^}]*background-color:var\(--bg\)/)});
 test("Help links the capture, note, calendar, ink, and PDF workflows",()=>{const help=read("app/help/page.tsx");for(const label of ["Capture and review","Write and organize notes","Plan time and reminders","Create an ink note","Open a PDF attachment"])assert.match(help,new RegExp(label));assert.doesNotMatch(help,/<a href="\/(?:capture|vault|settings)/)});
 
 test("M4 keeps workspace context accessible, shareable, and timezone-safe",()=>{const capture=read("app/capture/page.tsx"),calendar=read("app/calendar/page.tsx"),vault=read("app/vault/page.tsx"),home=read("app/page.tsx"),compiler=read("app/coding/compiler/page.tsx");assert.match(capture,/tabIndex=\{0\}/);assert.match(capture,/aria-pressed=\{selected\}/);assert.match(capture,/params\.set\("q", searchQuery\)/);assert.match(calendar,/params\.set\("view",view\)/);assert.match(calendar,/event\.timezone/);assert.match(calendar,/dateTime=\{event\.startAt/);assert.match(vault,/params\.set\("folder",folder\)/);assert.match(home,/value=\{paletteQuery\}/);assert.doesNotMatch(home,/Asia\/Jakarta/);assert.match(compiler,/aria-live="polite"/)});
 test("Calendar defers date-dependent rendering until hydration",()=>{const calendar=read("app/calendar/page.tsx");assert.match(calendar,/const \[hydrated,setHydrated\]=useState\(false\)/);assert.match(calendar,/if\(!hydrated\)return <ModuleShell active="Calendar" title="Calendar"><p role="status">Loading calendar…<\/p><\/ModuleShell>/)});
 test("Capture row labels do not shadow the Capture details landmark",()=>{const capture=read("app/capture/page.tsx");assert.match(capture,/aria-label=\{`\$\{capture\.text\}\. \$\{statusMeta\[capture\.status\]\.label\}\. Open capture`\}/);assert.doesNotMatch(capture,/Open capture details/) });
 test("root layout eagerly warms daily navigation routes",()=>{const layout=read("app/layout.tsx"),warmup=read("app/components/NavigationWarmup.tsx");assert.match(layout,/NavigationWarmup/);for(const route of ["capture","calendar","vault","settings"])assert.match(warmup,new RegExp(`/${route}`));assert.doesNotMatch(warmup,/requestIdleCallback/)});
-test("root layout applies the saved Gruvbox theme before hydration",()=>{const layout=read("app/layout.tsx");assert.match(layout,/beforeInteractive/);assert.match(layout,/noema-theme/);assert.match(layout,/dataset\.theme/);assert.match(layout,/theme-color/);assert.match(layout,/<html lang="en" suppressHydrationWarning>/)});
+test("root layout applies the saved Gruvbox theme before hydration",()=>{const layout=read("app/layout.tsx");assert.match(layout,/beforeInteractive/);assert.match(layout,/noema-theme/);assert.match(layout,/dataset\.theme/);assert.match(layout,/theme-color/);assert.match(layout,/<html lang="en" data-scroll-behavior="smooth" suppressHydrationWarning>/)});
 test("global motion only transitions explicit visual properties",()=>{const css=read("app/globals.css");assert.doesNotMatch(css,/transition:\s*all/);assert.doesNotMatch(css,/transition:(?:max-width|max-height)/)});
 test("route entries stay within the restrained M2 motion budget",()=>{const css=read("app/globals.css");for(const value of [/\.app-shell>main\{animation:noema-enter-rise \.18s var\(--ease\) both\}/,/\.module-main\{animation:noema-enter-rise \.18s var\(--ease\) both\}/,/html\[data-nav-dir="forward"\] \.module-main\{animation:noema-enter-forward \.18s var\(--ease\) both\}/,/html\[data-nav-dir="back"\] \.module-main\{animation:noema-enter-back \.18s var\(--ease\) both\}/])assert.match(css,value)});
 test("app background uses a static tokenized paper grain",()=>{const css=read("app/globals.css");assert.match(css,/body\{[^}]*background-color:var\(--bg\)[^}]*background-image:radial-gradient\(color-mix\(in oklch,var\(--ink\) 8%,transparent\) \.5px,transparent \.5px\)[^}]*background-size:4px 4px/);assert.doesNotMatch(css,/paper-grain|grain.*animation/i)});
@@ -126,6 +131,13 @@ test("reduced motion and responsive breakpoints remain enforced",()=>{
   assert.match(css,/focus-visible/);
 });
 
+test("Capture inbox keeps its sticky toolbar opaque and omits recording",()=>{
+  const capture=read("app/capture/page.tsx"),css=read("app/globals.css");
+  assert.doesNotMatch(capture,/DurableRecorder|addVoiceCapture/);
+  assert.match(css,/\.capture-queue-toolbar\{position:sticky;top:0;z-index:15;isolation:isolate;[^}]*background-color:var\(--bg\)/);
+  assert.doesNotMatch(css,/\.capture-queue-toolbar\{[^}]*backdrop-filter/);
+});
+
 
 test("remote actions disclose missing AI and persistence",()=>{
   const notice=read("app/components/ServiceNotice.tsx");
@@ -178,9 +190,9 @@ test("Vault exposes a full-width mobile New note action above navigation",()=>{c
 test("Obsidian sync is stable and read-only",()=>{const sync=read("scripts/sync-obsidian.mjs");assert.match(sync,/createHash/);assert.match(sync,/Obsidian ·/);assert.match(sync,/readFileSync/);assert.doesNotMatch(sync,/writeFile|unlink|rename|rmSync/)});
 test("vault tasks expose live counts, source links, device-zone scheduling, and discriminated calendar items",()=>{const tasks=read("app/page.tsx"),calendar=read("app/calendar/page.tsx"),state=read("app/components/AppState.tsx");assert.doesNotMatch(tasks,/Four tasks are ready/);assert.match(tasks,/counts=Object\.fromEntries/);assert.doesNotMatch(tasks,/Asia\/Jakarta/);assert.match(tasks,/vaultSource\.relativePath/);assert.match(tasks,/Open source note/);assert.match(state,/kind:"event"/);assert.match(state,/kind:"task"/);assert.match(calendar,/calendarItems\s*\.map\(item => \(item\.kind === "task"/)});
 test("mixed handwriting editor preserves offline strokes and pen-first input",()=>{const editor=read("app/components/InkEditor.tsx"),mixed=read("app/components/MixedNoteEditor.tsx"),ink=read("app/lib/ink.ts"),queue=read("app/lib/offlineQueue.ts"),worker=read("server/worker/handlers/handwriting-ocr.mjs");assert.match(editor,/getCoalescedEvents/);assert.match(editor,/pointerType==="pen"/);assert.match(editor,/saveInkDraft/);for(const tool of ["pen","highlighter","eraser","lasso"])assert.match(editor,new RegExp(`"${tool}"`));assert.match(mixed,/blocks/);assert.match(queue,/ink-drafts/);assert.match(ink,/pressure:event\.pressure>0/);assert.match(worker,/strokesToPng/);assert.match(worker,/mimeType:"image\/png"/);assert.doesNotMatch(worker,/mimeType:"image\/svg\+xml"/)});
-test("mixed note editor inserts an ink block at the active Markdown caret",()=>{const mixed=read("app/components/MixedNoteEditor.tsx");assert.match(mixed,/insertInk/);assert.match(mixed,/value\.slice\(0,caret\)/);assert.match(mixed,/ids\.splice\(index\+1,0,inkId,afterId\)/)});
+test("inline ink creation is retired while legacy ink blocks remain readable",()=>{const mixed=read("app/components/MixedNoteEditor.tsx"),memory=read("PROJECT.md");assert.doesNotMatch(mixed,/Insert ink|insertInk|block-actions/);assert.match(mixed,/InkBlockView/);assert.match(memory,/Inline `Insert ink` block creation is discontinued legacy/)});
 test("mixed note editor renders every ink block in flow with move/delete handles",()=>{const mixed=read("app/components/MixedNoteEditor.tsx");assert.match(mixed,/InkBlockView/);assert.match(mixed,/Move ink block up/);assert.match(mixed,/Move ink block down/);assert.match(mixed,/Delete ink block/);assert.match(mixed,/blocks\.map\(\(block\) =>/)});
-test("ink surfaces share the viewport gesture helpers instead of inline math",()=>{const ink=read("app/lib/ink.ts"),editor=read("app/components/InkEditor.tsx"),mixed=read("app/components/MixedNoteEditor.tsx");assert.match(ink,/export function applyPinch|function applyPinch/);assert.match(ink,/export function zoomAtPoint|function zoomAtPoint/);assert.match(editor,/applyPinch|zoomAtPoint|panBy/);assert.doesNotMatch(editor,/pinchAnchor/)});
+test("ink surfaces share the viewport gesture helpers instead of inline math",()=>{const ink=read("app/lib/ink.ts"),editor=read("app/components/InkEditor.tsx"),mixed=read("app/components/MixedNoteEditor.tsx");assert.match(ink,/export function applyPinch|function applyPinch/);assert.match(ink,/export function zoomAtPoint|function zoomAtPoint/);assert.match(editor,/applyPinch|zoomAtPoint|panBy/);assert.match(mixed,/pinchViewport/);assert.match(mixed,/zoomAtScreenPoint/);assert.doesNotMatch(editor,/pinchAnchor/)});
 
 test("handwritten math continuation proposes reviewable blocks without touching strokes",()=>{
   const handler=read("server/worker/handlers/continue-math.mjs"),dispatch=read("server/worker/dispatch.mjs"),math=read("server/math.mjs"),route=read("app/api/v1/notes/[id]/continue-math/route.ts"),mixed=read("app/components/MixedNoteEditor.tsx");
@@ -219,7 +231,7 @@ test("lecture recordings transcribe through a chunked provider chain",()=>{
 test("voice captures are honestly tagged and transcribe into synced study notes",()=>{
   const state=read("app/components/AppState.tsx"),page=read("app/capture/page.tsx");
   assert.match(state,/addVoiceCapture:\(file/);assert.match(state,/source:"voice" as const/);assert.match(state,/Voice recording · /);
-  for(const token of ["TranscriptPanel","transcript-segment","Summarize into study note","mode: \"study\"","Record lecture"])assert.match(page,new RegExp(token));
+  for(const token of ["TranscriptPanel","transcript-segment","Summarize into study note","mode: \"study\""])assert.match(page,new RegExp(token));
 });
 test("mixed notes debounce serialized block saves and protect dirty drafts",()=>{const mixed=read("app/components/MixedNoteEditor.tsx"),live=read("app/components/LiveMarkdownEditor.tsx"),vault=read("app/vault/page.tsx");assert.match(mixed,/setTimeout\(\(\) => void flushMarkdown\(block\.id\), 800\)/);assert.match(mixed,/saveChains\.current/);assert.match(mixed,/onDirtyChange/);assert.match(live,/replaceAll/);assert.match(vault,/beforeunload/)});
 test("ink exposes world-edit transforms and geometric tool types",()=>{const editor=read("app/components/InkEditor.tsx"),ink=read("app/lib/ink.ts");for(const tool of ["rectangle","ellipse","arrow","rotateStroke","scaleStroke","formatVersion:2","coordinateSpace:\"world\"","Ruler snap"])assert.match(`${editor}\n${ink}`,new RegExp(tool))});
@@ -236,7 +248,7 @@ test("shared ink viewport helpers are tested pure functions adopted by every ink
   const view={x:0,y:0,zoom:1};
   assert.deepEqual(panBy(view,10,20),{x:-10,y:-20,zoom:1});
   assert.equal(clampZoom(.1),.25);
-  assert.equal(clampZoom(9),4);
+  assert.equal(clampZoom(9),9);
   const pinched=applyPinch(view,rect,200,200,{x:50,y:50},{x:60,y:60},2);
   assert.equal(pinched.zoom,2);
   assert.ok(Math.abs(pinched.x-40)<1e-9&&Math.abs(pinched.y-40)<1e-9);
@@ -247,10 +259,49 @@ test("shared ink viewport helpers are tested pure functions adopted by every ink
   assert.equal(zoomed.zoom,2);
   assert.ok(Math.abs(zoomed.x-50)<1e-9&&Math.abs(zoomed.y-50)<1e-9);
   assert.equal(zoomAtPoint(view,rect,200,200,50,50,.001).zoom,.25);
+  assert.equal(clampZoom(100),16);
   assert.equal(penRecentlyUp("touch",false,0,100),true);
   assert.equal(penRecentlyUp("touch",false,0,400),false);
   assert.equal(penRecentlyUp("pen",false,0,0),false);
 });
+test("viewport transforms preserve focal document points without drift",()=>{
+  const ts=require("typescript");
+  const compiled=ts.transpileModule(read("app/lib/ink.ts"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:"es2019"}}).outputText;
+  const module={exports:{}};
+  new Function("exports","module","performance",compiled)(module.exports,module,{now:()=>0});
+  const {screenToCanvas,canvasToScreen,zoomAtScreenPoint,pinchViewport}=module.exports;
+  const viewport={x:10,y:-20,zoom:2};
+  assert.deepEqual(screenToCanvas({x:110,y:80},viewport),{x:50,y:50});
+  assert.deepEqual(canvasToScreen({x:50,y:50},viewport),{x:110,y:80});
+  const focal={x:200,y:150};
+  const anchored=zoomAtScreenPoint({x:-100,y:-50,zoom:1},focal,4);
+  assert.deepEqual(anchored,{x:-1000,y:-650,zoom:4});
+  assert.deepEqual(canvasToScreen(screenToCanvas(focal,{x:-100,y:-50,zoom:1}),anchored),focal);
+  let cycled={x:-120,y:-80,zoom:1};
+  for(let index=0;index<10;index++){
+    cycled=zoomAtScreenPoint(cycled,focal,5);
+    cycled=zoomAtScreenPoint(cycled,focal,1);
+  }
+  assert.ok(Math.abs(cycled.x+120)<1e-9&&Math.abs(cycled.y+80)<1e-9&&cycled.zoom===1);
+  assert.deepEqual(pinchViewport({x:0,y:0,zoom:16},{x:50,y:50},{x:70,y:80},32),{x:20,y:30,zoom:16});
+});
+test("ink save retries an expected-version conflict with the authoritative block version",async()=>{
+  const ts=require("typescript");
+  const compiled=ts.transpileModule(read("app/lib/ink.ts"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:"es2019"}}).outputText;
+  const module={exports:{}};
+  new Function("exports","module","performance",compiled)(module.exports,module,{now:()=>0});
+  const calls=[];
+  const responses=[
+    {ok:false,status:409,json:async()=>({error:{message:"Expected version 3"}})},
+    {ok:true,status:200,json:async()=>({blocks:[{id:"ink-1",inkVersion:3}]})},
+    {ok:true,status:201,json:async()=>({id:"ink-1",version:4})}
+  ];
+  const request=async(url,options)=>{calls.push({url,body:options?.body&&JSON.parse(options.body)});return responses.shift()};
+  const saved=await module.exports.saveInkWithRetry("note-1",{id:"ink-1",version:2,width:320,height:240,strokes:[]},request,()=>"key");
+  assert.equal(saved.version,4);
+  assert.deepEqual(calls.filter(call=>call.body).map(call=>call.body.version),[2,3]);
+});
+test("Vault ink keeps vector geometry and document-relative stroke width through zoom",()=>{const ink=read("app/lib/ink.ts"),mixed=read("app/components/MixedNoteEditor.tsx"),vault=read("server/vault.mjs");assert.match(ink,/ZOOM_MAX=16/);assert.match(ink,/Q\$\{/);assert.match(mixed,/width:\s*size[,\n]/);assert.match(mixed,/eraseAt\([^\n]+size\s*\*\s*4\)/);assert.doesNotMatch(mixed,/width:\s*size\s*\//);assert.doesNotMatch(mixed,/eraseAt\([^\n]+\/\s*\(zoomRef/);assert.match(mixed,/svgClientToPoint/);assert.match(vault,/smoothStrokePath/);assert.doesNotMatch(vault,/\.png\]\]/)});
 test("ink auto-fit avoids opening a small drawing at maximum zoom",()=>assert.match(read("app/lib/ink.ts"),/Math\.min\(2,/));
 test("Vault uses an Obsidian-style tree with breadcrumbs and visible ink entry points",()=>{const page=read("app/vault/page.tsx"),organizer=read("app/components/VaultOrganizer.tsx");assert.match(page,/VaultOrganizer/);assert.match(organizer,/Vault folders/);assert.match(organizer,/Breadcrumb/);assert.match(organizer,/Draw in/);assert.match(organizer,/entries\/move/);assert.match(organizer,/entries\/trash/);assert.match(organizer,/New note/)});
 test("Vault initial connection uses one snapshot request without a client waterfall",()=>{const organizer=read("app/components/VaultOrganizer.tsx"),route=read("app/api/v1/vault-sources/route.ts");assert.match(organizer,/tree=true/);assert.doesNotMatch(organizer,/vault-sources\/\$\{id\}\/tree/);assert.match(route,/vaultTree/);assert.match(route,/selectedSourceId/)});
@@ -263,7 +314,7 @@ test("Vault starts with folders collapsed and discloses their notes",()=>{const 
 test("Vault scrollbar uses subdued semantic theme colors",()=>{const css=read("app/globals.css");assert.match(css,/\.obsidian-tree,\.obsidian-vault-body>main\{[^}]*scrollbar-color:color-mix\(in oklch,var\(--muted\) 68%,var\(--sidebar\)\)/);assert.match(css,/\.obsidian-vault-body>main::-webkit-scrollbar-button\{display:none\}/);assert.match(css,/\.obsidian-vault-body>main::-webkit-scrollbar-thumb\{[^}]*background:color-mix\(in oklch,var\(--muted\) 68%,var\(--sidebar\)\)/);assert.match(css,/\.obsidian-vault-body>main::-webkit-scrollbar-thumb:hover\{[^}]*background:var\(--muted\)/)});
 test("Rich note editing uses Noema theme tokens",()=>{const css=read("app/globals.css");for(const token of ["--crepe-color-background:var(--surface)!important","--crepe-color-on-background:var(--ink)!important","--crepe-color-primary:var(--primary)!important","--crepe-color-surface-low:var(--raised)!important"])assert.match(css,new RegExp(token.replace(/[()]/g,"\\$&")))});
 test("Rich note editing is a single layered reading surface",()=>{const css=read("app/globals.css");for(const token of ["--crepe-base-font-size:14px!important","background:transparent!important;border:0!important","z-index:100!important",".ProseMirror h2{font-size:1.25rem!important",".integrated-doc-container:has(.live-markdown-editor) .integrated-doc-page{width:100%!important;max-width:none!important;margin:0!important;padding:0!important;border:0!important",".live-markdown-editor .ProseMirror{padding-inline:clamp(20px,3vw,48px)!important"])assert.match(css,new RegExp(token.replace(/[()]/g,"\\$&")))});
-test("PDF annotation workspace renders lazy pages and normalized accessible overlays",()=>{const page=read("app/assets/[id]/annotate/page.tsx");assert.match(page,/pdfjs-dist/);assert.match(page,/getDocument/);assert.match(page,/geometry/);assert.match(page,/setPointerCapture/);assert.match(page,/aria-label="PDF annotation tools"/);assert.match(page,/Export annotations/);assert.match(page,/link_type/)});
+test("PDF annotation workspace renders lazy pages and normalized accessible overlays",()=>{const page=read("app/assets/[id]/annotate/page.tsx"),capture=read("app/capture/page.tsx");assert.match(page,/pdfjs-dist/);assert.match(page,/getDocument/);assert.match(page,/geometry/);assert.match(page,/setPointerCapture/);assert.match(page,/aria-label="PDF annotation tools"/);assert.match(page,/Export annotations/);assert.match(page,/link_type/);assert.match(capture,/asset\.mime==="application\/pdf"/);assert.match(capture,/\/assets\/\$\{asset\.id\}\/annotate/)});
 test("annotator supports eraser, colors, edit/delete, and page-count guard",()=>{const page=read("app/assets/[id]/annotate/page.tsx"),style=read("app/lib/pdfAnnotationStyle.ts");for(const token of ["Eraser","pdf-color-picker","COLOR_PALETTE","annotation-edit-form","is beyond this document"])assert.match(page,new RegExp(token));assert.match(style,/COLOR_PALETTE=/)});
 test("export fidelity shares annotation style constants with the preview",()=>{
   const server=read("server/pdf-style.mjs");const values=server.match(/export const (DEFAULT_COLOR|HIGHLIGHT_OPACITY|INK_THICKNESS|TEXT_MIN_SIZE|TEXT_MAX_SIZE)="?([^"\n;]+)"?;/g);
@@ -291,7 +342,7 @@ test("notification deliveries expose durable status and retry controls",()=>{con
 test("Settings enrolls and removes browser Web Push",()=>{const settings=read("app/settings/page.tsx"),route=read("app/api/v1/push-subscriptions/route.ts"),worker=read("public/sw.js");assert.match(settings,/Notification\.requestPermission/);assert.match(settings,/pushManager\.subscribe/);assert.match(settings,/current\.unsubscribe/);assert.match(route,/vapidPublicKey/);assert.match(route,/deletePushSubscription/);assert.match(worker,/addEventListener\("push"/);assert.match(worker,/showNotification/);assert.match(worker,/notificationclick/) });
 test("automations and notifications reconnect to durable live snapshots",()=>{const automation=read("app/automations/page.tsx"),notifications=read("app/notifications/page.tsx"),runRoute=read("app/api/v1/automations/[id]/runs/[runId]/route.ts");for(const route of ["app/api/v1/automations/[id]/events/route.ts","app/api/v1/notifications/events/route.ts"]){const stream=read(route);assert.match(stream,/text\/event-stream/);assert.match(stream,/retry: 3000/);assert.match(stream,/: heartbeat/);assert.match(stream,/event: snapshot/)}assert.match(automation,/new EventSource/);assert.match(automation,/runAction/);assert.match(notifications,/new EventSource/);assert.match(runRoute,/cancelAutomationRun/);assert.match(runRoute,/retryAutomationRun/)});
 test("notification center filters, groups, marks read, and navigates to related objects",()=>{const page=read("app/notifications/page.tsx");assert.match(page,/read-all/);assert.match(page,/deliveryAction/);assert.match(page,/related_type/);assert.match(page,/No notifications match this filter/)});
-test("Home and module shells use real notifications while OCR failures expose retry",()=>{const home=read("app/page.tsx"),shell=read("app/components/ModuleShell.tsx"),button=read("app/components/NotificationButton.tsx"),editor=read("app/components/MixedNoteEditor.tsx");assert.match(home,/<NotificationButton\/>/);assert.match(shell,/<NotificationButton\/>/);assert.match(button,/\/api\/v1\/notifications/);assert.match(button,/View all notifications/);assert.doesNotMatch(home,/data-unavailable=.*notifications/);assert.match(editor,/OCR ·/);assert.match(editor,/\/ocr/);assert.match(editor,/>Retry</)});
+test("Home and module shells use real notifications while OCR failures expose retry",()=>{const home=read("app/page.tsx"),shell=read("app/components/ModuleShell.tsx"),button=read("app/components/NotificationButton.tsx"),editor=read("app/components/MixedNoteEditor.tsx");assert.match(home,/<NotificationButton\/>/);assert.match(shell,/<NotificationButton\/>/);assert.match(button,/\/api\/v1\/notifications/);assert.match(button,/View all notifications/);assert.doesNotMatch(home,/data-unavailable=.*notifications/);assert.match(editor,/Handwriting recognition/);assert.match(editor,/\/ocr/);assert.match(editor,/Retry recognition/)});
 
 test("offline mutations queue durably and replay idempotently",()=>{
   const queue=read("app/lib/offlineQueue.ts"),pwa=read("app/components/PWARegister.tsx"),worker=read("public/sw.js");
@@ -374,6 +425,7 @@ test("Calendar edits normalized event time and recurrence",()=>{const page=read(
 test("Calendar drills into a double-clicked date and moves Day view one day at a time",()=>{const page=read("app/calendar/page.tsx");for(const token of ["onDoubleClick","setView\\(\"Day\"\\)","function movePeriod","selectedEvents.map","selectedTasks.map"])assert.match(page,new RegExp(token))});
 test("Calendar Day view shows the full day in its own scroll area",()=>{const page=read("app/calendar/page.tsx"),css=read("app/globals.css");assert.match(page,/Array\.from\(\{length:25\}/);assert.match(page,/dayPositionFor/);assert.match(css,/\.day-view\{height:min\(70dvh,680px\);min-height:0;overflow:auto/);assert.match(css,/\.day-view>\.times,\.day-view>div:last-child\{min-height:1456px/);assert.match(css,/\.times time:first-child\{transform:none\}/)});
 test("Calendar Week view scrolls its all-day row with the timeline and separates timed events and tasks",()=>{const page=read("app/calendar/page.tsx"),css=read("app/globals.css");for(const token of ["week-scroll","week-all-day","allDayEvents","allDayTasks","timedEvents","timedTaskItems","formatTimeRange"])assert.match(page,new RegExp(token));assert.match(css,/\.week-scroll\{height:min\(76dvh,820px\);overflow:auto/);assert.match(css,/\.week-day-column/)});
+test("Calendar Week positions events in their stored timezone",()=>{const page=read("app/calendar/page.tsx"),calendar=read("app/lib/calendar.ts");assert.match(calendar,/timeZone/);assert.match(page,/minutesAt\(event\.startAt!,event\.timezone\)/);assert.match(page,/minutesAt\(event\.endAt!,event\.timezone\)/);const compiled=require("typescript").transpileModule(calendar,{compilerOptions:{module:require("typescript").ModuleKind.CommonJS}}).outputText,mod={exports:{}};new Function("exports","module",compiled)(mod.exports,mod);assert.equal(mod.exports.minutesAt("2026-08-26T03:00:00.000Z","Asia/Jakarta"),600)});
 test("Calendar only opens selected-date details when that date has items",()=>{const page=read("app/calendar/page.tsx"),css=read("app/globals.css");assert.match(page,/const hasSelectedItems = selectedTasks\.length \+ selectedEvents\.length > 0/);assert.match(page,/\) : hasSelectedItems \? \(/);assert.match(page,/calendar-popover/);assert.match(css,/\.calendar-layout\{position:relative;display:block/);assert.match(css,/\.calendar-popover\{position:absolute/)});
 test("Calendar timelines reserve their scrollbar and contain scroll gestures",()=>{const css=read("app/globals.css");assert.match(css,/scrollbar-gutter:stable/);assert.match(css,/overscroll-behavior:contain/)});
 test("Week columns remain readable and can scroll horizontally",()=>{const page=read("app/calendar/page.tsx"),css=read("app/globals.css");assert.match(page,/dates\.map\(\(date,index\)=>/);assert.match(css,/\.week-scroll\{height:min\(76dvh,820px\);overflow:auto/);assert.match(css,/repeat\(7,minmax\(150px,1fr\)\)/)});
@@ -431,6 +483,7 @@ test("Home centers attention and capture while task creation floats",()=>{
   assert.match(calendar,/userSelectedView/);assert.match(calendar,/media\.addEventListener\("change"/);assert.match(calendar,/chooseView/);
 });
 test("Canvas persists versioned workspace objects with pointer, keyboard, and accessible list controls",()=>{const page=read("app/canvas/page.tsx"),engine=read("app/components/InfiniteCanvas.tsx"),routes=[read("app/api/v1/canvases/route.ts"),read("app/api/v1/canvases/[id]/route.ts")].join("\n");assert.match(page,/dynamic\(/);assert.match(engine,/onWheel/);assert.match(engine,/onPointerDown/);assert.match(engine,/ArrowLeft/);assert.match(engine,/longPress/);assert.match(engine,/Undo/);assert.match(engine,/Redo/);assert.match(engine,/Accessible object list/);assert.match(engine,/useAppState/);assert.match(engine,/refId/);assert.match(engine,/version/);assert.match(routes,/requireWorkspace/);assert.match(routes,/saveCanvas/)});
+test("Infinite Canvas is retained only as a discontinued legacy surface",()=>{const page=read("app/canvas/page.tsx"),shell=read("app/components/ModuleShell.tsx"),project=read("PROJECT.md"),readme=read("README.md");assert.match(page,/Discontinued/);assert.doesNotMatch(shell,/nav-canvas/);for(const text of [project,readme])assert.match(text,/Canvas[^\n]*[Dd]iscontinued/)});
 
 test("Markdown toolbar and LiveMarkdownEditor use compact labels (H1, H2, H3, P) and horizontal expand toggle",()=>{
   const toolbar=read("app/components/MarkdownToolbar.tsx"),live=read("app/components/LiveMarkdownEditor.tsx"),css=read("app/globals.css");

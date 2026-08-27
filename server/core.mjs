@@ -64,7 +64,7 @@ export function listState(db=getDatabase(),workspaceId=null){const filter=worksp
     projects:db.prepare(`SELECT * FROM projects${filter} ORDER BY name`).all(...args),
     taskDependencies:db.prepare(`SELECT d.task_id AS taskId,d.depends_on_task_id AS dependsOnTaskId,d.created_at AS createdAt FROM task_dependencies d JOIN tasks t ON t.id=d.task_id${workspaceId?" WHERE t.workspace_id=?":""}`).all(...args),
     noteLinks:db.prepare(`SELECT l.source_note_id AS sourceNoteId,l.target_note_id AS targetNoteId,l.link_text AS linkText,l.created_at AS createdAt FROM note_links l JOIN notes n ON n.id=l.source_note_id${workspaceId?" WHERE n.workspace_id=?":""}`).all(...args),
-    calendarItems:[...events.map(event=>({kind:"event",event})),...db.prepare(`SELECT * FROM tasks WHERE archived=0 AND (due_at IS NOT NULL OR scheduled_start_at IS NOT NULL)${workspaceId?" AND workspace_id=?":""} ORDER BY COALESCE(scheduled_start_at,due_at)`).all(...args).map(row=>({kind:"task",task:taskProjectionFromMap(row,vaultTaskLinkMap)}))],
+    calendarItems:[...events.map(event=>({kind:"event",event})),...db.prepare(`SELECT * FROM tasks WHERE archived=0 AND event_id IS NULL AND (due_at IS NOT NULL OR scheduled_start_at IS NOT NULL)${workspaceId?" AND workspace_id=?":""} ORDER BY COALESCE(scheduled_start_at,due_at)`).all(...args).map(row=>({kind:"task",task:taskProjectionFromMap(row,vaultTaskLinkMap)}))],
   };
 }
 
