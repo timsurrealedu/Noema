@@ -24,6 +24,34 @@ test("vault proposals must cite their connected vault target",async()=>{
   proposal.actions[0].sourceReferences.push("vault:source-1");assert.equal(validateProposal(proposal,new Set(["capture:c1","vault:source-1"])),proposal);
 });
 
+test("vault proposals validate placement paths against known vault sources",async()=>{
+  const {validateProposal}=await import("../server/worker/handlers/interpret-capture.mjs"),sources=new Set(["capture:c1","vault:vs1"]),vaultIds=new Set(["vs1"]);
+  const mk=path=>({schemaVersion:1,summary:"s",clarifications:[],actions:[{id:"v1",type:"vault.note.create",confidence:.9,sourceReferences:["capture:c1","vault:vs1"],arguments:{sourceId:"vs1",relativePath:path,title:"T",content:"# T",tags:[]}}]});
+  validateProposal(mk("Uni/BINUS/Sem3/Network Penetration Testing/Kelas/Session 1/Information Gathering.md"),sources,vaultIds);
+  assert.throws(()=>validateProposal(mk("../escape.md"),sources,vaultIds),/path is invalid/);
+  assert.throws(()=>validateProposal(mk("a/b/c/d/e/f/g/h/i.md"),sources,vaultIds),/nesting exceeds/);
+  assert.throws(()=>validateProposal(mk("note.txt"),sources,vaultIds),/must end in \.md/);
+  assert.throws(()=>validateProposal(mk("X.md"),sources,new Set(["vs2"])),/unknown vault source/);
+});
+
+test("vault folder context lists folders under a budget and reports truncation",async()=>{
+  const {vaultFolderContext}=await import("../server/worker/handlers/interpret-capture.mjs");
+  const index=new Map([["s1",["Uni","Uni/BINUS","Work","Ideas"]]]);
+  const full=vaultFolderContext([{id:"s1",name:"Obsidian"}],index,4000);
+  assert.match(full.text,/Source ID: vault:s1/);assert.match(full.text,/Folders \(4\):/);assert.match(full.text,/Uni\/BINUS\//);assert.equal(full.truncated,false);
+  const tight=vaultFolderContext([{id:"s1",name:"Obsidian"}],index,60);
+  assert.equal(tight.truncated,true);assert.equal(tight.text.includes("Ideas/"),false);
+});
+
+test("capture prompts include vault folder context and placement rules",async()=>{
+  const {vaultPlacementInstructions}=await import("../server/worker/handlers/interpret-capture.mjs");
+  const instructions=vaultPlacementInstructions();
+  assert.match(instructions,/never assume a fixed structure/);
+  assert.match(instructions,/at most 3 new nested folders/);
+  assert.match(instructions,/at most 6 levels deep/);
+  assert.match(instructions,/ending in \.md/);
+});
+
 test("Gemini receives a supported capture proposal schema",async()=>{
   const {geminiSchema}=await import("../server/ai.mjs"),{captureProposalSchema}=await import("../server/worker/handlers/interpret-capture.mjs"),schema=geminiSchema(captureProposalSchema),text=JSON.stringify(schema);
   assert.equal(text.includes("additionalProperties"),false);assert.equal(text.includes("oneOf"),false);assert.equal(text.includes("anyOf"),false);assert.equal(text.includes("maxItems"),false);assert.equal(schema.properties.schemaVersion.type,"integer");assert.equal(schema.properties.schemaVersion.enum,undefined);assert.deepEqual(schema.properties.actions.items.properties.type.enum,["task.create","event.create","note.create","vault.note.create"]);
@@ -65,6 +93,41 @@ test("AI capture processing proposes a connected vault note",async()=>{
     await handleInterpretCapture({job,config:{dataDir:dir,dbPath:join(dir,"test.sqlite"),objectsDir:join(dir,"objects"),backupsDir:join(dir,"backups"),pluginsDir:join(dir,"plugins"),codexEnabled:true,codexPath:resolve("test/fixtures/fake-codex.mjs"),jobsDir,timezone:"Asia/Jakarta"},db});
     const capture=db.prepare("SELECT status,error,objects_json FROM captures WHERE id='c1'").get();assert.equal(capture.status,"review",capture.error);const proposal=JSON.parse(capture.objects_json);assert.equal(proposal.actions[0].type,"vault.note.create");
     core.applyCaptureInterpretation("c1",db,actor);assert.equal(existsSync(join(vaultDir,"Ideas/Project Idea.md")),true);const completed=jobs.getJob(id,db);assert.equal(completed.state,"completed");assert.equal(completed.result.captureVersion,2);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("AI capture nests session notes under the existing university tree",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-capture-nest-")),vaultDir=join(dir,"vault"),jobsDir=join(dir,"jobs");mkdirSync(join(vaultDir,"Uni","BINUS"),{recursive:true});mkdirSync(join(vaultDir,"Work","Clients"),{recursive:true});mkdirSync(jobsDir);
+  const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),core=await import("../server/core.mjs"),vault=await import("../server/vault.mjs"),jobs=await import("../server/jobs.mjs"),{handleInterpretCapture}=await import("../server/worker/handlers/interpret-capture.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),workspace=collaboration.ensureDefaultWorkspace(user.id,db),actor={id:user.id,workspaceId:workspace.id};vault.connectVault({rootPath:vaultDir},workspace.id,db);
+    core.createCapture({id:"c1",text:"semester 3 mata kuliah network penetration testing first session about information gathering, defining ethical hacking methodology",source:"typed"},db,actor);
+    const id=jobs.enqueueJob("interpret-capture",{captureId:"c1"},db,workspace.id),job=jobs.claimJob(["interpret-capture"],60,db);
+    await handleInterpretCapture({job,config:{dataDir:dir,dbPath:join(dir,"test.sqlite"),objectsDir:join(dir,"objects"),backupsDir:join(dir,"backups"),pluginsDir:join(dir,"plugins"),codexEnabled:true,codexPath:resolve("test/fixtures/fake-codex.mjs"),jobsDir,timezone:"Asia/Jakarta"},db});
+    const capture=db.prepare("SELECT status,error,objects_json FROM captures WHERE id='c1'").get();assert.equal(capture.status,"review",capture.error);
+    const proposal=JSON.parse(capture.objects_json),action=proposal.actions.find(item=>item.type==="vault.note.create");
+    assert.ok(action,`expected a vault note proposal: ${JSON.stringify(proposal)}`);
+    assert.match(action.arguments.relativePath,/^Uni\/BINUS\/Sem3\//);
+    assert.match(action.arguments.relativePath,/Kelas\/Session 1\//);
+    assert.match(action.arguments.relativePath,/\.md$/);
+    core.applyCaptureInterpretation("c1",db,actor);
+    assert.equal(existsSync(join(vaultDir,action.arguments.relativePath)),true);
+    const state=core.listState(db,workspace.id),reviewed=state.captures.find(item=>item.id==="c1");
+    assert.equal(reviewed.objects[0].type,"vault");assert.equal(reviewed.objects[0].detail,action.arguments.relativePath);
+    const completed=jobs.getJob(id,db);assert.equal(completed.state,"completed");
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("applied vault notes reconcile folder casing instead of failing",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-capture-case-")),vaultDir=join(dir,"vault");mkdirSync(join(vaultDir,"Uni","BINUS"),{recursive:true});
+  const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),core=await import("../server/core.mjs"),vault=await import("../server/vault.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),workspace=collaboration.ensureDefaultWorkspace(user.id,db),actor={id:user.id,workspaceId:workspace.id},source=vault.connectVault({rootPath:vaultDir},workspace.id,db);
+    core.createCapture({id:"c1",text:"Lecture capture",source:"typed"},db,actor);
+    core.saveInterpretation("c1",{schemaVersion:1,summary:"File under the existing tree",clarifications:[],actions:[{id:"v1",type:"vault.note.create",confidence:.9,sourceReferences:["capture:c1",`vault:${source.id}`],arguments:{sourceId:source.id,relativePath:"uni/binus/Session 1/Lecture.md",title:"Lecture",content:"# Lecture\n\n",tags:[]}}]},db);
+    const applied=core.applyCaptureInterpretation("c1",db,actor);
+    assert.equal(applied.created[0].type,"vault-note");assert.equal(applied.created[0].object.relativePath,"Uni/BINUS/Session 1/Lecture.md");
+    assert.equal(existsSync(join(vaultDir,"Uni/BINUS/Session 1/Lecture.md")),true);
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 

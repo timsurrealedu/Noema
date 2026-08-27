@@ -16,7 +16,7 @@ export type CaptureSource = "typed"|"voice"|"file"|"link"|"handwriting";
 export type CaptureObject = {id?:string; type:"task"|"event"|"note"|"vault"; title:string; detail:string; confidence?:number; sourceReferences?:string[]; arguments?:Record<string,unknown>};
 export type Capture = {
   id:string; text:string; createdAt:string; status:"queued"|"processing"|"review"|"confirmed"|"failed"|"dismissed";
-  source:CaptureSource; sourceLabel:string; progress?:number; error?:string; jobId?:string; objects:CaptureObject[]; assets?:{id:string;name:string;mime:string;size:number}[]; handwriting?:{noteId:string;inkBlockId:string;state:string;title:string;path:string;folder:string;action:"summary"|"expansion"|null;confidence:number|null;provider:string|null}|null; version?:number;
+  source:CaptureSource; sourceLabel:string; progress?:number; error?:string; jobId?:string; objects:CaptureObject[]; clarifications?:string[]; assets?:{id:string;name:string;mime:string;size:number}[]; handwriting?:{noteId:string;inkBlockId:string;state:string;title:string;path:string;folder:string;action:"summary"|"expansion"|null;confidence:number|null;provider:string|null}|null; version?:number;
 };
 export type Project = {id:string; name:string; status:"Active"|"Planned"|"Archived"; summary:string; version?:number};
 export type TaskDependency = {taskId:string; dependsOnTaskId:string; createdAt:string};
@@ -51,7 +51,7 @@ async function api(path:string,method="GET",value?:unknown,key?:string){
   if(!response.ok){const error=new Error((await response.json()).error?.message||"Backend request failed") as Error&{status?:number};error.status=response.status;throw error}
   return response.json();
 }
-const proposalCards=(actions:any[]=[]):CaptureObject[]=>actions.map(action=>{const type=(action.type==="vault.note.create"?"vault":action.type.split(".")[0]) as CaptureObject["type"],args=action.arguments||{},detail=type==="event"?`${args.startAt} · ${args.timezone}`:type==="task"?args.dueAt||args.project||"No due date":String(args.content||"").slice(0,140);return {id:action.id,type,title:args.title,detail,confidence:action.confidence,sourceReferences:action.sourceReferences,arguments:args}});
+const proposalCards=(actions:any[]=[]):CaptureObject[]=>actions.map(action=>{const type=(action.type==="vault.note.create"?"vault":action.type.split(".")[0]) as CaptureObject["type"],args=action.arguments||{},detail=type==="event"?`${args.startAt} · ${args.timezone}`:type==="task"?args.dueAt||args.project||"No due date":type==="vault"?String(args.relativePath||args.title):String(args.content||"").slice(0,140);return {id:action.id,type,title:args.title,detail,confidence:action.confidence,sourceReferences:action.sourceReferences,arguments:args}});
 
 export function AppStateProvider({children}:{children:ReactNode}) {
   const [data,setData]=useState(seed);
@@ -79,7 +79,7 @@ export function AppStateProvider({children}:{children:ReactNode}) {
       if(info.state==="completed")api(`/jobs/${jobId}`).then(job=>{
         const objects=proposalCards(job.result?.actions);
         const status=objects.length===0?"confirmed":"review";
-        close({status,objects,version:job.result?.captureVersion,progress:undefined,jobId:undefined});
+        close({status,objects,clarifications:job.result?.clarifications||[],version:job.result?.captureVersion,progress:undefined,jobId:undefined});
       }).catch(()=>close({status:"failed",error:"The completed interpretation could not be loaded.",progress:undefined,jobId:undefined}));
       else if(info.state==="failed"||info.state==="cancelled"||info.state==="expired")close({status:"failed",error:info.state==="cancelled"?"Interpretation cancelled.":"Processing failed on the server. Try again.",progress:undefined,jobId:undefined});
     });
