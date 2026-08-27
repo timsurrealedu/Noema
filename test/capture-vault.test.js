@@ -12,9 +12,57 @@ test("capture can propose, apply, and undo a vault note",async()=>{
     core.createCapture({id:"c1",text:"Keep this project idea",source:"typed"},db,actor);
     core.saveInterpretation("c1",{schemaVersion:1,summary:"Save the idea in Obsidian",clarifications:[],actions:[{id:"vault-1",type:"vault.note.create",confidence:.9,sourceReferences:["capture:c1",`vault:${source.id}`],arguments:{sourceId:source.id,relativePath:"Ideas/Project Idea.md",title:"Project Idea",content:"# Project Idea\n\nKeep this project idea\n",tags:["ideas"]}}]},db);
     const applied=core.applyCaptureInterpretation("c1",db,actor);
-    assert.equal(applied.created.length,1);assert.equal(existsSync(join(vaultDir,"Ideas/Project Idea.md")),true);assert.equal(readFileSync(join(vaultDir,"Ideas/Project Idea.md"),"utf8"),"# Project Idea\n\nKeep this project idea\n");
+    assert.equal(applied.created.length,1);assert.equal(existsSync(join(vaultDir,"Ideas/Project Idea.md")),true);
+    assert.match(readFileSync(join(vaultDir,"Ideas/Project Idea.md"),"utf8"),/tags: \[ideas\]/);
+    assert.match(readFileSync(join(vaultDir,"Ideas/Project Idea.md"),"utf8"),/# Project Idea/);
     const event=core.listAuditEvents(10,db,workspace.id).find(item=>item.action==="apply");core.undoAuditEvent(event.id,db,actor);
     assert.equal(existsSync(join(vaultDir,"Ideas/Project Idea.md")),false);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("vault note creation auto-generates MOC notes and maintains clickable wikilinks",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-capture-moc-")),vaultDir=join(dir,"vault");mkdirSync(vaultDir);
+  const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),core=await import("../server/core.mjs"),vault=await import("../server/vault.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),workspace=collaboration.ensureDefaultWorkspace(user.id,db),actor={id:user.id,workspaceId:workspace.id},source=vault.connectVault({rootPath:vaultDir},workspace.id,db);
+    // Pre-create parent BINUS MOC
+    mkdirSync(join(vaultDir,"University/BINUS"),{recursive:true});
+    vault.createVaultNote(source.id,{relativePath:"University/BINUS/BINUS.md",content:"---\ntags: [moc, university, binus]\n---\n# 🎓 BINUS — Map of Content\n\n## Semesters\n- [[SEM 1]]\n\n→ [[University]]\n"},actor,db);
+    
+    // Now create a note in a new semester and course hierarchy
+    const note=vault.createVaultNote(source.id,{
+      relativePath:"University/BINUS/SEM3/NetworkPenetrationTesting/Kelas/Session1/Information Gathering.md",
+      title:"Information Gathering",
+      content:"# Information Gathering\n\nMethodology details.\n",
+      tags:["NetworkPenetrationTesting","EthicalHacking"]
+    },actor,db);
+
+    // 1. Note has frontmatter tags
+    const noteContent=readFileSync(join(vaultDir,"University/BINUS/SEM3/NetworkPenetrationTesting/Kelas/Session1/Information Gathering.md"),"utf8");
+    assert.match(noteContent,/tags: \[NetworkPenetrationTesting, EthicalHacking\]/);
+    assert.match(noteContent,/# Information Gathering/);
+
+    // 2. Course MOC was generated with clickable link
+    const courseMocPath=join(vaultDir,"University/BINUS/SEM3/NetworkPenetrationTesting/Network Penetration Testing.md");
+    assert.equal(existsSync(courseMocPath),true);
+    const courseMoc=readFileSync(courseMocPath,"utf8");
+    assert.match(courseMoc,/tags: \[moc, course, networkpenetrationtesting\]/);
+    assert.match(courseMoc,/# 🗺️ Network Penetration Testing — Map of Content/);
+    assert.match(courseMoc,/\[\[Information Gathering\]\]/);
+    assert.match(courseMoc,/→ \[\[SEM 3\]\]/);
+
+    // 3. Semester MOC was generated with course link
+    const semMocPath=join(vaultDir,"University/BINUS/SEM3/SEM 3.md");
+    assert.equal(existsSync(semMocPath),true);
+    const semMoc=readFileSync(semMocPath,"utf8");
+    assert.match(semMoc,/tags: \[moc, semester, sem3\]/);
+    assert.match(semMoc,/# 📗 Semester 3 — Map of Content/);
+    assert.match(semMoc,/\[\[Network Penetration Testing\]\]/);
+    assert.match(semMoc,/→ \[\[BINUS\]\]/);
+
+    // 4. Existing parent BINUS MOC was updated with the new semester
+    const binusMoc=readFileSync(join(vaultDir,"University/BINUS/BINUS.md"),"utf8");
+    assert.match(binusMoc,/\[\[SEM 3\]\]/);
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
 

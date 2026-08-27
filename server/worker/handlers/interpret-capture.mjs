@@ -35,6 +35,7 @@ CRITICAL RULES FOR MEETINGS, REMINDERS, AND SCHEDULES:
 CRITICAL RULES FOR NOTES AND KNOWLEDGE:
 - Whenever a capture represents study notes, lecture sessions, course topics, meeting notes, project ideas, or knowledge (for example "semester 3 mata kuliah network penetration testing first session about information gathering, defining ethical hacking methodology"):
   If a connected vault is available, emit a vault.note.create action with rich, structured Markdown content covering all the key concepts and methodology.
+  Always include relevant tags in the action's tags argument (and YAML frontmatter) representing the course, subject, and key topics.
   Follow the Vault note placement rules below adaptively.`}
 export function vaultPlacementInstructions(){return `Vault note placement rules:
 - The user's vault folder list is supplied below. It reflects their real organization; never assume a fixed structure.
@@ -44,6 +45,7 @@ export function vaultPlacementInstructions(){return `Vault note placement rules:
   - Extend the hierarchy logically to reflect the structure: <Institution Root>/<Semester>/<Course Name>/<Section or Class>/<Session or Week>/<Note Title>.md (for example: Uni/Binus/Sem3/NetworkPenetrationTesting/Kelas/Session1/Information Gathering and Ethical Hacking Methodology.md, adapting naming style to match existing vault folders).
   - Always give the note a clear, descriptive filename ending in .md based on the specific topic.
   - Generate comprehensive, high quality Markdown note content with headings (# Title, ## ...), bullet points, and key takeaways covering the subject rather than empty placeholders.
+  - Every note must include meaningful tags in arguments.tags and frontmatter (e.g. [NetworkPenetrationTesting, EthicalHacking, InformationGathering]).
   - relativePath must always use forward slashes and end in .md.`}
 export function parseActionsJson(value){if(Array.isArray(value))return value;let text=String(value||"").trim();text=text.replace(/^```(?:json)?\s*/i,"").replace(/\s*```$/i,"").trim();const startIdx=text.indexOf("[");if(startIdx<0)throw new Error("actionsJson must contain a JSON array");text=text.slice(startIdx);let depth=0,string=false,escaped=false;for(let index=0;index<text.length;index++){const char=text[index];if(string){if(escaped)escaped=false;else if(char==="\\")escaped=true;else if(char==='"')string=false;continue}if(char==='"')string=true;else if(char==="[")depth++;else if(char==="]"&&!--depth)return JSON.parse(text.slice(0,index+1))}throw new Error("actionsJson is incomplete")}
 const validTimezones=new Set(Intl.supportedValuesOf("timeZone"));

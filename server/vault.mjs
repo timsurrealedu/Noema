@@ -54,8 +54,136 @@ export function sourceRoot(sourceId,workspaceId,db=getDatabase()){return sourceR
 export function connectVault({rootPath,name="Obsidian",taskFolders=["TODO/"]},workspaceId,db=getDatabase()){if(!isAbsolute(rootPath))throw fail("Vault root must be absolute");const root=realpathSync(rootPath);if(!statSync(root).isDirectory())throw fail("Vault root must be a directory");const folders=taskFolders.map(v=>safeRelativePath(String(v).replace(/\/$/,""))+"/");const existing=db.prepare("SELECT * FROM vault_sources WHERE workspace_id=? AND root_path=?").get(workspaceId,root),time=now(),id=existing?.id||randomUUID();if(existing)db.prepare("UPDATE vault_sources SET name=?,task_folders_json=?,state='connected',updated_at=? WHERE id=?").run(name,JSON.stringify(folders),time,id);else db.prepare("INSERT INTO vault_sources(id,workspace_id,name,root_path,task_folders_json,created_at,updated_at) VALUES(?,?,?,?,?,?,?)").run(id,workspaceId,name,root,JSON.stringify(folders),time,time);return getVaultSource(id,workspaceId,db)}
 export function getVaultSource(id,workspaceId,db=getDatabase()){const row=sourceRow(id,workspaceId,db);return {...row,taskFolders:JSON.parse(row.task_folders_json),lastResult:row.last_result_json?JSON.parse(row.last_result_json):null}}
 export function listVaultSources(workspaceId,db=getDatabase()){return db.prepare("SELECT id FROM vault_sources WHERE workspace_id=? ORDER BY name").all(workspaceId).map(row=>getVaultSource(row.id,workspaceId,db))}
+function cleanTag(str){return String(str||"").replace(/^#+/,"").replace(/[^a-zA-Z0-9_\-]/g,"").toLowerCase()}
+function humanize(str){if(!str)return "";let s=String(str).replace(/([a-z])([A-Z])/g,"$1 $2").replace(/([A-Z]+)([A-Z][a-z])/g,"$1 $2");s=s.replace(/^(SEM|Sem|Semester)(\d+)$/i,"Semester $2");return s.trim()}
+export function ensureVaultMOCs(sourceId,relativePath,input={},actor,db=getDatabase()){
+  const source=sourceRow(sourceId,actor.workspaceId,db),root=source.root_path;
+  const parts=safeRelativePath(relativePath).split("/");
+  const fileName=parts.pop();
+  const noteTitle=input.title||title(input.content||"",fileName)||basename(fileName,".md");
+  if(fileName.toLowerCase().includes("moc")||fileName===`${parts[parts.length-1]}.md`)return;
+  const subGroupFolders=new Set(["kelas","class","lecture","lab","laboratory","uts","uas","exam","quiz","post-uts","pre-uts","review","session","session1","session2","session3","session4","session5","session6","session7","session8","session9","session10","session11","session12","session13","session14"]);
+  let courseFolderIndex=parts.length-1;
+  while(courseFolderIndex>0&&(subGroupFolders.has(parts[courseFolderIndex].toLowerCase())||/^session\s*\d+$/i.test(parts[courseFolderIndex])||/^week\s*\d+$/i.test(parts[courseFolderIndex]))){
+    courseFolderIndex--;
+  }
+  let section="## 📚 Class notes (Kelas)";
+  const fullPathLower=relativePath.toLowerCase();
+  if(fullPathLower.includes("/lab/")||fullPathLower.includes("/lab"))section="## 🧪 Lab";
+  else if(fullPathLower.includes("/uts/")||fullPathLower.includes("/uas/")||fullPathLower.includes("/exam/"))section="## 📝 Exam";
+  else if(fullPathLower.includes("idea"))section="## Bank";
+  else if(fullPathLower.includes("trading")||fullPathLower.includes("report"))section="## Reports";
+  let parentMocTitle="Home";
+  for(let i=0;i<=courseFolderIndex;i++){
+    const dirRel=parts.slice(0,i+1).join("/");
+    const dirName=parts[i];
+    const dirAbs=join(root,dirRel);
+    if(!existsSync(dirAbs))mkdirSync(dirAbs,{recursive:true});
+    const files=readdirSync(dirAbs).filter(f=>f.endsWith(".md"));
+    let mocFile=files.find(f=>{
+      const base=basename(f,".md").toLowerCase(),dirLower=dirName.toLowerCase();
+      return base===dirLower||base===humanize(dirName).toLowerCase()||base==="moc"||base==="index"||(dirLower.startsWith("sem")&&base.startsWith("sem"));
+    });
+    let mocRelPath,mocTitle,mocAbsPath;
+    if(mocFile){
+      mocRelPath=`${dirRel}/${mocFile}`;
+      mocAbsPath=join(root,mocRelPath);
+      mocTitle=basename(mocFile,".md");
+    }else{
+      const isSemester=/^sem(\d+)$/i.test(dirName)||/^semester\s*(\d+)$/i.test(dirName);
+      const isUniversity=i===0&&/^(university|college|kuliah|studies|academics)$/i.test(dirName);
+      const isInstitution=(i===1&&/^(university|college|kuliah)$/i.test(parts[0].toLowerCase()))||/^(binus|mit|harvard|stanford|itb|ui|ugm)$/i.test(dirName);
+      const isPersonal=/^(personal|life|journal)$/i.test(dirName);
+      const isTrading=/^(trading|stocks|crypto|finance)$/i.test(dirName);
+      let emoji="🗺️",tagsList=["moc"],secName="## Notes";
+      if(isSemester){
+        const numMatch=dirName.match(/\d+/),semNum=numMatch?numMatch[0]:"";
+        emoji="📗";mocTitle=`Semester ${semNum} — Map of Content`;mocFile=`SEM ${semNum}.md`;tagsList.push("semester",`sem${semNum}`);secName="## Courses";
+      }else if(isInstitution){
+        emoji="🎓";mocTitle=`${dirName} — Map of Content`;mocFile=`${dirName}.md`;tagsList.push("university",cleanTag(dirName));secName="## Semesters";
+      }else if(isUniversity){
+        emoji="🎓";mocTitle="University — Map of Content";mocFile="University.md";tagsList.push("domain","university");secName="## Areas";
+      }else if(isPersonal){
+        emoji="🏠";mocTitle="Personal — Map of Content";mocFile="Personal.md";tagsList.push("domain","personal");secName="## Areas";
+      }else if(isTrading){
+        emoji="📈";mocTitle="Trading — Map of Content";mocFile="Trading.md";tagsList.push("domain","trading");secName="## Reports";
+      }else{
+        const hName=humanize(dirName);emoji="🗺️";mocTitle=`${hName} — Map of Content`;mocFile=`${hName}.md`;tagsList.push("course",cleanTag(dirName));secName="## 📚 Class notes (Kelas)";
+      }
+      mocRelPath=`${dirRel}/${mocFile}`;mocAbsPath=join(root,mocRelPath);
+      const backlinkStr=parentMocTitle?`\n\n→ [[${parentMocTitle}]]\n`:"";
+      const mocBody=`---\ntags: [${tagsList.join(", ")}]\n---\n# ${emoji} ${mocTitle}\n\nHub note for ${humanize(dirName)}.\n\n${secName}\n-\n${backlinkStr}`;
+      atomicWrite(mocAbsPath,mocBody);
+    }
+    if(i===courseFolderIndex){
+      try{
+        let content=readFileSync(mocAbsPath,"utf8");
+        const link=`[[${noteTitle}]]`;
+        if(!content.includes(link)&&!content.includes(`[[${basename(fileName,".md")}]]`)){
+          if(content.includes(section)){
+            const secIdx=content.indexOf(section)+section.length;
+            content=content.slice(0,secIdx)+`\n- ${link}`+content.slice(secIdx);
+          }else{
+            const backlinkIdx=content.indexOf("→ [[");
+            if(backlinkIdx>-1)content=content.slice(0,backlinkIdx)+`\n${section}\n- ${link}\n\n`+content.slice(backlinkIdx);
+            else content=content+`\n\n${section}\n- ${link}\n`;
+          }
+          content=content.replace(/-\s*\n\s*- \[\[/g,"- [[");
+          atomicWrite(mocAbsPath,content);
+        }
+      }catch{}
+    }else{
+      const nextDirName=parts[i+1],nextHuman=humanize(nextDirName),nextIsSemester=/^sem(\d+)$/i.test(nextDirName)||/^semester\s*(\d+)$/i.test(nextDirName);
+      const nextSemNum=nextDirName.match(/\d+/)?.[0];
+      const childLinkName=nextIsSemester?`SEM ${nextSemNum}`:nextHuman;
+      const childLink=`[[${childLinkName}]]`;
+      try{
+        let content=readFileSync(mocAbsPath,"utf8");
+        if(!content.includes(childLink)&&!content.includes(`[[${nextDirName}]]`)){
+          const secToUse=nextIsSemester?"## Semesters":"## Courses";
+          if(content.includes(secToUse)){
+            const secIdx=content.indexOf(secToUse)+secToUse.length;
+            content=content.slice(0,secIdx)+`\n- ${childLink}`+content.slice(secIdx);
+          }else{
+            const backlinkIdx=content.indexOf("→ [[");
+            if(backlinkIdx>-1)content=content.slice(0,backlinkIdx)+`\n${secToUse}\n- ${childLink}\n\n`+content.slice(backlinkIdx);
+            else content=content+`\n\n${secToUse}\n- ${childLink}\n`;
+          }
+          content=content.replace(/-\s*\n\s*- \[\[/g,"- [[");
+          atomicWrite(mocAbsPath,content);
+        }
+      }catch{}
+    }
+    parentMocTitle=basename(mocFile||"",".md").replace(/\s*—\s*Map of Content/i,"").trim()||dirName;
+  }
+  return parentMocTitle;
+}
 export function updateVaultSource(id,input,workspaceId,db=getDatabase()){const source=sourceRow(id,workspaceId,db),name=String(input.name||source.name).trim();if(!name||name.length>200)throw fail("Vault source name is required");const folders=(input.taskFolders??JSON.parse(source.task_folders_json)).map(value=>safeRelativePath(String(value).replace(/\/$/,""))+"/");db.prepare("UPDATE vault_sources SET name=?,task_folders_json=?,updated_at=? WHERE id=?").run(name,JSON.stringify([...new Set(folders)]),now(),id);return getVaultSource(id,workspaceId,db)}
-export function createVaultNote(sourceId,input,actor,db=getDatabase()){const source=sourceRow(sourceId,actor.workspaceId,db),relativePath=safeRelativePath(String(input.relativePath||""));if(extname(relativePath).toLowerCase()!==".md")throw fail("Vault note path must end in .md");const path=vaultPath(source.root_path,relativePath);if(existsSync(path))throw fail("Vault note already exists",409);const heading=basename(relativePath,".md").replaceAll("-"," "),content=String(input.content||`# ${heading}\n\n`);if(Buffer.byteLength(content)>2_000_000)throw fail("Vault note is too large");atomicWrite(path,content);scanVault(sourceId,actor,db);const entry=db.prepare("SELECT note_id FROM vault_entries WHERE source_id=? AND relative_path=? AND deleted_at IS NULL").get(sourceId,relativePath);return {noteId:entry.note_id,relativePath}}
+export function createVaultNote(sourceId,input,actor,db=getDatabase()){
+  const source=sourceRow(sourceId,actor.workspaceId,db),relativePath=safeRelativePath(String(input.relativePath||""));
+  if(extname(relativePath).toLowerCase()!==".md")throw fail("Vault note path must end in .md");
+  const path=vaultPath(source.root_path,relativePath);
+  if(existsSync(path))throw fail("Vault note already exists",409);
+  const heading=basename(relativePath,".md").replaceAll("-"," ");
+  let content=String(input.content||`# ${heading}\n\n`);
+  const noteTags=Array.isArray(input.tags)?input.tags.map(t=>String(t).replace(/^#+/,"").trim()).filter(Boolean):[];
+  if(noteTags.length>0){
+    if(!content.startsWith("---")){
+      content=`---\ntags: [${noteTags.join(", ")}]\n---\n${content}`;
+    }else{
+      const fmMatch=content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
+      if(fmMatch&&!/(?:tags|tag):/i.test(fmMatch[1])){
+        content=content.replace(/^---\r?\n/,`---\ntags: [${noteTags.join(", ")}]\n`);
+      }
+    }
+  }
+  if(Buffer.byteLength(content)>2_000_000)throw fail("Vault note is too large");
+  atomicWrite(path,content);
+  try{ensureVaultMOCs(sourceId,relativePath,{title:input.title||heading,content,tags:noteTags},actor,db)}catch{}
+  scanVault(sourceId,actor,db);
+  const entry=db.prepare("SELECT note_id FROM vault_entries WHERE source_id=? AND relative_path=? AND deleted_at IS NULL").get(sourceId,relativePath);
+  return {noteId:entry.note_id,relativePath};
+}
 export function vaultTree(sourceId,workspaceId,db=getDatabase()){sourceRow(sourceId,workspaceId,db);const entries=db.prepare("SELECT relative_path,note_id,sync_state FROM vault_entries WHERE source_id=? AND deleted_at IS NULL ORDER BY relative_path").all(sourceId),root={name:"",path:"",folders:[],notes:[]};for(const entry of entries){const parts=entry.relative_path.split("/"),file=parts.pop();let node=root,path="";for(const part of parts){path=path?`${path}/${part}`:part;let next=node.folders.find(folder=>folder.name===part);if(!next){next={name:part,path,folders:[],notes:[]};node.folders.push(next)}node=next}node.notes.push({name:file,path:entry.relative_path,noteId:entry.note_id,syncState:entry.sync_state})}return root}
 export function listVaultFolders(sourceId,workspaceId,db=getDatabase()){const root=realpathSync(sourceRow(sourceId,workspaceId,db).root_path),folders=[];function walk(path,relativePath,depth){if(depth>12||folders.length>=2000)return;for(const entry of readdirSync(path,{withFileTypes:true})){if(!entry.isDirectory()||entry.isSymbolicLink()||entry.name.startsWith("."))continue;const next=join(path,entry.name),rel=relativePath?`${relativePath}/${entry.name}`:entry.name;if(realpathSync(next)!==next)continue;folders.push(rel);walk(next,rel,depth+1)}}walk(root,"",0);return folders.sort()}
 export function resolveVaultNotePath(sourceId,proposedPath,workspaceId,db=getDatabase()){
