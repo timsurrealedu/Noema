@@ -107,6 +107,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
   const alphaRef = useRef<number>(1.0);
   const animIdRef = useRef<number | null>(null);
   const isInteractingRef = useRef<boolean>(false);
+  const initialFittedRef = useRef<boolean>(false);
 
   // Camera Viewport
   const cameraRef = useRef({ x: 0, y: 0, zoom: 1.0 });
@@ -211,6 +212,40 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
   const reheat = useCallback((amount = 0.5) => {
     alphaRef.current = Math.max(alphaRef.current, amount);
   }, []);
+
+  // Fit camera to view all nodes
+  const fitToView = useCallback(() => {
+    const canvas = canvasRef.current;
+    const nodes = nodesRef.current;
+    if (!canvas || !nodes.length) return;
+
+    const rect = canvas.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;
+
+    let minX = Infinity,
+      maxX = -Infinity,
+      minY = Infinity,
+      maxY = -Infinity;
+
+    for (const n of nodes) {
+      minX = Math.min(minX, n.x - n.radius * 2);
+      maxX = Math.max(maxX, n.x + n.radius * 2);
+      minY = Math.min(minY, n.y - n.radius * 2);
+      maxY = Math.max(maxY, n.y + n.radius * 2);
+    }
+
+    const boundsW = Math.max(maxX - minX + 140, 160);
+    const boundsH = Math.max(maxY - minY + 140, 160);
+
+    const fitZoom = Math.max(0.25, Math.min(1.3, Math.min(rect.width / boundsW, rect.height / boundsH) * 0.85));
+
+    cameraRef.current = {
+      x: (minX + maxX) / 2,
+      y: (minY + maxY) / 2,
+      zoom: fitZoom,
+    };
+    reheat(0.1);
+  }, [reheat]);
 
   // Step physics simulation by 1 tick
   const runPhysicsStep = useCallback((nodes: SimNode[], edges: SimEdge[], alpha: number) => {
@@ -356,7 +391,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     const newNodes: SimNode[] = visibleNodes.map((n, i) => {
       const existing = existingMap.get(n.id);
       const degree = nodeDegrees[n.id] || 0;
-      const baseRadius = Math.max(6, Math.min(18, 6 + Math.sqrt(degree) * 3));
+      const baseRadius = Math.max(7, Math.min(20, 7 + Math.sqrt(degree) * 3));
 
       if (existing) {
         return {
@@ -370,7 +405,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
 
       // Golden ratio spiral for even, pleasing initial dispersion
       const phi = i * 2.39996323; // Golden angle in radians
-      const r = Math.min(220, 25 + Math.sqrt(i) * 24);
+      const r = Math.min(240, 30 + Math.sqrt(i) * 26);
       return {
         ...n,
         x: Math.cos(phi) * r,
@@ -403,8 +438,13 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     nodesRef.current = newNodes;
     edgesRef.current = newEdges;
 
+    if (!initialFittedRef.current && newNodes.length > 0) {
+      initialFittedRef.current = true;
+      setTimeout(() => fitToView(), 50);
+    }
+
     reheat(0.6);
-  }, [visibleNodes, visibleEdges, nodeDegrees, runPhysicsStep, reheat]);
+  }, [visibleNodes, visibleEdges, nodeDegrees, runPhysicsStep, reheat, fitToView]);
 
   // Read Theme Colors
   const getThemePalette = useCallback(() => {
@@ -442,11 +482,12 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     return { x: wx, y: wy };
   }, []);
 
-  // Hit test node in world space
+  // Hit test node in world space with generous clickable area
   const getNodeAt = useCallback(
     (wx: number, wy: number) => {
       const nodes = nodesRef.current;
-      const hitPadding = 8 / cameraRef.current.zoom;
+      // Generous hit padding so small nodes are effortless to click/drag
+      const hitPadding = Math.max(12, 16 / cameraRef.current.zoom);
       for (let i = nodes.length - 1; i >= 0; i--) {
         const n = nodes[i];
         const r = n.radius * nodeScale + hitPadding;
@@ -473,16 +514,26 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     alphaRef.current = alpha * 0.985;
   }, [physicsRunning, runPhysicsStep]);
 
-  // Main Render Loop
+  // Main Render Loop (Always razor sharp at native device pixel ratio)
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    const dpr = window.devicePixelRatio || 1;
-    const width = canvas.width / dpr;
-    const height = canvas.height / dpr;
+    const rect = canvas.getBoundingClientRect();
+    const dpr = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+
+    // Keep internal buffer synchronized with CSS display size
+    const targetWidth = Math.max(10, Math.floor(rect.width * dpr));
+    const targetHeight = Math.max(10, Math.floor(rect.height * dpr));
+    if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+      canvas.width = targetWidth;
+      canvas.height = targetHeight;
+    }
+
+    const width = rect.width;
+    const height = rect.height;
     const cam = cameraRef.current;
     const palette = getThemePalette();
 
@@ -509,7 +560,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
       const startX = Math.floor(minX / gridSize) * gridSize;
       const startY = Math.floor(minY / gridSize) * gridSize;
 
-      ctx.fillStyle = "rgba(146, 131, 116, 0.12)";
+      ctx.fillStyle = "rgba(146, 131, 116, 0.14)";
       for (let x = startX; x <= maxX; x += gridSize) {
         for (let y = startY; y <= maxY; y += gridSize) {
           ctx.fillRect(x - 1, y - 1, 2, 2);
@@ -642,7 +693,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
       const shouldDrawLabel =
         showLabels === "always" ||
         (showLabels === "hover" && (isActive || isNeighbor)) ||
-        cam.zoom > 1.3 ||
+        cam.zoom > 1.2 ||
         n.degree >= 3;
 
       if (shouldDrawLabel && showLabels !== "off" && alpha > 0.3) {
@@ -717,8 +768,8 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     const updateSize = () => {
       const rect = container.getBoundingClientRect();
       const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.floor(rect.width * dpr);
-      canvas.height = Math.floor(rect.height * dpr);
+      canvas.width = Math.max(10, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(10, Math.floor(rect.height * dpr));
       canvas.style.width = `${rect.width}px`;
       canvas.style.height = `${rect.height}px`;
       reheat(0.3);
@@ -894,37 +945,6 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     reheat(0.05);
   };
 
-  const fitToView = () => {
-    const canvas = canvasRef.current;
-    const nodes = nodesRef.current;
-    if (!canvas || !nodes.length) return;
-
-    const rect = canvas.getBoundingClientRect();
-    let minX = Infinity,
-      maxX = -Infinity,
-      minY = Infinity,
-      maxY = -Infinity;
-
-    for (const n of nodes) {
-      minX = Math.min(minX, n.x - n.radius);
-      maxX = Math.max(maxX, n.x + n.radius);
-      minY = Math.min(minY, n.y - n.radius);
-      maxY = Math.max(maxY, n.y + n.radius);
-    }
-
-    const boundsW = Math.max(maxX - minX + 80, 100);
-    const boundsH = Math.max(maxY - minY + 80, 100);
-
-    const fitZoom = Math.max(0.2, Math.min(1.8, Math.min(rect.width / boundsW, rect.height / boundsH) * 0.9));
-
-    cameraRef.current = {
-      x: (minX + maxX) / 2,
-      y: (minY + maxY) / 2,
-      zoom: fitZoom,
-    };
-    reheat(0.1);
-  };
-
   const resetCamera = () => {
     cameraRef.current = { x: 0, y: 0, zoom: 1.0 };
     reheat(0.1);
@@ -935,7 +955,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     const total = nodes.length;
     nodes.forEach((n, i) => {
       const phi = i * 2.39996323;
-      const r = Math.min(220, 25 + Math.sqrt(i) * 24);
+      const r = Math.min(240, 30 + Math.sqrt(i) * 26);
       n.x = Math.cos(phi) * r;
       n.y = Math.sin(phi) * r;
       n.vx = (Math.random() - 0.5) * 2;
@@ -944,6 +964,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     });
     cameraRef.current = { x: 0, y: 0, zoom: 1.0 };
     reheat(0.8);
+    fitToView();
   };
 
   const choose = (node: Node) => {
@@ -1069,359 +1090,390 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
           aria-label="Interactive knowledge graph"
           style={{ position: "relative", minHeight: "590px", display: "flex", flexDirection: "column" }}
         >
-          {loading ? (
-            <p role="status">Synchronizing graph…</p>
-          ) : visibleNodes.length ? (
-            <div
-              ref={containerRef}
-              className={`graph-canvas-viewport ${isInteractingRef.current ? "is-dragging" : ""}`}
-              style={{
-                position: "relative",
-                width: "100%",
-                height: "100%",
-                flex: 1,
-                minHeight: "580px",
-                overflow: "hidden",
-                touchAction: "none",
-                cursor: hoveredNode ? "grab" : "default",
-              }}
-            >
-              <canvas
-                ref={canvasRef}
-                role="img"
-                aria-label={`Interactive knowledge graph with ${visibleNodes.length} nodes and ${visibleEdges.length} connections. Drag nodes to simulate physics, use scroll to zoom, drag empty space to pan.`}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onWheel={handleWheel}
-                onDoubleClick={handleDoubleClick}
-                style={{ display: "block", width: "100%", height: "100%" }}
-              />
+          {/* Viewport & Canvas is always mounted so dimensions and high-DPI scaling remain razor sharp */}
+          <div
+            ref={containerRef}
+            className={`graph-canvas-viewport ${isInteractingRef.current ? "is-dragging" : ""}`}
+            style={{
+              position: "relative",
+              width: "100%",
+              height: "100%",
+              flex: 1,
+              minHeight: "580px",
+              overflow: "hidden",
+              touchAction: "none",
+              cursor: hoveredNode ? "pointer" : "grab",
+            }}
+          >
+            <canvas
+              ref={canvasRef}
+              role="img"
+              aria-label={`Interactive knowledge graph with ${visibleNodes.length} nodes and ${visibleEdges.length} connections. Drag nodes to simulate physics, use scroll to zoom, drag empty space to pan.`}
+              onPointerDown={handlePointerDown}
+              onPointerMove={handlePointerMove}
+              onPointerUp={handlePointerUp}
+              onWheel={handleWheel}
+              onDoubleClick={handleDoubleClick}
+              style={{ display: "block", width: "100%", height: "100%" }}
+            />
 
-              {/* Obsidian-like Floating HUD Control Drawer (Top Left) */}
-              <div className="graph-hud-overlay">
-                <button
-                  type="button"
-                  className={`secondary icon-button ${hudOpen ? "active" : ""}`}
-                  aria-label="Graph settings & physics controls"
-                  title="Graph settings & physics controls"
-                  onClick={() => setHudOpen((v) => !v)}
-                  style={{ width: "36px", height: "36px", borderRadius: "var(--r-sm)" }}
-                >
-                  <SlidersHorizontal />
-                </button>
+            {/* Loading Overlay */}
+            {loading && (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "grid",
+                  placeItems: "center",
+                  background: "rgba(29, 32, 33, 0.65)",
+                  backdropFilter: "blur(4px)",
+                  zIndex: 5,
+                }}
+              >
+                <p role="status" style={{ color: "var(--muted)", fontWeight: "500" }}>
+                  Synchronizing graph…
+                </p>
+              </div>
+            )}
 
-                {hudOpen && (
-                  <div className="graph-hud-panel" role="region" aria-label="Graph display and physics controls">
-                    <div className="graph-hud-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-                      <strong style={{ fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}>
-                        <Sparkle /> Graph Settings
-                      </strong>
-                      <button className="icon-button" style={{ width: "24px", height: "24px" }} onClick={() => setHudOpen(false)} aria-label="Close settings">
-                        <X />
-                      </button>
-                    </div>
+            {/* Empty State Overlay */}
+            {!loading && visibleNodes.length === 0 && (
+              <div
+                className="empty-state"
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  zIndex: 4,
+                }}
+              >
+                <ShareNetwork />
+                <h3>No connected objects yet</h3>
+                <p>Create tasks, notes, or links to populate the graph.</p>
+              </div>
+            )}
 
-                    <div className="graph-hud-tabs" role="tablist">
-                      <button
-                        role="tab"
-                        aria-selected={hudTab === "forces"}
-                        className={hudTab === "forces" ? "active" : ""}
-                        onClick={() => setHudTab("forces")}
-                      >
-                        Forces
-                      </button>
-                      <button
-                        role="tab"
-                        aria-selected={hudTab === "display"}
-                        className={hudTab === "display" ? "active" : ""}
-                        onClick={() => setHudTab("display")}
-                      >
-                        Display
-                      </button>
-                      <button
-                        role="tab"
-                        aria-selected={hudTab === "filters"}
-                        className={hudTab === "filters" ? "active" : ""}
-                        onClick={() => setHudTab("filters")}
-                      >
-                        Filters
-                      </button>
-                    </div>
+            {/* Obsidian-like Floating HUD Control Drawer (Top Left) */}
+            <div className="graph-hud-overlay">
+              <button
+                type="button"
+                className={`secondary icon-button ${hudOpen ? "active" : ""}`}
+                aria-label="Graph settings & physics controls"
+                title="Graph settings & physics controls"
+                onClick={() => setHudOpen((v) => !v)}
+                style={{ width: "36px", height: "36px", borderRadius: "var(--r-sm)" }}
+              >
+                <SlidersHorizontal />
+              </button>
 
-                    {hudTab === "forces" && (
-                      <div className="graph-hud-tab-content">
-                        <div className="graph-slider-row">
-                          <label>
-                            <span>Center force</span>
-                            <small>{centerForce.toFixed(2)}</small>
-                          </label>
-                          <input
-                            type="range"
-                            min="0"
-                            max="1"
-                            step="0.05"
-                            value={centerForce}
-                            onChange={(e) => {
-                              setCenterForce(parseFloat(e.target.value));
-                              reheat(0.5);
-                            }}
-                          />
-                        </div>
-
-                        <div className="graph-slider-row">
-                          <label>
-                            <span>Repulsion force</span>
-                            <small>{repulsionForce}</small>
-                          </label>
-                          <input
-                            type="range"
-                            min="30"
-                            max="400"
-                            step="10"
-                            value={repulsionForce}
-                            onChange={(e) => {
-                              setRepulsionForce(parseInt(e.target.value, 10));
-                              reheat(0.6);
-                            }}
-                          />
-                        </div>
-
-                        <div className="graph-slider-row">
-                          <label>
-                            <span>Link distance</span>
-                            <small>{linkDistance}px</small>
-                          </label>
-                          <input
-                            type="range"
-                            min="40"
-                            max="200"
-                            step="5"
-                            value={linkDistance}
-                            onChange={(e) => {
-                              setLinkDistance(parseInt(e.target.value, 10));
-                              reheat(0.5);
-                            }}
-                          />
-                        </div>
-
-                        <div className="graph-slider-row">
-                          <label>
-                            <span>Link strength</span>
-                            <small>{linkStrength.toFixed(2)}</small>
-                          </label>
-                          <input
-                            type="range"
-                            min="0.1"
-                            max="1.0"
-                            step="0.05"
-                            value={linkStrength}
-                            onChange={(e) => {
-                              setLinkStrength(parseFloat(e.target.value));
-                              reheat(0.5);
-                            }}
-                          />
-                        </div>
-
-                        <div className="graph-slider-row">
-                          <label>
-                            <span>Friction / Damping</span>
-                            <small>{damping.toFixed(2)}</small>
-                          </label>
-                          <input
-                            type="range"
-                            min="0.65"
-                            max="0.94"
-                            step="0.02"
-                            value={damping}
-                            onChange={(e) => {
-                              setDamping(parseFloat(e.target.value));
-                              reheat(0.3);
-                            }}
-                          />
-                        </div>
-
-                        <div style={{ display: "flex", gap: "6px", marginTop: "12px" }}>
-                          <button
-                            type="button"
-                            className="secondary"
-                            style={{ flex: 1, padding: "6px 8px", fontSize: "0.75rem" }}
-                            onClick={() => resetGraphLayout()}
-                          >
-                            <ArrowClockwise /> Scramble layout
-                          </button>
-                          <button
-                            type="button"
-                            className="secondary"
-                            style={{ flex: 1, padding: "6px 8px", fontSize: "0.75rem" }}
-                            onClick={() => {
-                              setCenterForce(0.4);
-                              setRepulsionForce(160);
-                              setLinkDistance(90);
-                              setLinkStrength(0.45);
-                              setDamping(0.82);
-                              reheat(0.8);
-                            }}
-                          >
-                            Reset physics
-                          </button>
-                        </div>
-                      </div>
-                    )}
-
-                    {hudTab === "display" && (
-                      <div className="graph-hud-tab-content">
-                        <div className="graph-slider-row">
-                          <label>
-                            <span>Node size</span>
-                            <small>{nodeScale.toFixed(1)}x</small>
-                          </label>
-                          <input
-                            type="range"
-                            min="0.5"
-                            max="2.2"
-                            step="0.1"
-                            value={nodeScale}
-                            onChange={(e) => setNodeScale(parseFloat(e.target.value))}
-                          />
-                        </div>
-
-                        <div className="graph-slider-row">
-                          <label>
-                            <span>Line thickness</span>
-                            <small>{linkScale.toFixed(1)}x</small>
-                          </label>
-                          <input
-                            type="range"
-                            min="0.5"
-                            max="2.5"
-                            step="0.1"
-                            value={linkScale}
-                            onChange={(e) => setLinkScale(parseFloat(e.target.value))}
-                          />
-                        </div>
-
-                        <div className="graph-slider-row">
-                          <label>
-                            <span>Labels</span>
-                          </label>
-                          <div style={{ display: "flex", gap: "4px" }}>
-                            {(["always", "hover", "off"] as const).map((m) => (
-                              <button
-                                key={m}
-                                type="button"
-                                className={showLabels === m ? "active" : "secondary"}
-                                style={{ flex: 1, padding: "4px", fontSize: "0.72rem", textTransform: "capitalize" }}
-                                onClick={() => setShowLabels(m)}
-                              >
-                                {m}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-
-                        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px" }}>
-                          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-                            <input
-                              type="checkbox"
-                              checked={showArrows}
-                              onChange={(e) => setShowArrows(e.target.checked)}
-                            />
-                            <span>Directional link arrows</span>
-                          </label>
-                          <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
-                            <input
-                              type="checkbox"
-                              checked={showGrid}
-                              onChange={(e) => setShowGrid(e.target.checked)}
-                            />
-                            <span>Background dot grid</span>
-                          </label>
-                        </div>
-                      </div>
-                    )}
-
-                    {hudTab === "filters" && (
-                      <div className="graph-hud-tab-content">
-                        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
-                          <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Toggle Types:</span>
-                          <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
-                            {availableTypes.map((t) => (
-                              <button
-                                key={t}
-                                type="button"
-                                className={types.includes(t) ? "active" : "secondary"}
-                                style={{ padding: "4px 8px", fontSize: "0.72rem", borderRadius: "999px" }}
-                                onClick={() => {
-                                  setTypes((cur) =>
-                                    cur.includes(t) ? cur.filter((item) => item !== t) : [...cur, t]
-                                  );
-                                  reheat(0.6);
-                                }}
-                              >
-                                {t}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      </div>
-                    )}
+              {hudOpen && (
+                <div className="graph-hud-panel" role="region" aria-label="Graph display and physics controls">
+                  <div className="graph-hud-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                    <strong style={{ fontSize: "0.85rem", display: "flex", alignItems: "center", gap: "6px" }}>
+                      <Sparkle /> Graph Settings
+                    </strong>
+                    <button className="icon-button" style={{ width: "24px", height: "24px" }} onClick={() => setHudOpen(false)} aria-label="Close settings">
+                      <X />
+                    </button>
                   </div>
-                )}
-              </div>
 
-              {/* Floating Bottom Navigation Controls */}
-              <div className="graph-floating-nav">
-                <button
-                  type="button"
-                  aria-label={physicsRunning ? "Pause physics" : "Play physics"}
-                  title={physicsRunning ? "Pause physics simulation" : "Resume physics simulation"}
-                  onClick={() => {
-                    setPhysicsRunning((v) => !v);
-                    if (!physicsRunning) reheat(0.6);
-                  }}
-                >
-                  {physicsRunning ? <Pause /> : <Play />}
-                </button>
-                <span style={{ width: "1px", height: "16px", background: "var(--border)" }} />
-                <button type="button" aria-label="Zoom in" title="Zoom in" onClick={zoomIn}>
-                  <Plus />
-                </button>
-                <button type="button" aria-label="Zoom out" title="Zoom out" onClick={zoomOut}>
-                  <Minus />
-                </button>
-                <button type="button" aria-label="Fit graph to view" title="Fit all nodes to view" onClick={fitToView}>
-                  <ArrowsIn />
-                </button>
-                <button type="button" aria-label="Reset camera" title="Reset camera to center" onClick={resetCamera}>
-                  <ArrowClockwise />
-                </button>
-              </div>
+                  <div className="graph-hud-tabs" role="tablist">
+                    <button
+                      role="tab"
+                      aria-selected={hudTab === "forces"}
+                      className={hudTab === "forces" ? "active" : ""}
+                      onClick={() => setHudTab("forces")}
+                    >
+                      Forces
+                    </button>
+                    <button
+                      role="tab"
+                      aria-selected={hudTab === "display"}
+                      className={hudTab === "display" ? "active" : ""}
+                      onClick={() => setHudTab("display")}
+                    >
+                      Display
+                    </button>
+                    <button
+                      role="tab"
+                      aria-selected={hudTab === "filters"}
+                      className={hudTab === "filters" ? "active" : ""}
+                      onClick={() => setHudTab("filters")}
+                    >
+                      Filters
+                    </button>
+                  </div>
 
-              {/* Hover Tooltip Card */}
-              {hoveredNode && (
-                <div
-                  className="graph-node-tooltip"
-                  style={{
-                    left: `${hoveredNode.x}px`,
-                    top: `${hoveredNode.y}px`,
-                  }}
-                >
-                  <i style={{ background: defaultTypeColors[hoveredNode.node.type] || "var(--primary)" }} />
-                  <strong>{hoveredNode.node.label}</strong>
-                  <small>
-                    {hoveredNode.node.type} · {hoveredNode.node.degree} links
-                  </small>
+                  {hudTab === "forces" && (
+                    <div className="graph-hud-tab-content">
+                      <div className="graph-slider-row">
+                        <label>
+                          <span>Center force</span>
+                          <small>{centerForce.toFixed(2)}</small>
+                        </label>
+                        <input
+                          type="range"
+                          min="0"
+                          max="1"
+                          step="0.05"
+                          value={centerForce}
+                          onChange={(e) => {
+                            setCenterForce(parseFloat(e.target.value));
+                            reheat(0.5);
+                          }}
+                        />
+                      </div>
+
+                      <div className="graph-slider-row">
+                        <label>
+                          <span>Repulsion force</span>
+                          <small>{repulsionForce}</small>
+                        </label>
+                        <input
+                          type="range"
+                          min="30"
+                          max="400"
+                          step="10"
+                          value={repulsionForce}
+                          onChange={(e) => {
+                            setRepulsionForce(parseInt(e.target.value, 10));
+                            reheat(0.6);
+                          }}
+                        />
+                      </div>
+
+                      <div className="graph-slider-row">
+                        <label>
+                          <span>Link distance</span>
+                          <small>{linkDistance}px</small>
+                        </label>
+                        <input
+                          type="range"
+                          min="40"
+                          max="200"
+                          step="5"
+                          value={linkDistance}
+                          onChange={(e) => {
+                            setLinkDistance(parseInt(e.target.value, 10));
+                            reheat(0.5);
+                          }}
+                        />
+                      </div>
+
+                      <div className="graph-slider-row">
+                        <label>
+                          <span>Link strength</span>
+                          <small>{linkStrength.toFixed(2)}</small>
+                        </label>
+                        <input
+                          type="range"
+                          min="0.1"
+                          max="1.0"
+                          step="0.05"
+                          value={linkStrength}
+                          onChange={(e) => {
+                            setLinkStrength(parseFloat(e.target.value));
+                            reheat(0.5);
+                          }}
+                        />
+                      </div>
+
+                      <div className="graph-slider-row">
+                        <label>
+                          <span>Friction / Damping</span>
+                          <small>{damping.toFixed(2)}</small>
+                        </label>
+                        <input
+                          type="range"
+                          min="0.65"
+                          max="0.94"
+                          step="0.02"
+                          value={damping}
+                          onChange={(e) => {
+                            setDamping(parseFloat(e.target.value));
+                            reheat(0.3);
+                          }}
+                        />
+                      </div>
+
+                      <div style={{ display: "flex", gap: "6px", marginTop: "12px" }}>
+                        <button
+                          type="button"
+                          className="secondary"
+                          style={{ flex: 1, padding: "6px 8px", fontSize: "0.75rem" }}
+                          onClick={() => resetGraphLayout()}
+                        >
+                          <ArrowClockwise /> Scramble layout
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary"
+                          style={{ flex: 1, padding: "6px 8px", fontSize: "0.75rem" }}
+                          onClick={() => {
+                            setCenterForce(0.4);
+                            setRepulsionForce(160);
+                            setLinkDistance(90);
+                            setLinkStrength(0.45);
+                            setDamping(0.82);
+                            reheat(0.8);
+                            fitToView();
+                          }}
+                        >
+                          Reset physics
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {hudTab === "display" && (
+                    <div className="graph-hud-tab-content">
+                      <div className="graph-slider-row">
+                        <label>
+                          <span>Node size</span>
+                          <small>{nodeScale.toFixed(1)}x</small>
+                        </label>
+                        <input
+                          type="range"
+                          min="0.5"
+                          max="2.2"
+                          step="0.1"
+                          value={nodeScale}
+                          onChange={(e) => setNodeScale(parseFloat(e.target.value))}
+                        />
+                      </div>
+
+                      <div className="graph-slider-row">
+                        <label>
+                          <span>Line thickness</span>
+                          <small>{linkScale.toFixed(1)}x</small>
+                        </label>
+                        <input
+                          type="range"
+                          min="0.5"
+                          max="2.5"
+                          step="0.1"
+                          value={linkScale}
+                          onChange={(e) => setLinkScale(parseFloat(e.target.value))}
+                        />
+                      </div>
+
+                      <div className="graph-slider-row">
+                        <label>
+                          <span>Labels</span>
+                        </label>
+                        <div style={{ display: "flex", gap: "4px" }}>
+                          {(["always", "hover", "off"] as const).map((m) => (
+                              <button
+                              key={m}
+                              type="button"
+                              className={showLabels === m ? "active" : "secondary"}
+                              style={{ flex: 1, padding: "4px", fontSize: "0.72rem", textTransform: "capitalize" }}
+                              onClick={() => setShowLabels(m)}
+                            >
+                              {m}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "10px" }}>
+                        <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                          <input
+                            type="checkbox"
+                            checked={showArrows}
+                            onChange={(e) => setShowArrows(e.target.checked)}
+                          />
+                          <span>Directional link arrows</span>
+                        </label>
+                        <label style={{ display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                          <input
+                            type="checkbox"
+                            checked={showGrid}
+                            onChange={(e) => setShowGrid(e.target.checked)}
+                          />
+                          <span>Background dot grid</span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {hudTab === "filters" && (
+                    <div className="graph-hud-tab-content">
+                      <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                        <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>Toggle Types:</span>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "4px" }}>
+                          {availableTypes.map((t) => (
+                            <button
+                              key={t}
+                              type="button"
+                              className={types.includes(t) ? "active" : "secondary"}
+                              style={{ padding: "4px 8px", fontSize: "0.72rem", borderRadius: "999px" }}
+                              onClick={() => {
+                                setTypes((cur) =>
+                                  cur.includes(t) ? cur.filter((item) => item !== t) : [...cur, t]
+                                );
+                                reheat(0.6);
+                              }}
+                            >
+                              {t}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          ) : (
-            <div className="empty-state">
-              <ShareNetwork />
-              <h3>No connected objects yet</h3>
-              <p>Create tasks, notes, or links to populate the graph.</p>
+
+            {/* Floating Bottom Navigation Controls */}
+            <div className="graph-floating-nav">
+              <button
+                type="button"
+                aria-label={physicsRunning ? "Pause physics" : "Play physics"}
+                title={physicsRunning ? "Pause physics simulation" : "Resume physics simulation"}
+                onClick={() => {
+                  setPhysicsRunning((v) => !v);
+                  if (!physicsRunning) reheat(0.6);
+                }}
+              >
+                {physicsRunning ? <Pause /> : <Play />}
+              </button>
+              <span style={{ width: "1px", height: "16px", background: "var(--border)" }} />
+              <button type="button" aria-label="Zoom in" title="Zoom in" onClick={zoomIn}>
+                <Plus />
+              </button>
+              <button type="button" aria-label="Zoom out" title="Zoom out" onClick={zoomOut}>
+                <Minus />
+              </button>
+              <button type="button" aria-label="Fit graph to view" title="Fit all nodes to view" onClick={fitToView}>
+                <ArrowsIn />
+              </button>
+              <button type="button" aria-label="Reset camera" title="Reset camera to center" onClick={resetCamera}>
+                <ArrowClockwise />
+              </button>
             </div>
-          )}
+
+            {/* Hover Tooltip Card */}
+            {hoveredNode && (
+              <div
+                className="graph-node-tooltip"
+                style={{
+                  left: `${hoveredNode.x}px`,
+                  top: `${hoveredNode.y}px`,
+                }}
+              >
+                <i style={{ background: defaultTypeColors[hoveredNode.node.type] || "var(--primary)" }} />
+                <strong>{hoveredNode.node.label}</strong>
+                <small>
+                  {hoveredNode.node.type} · {hoveredNode.node.degree} links
+                </small>
+              </div>
+            )}
+          </div>
         </section>
 
         {/* Node Inspector Panel */}
