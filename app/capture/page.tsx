@@ -191,7 +191,9 @@ function formatProposalSummary(capture: Capture): string {
   if (notes.length > 0) {
     if (notes.length === 1) {
       const note = notes[0];
-      const detailStr = note.detail ? formatFriendlyTime(note.detail) : "";
+      const detailStr = note.type === "vault" && note.detail
+        ? ` → ${note.detail}`
+        : note.detail && note.detail !== "No due date" ? formatFriendlyTime(note.detail) : "";
       const detail = detailStr ? ` · ${detailStr}` : "";
       parts.push(`1 note${detail}`);
     } else {
@@ -203,7 +205,7 @@ function formatProposalSummary(capture: Capture): string {
 }
 
 function getAmbiguities(capture: Capture): string[] {
-  const list: string[] = [];
+  const list: string[] = [...(capture.clarifications || [])];
   if (capture.objects) {
     for (const obj of capture.objects) {
       if (obj.confidence !== undefined && obj.confidence < 0.8) {
@@ -663,7 +665,7 @@ export default function CaptureInbox() {
                               <div>
                                 <small>{object.type === "vault" ? "Vault note" : object.type}</small>
                                 <strong>{object.title}</strong>
-                                <p>{formatFriendlyTime(object.detail)}</p>
+                                <p>{object.type === "vault" && object.detail && object.detail !== object.title ? `→ ${object.detail}` : formatFriendlyTime(object.detail)}</p>
                               </div>
                             </article>
                           ))}
@@ -763,7 +765,7 @@ export default function CaptureInbox() {
                         <div>
                           <small>{object.type === "vault" ? "Vault note" : object.type}</small>
                           <strong>{object.title}</strong>
-                          <p>{formatFriendlyTime(object.detail)}</p>
+                          <p>{object.type === "vault" && object.detail && object.detail !== object.title ? `→ ${object.detail}` : formatFriendlyTime(object.detail)}</p>
                         </div>
                         <CheckCircle aria-label="Ready to confirm" />
                       </article>

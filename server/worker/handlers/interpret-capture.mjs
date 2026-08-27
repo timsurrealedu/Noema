@@ -5,6 +5,7 @@ import {extractStructuredImage,extractText,structuredImageToMarkdown} from "../.
 import {reminderOffsets,getSettings} from "../../settings.mjs";
 import {addJobEvent,assertNotCancelled,failJob,finishJob} from "../../jobs.mjs";
 import {assetsForCapture} from "../../objects.mjs";
+import {listVaultFolders,safeRelativePath} from "../../vault.mjs";
 
 const nullableString={anyOf:[{type:"string"},{type:"null"}]};
 const common={id:{type:"string",minLength:1,maxLength:100},confidence:{type:"number",minimum:0,maximum:1},sourceReferences:{type:"array",maxItems:20,items:{type:"string",minLength:1,maxLength:500}}};
@@ -16,9 +17,16 @@ export const captureProposalSchema={type:"object",additionalProperties:false,req
 ] }},clarifications:{type:"array",maxItems:20,items:{type:"string",minLength:1,maxLength:1000}}}};
 export const codexCaptureProposalSchema={type:"object",additionalProperties:false,required:["schemaVersion","summary","actionsJson","clarifications"],properties:{schemaVersion:{type:"integer",enum:[1]},summary:{type:"string"},actionsJson:{type:"string"},clarifications:{type:"array",items:{type:"string"}}}};
 export function captureProposalInstructions(reminderOffsets=[60,30]){return `In actionsJson, return a JSON array. Each item must have id, type, confidence, sourceReferences, and arguments. type is exactly task.create, event.create, note.create, or vault.note.create; sourceReferences cites only supplied Source IDs. task arguments: title, dueAt|null, project|null, linkedActionId|null. event arguments: title, startAt, endAt, timezone, location|null, reminders. note arguments: title, content, tags. vault.note arguments: sourceId, relativePath, title, content, tags. Interpret every stated clock time in the supplied Time zone and return a full ISO 8601 timestamp with its UTC offset. Use a date-only value only when the capture gives a date but no clock time. When a capture implies BOTH a task and a calendar event for it (deadlines, meetings with prep, classes with homework), emit BOTH actions and set the task's linkedActionId to the event action id (or vice versa) so they are linked symmetrically. For timed events when the user does not specify reminders, use these default reminder offsets in minutes: ${JSON.stringify(reminderOffsets)}.`}
+export function vaultPlacementInstructions(){return `Vault note placement rules:
+- The user's vault folder list is supplied below. It reflects their real organization; never assume a fixed structure.
+- Route the note through existing folders when the topic clearly matches one (education under the study/university tree, work under the work tree, and so on). Follow the folder hierarchy the user already keeps.
+- When the natural parent exists but the specific subfolder does not, extend it by creating deeper folders that mirror how the user named things (for example Semester 3, a course folder, a class/session folder).
+- Create at most 3 new nested folders for one note, keep paths at most 6 levels deep, name folders in the capture's language, and never duplicate an existing folder at the same level under a different name.
+- If nothing matches, place the note under an existing general folder or the vault root rather than inventing a parallel top-level tree.
+- relativePath must be a forward-slash path ending in .md, for example Uni/BINUS/Sem3/Network Penetration Testing/Kelas/Session 1/Information Gathering.md.`}
 export function parseActionsJson(value){const text=String(value||"").trim();if(!text.startsWith("["))throw new Error("actionsJson must be an array");let depth=0,string=false,escaped=false;for(let index=0;index<text.length;index++){const char=text[index];if(string){if(escaped)escaped=false;else if(char==="\\")escaped=true;else if(char==='"')string=false;continue}if(char==='"')string=true;else if(char==="[")depth++;else if(char==="]"&&!--depth)return JSON.parse(text.slice(0,index+1))}throw new Error("actionsJson is incomplete")}
 const validTimezones=new Set(Intl.supportedValuesOf("timeZone"));
-export function validateProposal(proposal,sources){
+export function validateProposal(proposal,sources,vaultSourceIds=null){
   const ids=new Set();
   for(const action of proposal.actions){
     if(ids.has(action.id))throw new Error(`Duplicate action id: ${action.id}`);
@@ -31,10 +39,32 @@ export function validateProposal(proposal,sources){
       if(!validTimezones.has(action.arguments.timezone))throw new Error("Invalid event timezone");
     }
     if(action.type==="task.create"&&action.arguments.dueAt&&Number.isNaN(new Date(action.arguments.dueAt).valueOf()))throw new Error("Invalid task due time");
-    if(action.type==="vault.note.create"&&!action.sourceReferences.includes(`vault:${action.arguments.sourceId}`))throw new Error("Vault note must cite its target vault source");
+    if(action.type==="vault.note.create"){
+      if(!action.sourceReferences.includes(`vault:${action.arguments.sourceId}`))throw new Error("Vault note must cite its target vault source");
+      if(vaultSourceIds&&!vaultSourceIds.has(action.arguments.sourceId))throw new Error(`Vault note targets unknown vault source: ${action.arguments.sourceId}`);
+      try{safeRelativePath(action.arguments.relativePath)}catch{throw new Error("Vault note path is invalid; use Folder/Subfolder/Note Title.md")}
+      if(!action.arguments.relativePath.toLowerCase().endsWith(".md"))throw new Error("Vault note path must end in .md");
+      if(action.arguments.relativePath.split("/").length>8)throw new Error("Vault note nesting exceeds 8 levels");
+    }
   }
   for(const action of proposal.actions){const linked=action.arguments.linkedActionId;if(linked&&!ids.has(linked))throw new Error(`Unknown linked action: ${linked}`)}
   return proposal;
+}
+
+export function vaultFolderContext(vaultTargets,folderIndex,budget=4000){
+  const blocks=[];let used=0,truncated=false;
+  for(const target of vaultTargets){
+    const folders=folderIndex.get(target.id)||[],header=`Source ID: vault:${target.id}\nConnected vault: ${target.name}\nFolders (${folders.length}):`;
+    const lines=[header];used+=header.length;
+    for(const folder of folders){
+      const line=`${folder}/`;
+      if(used+line.length+1>budget){truncated=true;break}
+      lines.push(line);used+=line.length+1;
+    }
+    blocks.push(lines.join("\n"));
+    if(truncated)break;
+  }
+  return {text:blocks.join("\n\n"),truncated};
 }
 
 export function buildCaptureInput(capture,attachments,budget){
@@ -60,9 +90,11 @@ export async function handleInterpretCapture({job,config,db}){
         continue;
       }
       const extracted=await extractText(asset,config).catch(()=>null);attachments.push(extracted?`Source ${source}: ${asset.name} (extracted with ${extracted.tool})\n${extracted.text}`:`Source ${source}: ${asset.name} (${asset.mime}; no deterministic text extraction available)`)}
-    const vaultTargets=db.prepare("SELECT id,name FROM vault_sources WHERE workspace_id=? AND state='connected' ORDER BY name").all(job.workspace_id),vaultContext=vaultTargets.map(target=>{const source=`vault:${target.id}`;sources.add(source);return `Source ID: ${source}\nConnected vault: ${target.name}`}).join("\n\n"),now=new Date().toISOString(),timezone=config.timezone||Intl.DateTimeFormat().resolvedOptions().timeZone,{text:dynamic,truncated}=buildCaptureInput({id:job.input.captureId,...capture},attachments,config.captureMaxInputChars||24000),routing=vaultContext?`A connected vault is available below. Use vault.note.create only for durable knowledge notes, with its sourceId and source reference. Use note.create for local notes.\n\n${vaultContext}\n\n`:"",prompt=`Interpret this Noema capture into proposed actions. Do not perform actions. Preserve the original language. Use ISO 8601 timestamps with offsets and IANA time zones. Every sourceReferences value must use a supplied Source ID. If required scheduling information is ambiguous, add a clarification and omit that action. Return only the required structured result.\n\n${captureProposalInstructions(reminderOffsets(job.input.userId,db))}\n\nCurrent time: ${now}\nTime zone: ${timezone}\n\n${routing}${dynamic}`;
-    const output=await runAI({prompt,cwd:resolve(config.jobsDir,job.id),schema:captureProposalSchema,codexSchema:codexCaptureProposalSchema,geminiSchema:codexCaptureProposalSchema,config,profile:job.input.profile||job.profile||"fast",maxOutputTokens:config.captureMaxOutputTokens||2000,workload:capture.source==="file"||capture.text.length>1000?"note":"schedule",validate:result=>validateProposal(result.actionsJson?{...result,actions:parseActionsJson(result.actionsJson)}:result,sources),onEvent:event=>{assertNotCancelled(job.id,db);addJobEvent(job.id,"ai",{type:event.type,provider:event.provider,model:event.model},db);if(event.type==="provider.completed"||event.type==="provider.failed")db.prepare("INSERT INTO ai_runs(job_id,profile,provider,model,input_tokens,output_tokens,duration_ms,outcome,fallback_reason,truncated,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)").run(job.id,job.input.profile||"fast",event.provider,event.model,event.usage?.inputTokens??null,event.usage?.outputTokens??null,event.durationMs||0,event.type==="provider.completed"?"success":"failed",event.reason||null,truncated?1:0,new Date().toISOString())}});
-    assertNotCancelled(job.id,db);const result=output.result;if(truncated)result.clarifications=[...result.clarifications,"Some capture content was omitted from AI processing because it exceeded the configured input limit. Review the original capture before applying."];const proposal=saveInterpretation(job.input.captureId,result,db),captureVersion=db.prepare("SELECT version FROM captures WHERE id=?").get(job.input.captureId).version;finishJob(job.id,{provider:output.provider,model:output.model,durationMs:output.durationMs,truncated,captureVersion,...proposal},db);
+    const vaultTargets=db.prepare("SELECT id,name,workspace_id FROM vault_sources WHERE workspace_id=? AND state='connected' ORDER BY name").all(job.workspace_id),vaultFolderIndex=new Map(vaultTargets.map(target=>[target.id,listVaultFolders(target.id,target.workspace_id,db)])),{text:vaultContext,truncated:vaultContextTruncated}=vaultFolderContext(vaultTargets,vaultFolderIndex,config.captureMaxVaultFoldersChars||4000);
+    for(const target of vaultTargets)sources.add(`vault:${target.id}`);
+    const now=new Date().toISOString(),timezone=config.timezone||Intl.DateTimeFormat().resolvedOptions().timeZone,{text:dynamic,truncated}=buildCaptureInput({id:job.input.captureId,...capture},attachments,config.captureMaxInputChars||24000),routing=vaultContext?`A connected vault is available below. Use vault.note.create only for durable knowledge notes, with its sourceId and source reference. Use note.create for local notes. Choose relativePath following the placement rules.\n\n${vaultContext}${vaultContextTruncated?"\n(folder list truncated; prefer folders shown above)":""}\n\n${vaultPlacementInstructions()}\n\n`:"",prompt=`Interpret this Noema capture into proposed actions. Do not perform actions. Preserve the original language. Use ISO 8601 timestamps with offsets and IANA time zones. Every sourceReferences value must use a supplied Source ID. If required scheduling information is ambiguous, add a clarification and omit that action. Return only the required structured result.\n\n${captureProposalInstructions(reminderOffsets(job.input.userId,db))}\n\nCurrent time: ${now}\nTime zone: ${timezone}\n\n${routing}${dynamic}`;
+    const output=await runAI({prompt,cwd:resolve(config.jobsDir,job.id),schema:captureProposalSchema,codexSchema:codexCaptureProposalSchema,geminiSchema:codexCaptureProposalSchema,config,profile:job.input.profile||job.profile||"fast",maxOutputTokens:config.captureMaxOutputTokens||2000,workload:capture.source==="file"||capture.text.length>1000?"note":"schedule",validate:result=>validateProposal(result.actionsJson?{...result,actions:parseActionsJson(result.actionsJson)}:result,sources,new Set(vaultTargets.map(target=>target.id))),onEvent:event=>{assertNotCancelled(job.id,db);addJobEvent(job.id,"ai",{type:event.type,provider:event.provider,model:event.model},db);if(event.type==="provider.completed"||event.type==="provider.failed")db.prepare("INSERT INTO ai_runs(job_id,profile,provider,model,input_tokens,output_tokens,duration_ms,outcome,fallback_reason,truncated,created_at) VALUES(?,?,?,?,?,?,?,?,?,?,?)").run(job.id,job.input.profile||"fast",event.provider,event.model,event.usage?.inputTokens??null,event.usage?.outputTokens??null,event.durationMs||0,event.type==="provider.completed"?"success":"failed",event.reason||null,truncated?1:0,new Date().toISOString())}});
+    assertNotCancelled(job.id,db);const result=output.result;if(truncated)result.clarifications=[...result.clarifications,"Some capture content was omitted from AI processing because it exceeded the configured input limit. Review the original capture before applying."];if(vaultContextTruncated)result.clarifications=[...result.clarifications,"Only part of the vault folder list was shown to the AI; verify the proposed note location before applying."];const proposal=saveInterpretation(job.input.captureId,result,db),captureVersion=db.prepare("SELECT version FROM captures WHERE id=?").get(job.input.captureId).version;finishJob(job.id,{provider:output.provider,model:output.model,durationMs:output.durationMs,truncated,captureVersion,...proposal},db);
     // Optional auto-apply (F5.3): only for trusted patterns — every action confident and nothing ambiguous.
     try{
       const userId=job.input.userId||db.prepare("SELECT user_id FROM workspace_members WHERE workspace_id=? AND revoked_at IS NULL LIMIT 1").get(job.workspace_id)?.user_id;

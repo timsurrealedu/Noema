@@ -7,7 +7,7 @@ import {enqueueJob} from "./jobs.mjs";
 import {recordConflict} from "./collaboration.mjs";
 import {prepareVaultTaskWriteback} from "./vault-task-writeback.mjs";
 import {reminderOffsets} from "./settings.mjs";
-import {createVaultNote,sourceRoot,trashVaultEntry} from "./vault.mjs";
+import {createVaultNote,resolveVaultNotePath,sourceRoot,trashVaultEntry} from "./vault.mjs";
 import {copyFileSync,mkdirSync} from "node:fs";
 import {dirname,extname,join} from "node:path";
 import {occurrences,untilRule} from "./recurrence.mjs";
@@ -16,8 +16,9 @@ const stamp=()=>new Date().toISOString();
 const formatSize=bytes=>bytes>1024*1024?`${(bytes/1048576).toFixed(1)} MB`:`${Math.max(1,Math.round(bytes/1024))} KB`;
 const fileKind=type=>type?.startsWith("image/")?"Image":type?.startsWith("audio/")?"Audio":type?.startsWith("text/")?"Text":type==="application/pdf"?"Document":type==="application/vnd.openxmlformats-officedocument.wordprocessingml.document"?"Document":"File";
 const parse=value=>{try{return JSON.parse(value)}catch{return []}};
-const captureActionDetail=(type,args)=>{if(type==="event")return `${args.startAt} · ${args.timezone}`;if(type==="task")return args.dueAt||args.project||"No due date";return (args.content||"").slice(0,140)};
-const captureObjects=value=>{const parsed=parse(value),actions=Array.isArray(parsed)?parsed:parsed.actions||[];return actions.map(action=>{if(!action.type.includes(".")){return action}const type=action.type.split(".")[0],args=action.arguments;return {...action,type,title:args.title,detail:captureActionDetail(type,args)}})};
+const captureActionDetail=(type,args)=>{if(type==="event")return `${args.startAt} · ${args.timezone}`;if(type==="task")return args.dueAt||args.project||"No due date";if(type==="vault")return args.relativePath||args.title;return (args.content||"").slice(0,140)};
+const captureObjects=value=>{const parsed=parse(value),actions=Array.isArray(parsed)?parsed:parsed.actions||[];return actions.map(action=>{if(!action.type.includes(".")){return action}const type=action.type==="vault.note.create"?"vault":action.type.split(".")[0],args=action.arguments;return {...action,type,title:args.title,detail:captureActionDetail(type,args)}})};
+const captureClarifications=value=>{const parsed=parse(value);return Array.isArray(parsed)||!parsed.clarifications?[]:parsed.clarifications.map(item=>String(item)).slice(0,20)};
 const required=(value,name,max=10000)=>{if(typeof value!=="string"||!value.trim())throw new Error(`${name} is required`);if(value.length>max)throw new Error(`${name} is too long`);return value.trim()};
 const timestamp=value=>{if(!value)return null;const date=new Date(value);if(Number.isNaN(date.getTime()))throw new Error("reminderAt must be a valid date");return date.toISOString()};
 const dueLabel=value=>value?new Intl.DateTimeFormat("en",{dateStyle:"medium"}).format(new Date(value)):"No date";
@@ -60,7 +61,7 @@ export function listState(db=getDatabase(),workspaceId=null){const filter=worksp
     tasks,
     events,
     notes,
-    captures:captureRows.map(row=>({id:row.id,text:row.text,source:row.source,status:row.status,sourceLabel:row.source_label,objects:captureObjects(row.objects_json),error:row.error,assets:(captureAssetsMap.get(row.id)||[]).map(asset=>({id:asset.id,name:asset.name,mime:asset.mime,size:asset.size})),handwriting:handwritingCaptureMap.get(row.id)||null,createdAt:row.created_at,version:row.version})),
+    captures:captureRows.map(row=>({id:row.id,text:row.text,source:row.source,status:row.status,sourceLabel:row.source_label,objects:captureObjects(row.objects_json),clarifications:captureClarifications(row.objects_json),error:row.error,assets:(captureAssetsMap.get(row.id)||[]).map(asset=>({id:asset.id,name:asset.name,mime:asset.mime,size:asset.size})),handwriting:handwritingCaptureMap.get(row.id)||null,createdAt:row.created_at,version:row.version})),
     projects:db.prepare(`SELECT * FROM projects${filter} ORDER BY name`).all(...args),
     taskDependencies:db.prepare(`SELECT d.task_id AS taskId,d.depends_on_task_id AS dependsOnTaskId,d.created_at AS createdAt FROM task_dependencies d JOIN tasks t ON t.id=d.task_id${workspaceId?" WHERE t.workspace_id=?":""}`).all(...args),
     noteLinks:db.prepare(`SELECT l.source_note_id AS sourceNoteId,l.target_note_id AS targetNoteId,l.link_text AS linkText,l.created_at AS createdAt FROM note_links l JOIN notes n ON n.id=l.source_note_id${workspaceId?" WHERE n.workspace_id=?":""}`).all(...args),
@@ -218,7 +219,7 @@ function applyCaptureAction(action,captureId,db,actor){
   }
   else if(type==="event"){const reminder=action.arguments?.reminders?.[0],reminderAt=reminder?new Date(new Date(args.startAt).getTime()-reminder.offsetMinutes*60000).toISOString():null;object=saveEvent(action.arguments?{id,title:args.title,startAt:args.startAt,endAt:args.endAt,timezone:args.timezone,location:args.location,reminderAt}:{id,title:args.title,day:new Date().getDay(),time:"09:00",top:0,height:58},db,actor)}
   else if(action.type==="vault.note.create"){
-    const assets=assetsForCapture(captureId,db,actorInfo(actor).workspaceId).filter(asset=>asset.mime.startsWith("image/")),root=sourceRoot(args.sourceId,actorInfo(actor).workspaceId,db),attachmentNoteId=randomUUID(),attachments=assets.map(asset=>{const path=`Attachments/Noema/${attachmentNoteId}/${asset.id}${extname(asset.name)||".img"}`;mkdirSync(dirname(join(root,path)),{recursive:true});copyFileSync(assetPath(asset.sha256),join(root,path));return {asset,path}}),content=[args.content||`# ${args.title}\n\n`,...attachments.map(({path})=>`![](${path})`)].join("\n\n"),vault=createVaultNote(args.sourceId,{relativePath:args.relativePath,content},actor,db),note=findOwned(db,"notes",vault.noteId,actorInfo(actor).workspaceId);
+    const context=actorInfo(actor),relativePath=resolveVaultNotePath(args.sourceId,args.relativePath,context.workspaceId,db),assets=assetsForCapture(captureId,db,context.workspaceId).filter(asset=>asset.mime.startsWith("image/")),root=sourceRoot(args.sourceId,context.workspaceId,db),attachmentNoteId=randomUUID(),attachments=assets.map(asset=>{const path=`Attachments/Noema/${attachmentNoteId}/${asset.id}${extname(asset.name)||".img"}`;mkdirSync(dirname(join(root,path)),{recursive:true});copyFileSync(assetPath(asset.sha256),join(root,path));return {asset,path}}),content=[args.content||`# ${args.title}\n\n`,...attachments.map(({path})=>`![](${path})`)].join("\n\n"),vault=createVaultNote(args.sourceId,{relativePath,content},actor,db),note=findOwned(db,"notes",vault.noteId,context.workspaceId);
     for(const {asset,path} of attachments)db.prepare("INSERT INTO note_assets(note_id,asset_id,relative_path,workspace_id) VALUES(?,?,?,?)").run(note.id,asset.id,path,actorInfo(actor).workspaceId);
     object={...note,sourceId:args.sourceId,relativePath:vault.relativePath};type="vault-note";
   }else object=saveNote({id,title:args.title,content:args.content||args.detail||args.title,tags:args.tags||[],ai:true,source:`Capture ${captureId}`},db,actor);
