@@ -149,7 +149,7 @@ export function KnowledgeGraphView({ onOpenNote }: { onOpenNote?: (noteId: strin
     setError("");
     try {
       const data = await request(
-        `/api/v1/knowledge-graph?limit=120&depth=2${nextRoot ? `&root=${encodeURIComponent(nextRoot)}` : ""}`
+        `/api/v1/knowledge-graph?limit=1000&depth=2${nextRoot ? `&root=${encodeURIComponent(nextRoot)}` : ""}`
       );
       setGraph(data);
       setSelected((current) => data.nodes.find((node: Node) => node.id === current?.id) || null);
