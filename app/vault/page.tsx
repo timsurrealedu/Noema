@@ -66,13 +66,13 @@ export default function VaultPage(){
     const param=new URLSearchParams(location.search).get("open");
     if(!param)return;
     const note=findNoteByNameOrId(param);
-    if(note)void openNote(note);
+    if(note)void openNote(note,false);
     else{
       fetch(`/api/v1/notes/${encodeURIComponent(param)}`)
         .then(async r=>{
           if(!r.ok)return;
           const data=await r.json();
-          if(data&&data.id)void openNote(data);
+          if(data&&data.id)void openNote(data,false);
         })
         .catch(()=>{});
     }
@@ -80,6 +80,17 @@ export default function VaultPage(){
 
   useEffect(()=>{if(draft?.id)loadOptimizations(draft.id).catch(()=>{})},[draft?.id]);
   useEffect(()=>{const params=new URLSearchParams(location.search);if(folder)params.set("folder",folder);else params.delete("folder");history.replaceState(null,"",`${location.pathname}${params.size?`?${params}`:""}`)},[folder]);
+  useEffect(()=>{
+    const restore=()=>{
+      const params=new URLSearchParams(location.search),open=params.get("open");
+      setFolder(params.get("folder")||"");
+      if(!open){setDraft(null);return}
+      const note=findNoteByNameOrId(open);
+      if(note&&note.id!==draftRef.current?.id)void openNote(note,false);
+    };
+    addEventListener("popstate",restore);
+    return()=>removeEventListener("popstate",restore);
+  },[notes]);
   useEffect(()=>{draftRef.current=draft},[draft]);
   useEffect(()=>{
     const warn=(event:BeforeUnloadEvent)=>{if(mixedDirty||titleDirty){event.preventDefault();event.returnValue="";}};
@@ -132,10 +143,14 @@ export default function VaultPage(){
       const parent=draft.relativePath.split("/").slice(0,-1).join("/");
       setFolder(parent);
     }
+    const params=new URLSearchParams(location.search);
+    params.delete("open");
+    params.delete("ink");
+    history.replaceState(null,"",`${location.pathname}${params.size?`?${params}`:""}`);
     setDraft(null);
   }
 
-  async function openNote(note:Note){
+  async function openNote(note:Note,addHistory=true){
     const fallback=`# ${note.title}\n\n${note.excerpt}`;
     setOpenError("");
     let loaded={...note};
@@ -153,6 +168,14 @@ export default function VaultPage(){
     if(loaded.relativePath&&loaded.relativePath.includes("/")){
       const parent=loaded.relativePath.split("/").slice(0,-1).join("/");
       setFolder(parent);
+    }
+    if(addHistory){
+      const params=new URLSearchParams(location.search);
+      const parent=loaded.relativePath?.includes("/")?loaded.relativePath.split("/").slice(0,-1).join("/"):"";
+      if(parent)params.set("folder",parent);else params.delete("folder");
+      params.set("open",loaded.id);
+      params.delete("ink");
+      history.pushState(null,"",`${location.pathname}?${params}`);
     }
     setDraft({...loaded,tags:mergedTags});
   }

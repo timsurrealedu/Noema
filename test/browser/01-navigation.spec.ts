@@ -1,4 +1,7 @@
 import {expect,test} from "@playwright/test";
+import {mkdtempSync,mkdirSync,rmSync,writeFileSync} from "node:fs";
+import {tmpdir} from "node:os";
+import {join} from "node:path";
 
 test("primary product routes render without runtime errors",async({page})=>{
   test.setTimeout(90_000);
@@ -28,6 +31,34 @@ test("Home uses the shared mobile navigation and More menu",async({page})=>{
   await expect(navigation.getByRole("link",{name:"Coding"})).toHaveCount(0);
   await navigation.getByRole("button",{name:"More"}).click();
   await expect(page.getByRole("dialog",{name:"More navigation"})).toBeVisible();
+});
+
+test("mobile back from a note returns to its vault folder",async({page})=>{
+  const vault=mkdtempSync(join(tmpdir(),"noema-vault-back-")),folder=join(vault,"Projects");
+  mkdirSync(folder);writeFileSync(join(folder,"Mobile back.md"),"# Mobile back\n");
+  try{
+    await page.setViewportSize({width:390,height:844});
+    await page.goto("/login");
+    await page.getByLabel("Email address").fill("owner@example.com");
+    await page.getByLabel("Password").fill("correct horse battery staple");
+    await page.getByRole("button",{name:"Continue securely"}).click();
+    await expect(page).toHaveURL("/");
+    await page.evaluate(async rootPath=>{
+      const response=await fetch("/api/v1/vault-sources",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({rootPath,name:"Back gesture vault"})});
+      if(!response.ok)throw new Error(await response.text());
+      const source=await response.json();
+      const sync=await fetch(`/api/v1/vault-sources/${source.id}/sync`,{method:"POST"});
+      if(!sync.ok)throw new Error(await sync.text());
+    },vault);
+    await page.goto("/vault?folder=Projects");
+    const note=page.getByRole("button",{name:"Mobile back Projects/Mobile back.md",exact:true});
+    await note.click();
+    await expect(page).toHaveURL(/\/vault\?folder=Projects&open=/);
+    await page.goBack();
+    await expect(page).toHaveURL(/\/vault\?folder=Projects$/);
+    await expect(page.getByRole("heading",{name:"Projects"})).toBeVisible();
+    await expect(note).toBeVisible();
+  }finally{rmSync(vault,{recursive:true,force:true})}
 });
 
 test("Home desktop keeps Coding inside More and Settings owns theme switching",async({page})=>{
