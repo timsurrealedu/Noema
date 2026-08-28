@@ -856,7 +856,8 @@ html[data-nav-dir="back"] .module-main{animation:noema-enter-back .18s var(--eas
 .module-main:has(.note-workspace),
 .module-main:has(.mixed-workspace),
 .module-main:has(.compiler-container),
-.module-main:has(.capture-inbox){animation:none}
+.module-main:has(.capture-inbox),
+.module-main:has(.calendar-layout){animation:none}
 .module-main:has(.mobile-action-dock){animation:none}
 
 /* ===== Press feedback — buttons and nav links =====
@@ -1023,7 +1024,18 @@ article.task-subtask{padding-left:34px;font-size:.88rem}
   .calendar-layout>.day-view{height:auto}
   .calendar-layout>.month-scroll{overflow:auto}
   .month-scroll>.month-view{grid-template-rows:minmax(42px,auto);grid-auto-rows:minmax(92px,1fr);min-height:100%}
-  .calendar-layout>.mobile-agenda-view{padding:16px clamp(16px,2vw,28px);overflow:auto}
+.calendar-layout>.mobile-agenda-view{padding:16px clamp(16px,2vw,28px);overflow:auto}
+}
+
+/* Event editor: stable viewport drawer with one scrollable content region. */
+.calendar-inspector{display:flex;height:min(760px,calc(100dvh - 112px));max-height:calc(100dvh - 112px);overflow:hidden;box-sizing:border-box}
+.calendar-inspector>.object-inspector-head{flex:none}
+.calendar-inspector>form{min-height:0;overflow-y:auto;overscroll-behavior:contain;padding-right:4px}
+.calendar-inspector .inspector-actions{position:sticky;bottom:0;z-index:2;background:var(--surface)}
+@media(max-width:820px){
+  .calendar-inspector{position:fixed;top:auto;right:0;bottom:calc(72px + env(safe-area-inset-bottom));left:0;height:min(82dvh,720px);max-height:calc(100dvh - 88px - env(safe-area-inset-bottom))}
+  .calendar-inspector>form{padding-right:0}
+  .calendar-inspector .inspector-actions{background:var(--bg)}
 }
 
 /* Day view all-day row and live now-line */
