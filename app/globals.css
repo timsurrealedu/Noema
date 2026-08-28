@@ -1111,8 +1111,8 @@ article.task-subtask{padding-left:34px;font-size:.88rem}
 
 /* Persistent mobile shell: fixed navigation owns the bottom edge on every route. */
 @media(max-width:820px){
-  body>.mobile-nav{contain:layout paint;transform:translateZ(0)}
-  body>.mobile-nav>a,body>.mobile-nav>button{height:72px;flex-basis:20%;contain:layout paint}
+  body>.mobile-nav{contain:layout;isolation:isolate;transform:translate3d(0,0,0);backface-visibility:hidden;will-change:transform}
+  body>.mobile-nav>a,body>.mobile-nav>button{height:72px;flex:1 1 20%;min-width:0}
   body>.mobile-nav span{display:block;height:14px;line-height:14px}
   body:has(.note-workspace)>.mobile-nav,body:has(.mixed-workspace)>.mobile-nav,body:has(.fullscreen)>.mobile-nav{display:none!important}
   .capture-list-pane{padding-bottom:calc(136px + env(safe-area-inset-bottom));box-sizing:border-box}
@@ -1123,5 +1123,6 @@ article.task-subtask{padding-left:34px;font-size:.88rem}
   .calendar-layout>.week,.calendar-layout>.day-view,.calendar-layout>.month-scroll{flex:1;height:auto;min-height:0;max-height:none}
   .calendar-layout>.week{display:flex;min-width:0;overflow:hidden}
   .calendar-layout>.week .week-scroll{flex:1;height:auto;min-height:0;overflow:auto}
+  .calendar-layout>.week .week-day-column{touch-action:auto!important}
   .calendar-layout>.month-scroll{height:auto;overflow:auto}
 }
