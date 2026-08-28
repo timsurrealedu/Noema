@@ -211,15 +211,16 @@ test("image captures are read visually with structured equations and tables",()=
   assert.match(extract,/extractStructuredImage/);assert.match(extract,/tables:\{type:"array"/);assert.match(extract,/structuredImageToMarkdown/);
   assert.match(interpreter,/extractStructuredImage/);assert.match(interpreter,/structuredImageToMarkdown/);
 });
-test("camera quick action batches multiple photos into one interpreted capture",()=>{
-  const home=read("app/page.tsx"),state=read("app/components/AppState.tsx");
-  assert.match(home,/capture="environment"/);assert.match(home,/multiple/);assert.match(home,/addFileCaptures/);
-  assert.match(state,/addFileCaptures:\(files/);
+test("home capture uses the plus menu for photos without a redundant camera action",()=>{
+  const home=read("app/page.tsx");
+  assert.match(home,/className="capture-add"/);assert.match(home,/fileInput\.current\?\.click\(\)/);
+  assert.doesNotMatch(home,/capture-camera|Take photos to capture/);
 });
-test("captures can skip AI and stay raw with a device default",()=>{
+test("home captures always enter AI interpretation",()=>{
   const home=read("app/page.tsx"),settingsPage=read("app/settings/page.tsx");
-  assert.match(home,/noema-auto-interpret/);assert.match(home,/autoInterpret\?addAndInterpretCapture\(text\):addCapture\(text\)/);
-  assert.match(settingsPage,/Interpret captures with AI/);
+  assert.match(home,/setReviewId\(addAndInterpretCapture\(text\)\)/);
+  assert.doesNotMatch(home,/noema-auto-interpret|capture-auto-interpret|AI interpretation (?:on|off)/);
+  assert.doesNotMatch(settingsPage,/Interpret captures with AI|AutoInterpretDefault/);
 });
 test("inbox surfaces pending handwriting processing",()=>{
   const page=read("app/capture/page.tsx");assert.match(page,/process-pending/);assert.match(page,/Process inbox/);
@@ -439,6 +440,13 @@ test("Applying a capture proposal carries full calendar fields into local state"
   assert.match(state,/scheduledStartAt:object\.scheduledStartAt\?\?object\.scheduled_start_at\?\?undefined/);
   // Tasks linked to an event render as that event, never as a duplicate calendar chip.
   assert.match(state,/!task\.eventId&&\(task\.dueAt\|\|task\.scheduledStartAt\)/);
+});
+
+test("capture review supports durable edits, linked selection, revision, and selected apply",()=>{
+  const state=read("app/components/AppState.tsx"),page=read("app/capture/page.tsx"),proposal=read("app/api/v1/captures/[id]/proposal/route.ts"),apply=read("app/api/v1/captures/[id]/apply/route.ts");
+  assert.match(state,/saveCaptureProposal/);assert.match(state,/actionIds/);assert.match(proposal,/updateCaptureProposal/);assert.match(apply,/applyCaptureInterpretation/);
+  for(const copy of ["Confirm selected","Archive capture","Edited by you","Answer a clarification or tell Noema what to change","Revise proposal"])assert.match(page,new RegExp(copy));
+  assert.match(page,/linkedActionId/);assert.match(page,/selectedActions/);assert.match(page,/Object type/);assert.match(page,/Markdown path/);
 });
 test("Calendar only opens selected-date details when that date has items",()=>{const page=read("app/calendar/page.tsx"),css=read("app/globals.css");assert.match(page,/const hasSelectedItems = selectedTasks\.length \+ selectedEvents\.length > 0/);assert.match(page,/\) : hasSelectedItems \? \(/);assert.match(page,/calendar-popover/);assert.match(css,/\.calendar-layout\{position:relative;display:block/);assert.match(css,/\.calendar-popover\{position:absolute/)});
 test("Calendar timelines reserve their scrollbar and contain scroll gestures",()=>{const css=read("app/globals.css");assert.match(css,/scrollbar-gutter:stable/);assert.match(css,/overscroll-behavior:contain/)});

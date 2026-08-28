@@ -245,6 +245,55 @@ test("dual-created task and event actions link symmetrically",async()=>{
     assert.equal(result.created.filter(item=>item.type==="event").length,1); // no duplicate auto-event
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });
+
+test("capture proposals are editable with provenance and optimistic concurrency",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-proposal-edit-")),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    core.createCapture({id:"edit",text:"Draft task",source:"typed"},db);
+    core.saveInterpretation("edit",{schemaVersion:1,summary:"Draft",clarifications:[],actions:[{id:"t",type:"task.create",confidence:.92,sourceReferences:["capture:edit"],arguments:{title:"Draft task",dueAt:null,project:"Inbox",linkedActionId:null}}]},db);
+    const current=core.listState(db).captures.find(item=>item.id==="edit");
+    const saved=core.updateCaptureProposal("edit",{version:current.version,proposal:{schemaVersion:1,summary:"Draft",clarifications:[],actions:[{id:"t",type:"task.create",confidence:.92,sourceReferences:["capture:edit"],arguments:{title:"Final task",dueAt:null,project:"Work",linkedActionId:null}}]}},db);
+    assert.equal(saved.version,current.version+1);assert.equal(saved.proposal.actions[0].arguments.title,"Final task");assert.equal(saved.proposal.actions[0].userEdited,true);
+    assert.throws(()=>core.updateCaptureProposal("edit",{version:current.version,proposal:saved.proposal},db),error=>error.status===409&&error.code==="VERSION_CONFLICT");
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("a completed interpretation cannot overwrite a capture changed while AI was running",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-interpret-conflict-")),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{core.createCapture({id:"race",text:"Original",source:"typed"},db);db.prepare("UPDATE captures SET status='processing' WHERE id='race'").run();core.updateCapture("race","dismissed",1,db);assert.throws(()=>core.saveInterpretation("race",{schemaVersion:1,summary:"Late",clarifications:[],actions:[{id:"t",type:"task.create",confidence:.9,sourceReferences:["capture:race"],arguments:{title:"Late",dueAt:null,project:"Inbox",linkedActionId:null}}]},db,1),error=>error.code==="VERSION_CONFLICT");assert.equal(core.listState(db).captures[0].status,"dismissed")}finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("selected capture actions apply atomically and linked pairs cannot be split",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-selected-apply-")),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    core.createCapture({id:"selected",text:"Meeting and note",source:"typed"},db);
+    core.saveInterpretation("selected",{schemaVersion:1,summary:"Three",clarifications:[],actions:[
+      {id:"e",type:"event.create",confidence:.9,sourceReferences:["capture:selected"],arguments:{title:"Meeting",startAt:"2026-09-01T02:00:00.000Z",endAt:"2026-09-01T03:00:00.000Z",timezone:"UTC",location:null,reminders:[]}},
+      {id:"t",type:"task.create",confidence:.9,sourceReferences:["capture:selected"],arguments:{title:"Meeting",dueAt:"2026-09-01T02:00:00.000Z",project:"Inbox",linkedActionId:"e"}},
+      {id:"n",type:"note.create",confidence:.9,sourceReferences:["capture:selected"],arguments:{title:"Notes",content:"Body",tags:[]}}
+    ]},db);
+    const version=core.listState(db).captures.find(item=>item.id==="selected").version;
+    assert.throws(()=>core.applyCaptureInterpretation("selected",db,null,{version,actionIds:["t"]}),/linked actions must be selected together/i);
+    assert.equal(core.listState(db).tasks.length,0);
+    const result=core.applyCaptureInterpretation("selected",db,null,{version,actionIds:["n"]});
+    assert.equal(result.created.length,1);assert.equal(core.listState(db).notes[0].title,"Notes");assert.equal(core.listState(db).tasks.length,0);
+    assert.deepEqual(JSON.parse(db.prepare("SELECT objects_json FROM captures WHERE id='selected'").get().objects_json).actions.map(action=>action.id),["n"]);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("selected apply rejects missing, unknown, and duplicate action ids",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-selected-validation-")),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    core.createCapture({id:"validation",text:"Task",source:"typed"},db);core.saveInterpretation("validation",{schemaVersion:1,summary:"One",clarifications:[],actions:[{id:"t",type:"task.create",confidence:.9,sourceReferences:["capture:validation"],arguments:{title:"Task",dueAt:null,project:"Inbox",linkedActionId:null}}]},db);const version=core.listState(db).captures[0].version;
+    for(const actionIds of [undefined,[],["missing"],["t","t"]])assert.throws(()=>core.applyCaptureInterpretation("validation",db,null,{version,actionIds}),/action ids|selected action/i);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("auto-apply accepts only one confident unscheduled task",async()=>{
+  const {isSimpleAutoApply}=await import("../server/worker/handlers/interpret-capture.mjs"),task=(overrides={})=>({id:"t",type:"task.create",confidence:.9,arguments:{title:"Task",dueAt:null,project:"Inbox",linkedActionId:null},...overrides});
+  assert.equal(isSimpleAutoApply({actions:[task()],clarifications:[]}),true);
+  for(const proposal of [{actions:[task({confidence:.89})],clarifications:[]},{actions:[task()],clarifications:["When?"]},{actions:[task({arguments:{title:"Task",dueAt:"2026-09-01",project:"Inbox",linkedActionId:null}})],clarifications:[]},{actions:[task(),task({id:"t2"})],clarifications:[]},{actions:[{...task(),type:"note.create"}],clarifications:[]}])assert.equal(isSimpleAutoApply(proposal),false);
+});
 test("completing a recurring task regenerates its next occurrence",async()=>{
   const dir=mkdtempSync(join(tmpdir(),"noema-recur-")),{openDatabase}=await import("../server/db.mjs"),core=await import("../server/core.mjs"),db=openDatabase(join(dir,"test.sqlite"));
   try{

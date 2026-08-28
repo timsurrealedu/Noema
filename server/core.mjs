@@ -7,7 +7,7 @@ import {enqueueJob} from "./jobs.mjs";
 import {recordConflict} from "./collaboration.mjs";
 import {prepareVaultTaskWriteback} from "./vault-task-writeback.mjs";
 import {reminderOffsets} from "./settings.mjs";
-import {createVaultNote,resolveVaultNotePath,sourceRoot,trashVaultEntry} from "./vault.mjs";
+import {createVaultNote,resolveVaultNotePath,safeRelativePath,sourceRoot,trashVaultEntry} from "./vault.mjs";
 import {copyFileSync,mkdirSync} from "node:fs";
 import {dirname,extname,join} from "node:path";
 import {occurrences,untilRule} from "./recurrence.mjs";
@@ -207,11 +207,23 @@ function cleanCaptureAction(action,ids){
   if(!action||ids.has(action.id)){throw new Error("Action ids must be unique")}const clean=captureActionCleaners[action.type];if(!clean){throw new Error(`Unsupported capture action: ${action.type}`)}ids.add(action.id);const confidence=Number(action.confidence);if(!Number.isFinite(confidence)||confidence<0||confidence>1){throw new Error("confidence must be between 0 and 1")}return {id:required(action.id,"action id",100),type:action.type,confidence,sourceReferences:Array.isArray(action.sourceReferences)?action.sourceReferences.map(value=>required(value,"source reference",500)).slice(0,20):[],arguments:clean(action.arguments||{})};
 }
 
-export function saveInterpretation(id,proposal,db=getDatabase()){
+function cleanCaptureProposal(proposal){
   if(proposal?.schemaVersion!==1||!Array.isArray(proposal.actions)||!Array.isArray(proposal.clarifications))throw new Error("Invalid capture proposal");
   const ids=new Set(),actions=proposal.actions.slice(0,20).map(action=>cleanCaptureAction(action,ids));
   for(const action of actions){if(action.type==="task.create"&&action.arguments.linkedActionId&&!ids.has(action.arguments.linkedActionId)){throw new Error("linkedActionId must reference another proposed action")}}
-  const cleaned={schemaVersion:1,summary:required(proposal.summary,"proposal summary",1000),actions,clarifications:proposal.clarifications.map(value=>required(value,"clarification",1000)).slice(0,20)};const result=db.prepare("UPDATE captures SET status='review',objects_json=?,error=NULL,updated_at=?,version=version+1 WHERE id=?").run(JSON.stringify(cleaned),stamp(),id);if(!result.changes){throw new Error("Capture not found")}return cleaned;
+  return {schemaVersion:1,summary:required(proposal.summary,"proposal summary",1000),actions,clarifications:proposal.clarifications.map(value=>required(value,"clarification",1000)).slice(0,20)};
+}
+
+export function saveInterpretation(id,proposal,db=getDatabase(),expectedVersion=null){
+  const cleaned=cleanCaptureProposal(proposal),guard=expectedVersion===null?"":" AND version=? AND status='processing'",result=db.prepare(`UPDATE captures SET status='review',objects_json=?,error=NULL,updated_at=?,version=version+1 WHERE id=?${guard}`).run(JSON.stringify(cleaned),stamp(),id,...(expectedVersion===null?[]:[expectedVersion]));if(!result.changes){const exists=db.prepare("SELECT id FROM captures WHERE id=?").get(id);throw Object.assign(new Error(exists?"Capture changed while interpretation was running":"Capture not found"),{status:exists?409:404,code:exists?"VERSION_CONFLICT":"NOT_FOUND"})}return cleaned;
+}
+
+export function updateCaptureProposal(id,input,db=getDatabase(),actor=null){
+  const context=actorInfo(actor),capture=findOwned(db,"captures",id,context.workspaceId);if(!capture)throw Object.assign(new Error("Capture not found"),{status:404});if(capture.status!=="review")throw Object.assign(new Error(`Capture is ${capture.status}; only captures in review can be edited`),{status:409,code:"NOT_EDITABLE"});requireVersion(input,capture,{db,type:"capture",actor});
+  const previous=parse(capture.objects_json),cleaned=cleanCaptureProposal(input.proposal),oldById=new Map((previous.actions||[]).map(action=>[action.id,action]));
+  cleaned.actions=cleaned.actions.map(action=>{const old=oldById.get(action.id),comparable=old?cleanCaptureAction(old,new Set()):null,changed=!comparable||JSON.stringify(action)!==JSON.stringify(comparable);return changed||old?.userEdited?{...action,userEdited:true}:action});
+  if(context.workspaceId)for(const action of cleaned.actions)if(action.type==="vault.note.create"){sourceRoot(action.arguments.sourceId,context.workspaceId,db);safeRelativePath(action.arguments.relativePath);if(!action.arguments.relativePath.toLowerCase().endsWith(".md"))throw new Error("Vault note path must end in .md")}
+  db.prepare("UPDATE captures SET objects_json=?,error=NULL,updated_at=?,version=version+1 WHERE id=? AND workspace_id IS ?").run(JSON.stringify(cleaned),stamp(),id,capture.workspace_id);return {proposal:cleaned,version:capture.version+1};
 }
 
 function applyCaptureAction(action,captureId,db,actor){
@@ -235,10 +247,11 @@ function applyCaptureAction(action,captureId,db,actor){
   return {type,actionId:action.id,object,linkedEvent};
 }
 
-export function applyCaptureInterpretation(id,db=getDatabase(),actor=null){
+export function applyCaptureInterpretation(id,db=getDatabase(),actor=null,selection=null){
   const context=actorInfo(actor),capture=findOwned(db,"captures",id,context.workspaceId);if(!capture)throw Object.assign(new Error("Capture not found"),{status:404});
-  if(capture.status==="confirmed")return {captureId:id,status:"confirmed",created:[]};if(capture.status!=="review")throw Object.assign(new Error(`Capture is ${capture.status}; only captures in review can be applied`),{status:409,code:"NOT_APPLICABLE"});
-  const proposal=JSON.parse(capture.objects_json),actions=Array.isArray(proposal)?proposal:proposal.actions;if(!actions?.length)throw Object.assign(new Error("No interpreted actions to apply"),{status:409,code:"NOTHING_TO_APPLY"});
+  requireVersion(selection||{version:capture.version},capture,{db,type:"capture",actor});if(capture.status==="confirmed")return {captureId:id,status:"confirmed",created:[]};if(capture.status!=="review")throw Object.assign(new Error(`Capture is ${capture.status}; only captures in review can be applied`),{status:409,code:"NOT_APPLICABLE"});
+  const proposal=JSON.parse(capture.objects_json),allActions=Array.isArray(proposal)?proposal:proposal.actions;if(!allActions?.length)throw Object.assign(new Error("No interpreted actions to apply"),{status:409,code:"NOTHING_TO_APPLY"});
+  let actions=allActions;if(selection){const actionIds=selection.actionIds;if(!Array.isArray(actionIds)||!actionIds.length)throw new Error("At least one selected action id is required");const selectedIds=new Set(actionIds.map(value=>required(value,"action id",100)));if(selectedIds.size!==actionIds.length)throw new Error("Action ids must be unique");const known=new Set(allActions.map(action=>action.id));for(const actionId of selectedIds)if(!known.has(actionId))throw new Error(`Unknown selected action id: ${actionId}`);for(const action of allActions){const linked=action.arguments?.linkedActionId;if(linked&&selectedIds.has(action.id)!==selectedIds.has(linked))throw new Error("Linked actions must be selected together")}actions=allActions.filter(action=>selectedIds.has(action.id))}
   const created=[];db.exec("BEGIN IMMEDIATE");
   try{
     for(const action of actions){
@@ -274,7 +287,7 @@ export function applyCaptureInterpretation(id,db=getDatabase(),actor=null){
     }
     // Refresh task rows so created[].object reflects linking done above (projected shape for the client).
     for(const item of created)if(item.type==="task"&&item.object?.id){const row=findOwned(db,"tasks",item.object.id,context.workspaceId);if(row)item.object=taskProjection(row,db)}
-    db.prepare(`UPDATE captures SET status='confirmed',updated_at=?,version=version+1 WHERE id=?${context.workspaceId?" AND workspace_id=?":""}`).run(stamp(),id,...(context.workspaceId?[context.workspaceId]:[]));
+    const confirmedProposal=Array.isArray(proposal)?actions:{...proposal,actions};db.prepare(`UPDATE captures SET status='confirmed',objects_json=?,updated_at=?,version=version+1 WHERE id=?${context.workspaceId?" AND workspace_id=?":""}`).run(JSON.stringify(confirmedProposal),stamp(),id,...(context.workspaceId?[context.workspaceId]:[]));
     const objects=created.filter(({type})=>type!=="vault-note").flatMap(({type,object})=>type==="task"&&object.event_id?[{type,id:object.id},{type:"event",id:object.event_id}]:[{type,id:object.id}]);
     audit(db,"apply","capture",id,`Applied ${created.length} object(s) from capture`,{op:"delete-many",objects,vaultNotes:created.filter(({type})=>type==="vault-note").map(({object})=>({sourceId:object.sourceId,relativePath:object.relativePath})),captureStatus:"review"},actor);
     db.exec("COMMIT");

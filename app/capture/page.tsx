@@ -6,10 +6,10 @@ import {
   ArrowClockwise, ArrowLeft, ArrowRight, ArrowSquareOut, CalendarBlank, Check, CheckCircle, CheckSquare,
   CircleNotch, File, Globe, Keyboard, MagnifyingGlass, Microphone, Note, PenNib, Plus, Sparkle, Tray, WarningCircle, X
 } from "@phosphor-icons/react";
-import {Capture, CaptureSource, useAppState} from "../components/AppState";
+import {Capture, CaptureObject, CaptureSource, useAppState} from "../components/AppState";
 import {ModuleShell} from "../components/ModuleShell";
 
-const filters = ["All", "Review", "Processing", "Done"] as const;
+const filters = ["All", "Review", "Processing", "Done", "Dismissed"] as const;
 type Filter = (typeof filters)[number];
 
 const filterMeta = {
@@ -17,6 +17,7 @@ const filterMeta = {
   Review: { label: "Review", Icon: Sparkle },
   Processing: { label: "Processing", Icon: CircleNotch },
   Done: { label: "Done", Icon: CheckCircle },
+  Dismissed: {label:"Dismissed",Icon:X},
 } as const;
 
 const statusMeta = {
@@ -60,6 +61,16 @@ function shortTime(value: string) {
   };
   if (date.getFullYear() !== new Date().getFullYear()) options.year = "numeric";
   return new Intl.DateTimeFormat("en-US", options).format(date);
+}
+
+const localDateTime=(value?:string)=>value?new Date(value).toISOString().slice(0,16):"";
+const isoDateTime=(value:string)=>value?new Date(value).toISOString():null;
+function convertObject(object:CaptureObject,type:CaptureObject["type"],captureText:string,vaultSourceId?:string):CaptureObject{
+  const title=object.title,args=object.arguments||{},start=object.type==="task"&&args.dueAt&&!/^\d{4}-\d{2}-\d{2}$/.test(args.dueAt)?args.dueAt:object.type==="event"?args.startAt:null;
+  if(type==="task")return {...object,type,title,detail:start||"Inbox",arguments:{title,dueAt:start,project:"Inbox",linkedActionId:null}};
+  if(type==="event")return {...object,type,title,detail:start||"Start and end required",arguments:{title,startAt:start,endAt:start?new Date(new Date(start).getTime()+3600000).toISOString():null,timezone:Intl.DateTimeFormat().resolvedOptions().timeZone,location:null,reminders:[]}};
+  if(type==="vault")return {...object,type,title,detail:`${title}.md`,arguments:{sourceId:vaultSourceId||"",relativePath:`${title}.md`,title,content:captureText,tags:[]}};
+  return {...object,type,title,detail:captureText.slice(0,140),arguments:{title,content:captureText,tags:[]}};
 }
 
 function formatFriendlyTime(rawText: string): string {
@@ -142,6 +153,7 @@ function matches(capture: Capture, filter: Filter) {
   if (filter === "Review") return capture.status === "review";
   if (filter === "Processing") return capture.status === "queued" || capture.status === "processing";
   if (filter === "Done") return capture.status === "confirmed";
+  if (filter === "Dismissed") return capture.status === "dismissed";
   return true;
 }
 
@@ -338,13 +350,12 @@ function TranscriptPanel({capture}: {capture: Capture}) {
 }
 
 export default function CaptureInbox() {
-  const {addCapture, cancelInterpretation, captures, confirmCapture, requestInterpretation, updateCapture} = useAppState();
+  const {addCapture, cancelInterpretation, captures, confirmCapture, projects, requestInterpretation, saveCaptureProposal, updateCapture} = useAppState();
   const [filter, setFilter] = useState<Filter>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const didReadParams = useRef(false);
   const visible = useMemo(() => {
     return captures.filter(item => {
-      if (item.status === "dismissed") return false;
       if (!matches(item, filter)) return false;
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
@@ -361,9 +372,16 @@ export default function CaptureInbox() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [toast, setToast] = useState<{id: string; message: string; previous: Capture["status"]} | null>(null);
   const [processingInbox, setProcessingInbox] = useState(false);
+  const [selectedActions,setSelectedActions]=useState<Set<string>>(new Set());
+  const [editing,setEditing]=useState<{index:number;object:CaptureObject}|null>(null);
+  const [instruction,setInstruction]=useState("");
+  const [vaultSources,setVaultSources]=useState<{id:string;name:string}[]>([]);
   const didAutoProcess = useRef(false);
   const hasPending = captures.some(item => item.status === "queued");
   const selected = visible.find(item => item.id === selectedId) ?? visible[0];
+
+  useEffect(()=>{setSelectedActions(new Set((selected?.objects||[]).map(object=>object.id).filter((id):id is string=>!!id)));setEditing(null);setInstruction("")},[selected?.id,selected?.version]);
+  useEffect(()=>{fetch("/api/v1/vault-sources").then(response=>response.ok?response.json():null).then(result=>setVaultSources(result?.sources||[])).catch(()=>{})},[]);
 
   async function runProcessPending() {
     setProcessingInbox(true);
@@ -439,9 +457,12 @@ export default function CaptureInbox() {
       changeStatus(capture, "confirmed", "Capture confirmed");
       return;
     }
-    confirmCapture(capture.id);
+    void confirmCapture(capture.id,[...selectedActions]);
     setToast({id: capture.id, message: "Capture confirmed and objects created", previous: capture.status});
   }
+
+  function toggleAction(object:CaptureObject){if(!object.id)return;const linked=object.arguments?.linkedActionId as string|undefined,linkedFrom=selected?.objects.find(item=>item.arguments?.linkedActionId===object.id)?.id,ids=[object.id,linked,linkedFrom].filter((id):id is string=>!!id);setSelectedActions(current=>{const next=new Set(current),select=!current.has(object.id!);for(const id of ids)select?next.add(id):next.delete(id);return next})}
+  async function saveEdit(){if(!selected||!editing)return;const objects=selected.objects.map((object,index)=>index===editing.index?editing.object:object);await saveCaptureProposal(selected.id,objects);setEditing(null)}
 
   function undo() {
     if (!toast) return;
@@ -729,7 +750,7 @@ export default function CaptureInbox() {
                 </section>
               )}
 
-              {(selected.status === "review" || (selected.status === "confirmed" && !selected.handwriting)) && (
+              {(selected.status === "review" || selected.status === "dismissed" || (selected.status === "processing" && selected.objects.length > 0) || (selected.status === "confirmed" && !selected.handwriting)) && (
                 <>
                   <section className="interpretation-head">
                     <div>
@@ -741,6 +762,8 @@ export default function CaptureInbox() {
                             ? selected.objects.length > 0
                               ? "Check the detected objects before confirming."
                               : "No structured objects (tasks/events) detected in this capture."
+                            : selected.status === "dismissed"
+                            ? "Archived without creating objects. The latest proposal is preserved."
                             : selected.objects.length > 0
                             ? "This interpretation has been confirmed."
                             : "Confirmed as a preserved raw capture."}
@@ -757,20 +780,35 @@ export default function CaptureInbox() {
                     <h3 id="detected-title">
                       {selected.status === "confirmed" ? "Created objects" : "What Noema understood"} <span>{selected.objects.length}</span>
                     </h3>
-                    {selected.objects.map((object, index) => (
-                      <article key={`${object.type}-${index}`}>
+                    {selected.objects.map((object, index) => editing?.index===index ? (
+                      <article className="proposal-editor" key={object.id||index}>
+                        <div className="proposal-edit-fields">
+                          <label>Object type<select value={editing.object.type} onChange={event=>setEditing({index,object:convertObject(editing.object,event.target.value as CaptureObject["type"],selected.text,vaultSources[0]?.id)})}><option value="task">Task</option><option value="event">Event</option><option value="note">Note</option><option value="vault" disabled={!vaultSources.length}>Vault note</option></select></label>
+                          <label>Title<input value={editing.object.title} onChange={event=>setEditing({index,object:{...editing.object,title:event.target.value,arguments:{...editing.object.arguments,title:event.target.value}}})}/></label>
+                          {editing.object.type==="task"&&<><label>Due date/time<input type="datetime-local" value={localDateTime(editing.object.arguments?.dueAt)} onChange={event=>setEditing({index,object:{...editing.object,arguments:{...editing.object.arguments,dueAt:isoDateTime(event.target.value)}}})}/></label><label>Project<select value={editing.object.arguments?.project||"Inbox"} onChange={event=>setEditing({index,object:{...editing.object,arguments:{...editing.object.arguments,project:event.target.value}}})}><option>Inbox</option>{projects.map(project=><option key={project.id}>{project.name}</option>)}</select></label></>}
+                          {editing.object.type==="event"&&<><label>Start<input required type="datetime-local" value={localDateTime(editing.object.arguments?.startAt)} onChange={event=>setEditing({index,object:{...editing.object,arguments:{...editing.object.arguments,startAt:isoDateTime(event.target.value)}}})}/></label><label>End<input required type="datetime-local" value={localDateTime(editing.object.arguments?.endAt)} onChange={event=>setEditing({index,object:{...editing.object,arguments:{...editing.object.arguments,endAt:isoDateTime(event.target.value)}}})}/></label><label>Timezone<input value={editing.object.arguments?.timezone||""} onChange={event=>setEditing({index,object:{...editing.object,arguments:{...editing.object.arguments,timezone:event.target.value}}})}/></label><label>Location<input value={editing.object.arguments?.location||""} onChange={event=>setEditing({index,object:{...editing.object,arguments:{...editing.object.arguments,location:event.target.value||null}}})}/></label><label>Reminders (minutes)<input value={(editing.object.arguments?.reminders||[]).map((item:{offsetMinutes:number})=>item.offsetMinutes).join(", ")} onChange={event=>setEditing({index,object:{...editing.object,arguments:{...editing.object.arguments,reminders:event.target.value.split(",").map(value=>Number(value.trim())).filter(Number.isInteger).map(offsetMinutes=>({offsetMinutes}))}}})}/></label></>}
+                          {(editing.object.type==="note"||editing.object.type==="vault")&&<><label>Markdown<textarea rows={7} value={editing.object.arguments?.content||""} onChange={event=>setEditing({index,object:{...editing.object,arguments:{...editing.object.arguments,content:event.target.value}}})}/></label><label>Tags<input value={(editing.object.arguments?.tags||[]).join(", ")} onChange={event=>setEditing({index,object:{...editing.object,arguments:{...editing.object.arguments,tags:event.target.value.split(",").map(value=>value.trim()).filter(Boolean)}}})}/></label></>}
+                          {editing.object.type==="vault"&&<><label>Vault<select value={editing.object.arguments?.sourceId||""} onChange={event=>setEditing({index,object:{...editing.object,arguments:{...editing.object.arguments,sourceId:event.target.value}}})}>{vaultSources.map(source=><option value={source.id} key={source.id}>{source.name}</option>)}</select></label><label>Markdown path<input value={editing.object.arguments?.relativePath||""} onChange={event=>setEditing({index,object:{...editing.object,arguments:{...editing.object.arguments,relativePath:event.target.value}}})}/></label></>}
+                          <div className="proposal-edit-actions"><button className="secondary" onClick={()=>setEditing(null)}>Cancel</button><button className="primary" onClick={()=>void saveEdit()}>Save</button></div>
+                        </div>
+                      </article>
+                    ) : (
+                      <article key={object.id||`${object.type}-${index}`} className={!selectedActions.has(object.id||"")&&selected.status==="review"?"proposal-unselected":""}>
+                        {selected.status==="review"&&<input type="checkbox" aria-label={`Select ${object.title}`} checked={selectedActions.has(object.id||"")} onChange={()=>toggleAction(object)}/>}
                         <span className={`object-icon ${object.type}`}>
                           {object.type === "task" ? <CheckSquare /> : object.type === "event" ? <CalendarBlank /> : <Note />}
                         </span>
                         <div>
-                          <small>{object.type === "vault" ? "Vault note" : object.type}</small>
+                          <small>{object.type === "vault" ? "Vault note" : object.type}{object.userEdited?" · Edited by you":""}</small>
                           <strong>{object.title}</strong>
                           <p>{object.type === "vault" && object.detail && object.detail !== object.title ? `→ ${object.detail}` : formatFriendlyTime(object.detail)}</p>
                         </div>
-                        <CheckCircle aria-label="Ready to confirm" />
+                        {selected.status==="review"?<button className="secondary proposal-edit-button" onClick={()=>setEditing({index,object:structuredClone(object)})}>Edit</button>:<CheckCircle aria-label="Created" />}
                       </article>
                     ))}
                   </section>
+
+                  {(selected.status==="review"||selected.status==="processing")&&<section className="proposal-revision"><label htmlFor="proposal-instruction">Answer a clarification or tell Noema what to change.</label><textarea id="proposal-instruction" maxLength={2000} value={instruction} disabled={selected.status==="processing"} onChange={event=>setInstruction(event.target.value)} placeholder="For example: make this an event tomorrow at 3 PM, or split it into two tasks."/><button className="secondary" disabled={!instruction.trim()||!!editing||selected.status==="processing"} onClick={()=>void requestInterpretation(selected.id,instruction.trim())}><Sparkle/>Revise proposal</button></section>}
 
                   <section className="source-relationship">
                     <h3>Source relationship</h3>
@@ -807,16 +845,16 @@ export default function CaptureInbox() {
                 <footer className="inspector-actions">
                   {selected.status === "review" && (
                     <>
-                      <button className="secondary" onClick={() => changeStatus(selected, "dismissed", "Capture dismissed")}>
-                        Dismiss
+                      <button className="secondary" disabled={!!editing} onClick={() => changeStatus(selected, "dismissed", "Capture archived")}>
+                        Archive capture
                       </button>
                       {selected.objects.length === 0 && (
                         <button className="secondary" onClick={() => requestInterpretation(selected.id)}>
                           <Sparkle />Re-interpret
                         </button>
                       )}
-                      <button className="primary capture-primary-action" onClick={() => confirm(selected)}>
-                        <Check />{selected.objects.length === 0 ? "Keep as raw note" : "Confirm all"}
+                      <button className="primary capture-primary-action" disabled={!!editing||(selected.objects.length>0&&selectedActions.size===0)} onClick={() => confirm(selected)}>
+                        <Check />{selected.objects.length === 0 ? "Keep as raw note" : `Confirm selected (${selectedActions.size})`}
                       </button>
                     </>
                   )}

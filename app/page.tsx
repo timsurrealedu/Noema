@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Archive, Bell, BookOpen, CalendarBlank, Camera, CaretDown, CaretRight, Check, CheckSquare, CircleNotch, Clock,
+  Archive, Bell, BookOpen, CalendarBlank, CaretDown, CaretRight, Check, CheckSquare, CircleNotch, Clock,
   Code, Command, FileText, Folder, Gear, House, Lightning, ListChecks,
   MagnifyingGlass, Microphone, Paperclip, PaperPlaneTilt, PenNib, Plus, Sparkle,
   Tray, UploadSimple, Warning, X, Circle, DotsThree
@@ -41,7 +41,7 @@ const mobileTaskDue=(task:Task)=>{const due=taskDue(task),comma=due.indexOf(", "
 const overdueDays=(task:Task,today:string)=>task.dueAt?Math.max(1,Math.round((new Date(`${today}T00:00:00Z`).valueOf()-new Date(`${dateValue(task.dueAt)}T00:00:00Z`).valueOf())/86_400_000)):0;
 
 export default function Home() {
-  const {addAndInterpretCapture,addCapture,addFileCapture,addFileCaptures,addVoiceCapture,captures,confirmCapture,events,tasks,projects,toggleTask,saveTask,archiveTask,updateCapture}=useAppState();
+  const {addAndInterpretCapture,addFileCapture,addVoiceCapture,captures,confirmCapture,events,tasks,projects,toggleTask,saveTask,archiveTask,updateCapture}=useAppState();
   const [capture,setCapture] = useState("");
   const [reviewId,setReviewId] = useState<string|null>(null);
   const [palette,setPalette] = useState(false);
@@ -49,8 +49,6 @@ export default function Home() {
   const [paletteQuery,setPaletteQuery] = useState("");
   const [assistant,setAssistant] = useState(false);
   const [handwriting,setHandwriting] = useState(false);
-  const [autoInterpret,setAutoInterpret] = useState(true);
-  const cameraBatch = useRef<File[]>([]);
   const [collapsedGroups,setCollapsedGroups] = useState<Set<string>>(new Set());
   const [draft,setDraft] = useState<Task|null>(null);
   const [taskEditorSections,setTaskEditorSections] = useState<Set<string>>(new Set());
@@ -62,12 +60,10 @@ export default function Home() {
 
   const input = useRef<HTMLInputElement>(null);
   const fileInput = useRef<HTMLInputElement>(null);
-  const cameraInput = useRef<HTMLInputElement>(null);
   const openTargetRef = useRef<string|null>(null);
   const openResolvedRef = useRef(false);
 
   useEffect(() => {
-    setAutoInterpret(localStorage.getItem("noema-auto-interpret")!=="off");
     setMounted(true);
     if(!/Mac|iPhone|iPad|iPod/i.test(navigator.platform||""))setModKey("Ctrl");
   },[]);
@@ -128,10 +124,8 @@ export default function Home() {
   const pendingCaptures=captures.filter(item=>item.status==="review").length;
   const review=captures.find(item=>item.id===reviewId);
 
-  function submitCapture(e:FormEvent) {e.preventDefault();const text=capture.trim();if(!text)return;setCapture("");setReviewId(autoInterpret?addAndInterpretCapture(text):addCapture(text))}
-  function toggleAutoInterpret(){setAutoInterpret(value=>{const next=!value;localStorage.setItem("noema-auto-interpret",next?"on":"off");return next})}
-  function handleCameraSelection(files:FileList|null){if(!files?.length)return;cameraBatch.current=Array.from(files).filter(file=>file.type.startsWith("image/"));if(cameraBatch.current.length)setReviewId(addFileCaptures(cameraBatch.current));cameraBatch.current=[]}
-  function closeReview(status:"confirmed"|"dismissed") {if(reviewId){if(status==="confirmed")confirmCapture(reviewId);else updateCapture(reviewId,status)}setReviewId(null)}
+  function submitCapture(e:FormEvent) {e.preventDefault();const text=capture.trim();if(!text)return;setCapture("");setReviewId(addAndInterpretCapture(text))}
+  function closeReview(status:"confirmed"|"dismissed") {if(reviewId){if(status==="confirmed")void confirmCapture(reviewId,review?.objects.map(object=>object.id).filter((id):id is string=>!!id)||[]);else updateCapture(reviewId,status)}setReviewId(null)}
   function handleVoiceFinished(file:File){setReviewId(addVoiceCapture(file))}
 
   function submitTask(event:FormEvent){
@@ -229,10 +223,7 @@ export default function Home() {
         <label htmlFor="capture">Quick capture</label>
         <button type="button" className="capture-add" aria-label="Attach a file" onClick={()=>fileInput.current?.click()}><Plus/></button>
         <input ref={input} id="capture" name="quick-capture" type="text" inputMode="text" autoComplete="off" autoCapitalize="sentences" spellCheck value={capture} onChange={e=>setCapture(e.target.value)} placeholder="Capture anything…"/>
-        <button type="button" className="capture-tool capture-camera" aria-label="Take photos to capture" onClick={()=>cameraInput.current?.click()}><Camera/></button>
-        <input ref={cameraInput} type="file" accept="image/*" capture="environment" multiple hidden aria-hidden="true" tabIndex={-1} onChange={e=>{handleCameraSelection(e.target.files);e.target.value=""}}/>
         <input ref={fileInput} type="file" hidden aria-hidden="true" tabIndex={-1} onChange={e=>{const file=e.target.files?.[0];if(file)addFileCapture(file);e.target.value=""}}/>
-        <button type="button" className={`capture-tool capture-auto-interpret ${autoInterpret?"active":""}`} aria-label={autoInterpret?"AI interpretation on":"AI interpretation off"} aria-pressed={autoInterpret} title={autoInterpret?"AI will propose actions from captures. Tap to keep them raw.":"Captures stay raw inbox items. Tap to enable AI."} onClick={toggleAutoInterpret}><Sparkle weight={autoInterpret?"fill":"regular"}/></button>
         <button type="button" className="capture-tool capture-handwriting" aria-label="Write a handwritten note" onClick={()=>setHandwriting(true)}><PenNib/></button>
         <DurableRecorder onFinished={handleVoiceFinished} label="Record voice"/>
         <button className="send" disabled={!capture.trim()} aria-label="Process capture"><PaperPlaneTilt/></button>

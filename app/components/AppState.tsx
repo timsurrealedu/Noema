@@ -13,7 +13,7 @@ export type CalendarItem={kind:"event";event:Event}|{kind:"task";task:Task};
 export type NoteBlockSummary={id:string;position:number;kind:"markdown"|"ink";version:number;width?:number;height?:number;transcript?:string;ocrStatus?:string};
 export type Note = {id:string; title:string; excerpt:string; content:string; tags:string[]; time:string; ai:boolean; draft?:boolean; source?:string; sourceId?:string|null; relativePath?:string|null; syncState?:string; blocks?:NoteBlockSummary[]; favorite?:boolean; trashed?:boolean; version?:number};
 export type CaptureSource = "typed"|"voice"|"file"|"link"|"handwriting";
-export type CaptureObject = {id?:string; type:"task"|"event"|"note"|"vault"; title:string; detail:string; confidence?:number; sourceReferences?:string[]; arguments?:Record<string,unknown>};
+export type CaptureObject = {id?:string; type:"task"|"event"|"note"|"vault"; title:string; detail:string; confidence?:number; sourceReferences?:string[]; arguments?:Record<string,any>; userEdited?:boolean};
 export type Capture = {
   id:string; text:string; createdAt:string; status:"queued"|"processing"|"review"|"confirmed"|"failed"|"dismissed";
   source:CaptureSource; sourceLabel:string; progress?:number; error?:string; jobId?:string; objects:CaptureObject[]; clarifications?:string[]; assets?:{id:string;name:string;mime:string;size:number}[]; handwriting?:{noteId:string;inkBlockId:string;state:string;title:string;path:string;folder:string;action:"summary"|"expansion"|null;confidence:number|null;provider:string|null}|null; version?:number;
@@ -30,9 +30,10 @@ type AppState = AppData & {
   addFileCaptures:(files:File[])=>string;
   addVoiceCapture:(file:File,durationSeconds?:number)=>string;
   updateCapture:(id:string,status:Capture["status"])=>void;
-  confirmCapture:(id:string)=>void;
+  confirmCapture:(id:string,actionIds:string[])=>Promise<void>;
+  saveCaptureProposal:(id:string,objects:CaptureObject[])=>Promise<void>;
   cancelInterpretation:(id:string)=>void;
-  requestInterpretation:(id:string)=>void;
+  requestInterpretation:(id:string,instruction?:string)=>Promise<void>;
   toggleTask:(id:string)=>void;
   saveTask:(task:Task)=>void;
   saveEvent:(event:Event)=>void;
@@ -51,7 +52,8 @@ async function api(path:string,method="GET",value?:unknown,key?:string){
   if(!response.ok){const error=new Error((await response.json()).error?.message||"Backend request failed") as Error&{status?:number};error.status=response.status;throw error}
   return response.json();
 }
-const proposalCards=(actions:any[]=[]):CaptureObject[]=>actions.map(action=>{const type=(action.type==="vault.note.create"?"vault":action.type.split(".")[0]) as CaptureObject["type"],args=action.arguments||{},detail=type==="event"?`${args.startAt} · ${args.timezone}`:type==="task"?args.dueAt||args.project||"No due date":type==="vault"?String(args.relativePath||args.title):String(args.content||"").slice(0,140);return {id:action.id,type,title:args.title,detail,confidence:action.confidence,sourceReferences:action.sourceReferences,arguments:args}});
+const proposalCards=(actions:any[]=[]):CaptureObject[]=>actions.map(action=>{const type=(action.type==="vault.note.create"?"vault":action.type.split(".")[0]) as CaptureObject["type"],args=action.arguments||{},detail=type==="event"?`${args.startAt} · ${args.timezone}`:type==="task"?args.dueAt||args.project||"No due date":type==="vault"?String(args.relativePath||args.title):String(args.content||"").slice(0,140);return {id:action.id,type,title:args.title,detail,confidence:action.confidence,sourceReferences:action.sourceReferences,arguments:args,userEdited:!!action.userEdited}});
+const proposalAction=(object:CaptureObject)=>({id:object.id,type:object.type==="vault"?"vault.note.create":`${object.type}.create`,confidence:object.confidence??1,sourceReferences:object.sourceReferences||[],arguments:object.arguments});
 
 export function AppStateProvider({children}:{children:ReactNode}) {
   const [data,setData]=useState(seed);
@@ -73,7 +75,8 @@ export function AppStateProvider({children}:{children:ReactNode}) {
 
   const persist=(path:string,method:string,value:unknown)=>{const idempotencyKey=createId();void api(path,method,value,idempotencyKey).catch(error=>{if(!error.status||error.status>=500)void queueRequest({path,method,body:value,idempotencyKey,dependencies:[]});showUnavailable(`${error.message} Your change remains saved in this browser and will retry when the server is reachable.`)});};
   const patchCapture=(id:string,patch:Partial<Capture>)=>setData(current=>({...current,captures:current.captures.map(item=>item.id===id?{...item,...patch}:item)}));
-  const watchInterpretation=(capture:Capture,jobId:string)=>{patchCapture(capture.id,{jobId});
+  const refreshCapture=async(id:string)=>{const remote=await api("/state"),capture=(remote.captures||[]).find((item:Capture)=>item.id===id);if(capture)patchCapture(id,capture)};
+  const watchInterpretation=(capture:Capture,jobId:string,revision=false)=>{patchCapture(capture.id,{jobId});
     const source=new EventSource(`/api/v1/jobs/${jobId}/events`),close=(patch:Partial<Capture>)=>{source.close();patchCapture(capture.id,patch)};
     source.addEventListener("state",event=>{const info=JSON.parse((event as MessageEvent).data);
       if(info.state==="completed")api(`/jobs/${jobId}`).then(job=>{
@@ -81,10 +84,10 @@ export function AppStateProvider({children}:{children:ReactNode}) {
         const status=objects.length===0?"confirmed":"review";
         close({status,objects,clarifications:job.result?.clarifications||[],version:job.result?.captureVersion,progress:undefined,jobId:undefined});
       }).catch(()=>close({status:"failed",error:"The completed interpretation could not be loaded.",progress:undefined,jobId:undefined}));
-      else if(info.state==="failed"||info.state==="cancelled"||info.state==="expired")close({status:"failed",error:info.state==="cancelled"?"Interpretation cancelled.":"Processing failed on the server. Try again.",progress:undefined,jobId:undefined});
+      else if(info.state==="failed"||info.state==="cancelled"||info.state==="expired")close({status:revision?"review":"failed",error:info.state==="cancelled"?"Interpretation cancelled.":"Processing failed on the server. The previous proposal was preserved.",progress:undefined,jobId:undefined});
     });
   };
-  const interpret=(capture:Capture)=>api(`/captures/${capture.id}/interpret`,"POST",{}).then(({jobId})=>watchInterpretation(capture,jobId)).catch(error=>{showUnavailable(`${error.message} Server interpretation is unavailable.`);patchCapture(capture.id,{status:"failed",error:error.message,progress:undefined})});
+  const interpret=(capture:Capture,instruction?:string)=>api(`/captures/${capture.id}/interpret`,"POST",{version:capture.version,instruction}).then(({jobId})=>watchInterpretation(capture,jobId,!!instruction)).catch(error=>{showUnavailable(`${error.message} Server interpretation is unavailable.`);patchCapture(capture.id,{status:instruction?"review":"failed",error:error.message,progress:undefined});throw error});
   useEffect(()=>{const synced=(event:globalThis.Event)=>{const result=(event as CustomEvent<{id:string;jobId:string}>).detail,capture=data.captures.find(item=>item.id===result?.id);if(capture&&result.jobId)watchInterpretation(capture,result.jobId)};addEventListener("noema:capture-synced",synced);return()=>removeEventListener("noema:capture-synced",synced)},[data.captures]);
   const applyObjects=(created:{type:string;object:any}[])=>setData(current=>{
     const tasks=[...current.tasks],events=[...current.events],notes=[...current.notes];
@@ -140,17 +143,20 @@ export function AppStateProvider({children}:{children:ReactNode}) {
         .catch(error=>{void queueOfflineCapture(capture,file);showUnavailable(`${error.message} The original audio is preserved on this device and will retry when the server is reachable.`)});
       return capture.id;
     },
-    confirmCapture:id=>{const capture=data.captures.find(item=>item.id===id);if(!capture||capture.status==="confirmed")return;
+    confirmCapture:async(id,actionIds)=>{const capture=data.captures.find(item=>item.id===id);if(!capture||capture.status==="confirmed")return;
       patchCapture(id,{status:"confirmed"});
-      api(`/captures/${id}/apply`,"POST",{},`apply-${id}`).then(result=>applyObjects(result.created||[])).catch(error=>{
-        setData(current=>({...current,captures:current.captures.map(item=>item.id===id?{...item,status:"review",version:(item.version||0)+1}:item)}));
+      await api(`/captures/${id}/apply`,"POST",{version:capture.version,actionIds},`apply-${id}-${capture.version}`).then(result=>{applyObjects(result.created||[]);patchCapture(id,{objects:capture.objects.filter(object=>object.id&&actionIds.includes(object.id)),version:(capture.version||0)+1})}).catch(error=>{
+        patchCapture(id,{status:"review"});
+        if(error.status===409)void refreshCapture(id);
         showUnavailable(`${error.message} Nothing was created — the proposal stays open so you can retry.`);
+        throw error;
       });
     },
+    saveCaptureProposal:async(id,objects)=>{const capture=data.captures.find(item=>item.id===id);if(!capture)return;try{const result=await api(`/captures/${id}/proposal`,"PATCH",{version:capture.version,proposal:{schemaVersion:1,summary:"User-edited proposal",clarifications:capture.clarifications||[],actions:objects.map(proposalAction)}});patchCapture(id,{objects:proposalCards(result.proposal.actions),clarifications:result.proposal.clarifications,version:result.version})}catch(error:any){if(error.status===409)await refreshCapture(id);throw error}},
     cancelInterpretation:id=>{const capture=data.captures.find(item=>item.id===id);if(!capture?.jobId)return;void api(`/jobs/${capture.jobId}/cancel`,"POST",{}).catch(error=>showUnavailable(error.message))},
-    requestInterpretation:id=>{const capture=data.captures.find(item=>item.id===id);if(!capture)return;
+    requestInterpretation:async(id,instruction)=>{const capture=data.captures.find(item=>item.id===id);if(!capture)return;
       patchCapture(id,{status:"processing",progress:10,error:undefined});
-      void interpret(capture);
+      await interpret(capture,instruction);
     },
     toggleTask:id=>{const task=data.tasks.find(item=>item.id===id);if(!task)return;const changed={...task,completed:!task.completed};setData(current=>({...current,tasks:current.tasks.map(item=>item.id===id?{...changed,version:(task.version||0)+1}:item)}));persist("/tasks","POST",changed)},
     saveTask:task=>{const stored={...task,version:task.version?task.version+1:1};setData(current=>({...current,tasks:current.tasks.some(item=>item.id===task.id)?current.tasks.map(item=>item.id===task.id?stored:item):[stored,...current.tasks]}));persist("/tasks","POST",task)},
