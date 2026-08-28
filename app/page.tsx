@@ -1,7 +1,7 @@
 "use client";
 
 import {
-  Archive, Bell, BookOpen, CalendarBlank, Camera, CaretRight, Check, CheckSquare, CircleNotch, Clock,
+  Archive, Bell, BookOpen, CalendarBlank, Camera, CaretDown, CaretRight, Check, CheckSquare, CircleNotch, Clock,
   Code, Command, FileText, Folder, Gear, House, Lightning, ListChecks,
   MagnifyingGlass, Microphone, Paperclip, PaperPlaneTilt, PenNib, Plus, Sparkle,
   Tray, UploadSimple, Warning, X, Circle, DotsThree
@@ -30,7 +30,7 @@ const moreNav = [
   ["Help","/help",Command],["Settings","/settings",Gear]
 ] as const;
 
-const blankTask=():Task=>({id:createId(),title:"",project:"Inbox",due:"",dueAt:new Date().toISOString(),priority:"Medium",completed:false,status:"open",reminderAt:null});
+const blankTask=():Task=>({id:createId(),title:"",project:"Inbox",due:"",dueAt:null,priority:"Medium",completed:false,status:"open",reminderAt:null});
 const localParts=(value:string)=>Object.fromEntries(new Intl.DateTimeFormat("en-GB",{year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date(value)).map(part=>[part.type,part.value]));
 const dateValue=(value?:string|null)=>{if(!value)return "";const part=localParts(value);return `${part.year}-${part.month}-${part.day}`};
 const dateTimeValue=(value?:string|null)=>{if(!value)return "";const part=localParts(value);return `${part.year}-${part.month}-${part.day}T${part.hour}:${part.minute}`};
@@ -53,6 +53,7 @@ export default function Home() {
   const cameraBatch = useRef<File[]>([]);
   const [collapsedGroups,setCollapsedGroups] = useState<Set<string>>(new Set());
   const [draft,setDraft] = useState<Task|null>(null);
+  const [taskEditorSections,setTaskEditorSections] = useState<Set<string>>(new Set());
   const [taskTitleError,setTaskTitleError] = useState("");
   const [mounted,setMounted] = useState(false);
   const [modKey,setModKey] = useState("⌘");
@@ -105,6 +106,14 @@ export default function Home() {
       openResolvedRef.current = true;
     }
   }, []);
+  useEffect(() => {
+    if(!draft)return;
+    setTaskEditorSections(new Set([
+      ...(draft.dueAt||draft.scheduledStartAt||draft.reminderAt||(draft.recurrence&&draft.recurrence!=="Never")?["schedule"]:[]),
+      ...(draft.projectId||draft.priority!=="Medium"?["organize"]:[]),
+      ...(draft.subtasks?.length?["subtasks"]:[])
+    ]));
+  }, [draft?.id]);
   useEffect(() => {
     if (openResolvedRef.current || !openTargetRef.current) return;
     const id = openTargetRef.current;
@@ -282,50 +291,34 @@ export default function Home() {
               <div className="object-inspector-head">
                 <div>
                   <span id="task-editor-title">{tasks.some(task => task.id === draft.id) ? "Edit task" : "New task"}</span>
-                  <small>{draft.vaultSource ? "Changes rewrite only this Obsidian checklist line." : "Use plain language; changes appear on Home immediately."}</small>
+                  <small>{draft.vaultSource ? "Synced with Obsidian" : "Capture it now. Add details only when useful."}</small>
                 </div>
                 <button className="icon-button" aria-label="Close task inspector" onClick={() => setDraft(null)}><X /></button>
               </div>
-              <form onSubmit={submitTask}>
-                <label>Task name<input autoFocus value={draft.title} onChange={e => {setDraft({ ...draft, title: e.target.value });if(taskTitleError)setTaskTitleError("")}} placeholder="What needs doing?" aria-invalid={!!taskTitleError} aria-describedby={taskTitleError?"task-title-error":undefined} /></label>
+              <form className="task-editor-form" onSubmit={submitTask}>
+                <label className="task-title-field"><span className="sr-only">Task name</span><input autoFocus value={draft.title} onChange={e => {setDraft({ ...draft, title: e.target.value });if(taskTitleError)setTaskTitleError("")}} placeholder="What needs doing?" aria-label="Task name" aria-invalid={!!taskTitleError} aria-describedby={taskTitleError?"task-title-error":undefined} /></label>
                 {taskTitleError&&<p className="field-error" id="task-title-error" role="alert">{taskTitleError}</p>}
-                <label>Project
-                  <select value={draft.projectId || ""} onChange={e => { const project = projects.find(item => item.id === e.target.value); setDraft({ ...draft, projectId: project?.id || null, project: project?.name || "Inbox" }) }}>
-                    <option value="">Inbox</option>
-                    {projects.filter(item => item.status !== "Archived").map(project => <option key={project.id} value={project.id}>{project.name}</option>)}
-                  </select>
-                </label>
-                <div className="field-row">
-                  <label>Due<input type="date" value={dateValue(draft.dueAt)} onChange={e => setDraft({ ...draft, dueAt: e.target.value ? localIso(`${e.target.value}T00:00:00`) : null, scheduledStartAt: null })} /></label>
-                  <label>Priority
-                    <select value={draft.priority} onChange={e => setDraft({ ...draft, priority: e.target.value as Task["priority"] })}>
-                      <option>High</option>
-                      <option>Medium</option>
-                      <option>Low</option>
-                    </select>
-                  </label>
-                </div>
-                <label>Scheduled time<input type="datetime-local" value={dateTimeValue(draft.scheduledStartAt)} onChange={e => setDraft({ ...draft, scheduledStartAt: e.target.value ? localIso(e.target.value) : null, dueAt: e.target.value ? localIso(e.target.value) : draft.dueAt })} /></label>
-                <label>Reminder<input type="datetime-local" value={dateTimeValue(draft.reminderAt)} onChange={e => setDraft({ ...draft, reminderAt: e.target.value ? localIso(e.target.value) : null })} /></label>
-                <label>Repeat
-                  <select value={draft.recurrence || "Never"} onChange={e => setDraft({ ...draft, recurrence: e.target.value })}>
-                    <option>Never</option>
-                    <option>Daily</option>
-                    <option>Weekdays</option>
-                    <option>Weekly</option>
-                    <option>Monthly</option>
-                  </select>
-                </label>
-                <label>Subtasks<textarea value={(draft.subtasks || []).join("\n")} onChange={e => setDraft({ ...draft, subtasks: e.target.value.split("\n").filter(Boolean) })} placeholder="One subtask per line" /></label>
-                <label className="check-field"><input type="checkbox" checked={draft.completed} onChange={e => setDraft({ ...draft, completed: e.target.checked })} /> Mark completed</label>
+                <details className="task-editor-section" open={taskEditorSections.has("schedule")}>
+                  <summary onClick={e=>{e.preventDefault();setTaskEditorSections(current=>{const next=new Set(current);next.has("schedule")?next.delete("schedule"):next.add("schedule");return next})}}><span><CalendarBlank/>Schedule</span><small>{draft.scheduledStartAt?taskStartTime(draft.scheduledStartAt):draft.dueAt?dateValue(draft.dueAt):"No date"}</small><CaretDown/></summary>
+                  <div className="task-editor-section-body"><div className="field-row"><label>Due date<input type="date" value={dateValue(draft.dueAt)} onChange={e => setDraft({ ...draft, dueAt: e.target.value ? localIso(`${e.target.value}T00:00:00`) : null, scheduledStartAt: null })} /></label><label>Scheduled time<input type="datetime-local" value={dateTimeValue(draft.scheduledStartAt)} onChange={e => setDraft({ ...draft, scheduledStartAt: e.target.value ? localIso(e.target.value) : null, dueAt: e.target.value ? localIso(e.target.value) : draft.dueAt })} /></label></div><div className="field-row"><label>Reminder<input type="datetime-local" value={dateTimeValue(draft.reminderAt)} onChange={e => setDraft({ ...draft, reminderAt: e.target.value ? localIso(e.target.value) : null })} /></label><label>Repeat<select value={draft.recurrence || "Never"} onChange={e => setDraft({ ...draft, recurrence: e.target.value })}><option>Never</option><option>Daily</option><option>Weekdays</option><option>Weekly</option><option>Monthly</option></select></label></div></div>
+                </details>
+                <details className="task-editor-section" open={taskEditorSections.has("organize")}>
+                  <summary onClick={e=>{e.preventDefault();setTaskEditorSections(current=>{const next=new Set(current);next.has("organize")?next.delete("organize"):next.add("organize");return next})}}><span><Folder/>Organize</span><small>{draft.projectId?draft.project:draft.priority!=="Medium"?`${draft.priority} priority`:"Inbox"}</small><CaretDown/></summary>
+                  <div className="task-editor-section-body"><label>Project<select value={draft.projectId || ""} onChange={e => { const project = projects.find(item => item.id === e.target.value); setDraft({ ...draft, projectId: project?.id || null, project: project?.name || "Inbox" }) }}><option value="">Inbox — no project</option>{projects.filter(item => item.status !== "Archived").map(project => <option key={project.id} value={project.id}>{project.name}</option>)}</select></label><label>Priority<select value={draft.priority} onChange={e => setDraft({ ...draft, priority: e.target.value as Task["priority"] })}><option>High</option><option>Medium</option><option>Low</option></select><small className="field-hint">Use High for work that should stand out; Medium is the default.</small></label></div>
+                </details>
+                <details className="task-editor-section" open={taskEditorSections.has("subtasks")}>
+                  <summary onClick={e=>{e.preventDefault();setTaskEditorSections(current=>{const next=new Set(current);next.has("subtasks")?next.delete("subtasks"):next.add("subtasks");return next})}}><span><ListChecks/>Subtasks</span><small>{draft.subtasks?.length?`${draft.subtasks.length} added`:"Optional"}</small><CaretDown/></summary>
+                  <div className="task-editor-section-body"><label><span className="sr-only">Subtasks</span><textarea aria-label="Subtasks" value={(draft.subtasks || []).join("\n")} onChange={e => setDraft({ ...draft, subtasks: e.target.value.split("\n").map(item=>item.trim()).filter(Boolean) })} placeholder={'Break it into smaller steps\nOne step per line'} /></label></div>
+                </details>
+                <label className="check-field task-status-field"><input type="checkbox" checked={draft.completed} onChange={e => setDraft({ ...draft, completed: e.target.checked })} /> Completed</label>
                 {draft.vaultSource && (
-                  <div className="permission-note">
+                  <div className="permission-note task-source-note">
                     <CalendarBlank />
                     <span>
                       <strong>{draft.vaultSource.sourceName} · {draft.vaultSource.relativePath}</strong>
-                      <small>Line {draft.vaultSource.lineNumber} · ^{draft.vaultSource.blockId}</small>
-                      <Link href={`/vault?open=${encodeURIComponent(draft.vaultSource.noteId)}`}>Open source note</Link>
+                      <small>Line {draft.vaultSource.lineNumber} · Saves back to this checklist item</small>
                     </span>
+                    <Link href={`/vault?open=${encodeURIComponent(draft.vaultSource.noteId)}`}>Open source note</Link>
                   </div>
                 )}
                 <div className="inspector-actions">
