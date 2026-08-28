@@ -42,17 +42,17 @@ test("mobile navigation persists and fixed actions never cover scrollable conten
   await page.setViewportSize({width:390,height:844});await login(page);
   await page.evaluate(()=>Reflect.set(window,"__mobileNav",document.querySelector(".mobile-nav")));
   await page.locator(".mobile-nav").getByRole("link",{name:"Capture"}).click();await expect(page).toHaveURL(/\/capture$/);
+  await expect(page.locator(".capture-list-pane")).toBeVisible();
   expect(await page.evaluate(()=>Reflect.get(window,"__mobileNav")===document.querySelector(".mobile-nav"))).toBe(true);
   const capture=await page.evaluate(()=>{const pane=document.querySelector<HTMLElement>(".capture-list-pane")!,dock=document.querySelector<HTMLElement>(".capture-mobile-dock")!,nav=document.querySelector<HTMLElement>(".mobile-nav")!;pane.scrollTop=pane.scrollHeight;return {paddingBottom:parseFloat(getComputedStyle(pane).paddingBottom),dockTop:dock.getBoundingClientRect().top,navTop:nav.getBoundingClientRect().top,scrollBottom:pane.scrollHeight-pane.scrollTop-pane.clientHeight}});expect(capture.paddingBottom).toBeGreaterThanOrEqual(136);expect(capture.dockTop).toBeLessThanOrEqual(capture.navTop);expect(capture.scrollBottom).toBeLessThanOrEqual(1);
 });
 
 test("mobile navigation labels and geometry stay stable during Home to Capture navigation",async({page})=>{
   await page.setViewportSize({width:390,height:844});await login(page);
-  const samples:{height:number;labels:number[];bottom:number}[]=[];
-  await page.evaluate(()=>{const sample=()=>{const nav=document.querySelector<HTMLElement>(".mobile-nav")!,box=nav.getBoundingClientRect();(window as any).__navSamples.push({height:box.height,bottom:box.bottom,labels:[...nav.querySelectorAll<HTMLElement>("span")].map(node=>node.getBoundingClientRect().height)});if(!(location.pathname==="/capture"&&document.querySelector(".capture-inbox")))requestAnimationFrame(sample)};(window as any).__navSamples=[];sample()});
-  await page.locator(".mobile-nav").getByRole("link",{name:"Capture"}).click();await expect(page).toHaveURL(/\/capture$/);
-  samples.push(...await page.evaluate(()=>(window as any).__navSamples));
-  expect(samples.length).toBeGreaterThan(1);for(const sample of samples){expect(sample.height).toBeGreaterThanOrEqual(68);expect(Math.abs(sample.bottom-844)).toBeLessThanOrEqual(1);for(const label of sample.labels)expect(label).toBeGreaterThan(0)}
+  const sampling=page.evaluate(async()=>{const samples:{height:number;labels:number[];bottom:number;items:{x:number;y:number;width:number;height:number;transform:string}[]}[]=[];await new Promise<void>(resolve=>{const sample=()=>{const nav=document.querySelector<HTMLElement>(".mobile-nav")!,box=nav.getBoundingClientRect();samples.push({height:box.height,bottom:box.bottom,labels:[...nav.querySelectorAll<HTMLElement>("span")].map(node=>node.getBoundingClientRect().height),items:[...nav.children].map(node=>{const item=node.getBoundingClientRect();return {x:item.x,y:item.y,width:item.width,height:item.height,transform:getComputedStyle(node).transform}})});if(location.pathname==="/capture"&&document.querySelector(".capture-inbox"))resolve();else requestAnimationFrame(sample)};sample()});return samples});
+  const capture=page.locator(".mobile-nav").getByRole("link",{name:"Capture"});expect(await capture.evaluate(node=>getComputedStyle(node).transitionProperty.split(", "))).not.toContain("transform");await capture.click();await expect(page).toHaveURL(/\/capture$/);
+  const samples=await sampling;
+  expect(samples.length).toBeGreaterThan(1);const first=samples[0];for(const sample of samples){expect(sample.height).toBeGreaterThanOrEqual(68);expect(Math.abs(sample.bottom-844)).toBeLessThanOrEqual(1);for(const label of sample.labels)expect(label).toBeGreaterThan(0);sample.items.forEach((item,index)=>{const initial=first.items[index];expect(item.transform).toBe("none");expect(Math.abs(item.x-initial.x)).toBeLessThanOrEqual(1);expect(Math.abs(item.y-initial.y)).toBeLessThanOrEqual(1);expect(Math.abs(item.width-initial.width)).toBeLessThanOrEqual(1);expect(Math.abs(item.height-initial.height)).toBeLessThanOrEqual(1)})}
 });
 
 test("mobile calendar editor is one column and concurrent items split into lanes",async({page})=>{
