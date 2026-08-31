@@ -711,6 +711,9 @@ export default function CaptureInbox() {
                     </section>
 
                     <footer className="inspector-actions">
+                      <button className="secondary" onClick={() => changeStatus(selected, "dismissed", "Capture dismissed")}>
+                        Dismiss capture
+                      </button>
                       {errInfo.isRateLimit && (
                         <Link className="secondary" href="/settings">
                           Switch provider
@@ -881,11 +884,7 @@ export default function CaptureInbox() {
         </aside>
       </div>
 
-      <div className="mobile-action-dock capture-mobile-dock">
-        <Link href="/#capture" className="primary" aria-label="Quick capture">
-          <Plus weight="bold" /> Quick capture
-        </Link>
-      </div>
+
 
       {toast && (
         <div className="undo-toast" role="status">
@@ -960,7 +959,7 @@ function CaptureRow({
     e.stopPropagation();
     if (swipeOffset > 80 && capture.status === "review") {
       onConfirm();
-    } else if (swipeOffset < -80 && capture.status === "review") {
+    } else if (swipeOffset < -80 && (capture.status === "review" || capture.status === "failed")) {
       onDismiss();
     }
     setSwipeOffset(0);
@@ -1026,15 +1025,26 @@ function CaptureRow({
             <span className="status-label error" title={capture.error}>
               <WarningCircle /> Failed · {errInfo.title}
             </span>
-            <button
-              className="row-retry"
-              onClick={e => {
-                e.stopPropagation();
-                onRetry();
-              }}
-            >
-              <ArrowClockwise /> Retry
-            </button>
+            <div className="failed-actions">
+              <button
+                className="row-dismiss"
+                onClick={e => {
+                  e.stopPropagation();
+                  onDismiss();
+                }}
+              >
+                Dismiss
+              </button>
+              <button
+                className="row-retry"
+                onClick={e => {
+                  e.stopPropagation();
+                  onRetry();
+                }}
+              >
+                <ArrowClockwise /> Retry
+              </button>
+            </div>
           </div>
         );
       })()}
