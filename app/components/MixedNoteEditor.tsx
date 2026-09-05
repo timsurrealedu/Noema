@@ -21,6 +21,7 @@ import {
   Eye,
   EyeSlash,
   HighlighterCircle,
+  Selection,
   PencilLine,
   PenNib,
   Plus,
@@ -46,6 +47,7 @@ import {
 } from "../lib/ink";
 import {MarkdownContent, extractTagsAndCleanText, StructuredTags} from "./MarkdownContent";
 import {LiveMarkdownEditor} from "./LiveMarkdownEditor";
+import {ModalDialog} from "./ModalDialog";
 
 type Block = {
   id: string;
@@ -65,7 +67,7 @@ type Block = {
 };
 
 type CompositionText={id:string;type:"text";x:number;y:number;width:number;height:number;z:number;markdown:string};
-type Composition={formatVersion:1;background:"blank"|"ruled"|"grid";objects:CompositionText[]};
+type Composition={formatVersion:1|2;layout?:"paper";paperWidth?:number;writingExtent?:number;background:"blank"|"ruled"|"grid";objects:CompositionText[]};
 
 type MathContinuation = {
   id: string;
@@ -262,6 +264,10 @@ function IntegratedOverlayCanvas({
   const pinchCenter = useRef({x: 0, y: 0});
   const lastTwoTap = useRef(0);
   const touchTap = useRef<{started:number; x:number; y:number; distance:number; moved:boolean} | null>(null);
+  const lassoStart = useRef<InkPoint | null>(null);
+  const selectionDrag = useRef<{point:InkPoint;before:InkStroke[]} | null>(null);
+  const [lassoBox,setLassoBox]=useState<{left:number;top:number;right:number;bottom:number}|null>(null);
+  const [selected,setSelected]=useState<string[]>([]);
 
   useEffect(() => {
     setCurrentStrokes(strokes);
@@ -329,6 +335,12 @@ function IntegratedOverlayCanvas({
 
     const pt = getPoint(event);
     if (!pt) return;
+    if(activeTool==="lasso"){
+      const hit=lassoBox&&pt.x>=lassoBox.left&&pt.x<=lassoBox.right&&pt.y>=lassoBox.top&&pt.y<=lassoBox.bottom;
+      if(hit&&selected.length)selectionDrag.current={point:pt,before:liveStrokes.current};
+      else{lassoStart.current=pt;setLassoBox({left:pt.x,top:pt.y,right:pt.x,bottom:pt.y});setSelected([])}
+      drawing.current=true;(event.target as HTMLElement).setPointerCapture?.(event.pointerId);return;
+    }
     drawing.current = true;
     if (event.pointerType === "pen") setPenDrawing(true);
     (event.target as HTMLElement).setPointerCapture?.(event.pointerId);
@@ -341,7 +353,7 @@ function IntegratedOverlayCanvas({
       return;
     }
 
-    const tool = activeTool === "lasso" || activeTool === "pan" ? "pen" : activeTool;
+    const tool = activeTool === "pan" ? "pen" : activeTool;
     const stroke: InkStroke = {
       id: createId(),
       tool,
@@ -381,6 +393,11 @@ function IntegratedOverlayCanvas({
 
     const pt = getPoint(event);
     if (!pt) return;
+    if(activeTool==="lasso"){
+      if(selectionDrag.current){const dx=pt.x-selectionDrag.current.point.x,dy=pt.y-selectionDrag.current.point.y;liveStrokes.current=selectionDrag.current.before.map(stroke=>selected.includes(stroke.id)?{...stroke,points:stroke.points.map(point=>({...point,x:point.x+dx,y:point.y+dy}))}:stroke);setCurrentStrokes(liveStrokes.current)}
+      else if(lassoStart.current)setLassoBox({left:Math.min(lassoStart.current.x,pt.x),top:Math.min(lassoStart.current.y,pt.y),right:Math.max(lassoStart.current.x,pt.x),bottom:Math.max(lassoStart.current.y,pt.y)});
+      return;
+    }
 
     if (activeTool === "eraser") {
       const erased = eraseAt(liveStrokes.current, pt, size * 4);
@@ -421,6 +438,16 @@ function IntegratedOverlayCanvas({
     if (!drawing.current) return;
     drawing.current = false;
     setPenDrawing(false);
+    if(event.type==="pointercancel"){
+      if(selectionDrag.current){liveStrokes.current=selectionDrag.current.before;setCurrentStrokes(liveStrokes.current)}
+      else if(activeStroke.current){liveStrokes.current=liveStrokes.current.filter(stroke=>stroke.id!==activeStroke.current?.id);setCurrentStrokes(liveStrokes.current)}
+      selectionDrag.current=null;activeStroke.current=null;lassoStart.current=null;setLassoBox(null);return;
+    }
+    if(activeTool==="lasso"){
+      if(selectionDrag.current){selectionDrag.current=null;onChange(liveStrokes.current)}
+      else if(lassoBox){setSelected(liveStrokes.current.filter(stroke=>stroke.points.some(point=>point.x>=lassoBox.left&&point.x<=lassoBox.right&&point.y>=lassoBox.top&&point.y<=lassoBox.bottom)).map(stroke=>stroke.id))}
+      lassoStart.current=null;return;
+    }
 
     if (activeTool === "eraser") {
       onChange(liveStrokes.current);
@@ -472,6 +499,7 @@ function IntegratedOverlayCanvas({
           />
         );
       })}
+      {lassoBox&&<rect className="ink-lasso-selection" x={lassoBox.left} y={lassoBox.top} width={lassoBox.right-lassoBox.left} height={lassoBox.bottom-lassoBox.top}/>}
     </svg>
   );
 }
@@ -579,6 +607,8 @@ export function MixedNoteEditor({
     return localStorage.getItem("noema-note-ink-mode") === "ink" ? "ink" : "text";
   });
   const [paletteCollapsed, setPaletteCollapsed] = useState(false);
+  const [paperPrompt,setPaperPrompt]=useState(false);
+  const [selectedObjectId,setSelectedObjectId]=useState<string|null>(null);
   useEffect(() => {
     try { setPaletteCollapsed(localStorage.getItem(`noema-tools-${editorMode}`) === "hidden"); } catch {}
   }, [editorMode]);
@@ -665,6 +695,7 @@ export function MixedNoteEditor({
     return undefined;
   }, [blocks]);
   const overlayStrokes = useMemo(() => sanitizeStrokes(inkBlock?.strokes || []), [inkBlock?.strokes]);
+  const paperLayout=inkBlock?.composition?.layout==="paper";
 
   function moveInk(block: Block, delta: number) {
     const index = blocks.findIndex(item => item.id === block.id);
@@ -680,7 +711,8 @@ export function MixedNoteEditor({
       if (!Array.isArray(data.blocks) || !data.blocks.length) throw new Error("This note has no editable blocks");
       const overlay = [...data.blocks].reverse().find((block: Block) => block.kind === "ink");
       if (overlay?.width) setViewportWidth(overlay.width);
-      if (overlay?.height) setViewportHeight(overlay.height);
+      if (overlay?.composition?.layout==="paper") setViewportHeight(overlay.composition.writingExtent||overlay.height||1123);
+      else if (overlay?.height) setViewportHeight(overlay.height);
       setBlocks(data.blocks);
       setError("");
     } catch (reason) {
@@ -700,9 +732,9 @@ export function MixedNoteEditor({
   useEffect(() => {
     if (initialInk && !loading && !startedInk.current) {
       startedInk.current = true;
-      setEditorMode("ink");
+      if(paperLayout)setEditorMode("ink");else void activatePaper();
     }
-  }, [initialInk, loading]);
+  }, [initialInk, loading, paperLayout]);
 
   useEffect(() => {
     if (typeof window !== "undefined" && window.innerWidth <= 600) {
@@ -818,6 +850,12 @@ export function MixedNoteEditor({
     commitPageZoom(1, anchor);
     setPageZoom(pageZoomRef.current);
   }
+
+  useEffect(()=>{
+    if(!paperLayout||!docRef.current)return;
+    const frame=requestAnimationFrame(()=>{const fit=Math.min(1,Math.max(.25,(docRef.current!.clientWidth-32)/794));commitPageZoom(fit);setPageZoom(pageZoomRef.current)});
+    return()=>cancelAnimationFrame(frame);
+  },[paperLayout,noteId]);
 
 
   // Overlay dimensions come from the overlay's rendered box itself (reported by
@@ -1043,10 +1081,22 @@ export function MixedNoteEditor({
     else setError((await response.json()).error?.message || "Reorder failed");
   }
 
-  async function insertPaper(background:Composition["background"]="blank"){
-    const response=await fetch(`/api/v1/notes/${noteId}/ink`,{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":createId()},body:JSON.stringify({width:794,height:1123,formatVersion:2,coordinateSpace:"world",strokes:[],queueOcr:false,composition:{formatVersion:1,background,objects:[]}})});
+  async function activatePaper(background:Composition["background"]="blank"){
+    const response=await fetch(`/api/v1/notes/${noteId}/ink`,{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":createId()},body:JSON.stringify({width:794,height:1123,formatVersion:2,coordinateSpace:"world",strokes:[],queueOcr:false,composition:{formatVersion:2,layout:"paper",paperWidth:794,writingExtent:1123,background,objects:[]}})});
     if(!response.ok){setError((await response.json()).error?.message||"Could not insert paper");return}
-    await load();setEditorMode("ink");setViewMode("write");
+    setPaperPrompt(false);await load();setEditorMode("ink");setViewMode("write");
+  }
+
+  function chooseDrawingTool(tool:InkTool){if(!paperLayout){setActiveTool(tool);setPaperPrompt(true);return}setActiveTool(tool);setEditorMode("ink");setViewMode("write");setShowAnnotations(true)}
+  function addPage(){if(!inkBlock)return;const composition={...inkBlock.composition!,writingExtent:(inkBlock.composition?.writingExtent||viewportHeight)+1123};setViewportHeight(composition.writingExtent);changeComposition(inkBlock,composition)}
+  function placeText(){if(!inkBlock)return;const objects=inkBlock.composition?.objects||[];changeComposition(inkBlock,{...inkBlock.composition!,objects:[...objects,{id:createId(),type:"text",x:48,y:96,width:300,height:100,z:objects.length+1,markdown:"Type here"}]})}
+  function updatePaper(background:Composition["background"]){if(inkBlock)changeComposition(inkBlock,{...inkBlock.composition!,background})}
+  function moveSelectedObject(delta:number){if(!inkBlock||!selectedObjectId)return;changeComposition(inkBlock,{...inkBlock.composition!,objects:inkBlock.composition!.objects.map(object=>object.id===selectedObjectId?{...object,z:object.z+delta}:object)})}
+  function nudgeObject(object:CompositionText,key:string){if(!inkBlock)return;const dx=key==="ArrowLeft"?-4:key==="ArrowRight"?4:0,dy=key==="ArrowUp"?-4:key==="ArrowDown"?4:0;changeComposition(inkBlock,{...inkBlock.composition!,objects:inkBlock.composition!.objects.map(entry=>entry.id===object.id?{...entry,x:Math.max(0,entry.x+dx),y:Math.max(0,entry.y+dy)}:entry)})}
+  async function returnToFit(){
+    if(overlayStrokes.length||(inkBlock?.composition?.objects.length||0)){setError("Remove paper ink and positioned text before returning to Fit screen.");return}
+    if(inkBlock){const response=await fetch(`/api/v1/notes/${noteId}/blocks`),data=await response.json(),current=data.blocks?.find((block:Block)=>block.id===inkBlock.id);if(current)await remove(current)}
+    setEditorMode("text");setViewMode("write");
   }
 
   async function keepLayout(block:Block){
@@ -1059,7 +1109,7 @@ export function MixedNoteEditor({
 
   function changeComposition(block:Block,composition:Composition){
     setBlocks(items=>items.map(item=>item.id===block.id?{...item,composition}:item));
-    void saveInkWithRetry(noteId,{id:block.id,version:block.inkVersion||0,width:block.width||794,height:block.height||1123,strokes:sanitizeStrokes(block.strokes),composition},fetch,createId).then(()=>load()).catch(reason=>setError(reason.message||"Composition save failed"));
+    void saveInkWithRetry(noteId,{id:block.id,version:currentInkVersion.current,width:block.width||794,height:composition.writingExtent||block.height||1123,strokes:sanitizeStrokes(block.strokes),composition},fetch,createId).then(data=>{currentInkVersion.current=data.version??data.inkVersion??currentInkVersion.current+1;setBlocks(items=>items.map(item=>item.id===block.id?{...item,composition,inkVersion:currentInkVersion.current}:item));setError("")}).catch(reason=>setError(reason.message||"Composition save failed"));
   }
 
   useEffect(() => {
@@ -1099,7 +1149,7 @@ export function MixedNoteEditor({
         <div className="palette-row">
           <div className="palette-group" aria-label="Note mode">
             <button type="button" className={editorMode === "text" && viewMode === "write" ? "active" : ""} onClick={() => { setEditorMode("text"); setViewMode("write"); }} aria-pressed={editorMode === "text" && viewMode === "write"}><TextT size={18}/><span>Write</span></button>
-            <button type="button" className={editorMode === "ink" ? "active" : ""} onClick={() => { setEditorMode("ink"); setViewMode("write"); setShowAnnotations(true); }} aria-pressed={editorMode === "ink"}><PencilLine size={18}/><span>Handwrite</span></button>
+            <button type="button" className={editorMode === "ink" ? "active" : ""} onClick={() => chooseDrawingTool("pen")} aria-pressed={editorMode === "ink"}><PencilLine size={18}/><span>Handwrite</span></button>
             <button type="button" className={editorMode === "text" && viewMode === "preview" ? "active" : ""} onClick={() => { setEditorMode("text"); setViewMode("preview"); }} aria-pressed={editorMode === "text" && viewMode === "preview"}><Eye size={18}/><span>Read</span></button>
           </div>
           <details className="note-toolbar-menu">
@@ -1108,9 +1158,15 @@ export function MixedNoteEditor({
               {inkBlock&&<p className="ocr-menu-status" role="status"><span>Handwriting recognition</span><strong>{inkBlock.ocrStatus||"pending"}</strong></p>}
               {inkBlock?.ocrStatus==="failed"&&<button type="button" onClick={()=>void retryOcr()}>Retry recognition</button>}
               {inkBlock&&<button type="button" aria-expanded={ocrPanelOpen} onClick={()=>{setOcrPanelOpen(open=>!open);setDismissedOcr(false)}}>{ocrPanelOpen?"Hide OCR review":"Review OCR"}</button>}
-              <button type="button" onClick={()=>void insertPaper("blank")}><Plus size={18}/><span>Insert blank paper</span></button>
-              <button type="button" onClick={()=>void insertPaper("ruled")}><Plus size={18}/><span>Insert ruled paper</span></button>
-              <button type="button" onClick={()=>void insertPaper("grid")}><Plus size={18}/><span>Insert grid paper</span></button>
+              {!paperLayout&&<button type="button" onClick={()=>setPaperPrompt(true)}><Plus size={18}/><span>Use paper</span></button>}
+              {paperLayout&&<button type="button" onClick={addPage}><Plus size={18}/><span>Add page</span></button>}
+              {paperLayout&&<button type="button" onClick={placeText}><TextT size={18}/><span>Place text</span></button>}
+              {paperLayout&&<button type="button" onClick={()=>updatePaper("blank")}>Blank background</button>}
+              {paperLayout&&<button type="button" onClick={()=>updatePaper("ruled")}>Ruled background</button>}
+              {paperLayout&&<button type="button" onClick={()=>updatePaper("grid")}>Grid background</button>}
+              {paperLayout&&selectedObjectId&&<button type="button" onClick={()=>moveSelectedObject(1)}>Bring forward</button>}
+              {paperLayout&&selectedObjectId&&<button type="button" onClick={()=>moveSelectedObject(-1)}>Send backward</button>}
+              {paperLayout&&<button type="button" onClick={returnToFit}><ArrowsIn size={18}/><span>Fit screen</span></button>}
               <button type="button" onClick={() => setShowAnnotations(v => !v)}>{showAnnotations ? <Eye size={18} /> : <EyeSlash size={18} />}<span>{showAnnotations ? "Hide ink" : "Show ink"}</span></button>
               <button type="button" onClick={() => { const container=docRef.current; if(container) { commitPageZoom(Math.min(1,(container.clientWidth-48)/viewportWidth)); setPageZoom(pageZoomRef.current); } }}>Fit page</button>
               {pageZoom !== 1 && <button type="button" onClick={resetPageZoom}><span>Reset zoom ({Math.round(pageZoom * 100)}%)</span></button>}
@@ -1229,6 +1285,7 @@ export function MixedNoteEditor({
                   >
                     <Broom size={18} />
                   </button>
+                  <button className={activeTool === "lasso" ? "active" : ""} onClick={() => chooseDrawingTool("lasso")} title="Lasso" aria-label="Lasso tool" aria-pressed={activeTool === "lasso"}><Selection size={18}/></button>
                 </div>
 
                 <div className="palette-group" aria-label="Shapes and ruler">
@@ -1304,7 +1361,7 @@ export function MixedNoteEditor({
       <div className="note-formatting-slot"/>
       {/* Dual-Layer Viewport Bounded Sheet */}
       <div className="integrated-doc-container" ref={docRef}>
-        <div className={`integrated-doc-page ${orientation}`} ref={pageRef}>
+        <div className={`integrated-doc-page ${paperLayout?`paper-layout paper-${inkBlock?.composition?.background||"blank"}`:"fit-layout"}`} ref={pageRef} style={paperLayout?{width:794,minHeight:viewportHeight}:undefined}>
           <div className="integrated-doc-content" style={{position: "relative", zIndex: 1}}>
             {blocks.map((block) =>
               block.kind === "markdown" ? (
@@ -1318,7 +1375,7 @@ export function MixedNoteEditor({
                   />
                   {editorMode==="ink"&&<button type="button" className="keep-layout-action" onClick={()=>void keepLayout(block)}>Keep layout to draw here</button>}
                 </article>
-              ) : (
+              ) : block.composition?.layout==="paper" ? null : (
                 <InkBlockView
                   key={block.id}
                   noteId={noteId}
@@ -1331,8 +1388,11 @@ export function MixedNoteEditor({
               )
             )}
           </div>
+          {paperLayout&&inkBlock&&<IntegratedOverlayCanvas width={794} height={viewportHeight} strokes={overlayStrokes} activeTool={activeTool} color={color} size={size} interactive={editorMode==="ink"} visible={showAnnotations} zoomRef={pageZoomRef} onChange={saveInkStrokes} onPinch={handleOverlayPinch} onGestureUndo={handleUndo}/>}
+          {paperLayout&&inkBlock&&(inkBlock.composition?.objects||[]).map(object=><textarea key={object.id} className={`paper-positioned-text ${selectedObjectId===object.id?"selected":""}`} aria-label="Positioned text" value={object.markdown} style={{left:object.x,top:object.y,width:object.width,height:object.height,zIndex:3+object.z}} onFocus={()=>setSelectedObjectId(object.id)} onKeyDown={event=>{if(event.altKey&&event.key.startsWith("Arrow")){event.preventDefault();nudgeObject(object,event.key)}}} onChange={event=>setBlocks(items=>items.map(item=>item.id===inkBlock.id?{...item,composition:{...item.composition!,objects:item.composition!.objects.map(entry=>entry.id===object.id?{...entry,markdown:event.target.value}:entry)}}:item))} onBlur={event=>changeComposition(inkBlock,{...inkBlock.composition!,objects:inkBlock.composition!.objects.map(entry=>entry.id===object.id?{...entry,markdown:event.target.value,width:event.currentTarget.offsetWidth,height:event.currentTarget.offsetHeight}:entry)})}/>)}
         </div>
       </div>
+      {paperPrompt&&<ModalDialog className="paper-choice-dialog" ariaLabel="Use Paper layout" onClose={()=>setPaperPrompt(false)}><div className="paper-choice-preview paper-grid" aria-hidden="true"/><h2>Use Paper layout?</h2><p>Paper keeps an A4 writing width so handwriting and typed text stay aligned on every device.</p><div className="dialog-actions"><button type="button" className="secondary" onClick={()=>setPaperPrompt(false)}>Cancel</button><button type="button" className="primary" onClick={()=>void activatePaper()}>Use paper</button></div></ModalDialog>}
     </div>
   );
 }
