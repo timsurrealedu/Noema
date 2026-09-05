@@ -242,6 +242,7 @@ test("ink exposes world-edit transforms and geometric tool types",()=>{const edi
 test("ink replay drops malformed strokes before rendering or transforms",()=>{const ink=read("app/lib/ink.ts"),editor=read("app/components/InkEditor.tsx");assert.match(ink,/sanitizeStrokes/);assert.match(ink,/if\(!a\|\|!b\)return ""/);assert.match(editor,/sanitizeStrokes\(initial\)/);assert.match(editor,/sanitizeStrokes\(draft\?\.strokes\)/)});
 test("ink touch gestures pan, pinch, and support two-finger double-tap undo",()=>{const editor=read("app/components/InkEditor.tsx");for(const token of ["touches","pinchDistance","lastTwoTap","pointerType===\"touch\"","viewBox","undo\(\)"])assert.match(editor,new RegExp(token))});
 test("ink touch navigation preserves a manual view and pinches around its midpoint",()=>{const editor=read("app/components/InkEditor.tsx"),ink=read("app/lib/ink.ts");for(const token of ["userInteracted.current = true","previousCenter"])assert.match(editor,new RegExp(token));assert.match(editor,/applyPinch\(/);assert.match(ink,/function applyPinch/)});
+test("ink wheel zoom snapshots SVG bounds before React defers state",()=>{const editor=read("app/components/InkEditor.tsx");assert.doesNotMatch(editor,/setView\(val\s*=>[\s\S]{0,180}event\.currentTarget\.getBoundingClientRect\(\)/)});
 test("shared ink viewport helpers are tested pure functions adopted by every ink surface",()=>{
   const ts=require("typescript");
   const compiled=ts.transpileModule(read("app/lib/ink.ts"),{compilerOptions:{module:ts.ModuleKind.CommonJS,target:"es2019"}}).outputText;

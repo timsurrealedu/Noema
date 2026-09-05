@@ -480,15 +480,17 @@ export function InkEditor({
   function wheel(event: React.WheelEvent<SVGSVGElement>) {
     event.preventDefault();
     userInteracted.current = true;
+    const rect = event.currentTarget.getBoundingClientRect();
+    const {clientX, clientY, deltaY} = event;
     setView(val =>
       zoomAtPoint(
         val,
-        event.currentTarget.getBoundingClientRect(),
+        rect,
         canvasSize.width,
         canvasSize.height,
-        event.clientX,
-        event.clientY,
-        Math.exp(-event.deltaY * 0.0015)
+        clientX,
+        clientY,
+        Math.exp(-deltaY * 0.0015)
       )
     );
   }
