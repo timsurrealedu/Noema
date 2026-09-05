@@ -15,6 +15,15 @@ test("Fit screen changes to fixed Paper only after confirmation",async({page})=>
   await page.goto(`/vault?open=${note.id}`);
   await expect(page.locator(".mixed-note-editor")).toBeVisible();
   await expect(page.locator(".integrated-doc-page.fit-layout")).toBeVisible();
+  const geometry=await page.locator(".mixed-workspace").evaluate(root=>{
+    const box=(selector:string)=>(root.querySelector(selector) as HTMLElement).getBoundingClientRect();
+    const palette=box(".integrated-floating-palette"),formatting=box(".milkdown-top-bar"),document=box(".integrated-doc-container");
+    return {paletteTop:palette.top,formattingTop:formatting.top,documentTop:document.top,documentHeight:document.height};
+  });
+  expect(geometry.paletteTop).toBeLessThan(120);
+  expect(Math.abs(geometry.paletteTop-geometry.formattingTop)).toBeLessThan(12);
+  expect(geometry.documentTop).toBeLessThan(160);
+  expect(geometry.documentHeight).toBeGreaterThan(500);
   await page.getByRole("button",{name:"Handwrite",exact:true}).click();
   await expect(page.getByRole("dialog",{name:"Use Paper layout"})).toBeVisible();
   await expect(page.locator(".integrated-doc-page.fit-layout")).toBeVisible();

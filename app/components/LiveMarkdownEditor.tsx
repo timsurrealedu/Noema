@@ -11,7 +11,7 @@ import {createTable, toggleStrikethroughCommand} from "@milkdown/kit/preset/gfm"
 import {imageBlockSchema} from "@milkdown/kit/component/image-block";
 import {toggleLinkCommand} from "@milkdown/kit/component/link-tooltip";
 import {undoCommand, redoCommand} from "@milkdown/kit/plugin/history";
-import {ArrowCounterClockwise, ArrowClockwise, TextB, TextItalic, TextStrikethrough, Code, ListBullets, ListNumbers, CheckSquare, Link, Image, Table, CodeBlock, Sigma, Quotes, Minus} from "@phosphor-icons/react";
+import {ArrowCounterClockwise, ArrowClockwise, TextB, TextItalic, TextStrikethrough, Code, ListBullets, ListNumbers, CheckSquare, Link, Image, Table, CodeBlock, Sigma, Quotes, Minus, DotsThree} from "@phosphor-icons/react";
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/frame.css";
 
@@ -43,7 +43,7 @@ export function LiveMarkdownEditor({value, onChange, onBlur, readOnly = false}: 
   const change = useRef(onChange), blur = useRef(onBlur), readonlyRef = useRef(readOnly);
   const crepe = useRef<Crepe | null>(null);
   const [host,setHost] = useState<Element|null>(null);
-  const [ready,setReady] = useState(false),[error,setError] = useState("");
+  const [ready,setReady] = useState(false),[error,setError] = useState(""),[expanded,setExpanded] = useState(false);
   const [format,setFormat] = useState<{heading:number;marks:string[]}>({heading:0,marks:[]});
   change.current = onChange; blur.current = onBlur; readonlyRef.current = readOnly;
 
@@ -95,11 +95,12 @@ export function LiveMarkdownEditor({value, onChange, onBlur, readOnly = false}: 
   },[host,readOnly]);
 
   return <>
-    {host&&createPortal(<div className="milkdown-top-bar react-note-toolbar" ref={topBarRef} role="toolbar" aria-label="Text formatting" hidden={readOnly}>
+    {host&&createPortal(<div className={`milkdown-top-bar react-note-toolbar${expanded?" is-expanded":""}`} ref={topBarRef} role="toolbar" aria-label="Text formatting" hidden={readOnly}>
       <label className="text-style-select"><span className="sr-only">Text style</span><select aria-label="Text style" value={format.heading} disabled={!ready} onChange={event=>run(ctx=>ctx.get(commandsCtx).call(setBlockTypeCommand.key,{nodeType:Number(event.target.value)?headingSchema.type(ctx):paragraphSchema.type(ctx),attrs:Number(event.target.value)?{level:Number(event.target.value)}:undefined}))}>
         <option value={0}>Paragraph</option>{[1,2,3,4,5,6].map(level=><option value={level} key={level}>Heading {level}</option>)}
       </select></label>
       <div className="top-bar-inner">{tools.map(({label,icon:Icon,run:action,mark})=><button key={label} type="button" className={`top-bar-item ${mark&&format.marks.includes(mark)?"active":""}`} title={label} aria-label={label} aria-pressed={mark?format.marks.includes(mark):undefined} disabled={!ready} onPointerDown={event=>event.preventDefault()} onClick={()=>run(action)}><Icon size={18}/></button>)}</div>
+      <button type="button" className="top-bar-more-btn" aria-label={expanded?"Show fewer formatting tools":"Show more formatting tools"} aria-expanded={expanded} onClick={()=>setExpanded(value=>!value)}><DotsThree size={20}/></button>
     </div>,host)}
     {error&&<div role="alert" className="tutor-error">{error}</div>}
     <div className="live-markdown-editor" ref={root} onFocusCapture={activateToolbar}/>

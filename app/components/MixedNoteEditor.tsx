@@ -1152,6 +1152,7 @@ export function MixedNoteEditor({
             <button type="button" className={editorMode === "ink" ? "active" : ""} onClick={() => chooseDrawingTool("pen")} aria-pressed={editorMode === "ink"}><PencilLine size={18}/><span>Handwrite</span></button>
             <button type="button" className={editorMode === "text" && viewMode === "preview" ? "active" : ""} onClick={() => { setEditorMode("text"); setViewMode("preview"); }} aria-pressed={editorMode === "text" && viewMode === "preview"}><Eye size={18}/><span>Read</span></button>
           </div>
+          <div className="note-formatting-slot"/>
           <details className="note-toolbar-menu">
             <summary aria-label={`More note options${inkBlock ? `. Handwriting recognition ${inkBlock.ocrStatus||"pending"}` : ""}`} title="More note options"><DotsThree size={20} />{inkBlock&&<span className={`ocr-status-dot ${inkBlock.ocrStatus||"pending"}`} aria-hidden="true" />}</summary>
             <div>
@@ -1358,7 +1359,6 @@ export function MixedNoteEditor({
         </section>
       )}
 
-      <div className="note-formatting-slot"/>
       {/* Dual-Layer Viewport Bounded Sheet */}
       <div className="integrated-doc-container" ref={docRef}>
         <div className={`integrated-doc-page ${paperLayout?`paper-layout paper-${inkBlock?.composition?.background||"blank"}`:"fit-layout"}`} ref={pageRef} style={paperLayout?{width:794,minHeight:viewportHeight}:undefined}>
