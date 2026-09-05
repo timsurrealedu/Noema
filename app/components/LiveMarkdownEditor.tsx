@@ -1,134 +1,107 @@
 "use client";
 
-import {useEffect, useRef} from "react";
+import {useEffect, useRef, useState} from "react";
+import {createPortal} from "react-dom";
 import {Crepe} from "@milkdown/crepe";
 import {replaceAll} from "@milkdown/utils";
+import type {Ctx} from "@milkdown/kit/ctx";
+import {commandsCtx, editorViewCtx} from "@milkdown/kit/core";
+import {addBlockTypeCommand, blockquoteSchema, bulletListSchema, codeBlockSchema, headingSchema, hrSchema, listItemSchema, orderedListSchema, paragraphSchema, setBlockTypeCommand, toggleEmphasisCommand, toggleInlineCodeCommand, toggleStrongCommand, wrapInBlockTypeCommand} from "@milkdown/kit/preset/commonmark";
+import {createTable, toggleStrikethroughCommand} from "@milkdown/kit/preset/gfm";
+import {imageBlockSchema} from "@milkdown/kit/component/image-block";
+import {toggleLinkCommand} from "@milkdown/kit/component/link-tooltip";
+import {undoCommand, redoCommand} from "@milkdown/kit/plugin/history";
+import {ArrowCounterClockwise, ArrowClockwise, TextB, TextItalic, TextStrikethrough, Code, ListBullets, ListNumbers, CheckSquare, Link, Image, Table, CodeBlock, Sigma, Quotes, Minus} from "@phosphor-icons/react";
 import "@milkdown/crepe/theme/common/style.css";
 import "@milkdown/crepe/theme/frame.css";
 
 async function uploadImage(file:File){const form=new FormData();form.append("file",file);const response=await fetch("/api/v1/assets",{method:"POST",body:form}),body=await response.json();if(!response.ok)throw new Error(body.error?.message||"Image upload failed");const asset=body.assets?.[0];if(!asset?.id)throw new Error("Image upload returned no asset");return `/api/v1/assets/${asset.id}`}
 
-export function LiveMarkdownEditor({value, onChange, onBlur}: {value: string; onChange: (value: string) => void; onBlur: () => void}) {
-  const root = useRef<HTMLDivElement>(null);
-  const topBarRef = useRef<HTMLElement | null>(null);
-  const latest = useRef(value);
-  const change = useRef(onChange);
-  const blur = useRef(onBlur);
-  const crepe = useRef<Crepe | null>(null);
-  change.current = onChange;
-  blur.current = onBlur;
+const tools = [
+  {label:"Undo typing",icon:ArrowCounterClockwise,run:(ctx:Ctx)=>ctx.get(commandsCtx).call(undoCommand.key)},
+  {label:"Redo typing",icon:ArrowClockwise,run:(ctx:Ctx)=>ctx.get(commandsCtx).call(redoCommand.key)},
+  {label:"Bold",icon:TextB,mark:"strong",run:(ctx:Ctx)=>ctx.get(commandsCtx).call(toggleStrongCommand.key)},
+  {label:"Italic",icon:TextItalic,mark:"emphasis",run:(ctx:Ctx)=>ctx.get(commandsCtx).call(toggleEmphasisCommand.key)},
+  {label:"Strikethrough",icon:TextStrikethrough,mark:"strike_through",run:(ctx:Ctx)=>ctx.get(commandsCtx).call(toggleStrikethroughCommand.key)},
+  {label:"Inline code",icon:Code,mark:"inlineCode",run:(ctx:Ctx)=>ctx.get(commandsCtx).call(toggleInlineCodeCommand.key)},
+  {label:"Bulleted list",icon:ListBullets,run:(ctx:Ctx)=>ctx.get(commandsCtx).call(wrapInBlockTypeCommand.key,{nodeType:bulletListSchema.type(ctx)})},
+  {label:"Numbered list",icon:ListNumbers,run:(ctx:Ctx)=>ctx.get(commandsCtx).call(wrapInBlockTypeCommand.key,{nodeType:orderedListSchema.type(ctx)})},
+  {label:"Task list",icon:CheckSquare,run:(ctx:Ctx)=>ctx.get(commandsCtx).call(wrapInBlockTypeCommand.key,{nodeType:listItemSchema.type(ctx),attrs:{checked:false}})},
+  {label:"Link",icon:Link,run:(ctx:Ctx)=>ctx.get(commandsCtx).call(toggleLinkCommand.key)},
+  {label:"Image",icon:Image,run:(ctx:Ctx)=>ctx.get(commandsCtx).call(addBlockTypeCommand.key,{nodeType:imageBlockSchema.type(ctx)})},
+  {label:"Table",icon:Table,run:(ctx:Ctx)=>ctx.get(commandsCtx).call(addBlockTypeCommand.key,{nodeType:createTable(ctx,3,3)})},
+  {label:"Code block",icon:CodeBlock,run:(ctx:Ctx)=>ctx.get(commandsCtx).call(setBlockTypeCommand.key,{nodeType:codeBlockSchema.type(ctx)})},
+  {label:"Equation",icon:Sigma,run:(ctx:Ctx)=>ctx.get(commandsCtx).call(addBlockTypeCommand.key,{nodeType:codeBlockSchema.type(ctx),attrs:{language:"LaTeX"}})},
+  {label:"Quote",icon:Quotes,run:(ctx:Ctx)=>ctx.get(commandsCtx).call(wrapInBlockTypeCommand.key,{nodeType:blockquoteSchema.type(ctx)})},
+  {label:"Horizontal rule",icon:Minus,run:(ctx:Ctx)=>ctx.get(commandsCtx).call(addBlockTypeCommand.key,{nodeType:hrSchema.type(ctx)})}
+];
 
+export function LiveMarkdownEditor({value, onChange, onBlur, readOnly = false}: {value: string; onChange: (value: string) => void; onBlur: () => void; readOnly?: boolean}) {
+  const root = useRef<HTMLDivElement>(null);
+  const topBarRef = useRef<HTMLDivElement>(null);
+  const latest = useRef(value);
+  const change = useRef(onChange), blur = useRef(onBlur), readonlyRef = useRef(readOnly);
+  const crepe = useRef<Crepe | null>(null);
+  const [host,setHost] = useState<Element|null>(null);
+  const [ready,setReady] = useState(false),[error,setError] = useState("");
+  const [format,setFormat] = useState<{heading:number;marks:string[]}>({heading:0,marks:[]});
+  change.current = onChange; blur.current = onBlur; readonlyRef.current = readOnly;
+
+  function updateFormat(ctx:Ctx){
+    if(!crepe.current)return;
+    const {selection,storedMarks}=ctx.get(editorViewCtx).state;
+    setFormat({heading:selection.$from.parent.type.name==="heading"?selection.$from.parent.attrs.level:0,marks:(storedMarks||selection.$from.marks()).map(mark=>mark.type.name)});
+  }
   function activateToolbar() {
-    const topBar = topBarRef.current;
-    const container = root.current?.closest(".integrated-doc-container") || root.current?.closest(".integrated-note-editor");
-    if (!topBar || !container) return;
-    container.querySelectorAll<HTMLElement>(".milkdown-top-bar").forEach(item => {
-      item.hidden = item !== topBar;
-      if (item !== topBar) item.classList.remove("is-expanded");
-    });
+    const topBar=topBarRef.current;
+    if(!topBar||!host)return;
+    host.querySelectorAll<HTMLElement>(".milkdown-top-bar").forEach(item=>{item.hidden=item!==topBar});
+  }
+  function run(action:(ctx:Ctx)=>unknown){
+    if(readOnly||!crepe.current)return;
+    crepe.current.editor.action(ctx=>{action(ctx);ctx.get(editorViewCtx).focus();updateFormat(ctx)});
   }
 
   useEffect(() => {
     if (!root.current) return;
-    const editor = new Crepe({
-      root: root.current,
-      defaultValue: latest.current,
-      features: {[Crepe.Feature.TopBar]: true},
-      featureConfigs: {
-        [Crepe.Feature.ImageBlock]: {onUpload: uploadImage},
-        [Crepe.Feature.TopBar]: {
-          headingOptions: [
-            { label: "P", level: null },
-            { label: "H1", level: 1 },
-            { label: "H2", level: 2 },
-            { label: "H3", level: 3 },
-            { label: "H4", level: 4 },
-            { label: "H5", level: 5 },
-            { label: "H6", level: 6 }
-          ]
-        }
-      }
-    });
+    setHost(root.current.closest(".integrated-note-editor")?.querySelector(".note-formatting-slot")||null);
+    const editor = new Crepe({root:root.current,defaultValue:latest.current,features:{[Crepe.Feature.TopBar]:false},featureConfigs:{[Crepe.Feature.ImageBlock]:{onUpload: uploadImage}}});
     editor.on(listener => {
-      listener.markdownUpdated((_ctx, markdown) => {
-        latest.current = markdown;
-        change.current(markdown);
-      });
+      listener.markdownUpdated((ctx, markdown) => {latest.current=markdown;change.current(markdown);updateFormat(ctx)});
+      listener.selectionUpdated(ctx=>updateFormat(ctx));
       listener.blur(() => blur.current());
     });
-    let disposed = false;
-    let toolbarCleanup = () => {};
+    let disposed=false;
     void editor.create().then(() => {
-      if (disposed) { void editor.destroy(); return; }
-      crepe.current = editor;
-      const topBar = root.current?.querySelector(".milkdown-top-bar") as HTMLElement | null;
-      if (topBar) {
-        const docContainer = root.current?.closest(".integrated-doc-container") || root.current?.closest(".integrated-note-editor");
-        if (docContainer && topBar.parentElement !== docContainer) {
-          docContainer.prepend(topBar);
-        }
-        topBarRef.current = topBar;
-        const labels = ["Bold", "Italic", "Strikethrough", "Inline code", "Bulleted list", "Numbered list", "Task list", "Link", "Image", "Table", "Code block", "Equation", "Quote", "Horizontal rule"];
-        const heading = topBar.querySelector<HTMLButtonElement>(".top-bar-heading-button");
-        if (heading) {
-          heading.setAttribute("aria-label", "Text style");
-          heading.setAttribute("title", "Text style");
-        }
-        topBar.querySelectorAll<HTMLButtonElement>(".top-bar-item").forEach((button, index) => {
-          const label = labels[index];
-          if (!label) return;
-          button.setAttribute("aria-label", label);
-          button.setAttribute("title", label);
-        });
-        if (!topBar.querySelector(".top-bar-more-btn")) {
-          const moreBtn = document.createElement("button");
-          moreBtn.type = "button";
-          moreBtn.className = "top-bar-more-btn";
-          moreBtn.setAttribute("aria-label", "More formatting tools");
-          moreBtn.setAttribute("title", "More formatting tools");
-          moreBtn.setAttribute("aria-expanded", "false");
-          moreBtn.innerHTML = `<svg width="18" height="18" viewBox="0 0 256 256" fill="currentColor"><path d="M112,128a16,16,0,1,1,16,16A16,16,0,0,1,112,128ZM48,112a16,16,0,1,0,16,16A16,16,0,0,0,48,112Zm144,0a16,16,0,1,0,16,16A16,16,0,0,0,192,112Z"></path></svg>`;
-          moreBtn.addEventListener("click", (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            topBar.classList.toggle("is-expanded");
-            moreBtn.classList.toggle("active");
-            moreBtn.setAttribute("aria-expanded", String(topBar.classList.contains("is-expanded")));
-          });
-          topBar.appendChild(moreBtn);
-        }
-        const otherVisible = [...(docContainer?.querySelectorAll<HTMLElement>(".milkdown-top-bar:not([hidden])") || [])].some(item => item !== topBar);
-        topBar.hidden = otherVisible;
-        const dismiss = (event: Event) => {
-          if (topBar.contains(event.target as Node)) return;
-          topBar.classList.remove("is-expanded");
-          const more = topBar.querySelector<HTMLButtonElement>(".top-bar-more-btn");
-          more?.classList.remove("active");
-          more?.setAttribute("aria-expanded", "false");
-        };
-        const escape = (event: KeyboardEvent) => {
-          if (event.key !== "Escape") return;
-          topBar.classList.remove("is-expanded");
-          const more = topBar.querySelector<HTMLButtonElement>(".top-bar-more-btn");
-          more?.classList.remove("active");
-          more?.setAttribute("aria-expanded", "false");
-        };
-        document.addEventListener("pointerdown", dismiss);
-        document.addEventListener("keydown", escape);
-        toolbarCleanup = () => {
-          document.removeEventListener("pointerdown", dismiss);
-          document.removeEventListener("keydown", escape);
-        };
-      }
-    });
-    return () => { disposed = true; toolbarCleanup(); topBarRef.current = null; crepe.current = null; void editor.destroy(); };
+      if(disposed){void editor.destroy();return}
+      crepe.current=editor;
+      root.current?.querySelector(".ProseMirror")?.setAttribute("aria-label","Note body");
+      editor.setReadonly(readonlyRef.current);
+      setReady(true);
+    }).catch(reason=>{if(!disposed)setError(reason.message||"Could not load the editor")});
+    return()=>{disposed=true;crepe.current=null;void editor.destroy()};
   }, []);
 
-  useEffect(() => {
-    if (!crepe.current || latest.current === value) return;
-    latest.current = value;
+  useEffect(()=>{crepe.current?.setReadonly(readOnly)},[readOnly]);
+  useEffect(()=>{
+    if(!crepe.current||latest.current===value)return;
+    latest.current=value;
     crepe.current.editor.action(replaceAll(value));
-  }, [value]);
+  },[value]);
+  useEffect(()=>{
+    if(!host||!topBarRef.current)return;
+    const other=[...host.querySelectorAll<HTMLElement>(".milkdown-top-bar:not([hidden])")].find(item=>item!==topBarRef.current);
+    topBarRef.current.hidden=!!other;
+  },[host,readOnly]);
 
-  return <div className="live-markdown-editor" ref={root} onFocusCapture={activateToolbar} />;
+  return <>
+    {host&&createPortal(<div className="milkdown-top-bar react-note-toolbar" ref={topBarRef} role="toolbar" aria-label="Text formatting" hidden={readOnly}>
+      <label className="text-style-select"><span className="sr-only">Text style</span><select aria-label="Text style" value={format.heading} disabled={!ready} onChange={event=>run(ctx=>ctx.get(commandsCtx).call(setBlockTypeCommand.key,{nodeType:Number(event.target.value)?headingSchema.type(ctx):paragraphSchema.type(ctx),attrs:Number(event.target.value)?{level:Number(event.target.value)}:undefined}))}>
+        <option value={0}>Paragraph</option>{[1,2,3,4,5,6].map(level=><option value={level} key={level}>Heading {level}</option>)}
+      </select></label>
+      <div className="top-bar-inner">{tools.map(({label,icon:Icon,run:action,mark})=><button key={label} type="button" className={`top-bar-item ${mark&&format.marks.includes(mark)?"active":""}`} title={label} aria-label={label} aria-pressed={mark?format.marks.includes(mark):undefined} disabled={!ready} onPointerDown={event=>event.preventDefault()} onClick={()=>run(action)}><Icon size={18}/></button>)}</div>
+    </div>,host)}
+    {error&&<div role="alert" className="tutor-error">{error}</div>}
+    <div className="live-markdown-editor" ref={root} onFocusCapture={activateToolbar}/>
+  </>;
 }

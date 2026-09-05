@@ -4,6 +4,10 @@ import {createId} from "../lib/id";
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {
   ArrowDown,
+  ArrowUpRight,
+  Rectangle,
+  Circle,
+  Ruler,
   ArrowUp,
   ArrowCounterClockwise,
   ArrowClockwise,
@@ -57,7 +61,11 @@ type Block = {
   ocrStatus?: string;
   equations?: {latex: string; confidence: string}[];
   taskProposals?: {id: string; text: string; state: string}[];
+  composition?: Composition;
 };
+
+type CompositionText={id:string;type:"text";x:number;y:number;width:number;height:number;z:number;markdown:string};
+type Composition={formatVersion:1;background:"blank"|"ruled"|"grid";objects:CompositionText[]};
 
 type MathContinuation = {
   id: string;
@@ -148,11 +156,13 @@ function useMathContinuationFlow(noteId: string, blockId: string) {
 function MarkdownBlock({
   block,
   preview,
+  readOnly = false,
   onSave,
   onNavigateNote
 }: {
   block: Block;
   preview: boolean;
+  readOnly?: boolean;
   onSave: (block: Block, value: string) => void;
   onNavigateNote?: (target: string) => void;
 }) {
@@ -164,17 +174,12 @@ function MarkdownBlock({
 
   return (
     <div className="markdown-block-editor">
-      {!preview ? (
-        <LiveMarkdownEditor
-          value={value}
-          onChange={(val) => { setValue(val); onSave(block, val); }}
-          onBlur={() => {}}
-        />
-      ) : (
-        <article className="markdown-preview block-preview">
-          <MarkdownContent text={value} onNavigateNote={onNavigateNote} />
-        </article>
-      )}
+      <LiveMarkdownEditor
+        value={value}
+        readOnly={readOnly || preview}
+        onChange={(val) => { setValue(val); onSave(block, val); }}
+        onBlur={() => {}}
+      />
     </div>
   );
 }
@@ -184,34 +189,33 @@ function InkBlockView({
   block,
   onMove,
   onDelete,
-  onSaved
+  onSaved,
+  onCompositionChange
 }: {
   noteId: string;
   block: Block;
   onMove: (block: Block, delta: number) => void;
   onDelete: (block: Block) => void;
   onSaved: () => void;
+  onCompositionChange: (block:Block,composition:Composition) => void;
 }) {
   const {proposal, busy, request, decide} = useMathContinuationFlow(noteId, block.id);
   return (
     <section className="note-block ink-note-block">
       <nav>
-        <span>Ink</span>
+        <span>Paper</span>
+        <select aria-label="Paper background" value={block.composition?.background||"blank"} onChange={event=>onCompositionChange(block,{...(block.composition||{formatVersion:1,objects:[]}),background:event.target.value as Composition["background"]})}><option value="blank">Blank</option><option value="ruled">Ruled</option><option value="grid">Grid</option></select>
+        <button type="button" onClick={()=>onCompositionChange(block,{...(block.composition||{formatVersion:1,background:"blank",objects:[]}),objects:[...(block.composition?.objects||[]),{id:createId(),type:"text",x:40,y:40,width:320,height:120,z:(block.composition?.objects.length||0)+1,markdown:"Type here"}]})}><TextT size={14}/> Add text</button>
         <button type="button" disabled={busy} onClick={() => void request()} aria-label="Continue math with AI">Continue math</button>
         <button type="button" onClick={() => onMove(block, -1)} aria-label="Move ink block up"><ArrowUp size={14} /></button>
         <button type="button" onClick={() => onMove(block, 1)} aria-label="Move ink block down"><ArrowDown size={14} /></button>
         <button type="button" onClick={() => onDelete(block)} aria-label="Delete ink block"><Trash size={14} /></button>
       </nav>
       {proposal && <MathContinuationCard continuation={proposal} busy={busy} onDecide={action => { void decide(action).then(() => { if (action === "accept") onSaved(); }); }} />}
-      <InkEditor
-        id={block.id}
-        noteId={noteId}
-        strokes={sanitizeStrokes(block.strokes)}
-        version={block.inkVersion || 0}
-        transcript={block.transcript || ""}
-        ocrStatus={block.ocrStatus || "pending"}
-        onSaved={onSaved}
-      />
+      <div className={`fixed-composition-paper paper-${block.composition?.background||"blank"}`} style={{aspectRatio:`${block.width||794}/${block.height||1123}`}}>
+        <InkEditor id={block.id} noteId={noteId} strokes={sanitizeStrokes(block.strokes)} version={block.inkVersion || 0} transcript={block.transcript || ""} ocrStatus={block.ocrStatus || "pending"} onSaved={onSaved}/>
+        {(block.composition?.objects||[]).map(object=><textarea key={object.id} className="composition-text-box" aria-label="Composition text" defaultValue={object.markdown} style={{left:`${object.x/(block.width||794)*100}%`,top:`${object.y/(block.height||1123)*100}%`,width:`${object.width/(block.width||794)*100}%`,height:`${object.height/(block.height||1123)*100}%`,zIndex:object.z}} onBlur={event=>onCompositionChange(block,{...block.composition!,objects:block.composition!.objects.map(item=>item.id===object.id?{...item,markdown:event.target.value}:item)})}/>) }
+      </div>
     </section>
   );
 }
@@ -257,6 +261,7 @@ function IntegratedOverlayCanvas({
   const pinchDistance = useRef(0);
   const pinchCenter = useRef({x: 0, y: 0});
   const lastTwoTap = useRef(0);
+  const touchTap = useRef<{started:number; x:number; y:number; distance:number; moved:boolean} | null>(null);
 
   useEffect(() => {
     setCurrentStrokes(strokes);
@@ -273,10 +278,8 @@ function IntegratedOverlayCanvas({
     if (!element) return;
     const update = () => {
       if (!onResizeRef.current) return;
-      const scale = zoomRef?.current || 1;
-      const rect = element.getBoundingClientRect();
-      const w = Math.max(320, Math.floor(rect.width / scale));
-      const h = Math.max(500, Math.floor(rect.height / scale));
+      const w = Math.max(1, element.clientWidth);
+      const h = Math.max(1, element.clientHeight);
       if (w > 0 && h > 0) onResizeRef.current(w, h);
     };
     update();
@@ -315,13 +318,7 @@ function IntegratedOverlayCanvas({
       touchPoints.current.set(event.pointerId, {x: event.clientX, y: event.clientY});
       if (touchPoints.current.size === 2) {
         const [a, b] = [...touchPoints.current.values()];
-        const now = performance.now();
-        if (onGestureUndo && now - lastTwoTap.current < 350) {
-          lastTwoTap.current = 0;
-          onGestureUndo();
-        } else {
-          lastTwoTap.current = now;
-        }
+        touchTap.current = {started:performance.now(),x:(a.x+b.x)/2,y:(a.y+b.y)/2,distance:Math.hypot(a.x-b.x,a.y-b.y),moved:false};
         pinchDistance.current = Math.hypot(a.x - b.x, a.y - b.y);
         pinchCenter.current = {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2};
       }
@@ -344,7 +341,7 @@ function IntegratedOverlayCanvas({
       return;
     }
 
-    const tool = activeTool === "highlighter" ? "highlighter" : "pen";
+    const tool = activeTool === "lasso" || activeTool === "pan" ? "pen" : activeTool;
     const stroke: InkStroke = {
       id: createId(),
       tool,
@@ -369,6 +366,8 @@ function IntegratedOverlayCanvas({
         const [a, b] = [...touchPoints.current.values()];
         const distance = Math.hypot(a.x - b.x, a.y - b.y);
         const center = {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2};
+        const tap = touchTap.current;
+        if (tap && (Math.hypot(center.x-tap.x,center.y-tap.y)>8 || Math.abs(distance-tap.distance)>8)) { tap.moved=true; lastTwoTap.current=0; }
         const previousCenter = pinchCenter.current;
         const distRatio = distance / Math.max(1, pinchDistance.current);
         pinchDistance.current = distance;
@@ -395,7 +394,9 @@ function IntegratedOverlayCanvas({
       const valid = points.filter((pt): pt is InkPoint => !!pt);
       const updated = {
         ...activeStroke.current,
-        points: [...activeStroke.current.points, ...(valid.length ? valid : [getPoint(event)].filter((pt): pt is InkPoint => !!pt))]
+        points: ["ruler", "rectangle", "ellipse", "arrow"].includes(activeStroke.current.tool)
+          ? [activeStroke.current.points[0], pt]
+          : [...activeStroke.current.points, ...(valid.length ? valid : [pt])]
       };
       activeStroke.current = updated;
       liveStrokes.current = liveStrokes.current.map(stroke => stroke.id === updated.id ? updated : stroke);
@@ -405,6 +406,15 @@ function IntegratedOverlayCanvas({
 
   function handlePointerUp(event: React.PointerEvent<SVGSVGElement>) {
     if (event.pointerType === "touch") {
+      const tap=touchTap.current;
+      if (touchPoints.current.size===2 && tap) {
+        const now=performance.now();
+        if(event.type!=="pointercancel" && !tap.moved && now-tap.started<250) {
+          if(lastTwoTap.current>0 && now-lastTwoTap.current<350) {lastTwoTap.current=0;onGestureUndo?.();}
+          else lastTwoTap.current=now;
+        } else lastTwoTap.current=0;
+        touchTap.current=null;
+      }
       touchPoints.current.delete(event.pointerId);
       return;
     }
@@ -434,6 +444,7 @@ function IntegratedOverlayCanvas({
       ref={svgRef}
       className={`integrated-ink-overlay ${interactive ? "mode-ink" : "mode-text"} ${penDrawing ? "pen-drawing" : ""}`}
       viewBox={`0 0 ${width} ${height}`}
+      preserveAspectRatio="none"
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={handlePointerUp}
@@ -465,7 +476,7 @@ function IntegratedOverlayCanvas({
   );
 }
 
-export type MixedEditorHandle={refresh:()=>void;getActiveBlock:()=>string|null};
+export type MixedEditorHandle={refresh:()=>void;getActiveBlock:()=>string|null;flush:()=>Promise<boolean>;rename:(title:string)=>Promise<void>};
 
 export function MixedNoteEditor({
   noteId,
@@ -494,11 +505,15 @@ export function MixedNoteEditor({
   const markdownPending = useRef(new Map<string, {value: string; version: number}>());
   const markdownTimers = useRef(new Map<string, ReturnType<typeof setTimeout>>());
   const saveChains = useRef(new Map<string, Promise<void>>());
+  const savedVersions = useRef(new Map<string, number>());
   const markdownSaving = useRef(new Set<string>());
   const activeBlockRef = useRef<string | null>(null);
 
+  const savingInkRef = useRef<boolean>(false);
+  const pendingStrokesRef = useRef<InkStroke[] | null>(null);
+
   function updateDirty() {
-    onDirtyChange?.(markdownPending.current.size > 0 || markdownTimers.current.size > 0 || markdownSaving.current.size > 0);
+    onDirtyChange?.(markdownPending.current.size > 0 || markdownTimers.current.size > 0 || markdownSaving.current.size > 0 || savingInkRef.current || pendingStrokesRef.current !== null);
   }
 
   async function flushMarkdown(id: string) {
@@ -515,14 +530,15 @@ export function MixedNoteEditor({
       const response = await fetch(`/api/v1/notes/${noteId}/blocks/${id}`, {
         method: "PATCH",
         headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({markdown: pending.value, version: pending.version})
+        body: JSON.stringify({markdown: pending.value, version: savedVersions.current.get(id) ?? pending.version})
       });
       if (!response.ok) throw new Error((await response.json()).error?.message || "Save failed");
       const saved = await response.json();
+      savedVersions.current.set(id, saved.version);
       setBlocks(items => items.map(item => item.id === id ? {...item, version: saved.version, markdown: item.markdown === pending.value ? saved.markdown : item.markdown} : item));
       setError("");
     }).catch(reason => {
-      markdownPending.current.set(id, pending);
+      if (!markdownPending.current.has(id)) markdownPending.current.set(id, pending);
       setError(reason.message || "Save failed");
     }).finally(() => { markdownSaving.current.delete(id); updateDirty(); });
     saveChains.current.set(id, next);
@@ -563,6 +579,22 @@ export function MixedNoteEditor({
     return localStorage.getItem("noema-note-ink-mode") === "ink" ? "ink" : "text";
   });
   const [paletteCollapsed, setPaletteCollapsed] = useState(false);
+  useEffect(() => {
+    try { setPaletteCollapsed(localStorage.getItem(`noema-tools-${editorMode}`) === "hidden"); } catch {}
+  }, [editorMode]);
+  function collapseTools(hidden: boolean) {
+    setPaletteCollapsed(hidden);
+    try { localStorage.setItem(`noema-tools-${editorMode}`, hidden ? "hidden" : "visible"); } catch {}
+  }
+  const inkToolbarRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const toolbar=inkToolbarRef.current,container=docRef.current;
+    if(!toolbar||!container)return;
+    const measure=()=>container.style.setProperty("--ink-toolbar-space",`${toolbar.offsetHeight+24}px`);
+    measure();
+    const observer=new ResizeObserver(measure);observer.observe(toolbar);
+    return()=>observer.disconnect();
+  },[editorMode,paletteCollapsed,loading]);
   const [orientation, setOrientation] = useState<"portrait" | "landscape">("portrait");
   const [showAnnotations, setShowAnnotations] = useState(true);
   const [theme, setTheme] = useState<string>(() => {
@@ -640,31 +672,20 @@ export function MixedNoteEditor({
   }
 
   async function load() {
-    if (markdownPending.current.size || markdownSaving.current.size) return;
+    if (markdownPending.current.size || markdownSaving.current.size || savingInkRef.current || pendingStrokesRef.current !== null) return;
     try {
       const response = await fetch(`/api/v1/notes/${noteId}/blocks`);
-      const contentType = response.headers.get("content-type") || "";
-      if (contentType.includes("application/json")) {
-        const data = await response.json();
-        if (response.ok && Array.isArray(data.blocks) && data.blocks.length > 0) {
-          setBlocks(data.blocks);
-          setLoading(false);
-          return;
-        }
-      }
-    } catch {
-      // Fallback below
-    }
-    setBlocks([
-      {
-        id: createId(),
-        position: 0,
-        kind: "markdown",
-        markdown: initialContent || `# Note\n\n`,
-        version: 1
-      }
-    ]);
-    setLoading(false);
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error?.message || "Could not load this note");
+      if (!Array.isArray(data.blocks) || !data.blocks.length) throw new Error("This note has no editable blocks");
+      const overlay = [...data.blocks].reverse().find((block: Block) => block.kind === "ink");
+      if (overlay?.width) setViewportWidth(overlay.width);
+      if (overlay?.height) setViewportHeight(overlay.height);
+      setBlocks(data.blocks);
+      setError("");
+    } catch (reason) {
+      setError((reason as Error).message || "Could not load this note");
+    } finally { setLoading(false); }
   }
 
   useEffect(() => {
@@ -749,15 +770,6 @@ export function MixedNoteEditor({
     const onTouchStart = (event: TouchEvent) => {
       if (event.touches.length !== 2 || onInkSurface(event)) return;
       event.preventDefault();
-      // Two-finger double tap: undo the last stroke (ink mode only).
-      const now = performance.now();
-      if (editorModeRef.current === "ink" && now - lastTwoFingerTap.current < 350) {
-        lastTwoFingerTap.current = 0;
-        gesture.current = null;
-        gestureUndoRef.current();
-        return;
-      }
-      lastTwoFingerTap.current = now;
       const point = center(event.touches);
       gesture.current = {distance: spread(event.touches), cx: point.x, cy: point.y};
     };
@@ -829,8 +841,7 @@ export function MixedNoteEditor({
   }
 
   const currentInkVersion = useRef<number>(inkBlock?.inkVersion || 0);
-  const savingInkRef = useRef<boolean>(false);
-  const pendingStrokesRef = useRef<InkStroke[] | null>(null);
+
   const gestureUndoPushed = useRef(false);
   const gestureBeforeRef = useRef<InkStroke[] | null>(null);
   // Stable id for the full-page overlay ink block; reused across rapid strokes so
@@ -857,10 +868,11 @@ export function MixedNoteEditor({
     setBlocks(items => {
       const existing = items.find(item => item.id === targetInkId);
       if (existing) return items.map(item => item.id === targetInkId ? {...item, strokes: nextStrokes} : item);
-      return [...items, {id: targetInkId, position: items.length, kind: "ink", markdown: "", version: 1, inkVersion: 0, strokes: nextStrokes}];
+      return [...items, {id: targetInkId, position: items.length, kind: "ink", markdown: "", version: 1, inkVersion: 0, width: viewportWidth, height: viewportHeight, strokes: nextStrokes}];
     });
 
     pendingStrokesRef.current = nextStrokes;
+    updateDirty();
     if (savingInkRef.current) return;
     savingInkRef.current = true;
 
@@ -881,15 +893,18 @@ export function MixedNoteEditor({
             strokes: clampInkStrokes(strokesToSave, viewportWidth, viewportHeight)
         }, fetch, createId);
         currentInkVersion.current = data.version ?? data.inkVersion ?? currentInkVersion.current + 1;
-        setBlocks(items => items.map(item => item.id === targetInkId ? {...item, strokes: strokesToSave, inkVersion: currentInkVersion.current} : item));
+        setBlocks(items => items.map(item => item.id === targetInkId ? {...item, inkVersion: currentInkVersion.current} : item));
         setError("");
         attempts = 0;
       } catch (reason) {
+        pendingStrokesRef.current ??= strokesToSave;
         setError((reason as Error).message || "Save ink failed");
+        break;
       }
     }
 
     savingInkRef.current = false;
+    updateDirty();
   }
 
   function handleUndo() {
@@ -908,6 +923,17 @@ export function MixedNoteEditor({
     void saveInkStrokes(next, false);
   }
 
+  useEffect(() => {
+    const keydown=(event:KeyboardEvent)=>{
+      if(editorMode!=="ink" || !(event.ctrlKey||event.metaKey) || event.key.toLowerCase()!=="z")return;
+      if(event.target instanceof HTMLElement && event.target.matches("input,textarea"))return;
+      event.preventDefault();
+      if(event.shiftKey)handleRedo();else handleUndo();
+    };
+    document.addEventListener("keydown",keydown);
+    return()=>document.removeEventListener("keydown",keydown);
+  },[editorMode,undoStack,redoStack]);
+
   function handleClearInk() {
     if (!overlayStrokes.length) return;
     void saveInkStrokes([], true);
@@ -919,9 +945,27 @@ export function MixedNoteEditor({
     queueMarkdown(block, value);
   }
 
+  async function flush() {
+    await flushMarkdownSaves();
+    await Promise.all(saveChains.current.values());
+    const deadline = Date.now() + 10000;
+    while (savingInkRef.current && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 25));
+    if (pendingStrokesRef.current && !savingInkRef.current) await saveInkStrokes([...pendingStrokesRef.current], false);
+    return !markdownPending.current.size && !markdownSaving.current.size && !savingInkRef.current && pendingStrokesRef.current === null;
+  }
+
+  async function rename(title: string) {
+    if (!await flush()) throw new Error("Save your pending changes before renaming");
+    const block = blocks.find(item => item.kind === "markdown");
+    if (!block) throw new Error("No text block to rename");
+    const value = /^#\s+.+$/m.test(block.markdown) ? block.markdown.replace(/^#\s+.+$/m, `# ${title}`) : `# ${title}\n\n${block.markdown}`;
+    await markdown(block, value);
+    if (!await flush()) throw new Error("Could not save the new title");
+  }
+
   useEffect(() => {
     if (!ref) return;
-    ref.current = {refresh: () => void load(), getActiveBlock: () => activeBlockRef.current};
+    ref.current = {refresh: () => void load(), getActiveBlock: () => activeBlockRef.current, flush, rename};
     return () => { ref.current = null; };
   });
 
@@ -999,6 +1043,25 @@ export function MixedNoteEditor({
     else setError((await response.json()).error?.message || "Reorder failed");
   }
 
+  async function insertPaper(background:Composition["background"]="blank"){
+    const response=await fetch(`/api/v1/notes/${noteId}/ink`,{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":createId()},body:JSON.stringify({width:794,height:1123,formatVersion:2,coordinateSpace:"world",strokes:[],queueOcr:false,composition:{formatVersion:1,background,objects:[]}})});
+    if(!response.ok){setError((await response.json()).error?.message||"Could not insert paper");return}
+    await load();setEditorMode("ink");setViewMode("write");
+  }
+
+  async function keepLayout(block:Block){
+    const composition:Composition={formatVersion:1,background:"blank",objects:[{id:createId(),type:"text",x:40,y:40,width:714,height:240,z:1,markdown:block.markdown}]};
+    const response=await fetch(`/api/v1/notes/${noteId}/ink`,{method:"POST",headers:{"Content-Type":"application/json","Idempotency-Key":createId()},body:JSON.stringify({width:794,height:320,formatVersion:2,coordinateSpace:"world",strokes:[],queueOcr:false,composition})});
+    if(!response.ok){setError((await response.json()).error?.message||"Could not keep this layout");return}
+    await fetch(`/api/v1/notes/${noteId}/blocks/${block.id}`,{method:"DELETE",headers:{"Content-Type":"application/json"},body:JSON.stringify({version:block.version})});
+    await load();setEditorMode("ink");
+  }
+
+  function changeComposition(block:Block,composition:Composition){
+    setBlocks(items=>items.map(item=>item.id===block.id?{...item,composition}:item));
+    void saveInkWithRetry(noteId,{id:block.id,version:block.inkVersion||0,width:block.width||794,height:block.height||1123,strokes:sanitizeStrokes(block.strokes),composition},fetch,createId).then(()=>load()).catch(reason=>setError(reason.message||"Composition save failed"));
+  }
+
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth >= 1024) {
@@ -1013,7 +1076,7 @@ export function MixedNoteEditor({
   }, []);
 
   if (loading) return (
-    <div className="integrated-note-editor mixed-note-editor">
+    <div className={`integrated-note-editor mixed-note-editor editor-${editorMode} ${paletteCollapsed ? "tools-hidden" : ""} ${viewMode === "preview" ? "is-reading" : ""}`}>
       <div className="integrated-doc-container">
         <div className="integrated-doc-page portrait" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
           <div className="mixed-editor-loading">Loading document…</div>
@@ -1023,38 +1086,41 @@ export function MixedNoteEditor({
   );
 
   return (
-    <div className="integrated-note-editor mixed-note-editor">
+    <div className={`integrated-note-editor mixed-note-editor editor-${editorMode} ${paletteCollapsed ? "tools-hidden" : ""} ${viewMode === "preview" ? "is-reading" : ""}`}>
       {error && (
         <div className="tutor-error" role="alert">
           {error}
+          <button type="button" onClick={() => { void flushMarkdownSaves(); if (pendingStrokesRef.current) void saveInkStrokes(pendingStrokesRef.current, false); else if (!blocks.length) void load(); }}>Retry</button>
         </div>
       )}
 
       <div className={`integrated-floating-palette ${paletteCollapsed ? "collapsed" : ""}`} role="toolbar" aria-label="Note controls">
-        {paletteCollapsed ? <button className="palette-expand-btn" onClick={() => setPaletteCollapsed(false)} aria-label="Expand note controls" title="Expand note controls"><PencilLine size={18} /><CaretDown size={14} /></button> : <div className="palette-rows-container">
+        {paletteCollapsed ? <button className="palette-expand-btn" onClick={() => collapseTools(false)} aria-label="Expand note controls" title="Expand note controls"><PencilLine size={18} /><CaretDown size={14} /></button> : <div className="palette-rows-container">
         <div className="palette-row">
-          <div className="palette-group" aria-label="Document view">
-            <button type="button" className={viewMode === "write" ? "active" : ""} onClick={() => setViewMode("write")} aria-pressed={viewMode === "write"}>Edit</button>
-            <button type="button" className={viewMode === "preview" ? "active" : ""} onClick={() => setViewMode("preview")} aria-pressed={viewMode === "preview"}>Preview</button>
+          <div className="palette-group" aria-label="Note mode">
+            <button type="button" className={editorMode === "text" && viewMode === "write" ? "active" : ""} onClick={() => { setEditorMode("text"); setViewMode("write"); }} aria-pressed={editorMode === "text" && viewMode === "write"}><TextT size={18}/><span>Write</span></button>
+            <button type="button" className={editorMode === "ink" ? "active" : ""} onClick={() => { setEditorMode("ink"); setViewMode("write"); setShowAnnotations(true); }} aria-pressed={editorMode === "ink"}><PencilLine size={18}/><span>Handwrite</span></button>
+            <button type="button" className={editorMode === "text" && viewMode === "preview" ? "active" : ""} onClick={() => { setEditorMode("text"); setViewMode("preview"); }} aria-pressed={editorMode === "text" && viewMode === "preview"}><Eye size={18}/><span>Read</span></button>
           </div>
-          <button type="button" className={`ink-mode-toggle ${editorMode === "ink" ? "active" : ""}`} onClick={() => setEditorMode(mode => mode === "ink" ? "text" : "ink")} aria-pressed={editorMode === "ink"} title="Draw over note">
-            <PencilLine size={18} /><span>Ink</span>
-          </button>
           <details className="note-toolbar-menu">
             <summary aria-label={`More note options${inkBlock ? `. Handwriting recognition ${inkBlock.ocrStatus||"pending"}` : ""}`} title="More note options"><DotsThree size={20} />{inkBlock&&<span className={`ocr-status-dot ${inkBlock.ocrStatus||"pending"}`} aria-hidden="true" />}</summary>
             <div>
               {inkBlock&&<p className="ocr-menu-status" role="status"><span>Handwriting recognition</span><strong>{inkBlock.ocrStatus||"pending"}</strong></p>}
               {inkBlock?.ocrStatus==="failed"&&<button type="button" onClick={()=>void retryOcr()}>Retry recognition</button>}
               {inkBlock&&<button type="button" aria-expanded={ocrPanelOpen} onClick={()=>{setOcrPanelOpen(open=>!open);setDismissedOcr(false)}}>{ocrPanelOpen?"Hide OCR review":"Review OCR"}</button>}
+              <button type="button" onClick={()=>void insertPaper("blank")}><Plus size={18}/><span>Insert blank paper</span></button>
+              <button type="button" onClick={()=>void insertPaper("ruled")}><Plus size={18}/><span>Insert ruled paper</span></button>
+              <button type="button" onClick={()=>void insertPaper("grid")}><Plus size={18}/><span>Insert grid paper</span></button>
               <button type="button" onClick={() => setShowAnnotations(v => !v)}>{showAnnotations ? <Eye size={18} /> : <EyeSlash size={18} />}<span>{showAnnotations ? "Hide ink" : "Show ink"}</span></button>
+              <button type="button" onClick={() => { const container=docRef.current; if(container) { commitPageZoom(Math.min(1,(container.clientWidth-48)/viewportWidth)); setPageZoom(pageZoomRef.current); } }}>Fit page</button>
               {pageZoom !== 1 && <button type="button" onClick={resetPageZoom}><span>Reset zoom ({Math.round(pageZoom * 100)}%)</span></button>}
               {onToggleFullscreen && <button type="button" onClick={onToggleFullscreen}>{fullscreen ? <ArrowsIn size={18} /> : <ArrowsOut size={18} />}<span>{fullscreen ? "Exit fullscreen" : "Fullscreen"}</span></button>}
             </div>
           </details>
-          <button type="button" onClick={() => setPaletteCollapsed(true)} aria-label="Collapse note controls" title="Collapse note controls"><CaretUp size={18} /></button>
+          <button type="button" onClick={() => collapseTools(true)} aria-label="Collapse note controls" title="Collapse note controls"><CaretUp size={18} /></button>
         </div>
             {editorMode === "ink" && (
-              <div className="palette-row">
+              <div className="palette-row" ref={inkToolbarRef}>
                 <div className="palette-group">
                   <div className="pen-tool-wrapper">
                     <button
@@ -1074,6 +1140,7 @@ export function MixedNoteEditor({
                       }}
                       title="Pen (Double click for options)"
                       aria-label="Pen tool"
+                      aria-pressed={activeTool === "pen"}
                     >
                       <PenNib size={18} />
                       <span
@@ -1088,6 +1155,12 @@ export function MixedNoteEditor({
                           <span>Pen Settings</span>
                           <button type="button" className="close-btn icon-button" aria-label="Close pen settings" onClick={closePenOptions}>×</button>
                         </header>
+                        <div className="popover-section">
+                          <label htmlFor="note-pen-type">Pen type</label>
+                          <select id="note-pen-type" aria-label="Pen type" value={activeTool} onChange={event=>{setActiveTool(event.target.value as InkTool);setPenOptionsOpen(false)}}>
+                            <option value="pen">Pen</option><option value="highlighter">Highlighter</option>
+                          </select>
+                        </div>
                         <div className="popover-section">
                           <label>Colors</label>
                           <div className="ink-color-presets" role="group" aria-label="Ink color presets">
@@ -1143,6 +1216,7 @@ export function MixedNoteEditor({
                     onClick={() => { setActiveTool("highlighter"); setPenOptionsOpen(false); }}
                     title="Highlighter"
                     aria-label="Highlighter tool"
+                    aria-pressed={activeTool === "highlighter"}
                   >
                     <HighlighterCircle size={18} />
                   </button>
@@ -1151,11 +1225,17 @@ export function MixedNoteEditor({
                     onClick={() => { setActiveTool("eraser"); setPenOptionsOpen(false); }}
                     title="Eraser"
                     aria-label="Eraser tool"
+                    aria-pressed={activeTool === "eraser"}
                   >
                     <Broom size={18} />
                   </button>
                 </div>
 
+                <div className="palette-group" aria-label="Shapes and ruler">
+                  {([["ruler", "Ruler", Ruler], ["arrow", "Arrow", ArrowUpRight], ["rectangle", "Rectangle", Rectangle], ["ellipse", "Ellipse", Circle]] as const).map(([tool, label, Icon]) => <button type="button" key={tool} aria-label={`${label} tool`} title={label} aria-pressed={activeTool === tool} className={activeTool === tool ? "active" : ""} onClick={() => { setActiveTool(tool); setPenOptionsOpen(false); }}><Icon size={18}/></button>)}
+                </div>
+                <label className="ink-custom-color" title="Ink color"><span className="sr-only">Ink color</span><input type="color" aria-label="Ink color" value={color} onChange={event => setColor(event.target.value)}/></label>
+                <label className="ink-width"><span className="sr-only">Stroke thickness</span><input type="range" aria-label="Stroke thickness" min="1" max="16" value={size} onChange={event => setSize(Number(event.target.value))}/><output>{size}px</output></label>
                 <div className="palette-divider" />
 
                 <div className="palette-group">
@@ -1170,7 +1250,7 @@ export function MixedNoteEditor({
                   </button>
                   <button
                     className="primary ink-done-btn"
-                    onClick={() => setEditorMode("text")}
+                    onClick={() => { setEditorMode("text"); setViewMode("write"); }}
                     title="Finish drawing (strokes are saved automatically)"
                     aria-label="Done saving handwriting"
                     style={{
@@ -1221,27 +1301,10 @@ export function MixedNoteEditor({
         </section>
       )}
 
+      <div className="note-formatting-slot"/>
       {/* Dual-Layer Viewport Bounded Sheet */}
       <div className="integrated-doc-container" ref={docRef}>
         <div className={`integrated-doc-page ${orientation}`} ref={pageRef}>
-          {/* Foreground Layer 2: Interactive SVG Ink Overlay */}
-          <IntegratedOverlayCanvas
-            width={viewportWidth}
-            height={viewportHeight}
-            strokes={overlayStrokes}
-            activeTool={activeTool}
-            color={color}
-            size={size}
-            interactive={editorMode === "ink"}
-            visible={showAnnotations}
-            zoomRef={pageZoomRef}
-            onChange={saveInkStrokes}
-            onResize={handleOverlayResize}
-            onPinch={handleOverlayPinch}
-            onGestureUndo={handleUndo}
-          />
-
-          {/* Background Layer 1: Rendered Document Blocks */}
           <div className="integrated-doc-content" style={{position: "relative", zIndex: 1}}>
             {blocks.map((block) =>
               block.kind === "markdown" ? (
@@ -1249,11 +1312,13 @@ export function MixedNoteEditor({
                   <MarkdownBlock
                     block={block}
                     preview={viewMode === "preview"}
+                    readOnly={editorMode === "ink"}
                     onSave={markdown}
                     onNavigateNote={onNavigateNote}
                   />
+                  {editorMode==="ink"&&<button type="button" className="keep-layout-action" onClick={()=>void keepLayout(block)}>Keep layout to draw here</button>}
                 </article>
-              ) : block.id === inkBlock?.id ? null : (
+              ) : (
                 <InkBlockView
                   key={block.id}
                   noteId={noteId}
@@ -1261,6 +1326,7 @@ export function MixedNoteEditor({
                   onMove={moveInk}
                   onDelete={remove}
                   onSaved={load}
+                  onCompositionChange={changeComposition}
                 />
               )
             )}

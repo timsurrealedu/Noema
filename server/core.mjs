@@ -7,7 +7,7 @@ import {enqueueJob} from "./jobs.mjs";
 import {recordConflict} from "./collaboration.mjs";
 import {prepareVaultTaskWriteback} from "./vault-task-writeback.mjs";
 import {reminderOffsets} from "./settings.mjs";
-import {createVaultNote,resolveVaultNotePath,safeRelativePath,sourceRoot,trashVaultEntry} from "./vault.mjs";
+import {createVaultNote,resolveVaultNotePath,safeRelativePath,sourceRoot,syncNoteBlocks,trashVaultEntry} from "./vault.mjs";
 import {copyFileSync,mkdirSync} from "node:fs";
 import {dirname,extname,join} from "node:path";
 import {occurrences,untilRule} from "./recurrence.mjs";
@@ -157,6 +157,7 @@ export function saveNote(input,db=getDatabase(),actor=null){
   }
   const time=stamp(),excerpt=String(input.excerpt||content.replace(/[#*_>-]/g,"").trim().slice(0,140));
   requireVersion(input,before,{db,type:"note",actor});
+  if(before&&before.content!==content)syncNoteBlocks(id,content,db);
   db.prepare(`INSERT INTO notes(id,title,excerpt,content,tags_json,ai,draft,source,favorite,trashed,created_at,updated_at,workspace_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?) ON CONFLICT(id) DO UPDATE SET title=excluded.title,excerpt=excluded.excerpt,content=excluded.content,tags_json=excluded.tags_json,ai=excluded.ai,draft=excluded.draft,source=excluded.source,favorite=excluded.favorite,trashed=excluded.trashed,updated_at=excluded.updated_at,version=notes.version+1`).run(id,title,excerpt,content,JSON.stringify(input.tags||[]),input.ai?1:0,input.draft?1:0,input.source||null,input.favorite?1:0,input.trashed?1:0,before?.created_at||time,time,context.workspaceId);
   db.prepare("DELETE FROM notes_fts WHERE id=?").run(id);db.prepare("INSERT INTO notes_fts(id,title,content,tags) VALUES(?,?,?,?)").run(id,title,content,(input.tags||[]).join(" "));
   reindexNoteLinks(id,content,db,context.workspaceId);

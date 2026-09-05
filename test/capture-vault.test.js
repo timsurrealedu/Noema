@@ -354,6 +354,7 @@ test("note PDF download embeds rich content and authoritative handwriting blocks
   const {getDatabase,closeDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),vault=await import("../server/vault.mjs"),objects=await import("../server/objects.mjs"),inkRaster=await import("../server/ink-raster.mjs"),core=await import("../server/core.mjs"),{load:pdfLoad}=await import("pdf-lib").then(module=>module.PDFDocument),{getDocument,OPS}=await import("pdfjs-dist/legacy/build/pdf.mjs");
   const {notePdf}=await import("../server/note-pdf.mjs");
   const config={dataDir:dir,dbPath:join(dir,"test.sqlite"),objectsDir:join(dir,"objects"),jobsDir:join(dir,"jobs")};
+  closeDatabase();
   const db=getDatabase(config);
   fs.mkdirSync(config.objectsDir,{recursive:true});fs.mkdirSync(config.jobsDir,{recursive:true});
   try{
@@ -365,7 +366,8 @@ test("note PDF download embeds rich content and authoritative handwriting blocks
     const content="![1.00]()\n\n# Export\n\nIntro paragraph.\n\n$$\\alpha + \\beta \\geq 1$$\n\n"+Array(19).fill("<br />").join("\n\n")+"\n\n![diagram](/api/v1/assets/"+asset.id+")",markdown=vault.listNoteBlocks(created.noteId,actor,db)[0];
     vault.saveMarkdownBlock(created.noteId,{id:markdown.id,markdown:content,version:markdown.version},actor,db);
     vault.saveInkBlock(created.noteId,{formatVersion:2,coordinateSpace:"world",width:810,height:595,strokes:[{id:"s1",tool:"pen",color:"#123456",width:3,points:[{x:10,y:10,pressure:.5,time:0},{x:750,y:500,pressure:.5,time:1}]},{id:"s2",tool:"pen",color:"#654321",width:3,points:[{x:400,y:300,pressure:.5,time:2}]}]},actor,db);
-    core.saveNote({id:created.noteId,content,version:db.prepare("SELECT version FROM notes WHERE id=?").get(created.noteId).version},db,actor);
+    // Simulate a legacy stale projection; PDF must still use authoritative ink blocks.
+    db.prepare("UPDATE notes SET content=? WHERE id=?").run(content,created.noteId);
     const result=await notePdf(created.noteId,undefined,workspace.id,config);
     const pdf=await pdfLoad(result.bytes);
     assert.equal(pdf.getPageCount(),1,"editor line breaks should not push handwriting onto a hidden second page");
@@ -390,5 +392,49 @@ test("parallel tutor answers require at least two distinct providers",async()=>{
       ()=>skills.runTutorParallel({kind:"note",id:note.id,question:"hi"},{dataDir:dir,jobsDir:dir,databasePath:join(dir,"t.sqlite"),geminiApiKey:"only-gemini",appEncryptionKey:"x".repeat(40)},db,"w"),
       error=>error.status===409&&/at least two/i.test(error.message)
     );
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("new note allocates a free name while explicit paths still reject duplicates",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-note-names-")),vaultDir=join(dir,"vault");mkdirSync(vaultDir);
+  const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),vault=await import("../server/vault.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),workspace=collaboration.ensureDefaultWorkspace(user.id,db),actor={id:user.id,workspaceId:workspace.id},source=vault.connectVault({rootPath:vaultDir},workspace.id,db);
+    const first=vault.createVaultNote(source.id,{relativePath:"Untitled note.md",content:"Keep original",uniqueName:true},actor,db);
+    const second=vault.createVaultNote(source.id,{relativePath:"Untitled note.md",uniqueName:true},actor,db);
+    const third=vault.createVaultNote(source.id,{relativePath:"Untitled note.md",uniqueName:true},actor,db);
+    assert.equal(first.relativePath,"Untitled note.md");assert.equal(second.relativePath,"Untitled note (2).md");assert.equal(third.relativePath,"Untitled note (3).md");
+    assert.equal(readFileSync(join(vaultDir,first.relativePath),"utf8"),"Keep original");
+    assert.throws(()=>vault.createVaultNote(source.id,{relativePath:first.relativePath},actor,db),/already exists/);
+  }finally{db.close();rmSync(dir,{recursive:true,force:true})}
+});
+
+test("AI and human notes without a vault persist typed blocks and handwriting together",async()=>{
+  const dir=mkdtempSync(join(tmpdir(),"noema-unified-note-"));
+  const {openDatabase}=await import("../server/db.mjs"),auth=await import("../server/auth.mjs"),collaboration=await import("../server/collaboration.mjs"),core=await import("../server/core.mjs"),vault=await import("../server/vault.mjs"),db=openDatabase(join(dir,"test.sqlite"));
+  try{
+    const user=await auth.ensureOwner({email:"owner@example.com",password:"correct horse battery staple"},db),workspace=collaboration.ensureDefaultWorkspace(user.id,db),actor={id:user.id,workspaceId:workspace.id};
+    for(const ai of [true,false]){
+      const note=core.saveNote({title:"Shared editor",content:"# Shared editor\n\nOriginal",ai,tags:["study"]},db,actor);
+      vault.listNoteBlocks(note.id,actor,db);
+      core.saveNote({...note,tags:["study"],content:"# Shared editor\n\nWhole-note update"},db,actor);
+      const [block]=vault.listNoteBlocks(note.id,actor,db);
+      assert.match(block.markdown,/Whole-note update/);
+      const saved=vault.saveMarkdownBlock(note.id,{id:block.id,version:block.version,markdown:"# Shared editor\n\nEdited"},actor,db);
+      const strokes=[{id:"stroke",tool:"arrow",color:"#ff0000",width:3,points:[{x:10,y:20,pressure:.5,time:0},{x:90,y:100,pressure:.5,time:1}]}];
+      const ink=vault.saveInkBlock(note.id,{width:800,height:600,strokes,queueOcr:false},actor,db);
+      vault.saveMarkdownBlock(note.id,{id:block.id,version:saved.version,markdown:"# Shared editor\n\nStill editable"},actor,db);
+      const blocks=vault.listNoteBlocks(note.id,actor,db);
+      assert.equal(blocks.length,2);assert.equal(blocks[1].id,ink.id);assert.equal(blocks[1].strokes[0].tool,"arrow");
+      const row=db.prepare("SELECT * FROM notes WHERE id=?").get(note.id);
+      assert.match(row.content,/Still editable/);assert.equal(row.ai,ai?1:0);assert.deepEqual(JSON.parse(row.tags_json),["study"]);
+      assert.throws(()=>vault.saveMarkdownBlock(note.id,{id:block.id,version:block.version,markdown:"stale"},actor,db),/Expected version/);
+      const optimized=core.saveNote({...row,tags:["study"],content:row.content.replace("Still editable","Optimized text")},db,actor);
+      const updated=vault.listNoteBlocks(note.id,actor,db);
+      assert.match(updated[0].markdown,/Optimized text/);assert.deepEqual(updated[1].strokes,strokes);
+      assert.throws(()=>core.saveNote({...optimized,content:"Replacement without ink"},db,actor),/preserve its handwriting/);
+      assert.match(vault.listNoteBlocks(note.id,actor,db)[0].markdown,/Optimized text/);
+
+    }
   }finally{db.close();rmSync(dir,{recursive:true,force:true})}
 });

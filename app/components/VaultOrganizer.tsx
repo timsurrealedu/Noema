@@ -78,7 +78,19 @@ export function VaultOrganizer({notes,onOpen,initialFolder="",onFolderChange}:{n
 
   async function sync(){if(!sourceId)return;setBusy(true);try{await request(`/api/v1/vault-sources/${sourceId}/sync`,{method:"POST"});await load(sourceId)}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
 
-  async function create(givenName?:string,selected=sourceId,ink=false){if(!selected)return;const name=givenName||await requestAction({title:"New note",input:{label:"Note name"},confirmLabel:"Create"});if(!name)return;const file=`${name.replace(/\.md$/i,"").replace(/[\\/:*?\"<>|]/g,"-").trim()}.md`,relativePath=folder&&!folder.startsWith("@")?`${folder}/${file}`:file;try{const created=await request(`/api/v1/vault-sources/${selected}/entries`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({relativePath})});await load(selected);location.assign(`/vault?open=${created.noteId}${ink?"&ink=1":""}`)}catch(reason:any){if(givenName&&reason?.message?.includes("already exists")){const altFile=`${name.replace(/\.md$/i,"").replace(/[\\/:*?\"<>|]/g,"-").trim()}-${Math.floor(Math.random()*1000)}.md`,altPath=folder&&!folder.startsWith("@")?`${folder}/${altFile}`:altFile;try{const retryCreated=await request(`/api/v1/vault-sources/${selected}/entries`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({relativePath:altPath})});await load(selected);location.assign(`/vault?open=${retryCreated.noteId}${ink?"&ink=1":""}`);return}catch{}}setError((reason as Error).message)}}
+  async function create(givenName?:string,selected=sourceId,ink=false){
+    if(!selected||busy)return;
+    const name=givenName||await requestAction({title:"New note",input:{label:"Note name"},confirmLabel:"Create"});
+    if(!name)return;
+    const stem=name.replace(/\.md$/i,"").replace(/[\\/:*?"<>|]/g,"-").trim()||"Untitled note";
+    const relativePath=folder&&!folder.startsWith("@")?`${folder}/${stem}.md`:`${stem}.md`;
+    setBusy(true);setError("");
+    try{
+      const created=await request(`/api/v1/vault-sources/${selected}/entries`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({relativePath,uniqueName:true})});
+      await load(selected);
+      location.assign(`/vault?open=${created.noteId}${ink?"&ink=1":""}`);
+    }catch(reason){setError((reason as Error).message)}finally{setBusy(false)}
+  }
 
   async function createFolder(){if(!sourceId)return;const name=await requestAction({title:"New folder",input:{label:"Folder name"},confirmLabel:"Create"});if(!name)return;const cleanName=name.replace(/[\\/:*?\"<>|]/g,"-").trim();if(!cleanName)return;const folderPath=folder&&!folder.startsWith("@")?`${folder}/${cleanName}`:cleanName;const relativePath=`${folderPath}/Untitled note.md`;setBusy(true);try{const created=await request(`/api/v1/vault-sources/${sourceId}/entries`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({relativePath})});setFolder(folderPath);await load(sourceId);if(created.noteId)location.assign(`/vault?open=${created.noteId}`)}catch(reason){setError((reason as Error).message)}finally{setBusy(false)}}
 

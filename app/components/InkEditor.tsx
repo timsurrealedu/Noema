@@ -94,6 +94,7 @@ export function InkEditor({
   const pinchDistance = useRef(0);
   const pinchCenter = useRef({x: 0, y: 0});
   const lastTwoTap = useRef(0);
+  const touchTap = useRef<{started:number; x:number; y:number; distance:number; moved:boolean} | null>(null);
   const drawFrame = useRef<number | null>(null);
   const liveStrokes = useRef<InkStroke[]>([]);
 
@@ -291,9 +292,7 @@ export function InkEditor({
       touches.current.set(event.pointerId, {x: event.clientX, y: event.clientY});
       if (touches.current.size===2) {
         const [a, b] = [...touches.current.values()];
-        const now = Date.now();
-        if (now - lastTwoTap.current < 350) undo();
-        lastTwoTap.current = now;
+        touchTap.current = {started:performance.now(),x:(a.x+b.x)/2,y:(a.y+b.y)/2,distance:Math.hypot(a.x-b.x,a.y-b.y),moved:false};
         pinchDistance.current = Math.hypot(a.x - b.x, a.y - b.y);
         pinchCenter.current = {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2};
         if (active.current) {
@@ -352,6 +351,8 @@ export function InkEditor({
         const [a, b] = [...touches.current.values()];
         const distance = Math.hypot(a.x - b.x, a.y - b.y);
         const center = {x: (a.x + b.x) / 2, y: (a.y + b.y) / 2};
+        const tap = touchTap.current;
+        if (tap && (Math.hypot(center.x-tap.x,center.y-tap.y)>8 || Math.abs(distance-tap.distance)>8)) { tap.moved=true; lastTwoTap.current=0; }
         const previousCenter = pinchCenter.current;
         const distRatio = distance / Math.max(1, pinchDistance.current);
         pinchDistance.current = distance;
@@ -423,6 +424,15 @@ export function InkEditor({
 
   function up(event: React.PointerEvent<SVGSVGElement>) {
     if (event.pointerType==="touch") {
+      const tap=touchTap.current;
+      if (touches.current.size===2 && tap) {
+        const now=performance.now();
+        if(event.type!=="pointercancel" && !tap.moved && now-tap.started<250) {
+          if(lastTwoTap.current>0 && now-lastTwoTap.current<350) {lastTwoTap.current=0;undo();}
+          else lastTwoTap.current=now;
+        } else lastTwoTap.current=0;
+        touchTap.current=null;
+      }
       touches.current.delete(event.pointerId);
       return;
     }
